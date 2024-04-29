@@ -1,0 +1,175 @@
+﻿@model LLB.Models.ViewModel.RegisterViewModel
+
+
+
+@{
+    Layout = "_LayoutReg";
+}
+
+
+<main>
+    <div class="container">
+
+        <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-12 d-flex flex-column align-items-center justify-content-center">
+
+                      @*  <div class="d-flex justify-content-center py-4">
+                            <a href="index.html" class="logo d-flex align-items-center w-auto">
+                                <img src="assets/img/logo.png" alt="">
+                                <span class="d-none d-lg-block">Chitotva</span>
+                            </a>
+                        </div>*@<!-- End Logo -->
+
+                        <div class="card mb-3">
+
+                            <div class="card-body">
+                                <center>
+                                    <a href="#"><img src="~/assets/img/CBZ.png" alt="Logo" style="width:40%"></a>
+                                </center>
+                                    
+                                </div>
+                                <div class="pt-4 pb-2">
+                                    <h1 class="auth-title" style="color:forestgreen; font-family:Elephant "><center><b>Register</b></center></h1>
+                                    <p class="text-center small">Enter your personal details to create account</p>
+                                </div>
+
+                                <form class="row g-3 needs-validation" novalidate method="post">
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="text" class="form-control" id="floatingInput"  asp-for="Name" required />
+                                        <label for="floatingInput" asp-for="Name"></label>
+                                        @*<span asp-validation-for="Name" class=" class="invalid-feedback"></span>*@
+                                        <span class="invalid-feedback" asp-validation-for="Name"></span>
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="text" class="form-control" id="floatingInput"  asp-for="LastName"  required/>
+                                        <label for="floatingInput" asp-for="LastName"></label>
+                                        <span asp-validation-for="LastName" class="text-danger"></span>
+                                        @*<div class="invalid-feedback">Last Name Is A Required Field!</div>*@
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="email" class="form-control" id="floatingInput"  asp-for="Email" required/>
+                                        <label for="floatingInput" asp-for="Email"></label>
+                                        <span asp-validation-for="Email" class="text-danger"></span>
+                                        @* <div class="invalid-feedback">Email Is A Required Field!</div>*@
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="number" class="form-control" id="floatingInput"  asp-for="PhoneNumber" required />
+                                        <label for="floatingInput" asp-for="PhoneNumber"></label>
+                                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                        @*<div class="invalid-feedback">Phone Number Is A Required Field!</div>*@
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="text" class="form-control" id="floatingInput"  asp-for="PhysicalAddress" required />
+                                        <label for="floatingInput" asp-for="PhysicalAddress"></label>
+                                        <span asp-validation-for="PhysicalAddress" class="text-danger"></span>
+                                        @* <div class="invalid-feedback">Physical Address Is A Required Field!</div>*@
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="text" class="form-control" id="floatingInput"  asp-for="CountryOfResidence" required />
+                                        <label for="floatingInput" asp-for="CountryOfResidence"></label>
+                                        <span asp-validation-for="CountryOfResidence" class="text-danger"></span>
+                                        @*<div class="invalid-feedback">Country Address Is A Required Field!</div>*@
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="text" class="form-control" id="floatingInput" asp-for="Nationality" required />
+                                        <label for="floatingInput" asp-for="Nationality"></label>
+                                        <span asp-validation-for="Nationality" class="text-danger"></span>
+                                        @*<div class="invalid-feedback">Country Address Is A Required Field!</div>*@
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="date" class="form-control" id="floatingInput"  asp-for="DOB" required />
+                                        <label for="floatingInput" asp-for="DOB"></label>
+                                        <span asp-validation-for="DOB" class="text-danger"></span>
+                                        @*<div class="invalid-feedback">Date of Birth IS A Required Field!</div>*@
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        @*<label for="validationTooltip04" class="form-label" asp-for="Gender">Gender</label>*@
+                                        <input type="text" class="form-control" id="floatingInput"  asp-for="NatID" required />
+                                        <label for="floatingInput" asp-for="NatID"></label>
+                                        <span asp-validation-for="NatID" class="text-danger"></span>
+                                        @*<div class="invalid-feedback">National Address Is A Required Field!</div>*@
+                                    </div>
+                                    <div class="col-md-3 position-relative">
+
+                                        <label for="validationTooltip04" class="form-label" asp-for="Gender">Gender</label>
+                                        <select class="form-select" id="validationTooltip04" asp-for="Gender" required>
+                                            <option selected disabled value="">Select Gender...</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                        <div class="invalid-tooltip">
+                                            Please select a valid Gender.
+                                        </div>
+                                    </div>
+                                 
+                                    <div class="form-floating mb-3 col-md-6">
+                                        @*<input type="text" class="form-control" id="floatingInput"  asp-for="Province" required />*@
+                                        @* <label for="floatingInput" asp-for="Province"></label>*@
+                                        <select class="form-control" type="text" asp-for="Province" required>
+                                            <option value="Harare">Harare</option>
+                                            <option value="Bulawayo">Bulawayo</option>
+                                            <option value="Manicaland">Manicaland</option>
+                                            <option value="Mashonaland Central">Mashonaland Central</option>
+                                            <option value="Mashonaland East">Mashonaland East</option>
+                                            <option value="Mashonaland West">Mashonaland West</option>
+                                            <option value="Masvingo">Masvingo </option>
+                                            <option value="Matabeleland North">Matabeleland North</option>
+                                        </select>
+                                        <span asp-validation-for="Province" class="text-danger"></span>
+                                        <div class="invalid-feedback">Province Is A Required Field!</div>
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="password" class="form-control" id="floatingInput"  asp-for="Password" required />
+                                        <label for="floatingInput" asp-for="Password"></label>
+                                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+
+                                    </div>
+                                    <div class="form-floating mb-3 col-md-6">
+                                        <input type="password" class="form-control" id="floatingInput"  asp-for="ConfirmPassword" required />
+                                        <label for="floatingInput" asp-for="ConfirmPassword"></label>
+                                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+
+                                    </div>
+
+
+                                    <div class="col-md-12 form-floating">
+                                        <div class="form-check">
+                                            <input class="form-check-input" name="terms" type="checkbox" value="" id="acceptTerms" required>
+                                            <label class="form-check-label" for="acceptTerms">I agree and accept the <a href="#">terms and conditions</a></label>
+                                            <div class="invalid-feedback">You must agree before submitting.</div>
+                                        </div>
+                                    </div>
+                                    <section>
+                                        <br />
+                                       
+                                            <button class="btn btn-primary rounded-pill" type="submit">Create Account</button>
+                                     
+
+                                    </section>
+
+                                    <div class="col-12">
+                                        <p class="small mb-0">Already have an account? <a href="pages-login.html">Log in</a></p>
+                                    </div>
+                                </form>
+
+                            </div>
+                        </div>
+
+                        <div class="credits">
+                            <!-- All the links in the footer should remain intact. -->
+                            <!-- You can delete the links only if you purchased the pro version. -->
+                            <!-- Licensing information: https://bootstrapmade.com/license/ -->
+                            <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/ -->
+                            Designed by <a href="https://bootstrapmade.com/">Tagwirei</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </div>
+</main><!-- End #main -->
