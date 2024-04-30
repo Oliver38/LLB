@@ -164,16 +164,16 @@ namespace LLB.Controllers
             await signInManager.SignOutAsync();
             return RedirectToAction("LandingPage", "Account");
         }
-        [AllowAnonymous]
+        
         [HttpGet("Login")]
         public IActionResult Login()
         {
             return View();
         }
        
-        [HttpPost]
+        
         [HttpPost("Login")]
-        [AllowAnonymous]
+       
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl)
         {
             if (ModelState.IsValid)
@@ -203,7 +203,7 @@ namespace LLB.Controllers
             return View(model);
         }
         [HttpGet("AccessDenied")]
-        [AllowAnonymous]
+        
         public IActionResult AccessDenied()
         {
             return View();

@@ -36,4 +36,13 @@
     <PackageReference Include="MySql.Data.EntityFrameworkCore" Version="8.0.22" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Views\Settings\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\Settings\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="Views\Settings\LicenseType.cshtml" />
+  </ItemGroup>
 </Project>

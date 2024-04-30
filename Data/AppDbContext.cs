@@ -15,6 +15,7 @@ namespace LLB.Data
         
         }
         public DbSet<Branches> Branches { get; set; }
+        public DbSet<LicenseTypes> licenseTypes { get; set; }
      
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

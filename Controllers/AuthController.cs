@@ -169,23 +169,14 @@ namespace LLB.Controllers
         {
             return View();
         }
-        [AllowAnonymous]
-        public IActionResult Logy()
-        {
-            return View();
-        }
-
+    
         [HttpPost("Login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl)
         {
             if (ModelState.IsValid)
             {
-                if (!_validatorService.HasRequestValidCaptchaEntry() == true)
-                {
-                    //this.ModelState.AddModelError(DNTCaptchaTagHelper.CaptchaInputName, "Please Enter Valid Captcha.");
-                    return RedirectToAction("Login", "Account");
-                }
+              
                 var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
                 if (result.Succeeded)
                 {
@@ -195,7 +186,7 @@ namespace LLB.Controllers
                     }
                     else 
                     {
-                        return RedirectToAction("index", "home");
+                        return RedirectToAction("Dashboard", "Home");
                     }
 
                 }

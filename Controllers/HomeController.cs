@@ -5,7 +5,7 @@ using LLB.Models;
 
 namespace LLB.Controllers
 {
-    [AllowAnonymous]
+    
     [Route("")]
     [Route("Home")]
     public class HomeController : Controller
@@ -42,8 +42,21 @@ namespace LLB.Controllers
         {
             return View();
         }
+
+        [HttpGet("AccessDenied")]
+        [AllowAnonymous]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
         [HttpGet("Privacy")]
         public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        [HttpGet("Dashboard")]
+        public IActionResult Dashboard()
         {
             return View();
         }
