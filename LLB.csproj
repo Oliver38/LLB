@@ -44,5 +44,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />
+    <Content Remove="wwwroot\NiceAdmin\assets\js\jquery.min.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="wwwroot\NiceAdmin\assets\js\jquery.min.js" />
   </ItemGroup>
 </Project>

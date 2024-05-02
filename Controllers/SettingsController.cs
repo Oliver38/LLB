@@ -33,11 +33,17 @@ namespace LLB.Controllers
             _validatorService = validatorService;
         }
 
-
+        [HttpGet(("Licenses"))]
+        public IActionResult Licenses()
+        {
+            var licenses = _db.LicenseTypes.ToList();
+            ViewBag.License = licenses;
+            return View();
+        }
         [HttpGet(("LicenseType"))]
         public IActionResult LicenseType()
         {
-            var licenses = _db.licenseTypes.ToList();
+            var licenses = _db.LicenseTypes.ToList();
             ViewBag.License = licenses;
             return View();
         }
@@ -56,11 +62,15 @@ namespace LLB.Controllers
 
 
             //public string LicenseTypeNameId { get; set; }
-           // types.Id = Guid.NewGuid();
-        types.Status = "active";
-            types.FeeId = 0;
+            types.Id = Guid.NewGuid().ToString();
+        types.Status = "inactive";
+            types.TownFee = 0;
+            types.CityFee = 0;
+            types.RDCFee = 0;
+            types.MunicipaltyFee = 0;
+
             types.DateAdded = DateTime.Now;
-            types.DateUpdates = DateTime.Now;
+            types.DateUpdated = DateTime.Now;
             _db.Add(types);
             _db.SaveChanges();
            // ViewBag.License = licenses;
@@ -69,18 +79,28 @@ namespace LLB.Controllers
 
 
 
-        [HttpGet(("LicensePrice"))]
-        public IActionResult LicensePrice()
+        [HttpPost(("UpdateFee"))]
+        public IActionResult UpdateFee(LicenseTypes types)
         {
-            var licenses = _db.licenseTypes.ToList();
-            ViewBag.License = licenses;
+            var licensefee = _db.LicenseTypes.Where(a => a.Id == types.Id).FirstOrDefault();
+            licensefee.CityFee = types.CityFee;
+            licensefee.MunicipaltyFee = types.MunicipaltyFee;
+            licensefee.RDCFee = types.RDCFee;
+            licensefee.TownFee = types.TownFee;
+            licensefee.DateUpdated = DateTime.Now;
+            _db.Update(licensefee);
+            if (_db.SaveChanges()==1)
+            {
+                return RedirectToAction("Licenses", "Settings");
+            }
+          
             return View();
         }
 
-        [HttpPost(("LicensePrice"))]
+       /* [HttpPost(("LicensePrice"))]
         public IActionResult LicensePrice(double NewFee, string Id)
         {
-            var thelicense = _db.licenseTypes.Where(a => a.Id == Id).FirstOrDefault();
+            var thelicense = _db.LicenseTypes.Where(a => a.Id == Id).FirstOrDefault();
 
             
             thelicense.FeeId = NewFee;
@@ -89,10 +109,10 @@ namespace LLB.Controllers
             _db.SaveChanges();
 
 
-            var licenses = _db.licenseTypes.ToList();
+            var licenses = _db.LicenseTypes.ToList();
             ViewBag.License = licenses;
             return View();
-        }
+        }*/
 
     }
 }

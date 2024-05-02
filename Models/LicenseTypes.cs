@@ -8,12 +8,16 @@ namespace LLB.Models
     {
         [Key]
         public string Id { get; set; }
-        public string LicenseTypeNameId { get; set; }
-        public string DescriptionId { get; set; }
+        public string LicenseName { get; set; }
+        public string Description { get; set; }
         public string Status { get; set; }
-        public double FeeId { get; set; }
+        public double CityFee { get; set; }
+        public double MunicipaltyFee { get; set; }
+        public double TownFee { get; set; }
+        public double RDCFee { get; set; }
+        //public double FeeId { get; set; }
         public DateTime DateAdded { get; set; }
-        public DateTime DateUpdates { get; set; }
+        public DateTime DateUpdated { get; set; }
         
     }
 }
