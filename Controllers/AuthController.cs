@@ -78,7 +78,8 @@ namespace LLB.Controllers
                         var user = new ApplicationUser
 
                         {
-                            Name = model.Name,
+                            Id = Guid.NewGuid().ToString(),
+                Name = model.Name,
 
                             LastName = model.LastName,
                             PhysicalAddress = model.PhysicalAddress,
