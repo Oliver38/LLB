@@ -79,6 +79,9 @@ namespace LLB.Controllers
 
 
 
+
+
+
         [HttpPost(("UpdateFee"))]
         public IActionResult UpdateFee(LicenseTypes types)
         {
@@ -97,22 +100,50 @@ namespace LLB.Controllers
             return View();
         }
 
-       /* [HttpPost(("LicensePrice"))]
-        public IActionResult LicensePrice(double NewFee, string Id)
+        /* [HttpPost(("LicensePrice"))]
+         public IActionResult LicensePrice(double NewFee, string Id)
+         {
+             var thelicense = _db.LicenseTypes.Where(a => a.Id == Id).FirstOrDefault();
+
+
+             thelicense.FeeId = NewFee;
+
+             _db.Update(thelicense);
+             _db.SaveChanges();
+
+
+             var licenses = _db.LicenseTypes.ToList();
+             ViewBag.License = licenses;
+             return View();
+         }*/
+
+
+
+        [HttpGet(("LicenseRegion"))]
+        public IActionResult LicenseRegion()
         {
-            var thelicense = _db.LicenseTypes.Where(a => a.Id == Id).FirstOrDefault();
+            var licenseRegions = _db.LicenseRegions.ToList();
+            ViewBag.LicenseRegions = licenseRegions;
 
-            
-            thelicense.FeeId = NewFee;
-           
-            _db.Update(thelicense);
-            _db.SaveChanges();
-
-
-            var licenses = _db.LicenseTypes.ToList();
-            ViewBag.License = licenses;
             return View();
-        }*/
+        }
+
+        [HttpPost(("LicenseRegion"))]
+        public IActionResult LicenseRegion(LicenseRegion licenseRegion)
+        {
+
+
+            //public string LicenseTypeNameId { get; set; }
+            licenseRegion.Id = Guid.NewGuid().ToString();
+            licenseRegion.DateAdded = DateTime.Now;
+            licenseRegion.status = "active";
+            _db.Add(licenseRegion);
+            _db.SaveChanges();
+            // ViewBag.License = licenses;
+            var licenseRegions = _db.LicenseRegions.ToList();
+            ViewBag.LicenseRegions = licenseRegions;
+            return View();
+        }
 
     }
 }

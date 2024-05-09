@@ -1,0 +1,85 @@
+﻿@{
+    Layout = "_LayoutMain";
+
+
+}
+
+ [Key]
+        public string Id { get; set; }
+        // * ApplicationID /Id
+        public string UserID { get; set; }
+        public string ApplicationType { get; set; }
+        public string LicenseTypeID { get; set; }
+        //* Name**
+        //* Surname**
+        //* DOB**
+        //* Gender**
+        public string PlaceOfBirth { get; set; }
+        public string DateofEntryIntoZimbabwe { get; set; }
+        public string PlaceOfEntry { get; set; }
+        public string OperationAddress { get; set; }//Place of operation//
+        public string Status { get; set; }
+        public DateTime ApplicationDate { get; set; }
+        public string InspectorID { get; set; }
+
+        public DateTime InspectionDate { get; set; }
+        public string Secretary { get; set; }
+        public DateTime ApprovedDate { get; set; }
+        public string RejectionReason { get; set; }
+        //spublic DateTime DateCreated { get; set; }
+
+
+
+<div class="row">
+    <div class="card">
+        <div class="card-body" id="_step1">
+            <h5 class="card-title">Multi Columns Form</h5>
+
+            <!-- Multi Columns Form -->
+            <form action="/Settings/CreateLicense" method="post" ß enctytpe="multipart/form-data" class="row g-3">
+                <div class="col-md-6">
+                    <label for="inputName5" class="form-label">Name</label>
+                    <input type="text" name="licenseName" value="@ViewBag.User.Name" readonly class="form-control" id="inputName5">
+                </div>
+                <div class="col-md-6">
+                    <label for="inputName5" class="form-label">Surname</label>
+                    <input type="text" value="@ViewBag.User.LastName" name="licenseName" class="form-control" id="inputName5">
+                </div>
+                <div class="col-md-6">
+                    <label for="inputName5" class="form-label">DOB</label>
+                    <input type="text" name="licenseName" value="@ViewBag.User.DOB" class="form-control" id="inputName5">
+                </div>
+                <div class="col-md-6">
+                    <label for="inputName5" class="form-label">Gender</label>
+                    <input type="text" name="licenseName" value="@ViewBag.User.Gender" class="form-control" id="inputName5">
+                </div>
+
+                <div class="col-md-6">
+                    <label for="inputName5" class="form-label">Licence Type</label>
+                    <select type="text" name="licenseName" value="" class="form-control" id="inputName5">
+
+                        <option value=""> </option>
+
+                        </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="inputName5" class="form-label">Region</label>
+                    <input type="text" name="licenseName" value="" class="form-control" id="inputName5">
+                </div>
+                <div class="col-6">
+                    <div class="form-floating">
+                        <textarea class="form-control" name="description" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
+                        <label for="floatingTextarea">Description</label>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="reset" class="btn btn-secondary">Reset</button>
+                </div>
+            </form><!-- End Multi Columns Form -->
+
+        </div>
+    </div>
+
+</div>

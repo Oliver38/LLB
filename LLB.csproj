@@ -39,10 +39,12 @@
   <ItemGroup>
     <None Remove="Views\Settings\" />
     <None Remove="Migrations\" />
+    <None Remove="Views\License\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
     <Folder Include="Migrations\" />
+    <Folder Include="Views\License\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

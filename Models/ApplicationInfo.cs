@@ -1,4 +1,4 @@
-﻿using Humanizer;
+﻿
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Net.NetworkInformation;
@@ -22,12 +22,14 @@ namespace LLB.Models
         public string PlaceOfEntry { get; set; }
         public string OperationAddress { get; set; }//Place of operation// 
         public string Status { get; set; }
-        public string ApplicationDate { get; set; }
+        public DateTime ApplicationDate { get; set; }
         public string InspectorID { get; set; }
-        public string InspectionDate { get; set; }
+
+        public DateTime InspectionDate { get; set; }
         public string Secretary { get; set; }
-        public string ApprovedDate { get; set; }
+        public DateTime ApprovedDate { get; set; }
         public string RejectionReason { get; set; }
+        //spublic DateTime DateCreated { get; set; }
 
     }
 }

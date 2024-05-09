@@ -29,7 +29,8 @@ namespace LLB.Migrations
                     InspectionDate = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Secretary = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ApprovedDate = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RejectionReason = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    RejectionReason = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -124,6 +125,23 @@ namespace LLB.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_LicenseTypes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ManagersParticularss",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ApplicationID = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Surname = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DateAdded = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ManagersParticularss", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -298,6 +316,9 @@ namespace LLB.Migrations
 
             migrationBuilder.DropTable(
                 name: "LicenseTypes");
+
+            migrationBuilder.DropTable(
+                name: "ManagersParticularss");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
