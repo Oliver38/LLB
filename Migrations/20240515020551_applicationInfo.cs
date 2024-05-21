@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace LLB.Migrations
 {
     /// <inheritdoc />
-    public partial class reapplymigration : Migration
+    public partial class applicationInfo : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,21 +16,21 @@ namespace LLB.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    UserID = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ApplicationType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LicenseTypeID = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PlaceOfBirth = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DateofEntryIntoZimbabwe = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PlaceOfEntry = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OperationAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ApplicationDate = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    InspectorID = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    InspectionDate = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Secretary = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ApprovedDate = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RejectionReason = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    UserID = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ApplicationType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LicenseTypeID = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PlaceOfBirth = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DateofEntryIntoZimbabwe = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PlaceOfEntry = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OperationAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BusinessName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ApplicationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    InspectorID = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    InspectionDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Secretary = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ApprovedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RejectionReason = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -108,13 +108,30 @@ namespace LLB.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "LicenseRegions",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RegionName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DateAdded = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LicenseRegions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "LicenseTypes",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    LicenseName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LicenseName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CityFee = table.Column<double>(type: "float", nullable: false),
                     MunicipaltyFee = table.Column<double>(type: "float", nullable: false),
                     TownFee = table.Column<double>(type: "float", nullable: false),
@@ -142,6 +159,27 @@ namespace LLB.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ManagersParticularss", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OutletInfo",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ApplicationId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TradingName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Province = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    City = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DirectorNames = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DateAdded = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutletInfo", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -315,10 +353,16 @@ namespace LLB.Migrations
                 name: "Branches");
 
             migrationBuilder.DropTable(
+                name: "LicenseRegions");
+
+            migrationBuilder.DropTable(
                 name: "LicenseTypes");
 
             migrationBuilder.DropTable(
                 name: "ManagersParticularss");
+
+            migrationBuilder.DropTable(
+                name: "OutletInfo");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

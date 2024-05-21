@@ -40,6 +40,8 @@ namespace LLB.Controllers
             ViewBag.License = licenses;
             return View();
         }
+
+
         [HttpGet(("LicenseType"))]
         public IActionResult LicenseType()
         {
@@ -56,7 +58,7 @@ namespace LLB.Controllers
             return View();
         }
 
-            [HttpPost(("CreateLicense"))]
+        [HttpPost(("CreateLicense"))]
         public IActionResult CreateLicense(LicenseTypes types)
         {
 
@@ -64,6 +66,7 @@ namespace LLB.Controllers
             //public string LicenseTypeNameId { get; set; }
             types.Id = Guid.NewGuid().ToString();
         types.Status = "inactive";
+            types.UserId = userManager.GetUserId(User);
             types.TownFee = 0;
             types.CityFee = 0;
             types.RDCFee = 0;
@@ -86,11 +89,14 @@ namespace LLB.Controllers
         public IActionResult UpdateFee(LicenseTypes types)
         {
             var licensefee = _db.LicenseTypes.Where(a => a.Id == types.Id).FirstOrDefault();
+            licensefee.UserId = userManager.GetUserId(User);
             licensefee.CityFee = types.CityFee;
             licensefee.MunicipaltyFee = types.MunicipaltyFee;
             licensefee.RDCFee = types.RDCFee;
             licensefee.TownFee = types.TownFee;
             licensefee.DateUpdated = DateTime.Now;
+            licensefee.Status = "active";
+
             _db.Update(licensefee);
             if (_db.SaveChanges()==1)
             {
@@ -136,7 +142,8 @@ namespace LLB.Controllers
             //public string LicenseTypeNameId { get; set; }
             licenseRegion.Id = Guid.NewGuid().ToString();
             licenseRegion.DateAdded = DateTime.Now;
-            licenseRegion.status = "active";
+            licenseRegion.Status = "active";
+            licenseRegion.UserId = userManager.GetUserId(User);
             _db.Add(licenseRegion);
             _db.SaveChanges();
             // ViewBag.License = licenses;

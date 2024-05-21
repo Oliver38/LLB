@@ -1,0 +1,57 @@
+﻿@{
+    Layout = "_LayoutMain";
+
+
+}
+
+ public string? Id { get; set; }
+        public string? ApplicationId { get; set; }
+        public string? UserId { get; set; }
+        public string? TradingName { get; set; }
+        public string? Province { get; set; }
+        public string? Address { get; set; }
+        public string? City { get; set; }
+        public string? DirectorNames { get; set; }
+        public string? Status { get; set; }
+        public DateTime DateAdded { get; set; }
+        public DateTime DateUpdated { get; set; }
+
+
+
+<div class="row">
+    <div class="card">
+        <div class="card-body" id="_step1">
+            <h5 class="card-title">License Personal Information</h5>
+
+            <!-- Multi Columns Form -->
+            <form action="/License/Apply" method="post" enctytpe="multipart/form-data" class="row g-3">
+
+
+                <div class="col-md-12">
+                    <label for="inputName5" class="form-label">Trading Name</label>
+                    <input type="text" name="tradingName" value="" class="form-control" id="inputName5">
+                    <input type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
+                </div>
+
+                <div class="col-md-">
+                    <label for="inputName5" class="form-label">Trading Name</label>
+                    <input type="text" name="tradingName" value="" class="form-control" id="inputName5">
+                </div>
+
+                <div class="col-12">
+                    <div class="form-floating">
+                        <textarea class="form-control" name="OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
+                        <label for="floatingTextarea">Operational Address</label>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="reset" class="btn btn-secondary">Reset</button>
+                </div>
+            </form><!-- End Multi Columns Form -->
+
+        </div>
+    </div>
+
+</div>

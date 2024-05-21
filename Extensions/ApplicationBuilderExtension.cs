@@ -1,15 +1,8 @@
 ﻿using LLB.Models;
 using LLB.Data;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 //using LLB.Models.Users;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace LLB.Extensions
 {
@@ -105,7 +98,7 @@ namespace LLB.Extensions
                     catch (Exception ex)
                     {
                         // Log exception here
-                        throw ex;
+                       // throw ex;
                     }
                 }
             }
