@@ -22,7 +22,8 @@ namespace LLB.Data
         public DbSet<OutletInfo> OutletInfo { get; set; }
         //public DbSet<ManagersParticulars> ManagersParticulars { get; set; }
         public DbSet<AttachmentInfo> AttachmentInfo { get; set; }
-     
+        public DbSet<DirectorDetails> DirectorDetails { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);

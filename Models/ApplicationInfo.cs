@@ -25,6 +25,7 @@ namespace LLB.Models
         public string? BusinessName { get; set; }//Place of operation
         public string? Status { get; set; }
         public DateTime ApplicationDate { get; set; }
+        public DateTime DateUpdated { get; set; }
         public string? InspectorID { get; set; }
 
         public DateTime InspectionDate { get; set; }

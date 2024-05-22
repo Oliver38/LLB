@@ -54,61 +54,95 @@ namespace LLB.Controllers
         [HttpPost(("Apply"))]
         public async Task<IActionResult> ApplyAsync(ApplicationInfo info)
         {
-                info.Id= Guid.NewGuid().ToString();
-            // * ApplicationID /Id
-            info.UserID = userManager.GetUserId(User);
-            //ApplicationType 
-            // LicenseTypeID 
-            //* Name**
-            //* Surname**
-            //* DOB**
-            //* Gender**
-            info.PlaceOfBirth = "";
-            info.DateofEntryIntoZimbabwe = "";
-            info.PlaceOfEntry = "";
-            //OperationAddress //Place of operation//
-            info.Status = "inprogress";
-        info.ApplicationDate = DateTime.Now;
-            info.InspectorID = "";
+            if (info.Id == null)
+            {
+                info.Id = Guid.NewGuid().ToString();
+                // * ApplicationID /Id
+                info.UserID = userManager.GetUserId(User);
 
-            //public DateTime InspectionDate 
-            info.Secretary = "";
-            // public DateTime ApprovedDate 
-            info.RejectionReason = "";
-            //spublic DateTime DateCreated 
+                info.PlaceOfBirth = "";
+                info.DateofEntryIntoZimbabwe = "";
+                info.PlaceOfEntry = "";
 
-            //public string LicenseTypeNameId 
-            //licenseRegion.Id = Guid.NewGuid().ToString();
-            // licenseRegion.DateAdded = DateTime.Now;
-            // licenseRegion.status = "active";
-             _db.Add(info);
-              _db.SaveChanges();
-            // ViewBag.License = licenses;
-            var application = _db.ApplicationInfo.Where(a => a.Id == info.Id).FirstOrDefault();
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
-            var licenses = _db.LicenseTypes.ToList();
-            var regions = _db.LicenseRegions.ToList();
-            ViewBag.ApplicationInfo = application;
-            ViewBag.User = user;
-            ViewBag.Regions = regions;
-            ViewBag.License = licenses;
-            TempData["result"] = "Applicant details successfully submited";
-            return View();
-        }
+                info.Status = "inprogress";
+                info.ApplicationDate = DateTime.Now;
+                info.InspectorID = "";
+
+                //public DateTime InspectionDate 
+                info.Secretary = "";
+                // public DateTime ApprovedDate 
+                ///////////// info.RejectionReason = "";
+                //spublic DateTime DateCreated 
+                _db.Add(info);
+                _db.SaveChanges();
+                // ViewBag.License = licenses;
+                var application = _db.ApplicationInfo.Where(a => a.Id == info.Id).FirstOrDefault();
+                var user = await userManager.FindByEmailAsync(User.Identity.Name);
+                var licenses = _db.LicenseTypes.ToList();
+                var regions = _db.LicenseRegions.ToList();
+                ViewBag.ApplicationInfo = application;
+                ViewBag.User = user;
+                ViewBag.Regions = regions;
+                ViewBag.License = licenses;
+                TempData["result"] = "Applicant details successfully submited";
+                return View();
+            }
+            else
+            {
+                var updateinfo = _db.ApplicationInfo.Where(x => x.Id == info.Id).FirstOrDefault();
+
+                updateinfo.OperationAddress = info.OperationAddress;
+                updateinfo.BusinessName = info.BusinessName;
+                updateinfo.LicenseTypeID = info.LicenseTypeID;
+                updateinfo.ApplicationType = info.ApplicationType;
+                    
+
+                updateinfo.PlaceOfBirth = "";
+                updateinfo.DateofEntryIntoZimbabwe = "";
+                updateinfo.PlaceOfEntry = "";
+
+                updateinfo.Status = "inprogress";
+                updateinfo.ApplicationDate = DateTime.Now;
+                updateinfo.InspectorID = "";
+
+                //public DateTime InspectionDate 
+                updateinfo.Secretary = "";
+                // public DateTime ApprovedDate 
+                ///////////// info.RejectionReason = "";
+                //spublic DateTime DateCreated 
+                var o =_db.Update(updateinfo);
+                var p = _db.SaveChanges();
+                // ViewBag.License = licenses;
+                var application = _db.ApplicationInfo.Where(a => a.Id == info.Id).FirstOrDefault();
+                var user = await userManager.FindByEmailAsync(User.Identity.Name);
+                var licenses = _db.LicenseTypes.ToList();
+                var regions = _db.LicenseRegions.ToList();
+                ViewBag.ApplicationInfo = application;
+                ViewBag.User = user;
+                ViewBag.Regions = regions;
+                ViewBag.License = licenses;
+                TempData["result"] = "Applicant details successfully updated";
+                return View();
+                //return View();
+            }
+            }
 
         [HttpGet(("OutletInfo"))]
         public async Task<IActionResult> OutletInfo(string Id)
-        {
-           // 00826805 - 0853 - 45c5 - 9fe3 - bce855854091
-            var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            {
+                // 00826805 - 0853 - 45c5 - 9fe3 - bce855854091
+                var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+                var outletInfo = _db.OutletInfo.Where(b => b.ApplicationId == Id).FirstOrDefault();
+                // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
 
-           // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
+                ViewBag.Application = application;
+                ViewBag.OutletInfo = outletInfo;
+                //ViewBag.User = user;
 
-            ViewBag.Application = application;
-            //ViewBag.User = user;
-
-            return View();
+                return View();
+            }
+            
         }
 
     }
-}
+
