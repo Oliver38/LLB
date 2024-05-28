@@ -16,6 +16,7 @@ namespace LLB.Models
         public string? NationalId { get; set; }
         public string? Address { get; set; }
         public string? Status { get; set; }
+        public string? Attachment { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }
 

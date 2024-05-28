@@ -1,0 +1,127 @@
+﻿@{
+    Layout = "_LayoutMain";
+
+
+
+}
+
+
+<div class="row">
+    <div class="card">
+        <div class="card-body" id="_step1">
+
+            <div class="card-header">
+                <div class="text-center">
+                    <h5 class="card-title text-success">@TempData["result"]</h5>
+                </div>
+                <h5 class="card-title">Manager's Particulars'</h5>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+
+            </div>
+
+
+            <table class="table table-responsiveß table-hover table-striped">
+                <thead>
+
+                </thead>
+                <tbody>
+                    @foreach (var manager in ViewBag.ManagersInfo)
+                    {
+                        <tr>
+                            <td>@manager.Name</td>
+                            <td>@manager.Surname</td>
+                            <td>@manager.NationalId</td>
+                            <td><a href="~/@manager.Attachment"> National Id Copy</a></td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+
+            <div class="card-footer">
+                <div class="text-center">
+                    @if (ViewBag.ManagersInfo == null)
+                    {
+                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                    }
+                    else
+                    {
+                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+Applicant National Id
+Vetted fingerprints
+Police report
+Form 55
+Affidavit by transferee
+Lease documents
+Advert
+Manager Applicant Fingerprints
+
+
+<div class="modal fade" id="addDirector" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adding Director Details </h5> <h5 class="modal-title" id="feetitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+             <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Name</label>
+                            <input type="hidden" name="applicationId" class="form-control" value="@ViewBag.ApplicationInfo.Id" id="Id">
+                            <input type="text" name="name" class="form-control" id="name">
+                        </div>
+
+                        @foreach (var attachment in ViewBag.Attachments)
+                        {
+                            @if (attachment.DocumentTitle == "Applicant National Id")
+                            {
+
+                                <div class="col-md-12">
+                                    <a href="">
+                                        <label for="inputName5" class="form-label">Applicant National Id</label>
+
+                                    </a>
+                                    <a class="btn btn-danger" href="#">delete</a>
+                                </div>
+
+                            }
+                            else
+                            {
+                               
+                    <form action="/License/ManagersInfo" enctype="multipart/form-data" method="post">
+
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">Applicant National Id</label>
+                            <input type="text" name="surname" class="form-control" id="surname">
+                            <button type="submit"></button>
+                        </div>
+                    </form>
+                                
+
+
+                            }
+
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+           
+        </div>
+    </div>
+</div><!-- End Basic Modal-->

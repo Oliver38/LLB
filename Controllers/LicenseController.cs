@@ -63,6 +63,8 @@ namespace LLB.Controllers
                 info.PlaceOfBirth = "";
                 info.DateofEntryIntoZimbabwe = "";
                 info.PlaceOfEntry = "";
+                info.RejectionReason = "";
+  
 
                 info.Status = "inprogress";
                 info.ApplicationDate = DateTime.Now;
@@ -128,20 +130,222 @@ namespace LLB.Controllers
             }
 
         [HttpGet(("OutletInfo"))]
-        public async Task<IActionResult> OutletInfo(string Id)
+        public IActionResult OutletInfo(string Id)
+        {
+            // 00826805 - 0853 - 45c5 - 9fe3 - bce855854091
+            var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var outletInfo = _db.OutletInfo.Where(b => b.ApplicationId == Id).FirstOrDefault();
+            var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == Id).ToList();
+            // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
+
+            ViewBag.Application = application;
+            ViewBag.OutletInfo = outletInfo;
+            ViewBag.Directors = directorsInfo;
+           ViewBag.DirectorsCount= directorsInfo.Count();
+            //ViewBag.User = user;
+
+            return View();
+        }
+
+        [HttpPost(("OutletInfo"))]
+        public IActionResult OutletInfo(OutletInfo outletInfo)
+        {
+            /*    public string? Id { get; set; }
+          public string? ApplicationId { get; set; }
+          public string? UserId { get; set; }
+          public string? TradingName { get; set; }
+          public string? Province { get; set; }
+          public string? Address { get; set; }
+          public string? City { get; set; }
+          public string? DirectorNames { get; set; }
+          public string? Status { get; set; }
+          public DateTime DateAdded { get; set; }
+          public DateTime DateUpdated { get; set; }*/
+            if (outletInfo.Id == null)
             {
+                outletInfo.Id = Guid.NewGuid().ToString();
+                outletInfo.UserId = userManager.GetUserId(User);
+                outletInfo.Status = "Unsubmitted";
+                outletInfo.DirectorNames = "";
+                outletInfo.DateAdded = DateTime.Now;
+                outletInfo.DateUpdated = DateTime.Now;
+                _db.Add(outletInfo);
+                _db.SaveChanges();
+
+
                 // 00826805 - 0853 - 45c5 - 9fe3 - bce855854091
-                var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
-                var outletInfo = _db.OutletInfo.Where(b => b.ApplicationId == Id).FirstOrDefault();
+                var application = _db.ApplicationInfo.Where(a => a.Id == outletInfo.ApplicationId).FirstOrDefault();
+                var outletInfob = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
+                var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == outletInfo.ApplicationId).ToList();
                 // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
 
                 ViewBag.Application = application;
-                ViewBag.OutletInfo = outletInfo;
-                //ViewBag.User = user;
-
+                ViewBag.OutletInfo = outletInfob;
+                ViewBag.Directors = directorsInfo;
+                ViewBag.DirectorsCount = directorsInfo.Count();
+                TempData["result"] = "Applicant details successfully added";
                 return View();
             }
+            else
+            {
+               // outletInfo.Id = Guid.NewGuid().ToString();
+                //outletInfo.UserId = userManager.GetUserId(User);
+              //  outletInfo.Status = "Unsubmitted";
+              var updateOutletInfo = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
+
+                //outletInfo.DirectorNames = "";
+                //outletInfo.DateAdded = DateTime.Now;
+                updateOutletInfo.TradingName = outletInfo.TradingName;
+                updateOutletInfo.Address = outletInfo.Address;
+                updateOutletInfo.City = outletInfo.Province;
+                updateOutletInfo.City = outletInfo.City;
+
+                updateOutletInfo.DateUpdated = DateTime.Now;
+                _db.Update(updateOutletInfo);
+                _db.SaveChanges();
+
+
+                // 00826805 - 0853 - 45c5 - 9fe3 - bce855854091
+                var application = _db.ApplicationInfo.Where(a => a.Id == outletInfo.ApplicationId).FirstOrDefault();
+                var outletInfob = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
+                var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == outletInfo.ApplicationId).ToList();
+                // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
+
+                ViewBag.Application = application;
+                ViewBag.OutletInfo = outletInfob;
+                ViewBag.Directors = directorsInfo;
+                ViewBag.DirectorsCount = directorsInfo.Count();
+                TempData["result"] = "Applicant details successfully Updated";
+                return View();
+
+            }
+            //ViewBag.User = user;
+
             
+        }
+
+        [HttpPost(("Director"))]
+        public IActionResult Director(DirectorDetails directorDetails)
+        {
+
+            /*     public string? Id { get; set; }
+           public string? UserId { get; set; }
+           public string? Name { get; set; }
+           public string? ApplicationId { get; set; }
+           public string? Surname { get; set; }
+           public string? NationalId { get; set; }
+           public string? Address { get; set; }
+           public string? Status { get; set; }
+           public DateTime DateAdded { get; set; }
+           public DateTime DateUpdated { get; set; }*/
+            directorDetails.Id = Guid.NewGuid().ToString();
+            directorDetails.Status = "active";
+            directorDetails.UserId = userManager.GetUserId(User);
+            directorDetails.DateAdded = DateTime.Now;
+            directorDetails.DateUpdated = DateTime.Now;
+            _db.Add(directorDetails);
+            _db.SaveChanges();
+
+            return RedirectToAction("OutletInfo", new { Id = directorDetails.ApplicationId });
+        }
+
+
+       // ManagersInfo
+
+              [HttpGet(("ManagersInfo"))]
+        public IActionResult ManagersInfo(string Id)
+        {
+
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var managersInfo = _db.ManagersParticulars.Where(b => b.ApplicationId == Id).ToList();
+
+
+            ViewBag.ApplicationInfo = applicationInfo;
+            ViewBag.ManagersInfo = managersInfo;
+
+
+            return View();
+        }
+
+
+
+        [HttpPost("ManagersInfo")]
+        public async Task<IActionResult> ManagersInfoAsync(ManagersParticulars manager, IFormFile file)
+        {
+            /*  public string? Id { get; set; }
+          public string? UserId { get; set; }
+          public string? Name { get; set; }
+          public string? ApplicationId { get; set; }
+          public string? Surname { get; set; }
+          public string? NationalId { get; set; }
+          public string? Address { get; set; }
+          public string? Status { get; set; }
+          public DateTime DateAdded { get; set; }
+          public DateTime DateUpdated { get; set; }*/
+            if(file != null)
+            {
+                string pic = System.IO.Path.GetFileName(file.FileName);
+                string dic = System.IO.Path.GetExtension(file.FileName);
+                string newname = manager.ApplicationId;
+                string path = System.IO.Path.Combine($"ManagerIds", newname + dic);
+                string docpath = System.IO.Path.Combine($"wwwroot/ManagerIds", newname + dic);
+                manager.Attachment = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                manager.Attachment = "";
+            }
+
+
+
+            manager.Id = Guid.NewGuid().ToString();
+            manager.UserId = userManager.GetUserId(User);
+            manager.Status = "UnSubmitted";
+            manager.DateAdded = DateTime.Now;
+            manager.DateUpdated = DateTime.Now;
+            _db.Add(manager);
+            _db.SaveChanges();
+
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == manager.ApplicationId).FirstOrDefault();
+            var managersInfo = _db.ManagersParticulars.Where(b => b.ApplicationId == manager.ApplicationId).ToList();
+
+
+            ViewBag.ApplicationInfo = applicationInfo;
+            ViewBag.ManagersInfo = managersInfo;
+            TempData["result"] = "Manager details successfully added";
+
+            return View();
+        }
+
+
+        [HttpGet(("Attachments"))]
+        public IActionResult Attachments(string Id)
+        {
+
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var attachments = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
+
+
+            ViewBag.ApplicationInfo = applicationInfo;
+            ViewBag.Attachments = attachments;
+
+
+            return View();
+        }
+
+
+        [HttpPost("Attachments")]
+        public async Task<IActionResult> Attachments(AttachmentInfo attachment, IFormFile file)
+        {
+
+            return View();
+        }
+
+
         }
 
     }
