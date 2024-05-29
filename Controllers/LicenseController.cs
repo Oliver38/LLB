@@ -57,8 +57,18 @@ namespace LLB.Controllers
             if (info.Id == null)
             {
                 info.Id = Guid.NewGuid().ToString();
+                var dbref = 2;
+                /* for (int i = 1; i < dbref; i++)
+                 {
+                     i.ToString().PadLeft(4, '0');
+                 }
+                string jobRef = new Random().Next(1000, 9999).ToString();
+                 */
                 // * ApplicationID /Id
                 info.UserID = userManager.GetUserId(User);
+                info.PaymentId = "";
+                info.PaymentStatus= "";
+                info.RefNum = "";
 
                 info.PlaceOfBirth = "";
                 info.DateofEntryIntoZimbabwe = "";
@@ -325,13 +335,38 @@ namespace LLB.Controllers
         [HttpGet(("Attachments"))]
         public IActionResult Attachments(string Id)
         {
-
-            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             var attachments = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
+
+            if (attachments.Count() <= 0)
+            {                string[] documents = { "Vetted fingerprints",
+"Police report",
+"Form 55",
+"Affidavit by transferee",
+"Lease documents",
+"Advert",
+"Manager Applicant Fingerprints",};
+                foreach (var document in documents)
+                {
+                    AttachmentInfo documentInfo = new AttachmentInfo();
+                    documentInfo.Id = Guid.NewGuid().ToString();
+                    documentInfo.DocumentTitle = document.ToString();
+                    documentInfo.UserId=  userManager.GetUserId(User);
+                    documentInfo.DateAdded = DateTime.Now;
+                    documentInfo.DateUpdated = DateTime.Now;
+                    documentInfo.Status = "empty";
+                    documentInfo.DocumentLocation = "";
+                    documentInfo.ApplicationId = Id;
+                    _db.Add(documentInfo);
+                    _db.SaveChanges();
+                }
+
+            }
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var attachmentDocs = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
 
 
             ViewBag.ApplicationInfo = applicationInfo;
-            ViewBag.Attachments = attachments;
+            ViewBag.Attachments = attachmentDocs;
 
 
             return View();
@@ -339,12 +374,121 @@ namespace LLB.Controllers
 
 
         [HttpPost("Attachments")]
-        public async Task<IActionResult> Attachments(AttachmentInfo attachment, IFormFile file)
+        public async Task<IActionResult> AttachmentsAsync(AttachmentInfo attachment, IFormFile file)
         {
+            var attachmentUpdate = _db.AttachmentInfo.Where(a => a.Id == attachment.Id).FirstOrDefault();
+            attachmentUpdate.DateUpdated = DateTime.Now;
+            attachmentUpdate.Status = "posted"; 
+            if (file != null)
+            {
+                string pic = System.IO.Path.GetFileName(file.FileName);
+                string dic = System.IO.Path.GetExtension(file.FileName);
+                string newname = attachmentUpdate.Id;
+                string path = System.IO.Path.Combine($"ApplicationAttchments", newname + dic);
+                string docpath = System.IO.Path.Combine($"wwwroot/ApplicationAttchments", newname + dic);
+                attachmentUpdate.DocumentLocation = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                attachmentUpdate.DocumentLocation = "";
+            }
+            _db.Update(attachmentUpdate);
+            _db.SaveChanges();
+
+
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == attachment.ApplicationId).FirstOrDefault();
+            var attachmentDocs = _db.AttachmentInfo.Where(b => b.ApplicationId == attachment.ApplicationId).ToList();
+
+
+            ViewBag.ApplicationInfo = applicationInfo;
+            ViewBag.Attachments = attachmentDocs;
 
             return View();
         }
 
+
+
+        [HttpGet("Finalising")]
+        public IActionResult Finalising(string Id)
+        {
+            Finalising finaldata = new Finalising();
+            /*public string? Id { get; set; }
+        public string? ApplicationId { get; set; }
+        public string? UserId { get; set; }
+        public string? ManagersInfo { get; set; }
+        public string? DirectorsInfo { get; set; }
+        public string? OutletInfo { get; set; }
+        public string? DocumentInfo { get; set; }
+        public string? ManagersPrice { get; set; }
+        public string? LicencePrice { get; set; }
+        public string? Status { get; set; }
+        public DateTime DateAdded { get; set; }
+        public DateTime DateUpdated { get; set; }*/
+            finaldata.ApplicationId = Id;
+            finaldata.UserId = userManager.GetUserId(User);
+            finaldata.ManagersInfo = "correct";
+            finaldata.OutletInfo = "correct";
+            finaldata.DocumentInfo = "correct";
+           // finaldata.DocumentInfo = "correct";
+
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var regiondata = _db.LicenseRegions.Where(s => s.Id == applicationInfo.ApplicationType).FirstOrDefault();
+            var licensefees = _db.LicenseTypes.Where(a => a.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
+            var managerfees = _db.LicenseTypes.Where(a => a.Id == "080146d5-6427-4db4-a851-3adb95ee208a").FirstOrDefault();
+            var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
+            int managerscount = managers.Count();
+            finaldata.ManagersCount = managerscount;
+
+            if (regiondata.RegionName == "Town")
+            {
+                finaldata.LicencePrice = licensefees.TownFee;
+                finaldata.ManagersPrice = managerfees.TownFee;
+
+                var managertotal = managerfees.TownFee * managerscount;
+                finaldata.ManagersTotal = managertotal;
+                finaldata.Total = managertotal + licensefees.TownFee;
+
+            }else if (regiondata.RegionName == "City") {
+                finaldata.LicencePrice = licensefees.CityFee;
+                finaldata.ManagersPrice = managerfees.CityFee;
+
+                var managertotal = managerfees.CityFee * managerscount;
+                finaldata.ManagersTotal = managertotal;
+                finaldata.Total = managertotal + licensefees.CityFee;
+            }
+            else if (regiondata.RegionName == "Municipality") {
+                finaldata.LicencePrice = licensefees.MunicipaltyFee;
+                finaldata.ManagersPrice = managerfees.MunicipaltyFee;
+
+                var managertotal = licensefees.MunicipaltyFee * managerscount;
+                finaldata.ManagersTotal = managertotal;
+                finaldata.Total = managertotal + licensefees.MunicipaltyFee;
+            }
+            else if (regiondata.RegionName == "RDC") {
+                finaldata.LicencePrice = licensefees.RDCFee;
+                finaldata.ManagersPrice = managerfees.RDCFee;
+
+                var managertotal = licensefees.RDCFee * managerscount;
+                finaldata.ManagersTotal = managertotal;
+                finaldata.Total = managertotal + licensefees.RDCFee;
+            }
+
+            ViewBag.ApplicationInfo = applicationInfo;
+            ViewBag.FinalData = finaldata;
+
+
+return View();
+        }
+
+        [HttpGet("Submit")]
+        public IActionResult Submit(string Id)
+        {
+            return View();
+        }
 
         }
 

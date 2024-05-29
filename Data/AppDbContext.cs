@@ -23,6 +23,7 @@ namespace LLB.Data
         //public DbSet<ManagersParticulars> ManagersParticulars { get; set; }
         public DbSet<AttachmentInfo> AttachmentInfo { get; set; }
         public DbSet<DirectorDetails> DirectorDetails { get; set; }
+        public DbSet<Payments> Payments { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

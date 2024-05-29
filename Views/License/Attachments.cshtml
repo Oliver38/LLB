@@ -8,47 +8,76 @@
 
 <div class="row">
     <div class="card">
+       
         <div class="card-body" id="_step1">
-
             <div class="card-header">
                 <div class="text-center">
                     <h5 class="card-title text-success">@TempData["result"]</h5>
                 </div>
                 <h5 class="card-title">Manager's Particulars'</h5>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-
+                @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                *@
             </div>
 
 
-            <table class="table table-responsiveß table-hover table-striped">
-                <thead>
 
-                </thead>
-                <tbody>
-                    @foreach (var manager in ViewBag.ManagersInfo)
+
+            <div class="row">
+
+                <table class="table table-responsiveß table-hover table-striped">
+                    @foreach (var attachment in ViewBag.Attachments)
                     {
-                        <tr>
-                            <td>@manager.Name</td>
-                            <td>@manager.Surname</td>
-                            <td>@manager.NationalId</td>
-                            <td><a href="~/@manager.Attachment"> National Id Copy</a></td>
+                        if (attachment.DocumentLocation == "")
+                        {
+                            <form method="post" class="form-control" enctype="multipart/form-data" action="/License/Attachments">
+                            <tr>
+                                <td>@attachment.DocumentTitle </td>
 
-                        </tr>
+                                <td>
+                                    <input type="file" name="file" class="form-control" />
+                                    <input type="hidden" name="id" value="@attachment.Id" />
+                                    <input type="hidden" name="applicationId" value="@attachment.ApplicationId" />
+                                </td>
+                                <td><input type="submit" class="btn btn-primary" /> </td>
+
+
+                            </tr>
+                            </form>
+
+                        }
+                        else
+                        {
+                <tr>
+                    <td>@attachment.DocumentTitle </td>
+                    <td><a href="~/@attachment.DocumentLocation">View Here</a></td>
+                    <td><a href="#" class="btn btn-danger">Remove</a></td>
+                </tr>
+
+                        }
+
+
                     }
-                </tbody>
-            </table>
+
+
+
+
+                </table>
+            </div>
+
+
+
 
 
             <div class="card-footer">
                 <div class="text-center">
-                    @if (ViewBag.ManagersInfo == null)
+                    @if (ViewBag.Attachments == null)
                     {
-                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
                     }
                     else
                     {
-                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                        <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+                        <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/License/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
 
                     }
                 </div>
@@ -86,34 +115,11 @@ Manager Applicant Fingerprints
 
                         @foreach (var attachment in ViewBag.Attachments)
                         {
-                            @if (attachment.DocumentTitle == "Applicant National Id")
-                            {
-
-                                <div class="col-md-12">
-                                    <a href="">
-                                        <label for="inputName5" class="form-label">Applicant National Id</label>
-
-                                    </a>
-                                    <a class="btn btn-danger" href="#">delete</a>
-                                </div>
-
-                            }
-                            else
-                            {
-                               
-                    <form action="/License/ManagersInfo" enctype="multipart/form-data" method="post">
-
-                        <div class="col-md-12">
-                            <label for="inputName5" class="form-label">Applicant National Id</label>
-                            <input type="text" name="surname" class="form-control" id="surname">
-                            <button type="submit"></button>
-                        </div>
-                    </form>
+                         
                                 
 
 
-                            }
-
+                            
                         }
                     </div>
                 </div>

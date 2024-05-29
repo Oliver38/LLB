@@ -14,6 +14,10 @@ namespace LLB.Models
         public string? ApplicationType { get; set; }
         //public string BusinessName { get; set; }
         public string? LicenseTypeID { get; set; }
+        public string? PaymentStatus { get; set; }
+        public string? PaymentId { get; set; }
+        public string? RefNum { get; set; }
+
         //* Name**
         //* Surname**
         //* DOB**
