@@ -14,6 +14,11 @@ using PasswordGenerator;
 using DNTCaptcha.Core;
 using LLB.Models.ViewModel;
 
+//using pa
+
+
+
+
 namespace LLB.Controllers
 {
     [Authorize]
@@ -413,7 +418,7 @@ namespace LLB.Controllers
 
 
         [HttpGet("Finalising")]
-        public IActionResult Finalising(string Id)
+        public IActionResult Finalising(string Id, string error)
         {
             Finalising finaldata = new Finalising();
             /*public string? Id { get; set; }
@@ -442,6 +447,8 @@ namespace LLB.Controllers
             var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
             int managerscount = managers.Count();
             finaldata.ManagersCount = managerscount;
+
+            var payment = _db.Payments.Where(s => s.ApplicationId == Id).FirstOrDefault();
 
             if (regiondata.RegionName == "Town")
             {
@@ -476,17 +483,68 @@ namespace LLB.Controllers
                 finaldata.ManagersTotal = managertotal;
                 finaldata.Total = managertotal + licensefees.RDCFee;
             }
+            TempData["result"] = error;
 
             ViewBag.ApplicationInfo = applicationInfo;
             ViewBag.FinalData = finaldata;
+            ViewBag.Payment = payment;
 
 
 return View();
         }
 
+
+        [HttpGet("PaynowPayment")]
+        public IActionResult PaynowPayment(string Id, double amount)
+        {
+          /*  var paynow = new Paynow("9885", "b99e1e71-908e-4bcb-b7a5-212dfce6a2e1");
+
+            paynow.ResultUrl = "http://example.com/gateways/paynow/update";
+            paynow.ReturnUrl = "http://example.com/return?gateway=paynow";
+            // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
+
+            // Create a new payment 
+            var payment = paynow.CreatePayment("Invoice 35");
+
+            
+
+            // Add items to the payment
+            payment.Add("Bananas", 2.5);
+            payment.Add("Apples", 3.4);
+            // Send payment to paynow
+            var response = paynow.Send(payment);
+
+            // Check if payment was sent without error
+            if (response.Success())
+            {
+                // Get the url to redirect the user to so they can make payment
+                var link = response.RedirectLink();
+
+                // Get the poll url of the transaction
+                var pollUrl = response.PollUrl();
+            }
+          */
+
+            return View();
+        }
+
+
         [HttpGet("Submit")]
         public IActionResult Submit(string Id)
         {
+            var payment = _db.Payments.Where(s => s.ApplicationId == Id).FirstOrDefault();
+            if (payment == null || payment.PaymentStatus == "not paid")
+            {
+                string error = "Please make payment to submit application";
+               // return RedirectToAction("OutletInfo", new { Id = Id, error = error });
+
+               // var applicationInfo = 
+            }
+            else
+            {
+
+            }
+
             return View();
         }
 
