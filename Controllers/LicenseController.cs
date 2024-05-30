@@ -13,10 +13,8 @@ using System.Net;
 using PasswordGenerator;
 using DNTCaptcha.Core;
 using LLB.Models.ViewModel;
-
-//using pa
-
-
+using Webdev.Payments;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace LLB.Controllers
@@ -49,7 +47,7 @@ namespace LLB.Controllers
             var regions = _db.LicenseRegions.ToList();
             ViewBag.ApplicationInfo = application;
             ViewBag.User = user;
-            ViewBag.Regions= regions;
+            ViewBag.Regions = regions;
             ViewBag.License = licenses;
             return View();
         }
@@ -70,16 +68,23 @@ namespace LLB.Controllers
                 string jobRef = new Random().Next(1000, 9999).ToString();
                  */
                 // * ApplicationID /Id
-                info.UserID = userManager.GetUserId(User);
+
+                var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+                string id = userId.Id;
+                info.UserID = id;
+
+               
+
                 info.PaymentId = "";
-                info.PaymentStatus= "";
+                info.PaymentStatus = "";
                 info.RefNum = "";
+                info.PaymentFee = 0;
 
                 info.PlaceOfBirth = "";
                 info.DateofEntryIntoZimbabwe = "";
                 info.PlaceOfEntry = "";
                 info.RejectionReason = "";
-  
+
 
                 info.Status = "inprogress";
                 info.ApplicationDate = DateTime.Now;
@@ -112,7 +117,7 @@ namespace LLB.Controllers
                 updateinfo.BusinessName = info.BusinessName;
                 updateinfo.LicenseTypeID = info.LicenseTypeID;
                 updateinfo.ApplicationType = info.ApplicationType;
-                    
+
 
                 updateinfo.PlaceOfBirth = "";
                 updateinfo.DateofEntryIntoZimbabwe = "";
@@ -127,7 +132,7 @@ namespace LLB.Controllers
                 // public DateTime ApprovedDate 
                 ///////////// info.RejectionReason = "";
                 //spublic DateTime DateCreated 
-                var o =_db.Update(updateinfo);
+                var o = _db.Update(updateinfo);
                 var p = _db.SaveChanges();
                 // ViewBag.License = licenses;
                 var application = _db.ApplicationInfo.Where(a => a.Id == info.Id).FirstOrDefault();
@@ -142,7 +147,7 @@ namespace LLB.Controllers
                 return View();
                 //return View();
             }
-            }
+        }
 
         [HttpGet(("OutletInfo"))]
         public IActionResult OutletInfo(string Id)
@@ -156,14 +161,14 @@ namespace LLB.Controllers
             ViewBag.Application = application;
             ViewBag.OutletInfo = outletInfo;
             ViewBag.Directors = directorsInfo;
-           ViewBag.DirectorsCount= directorsInfo.Count();
+            ViewBag.DirectorsCount = directorsInfo.Count();
             //ViewBag.User = user;
 
             return View();
         }
 
         [HttpPost(("OutletInfo"))]
-        public IActionResult OutletInfo(OutletInfo outletInfo)
+        public async Task<IActionResult> OutletInfoAsync(OutletInfo outletInfo)
         {
             /*    public string? Id { get; set; }
           public string? ApplicationId { get; set; }
@@ -179,7 +184,10 @@ namespace LLB.Controllers
             if (outletInfo.Id == null)
             {
                 outletInfo.Id = Guid.NewGuid().ToString();
-                outletInfo.UserId = userManager.GetUserId(User);
+
+                var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+                string id = userId.Id;
+                outletInfo.UserId = id;
                 outletInfo.Status = "Unsubmitted";
                 outletInfo.DirectorNames = "";
                 outletInfo.DateAdded = DateTime.Now;
@@ -203,10 +211,10 @@ namespace LLB.Controllers
             }
             else
             {
-               // outletInfo.Id = Guid.NewGuid().ToString();
+                // outletInfo.Id = Guid.NewGuid().ToString();
                 //outletInfo.UserId = userManager.GetUserId(User);
-              //  outletInfo.Status = "Unsubmitted";
-              var updateOutletInfo = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
+                //  outletInfo.Status = "Unsubmitted";
+                var updateOutletInfo = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
 
                 //outletInfo.DirectorNames = "";
                 //outletInfo.DateAdded = DateTime.Now;
@@ -236,11 +244,11 @@ namespace LLB.Controllers
             }
             //ViewBag.User = user;
 
-            
+
         }
 
         [HttpPost(("Director"))]
-        public IActionResult Director(DirectorDetails directorDetails)
+        public async Task<IActionResult> DirectorAsync(DirectorDetails directorDetails)
         {
 
             /*     public string? Id { get; set; }
@@ -255,7 +263,10 @@ namespace LLB.Controllers
            public DateTime DateUpdated { get; set; }*/
             directorDetails.Id = Guid.NewGuid().ToString();
             directorDetails.Status = "active";
-            directorDetails.UserId = userManager.GetUserId(User);
+
+            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+            directorDetails.UserId = id;
             directorDetails.DateAdded = DateTime.Now;
             directorDetails.DateUpdated = DateTime.Now;
             _db.Add(directorDetails);
@@ -265,9 +276,9 @@ namespace LLB.Controllers
         }
 
 
-       // ManagersInfo
+        // ManagersInfo
 
-              [HttpGet(("ManagersInfo"))]
+        [HttpGet(("ManagersInfo"))]
         public IActionResult ManagersInfo(string Id)
         {
 
@@ -297,7 +308,7 @@ namespace LLB.Controllers
           public string? Status { get; set; }
           public DateTime DateAdded { get; set; }
           public DateTime DateUpdated { get; set; }*/
-            if(file != null)
+            if (file != null)
             {
                 string pic = System.IO.Path.GetFileName(file.FileName);
                 string dic = System.IO.Path.GetExtension(file.FileName);
@@ -318,7 +329,10 @@ namespace LLB.Controllers
 
 
             manager.Id = Guid.NewGuid().ToString();
-            manager.UserId = userManager.GetUserId(User);
+
+            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+            manager.UserId = id;
             manager.Status = "UnSubmitted";
             manager.DateAdded = DateTime.Now;
             manager.DateUpdated = DateTime.Now;
@@ -338,12 +352,12 @@ namespace LLB.Controllers
 
 
         [HttpGet(("Attachments"))]
-        public IActionResult Attachments(string Id)
+        public async Task<IActionResult> AttachmentsAsync(string Id)
         {
             var attachments = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
 
             if (attachments.Count() <= 0)
-            {                string[] documents = { "Vetted fingerprints",
+            { string[] documents = { "Vetted fingerprints",
 "Police report",
 "Form 55",
 "Affidavit by transferee",
@@ -355,7 +369,10 @@ namespace LLB.Controllers
                     AttachmentInfo documentInfo = new AttachmentInfo();
                     documentInfo.Id = Guid.NewGuid().ToString();
                     documentInfo.DocumentTitle = document.ToString();
-                    documentInfo.UserId=  userManager.GetUserId(User);
+
+                    var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+                    string id = userId.Id;
+                    documentInfo.UserId = id;
                     documentInfo.DateAdded = DateTime.Now;
                     documentInfo.DateUpdated = DateTime.Now;
                     documentInfo.Status = "empty";
@@ -383,7 +400,7 @@ namespace LLB.Controllers
         {
             var attachmentUpdate = _db.AttachmentInfo.Where(a => a.Id == attachment.Id).FirstOrDefault();
             attachmentUpdate.DateUpdated = DateTime.Now;
-            attachmentUpdate.Status = "posted"; 
+            attachmentUpdate.Status = "posted";
             if (file != null)
             {
                 string pic = System.IO.Path.GetFileName(file.FileName);
@@ -418,8 +435,31 @@ namespace LLB.Controllers
 
 
         [HttpGet("Finalising")]
-        public IActionResult Finalising(string Id, string error)
+        public async Task<IActionResult> FinalisingAsync(string Id, string error, string gateway)
         {
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+
+            if (gateway == "paynow")
+            {
+                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == Id).FirstOrDefault();
+                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                
+                var status = paynow.PollTransaction(paymentTrans.PollUrl);
+
+                var statusdata = status.GetData();
+                paymentTrans.PaynowRef = statusdata["paynowreference"];
+                paymentTrans.PaymentStatus = statusdata["status"];
+                paymentTrans.Status = statusdata["status"];
+                paymentTrans.DateUpdated = DateTime.Now;
+
+                _db.Update(paymentTrans);
+                _db.SaveChanges();
+                // applicationInfo.PaymentFee = paymentTrans.Amount;
+                applicationInfo.PaymentId = paymentTrans.Id;
+                applicationInfo.PaymentStatus = statusdata["status"];
+                _db.Update(applicationInfo);
+                _db.SaveChanges();
+            }
             Finalising finaldata = new Finalising();
             /*public string? Id { get; set; }
         public string? ApplicationId { get; set; }
@@ -434,13 +474,15 @@ namespace LLB.Controllers
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }*/
             finaldata.ApplicationId = Id;
-            finaldata.UserId = userManager.GetUserId(User);
+
+            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+            finaldata.UserId = id;
             finaldata.ManagersInfo = "correct";
             finaldata.OutletInfo = "correct";
             finaldata.DocumentInfo = "correct";
-           // finaldata.DocumentInfo = "correct";
+            // finaldata.DocumentInfo = "correct";
 
-            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             var regiondata = _db.LicenseRegions.Where(s => s.Id == applicationInfo.ApplicationType).FirstOrDefault();
             var licensefees = _db.LicenseTypes.Where(a => a.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
             var managerfees = _db.LicenseTypes.Where(a => a.Id == "080146d5-6427-4db4-a851-3adb95ee208a").FirstOrDefault();
@@ -458,14 +500,28 @@ namespace LLB.Controllers
                 var managertotal = managerfees.TownFee * managerscount;
                 finaldata.ManagersTotal = managertotal;
                 finaldata.Total = managertotal + licensefees.TownFee;
+                var totalfee = finaldata.Total;
+               
+                    applicationInfo.PaymentFee = (decimal)totalfee;
+                _db.Update(applicationInfo);
+                _db.SaveChanges();
+                
 
-            }else if (regiondata.RegionName == "City") {
+                
+
+
+            } else if (regiondata.RegionName == "City") {
                 finaldata.LicencePrice = licensefees.CityFee;
                 finaldata.ManagersPrice = managerfees.CityFee;
 
                 var managertotal = managerfees.CityFee * managerscount;
                 finaldata.ManagersTotal = managertotal;
                 finaldata.Total = managertotal + licensefees.CityFee;
+                var totalfee = finaldata.Total;
+
+                applicationInfo.PaymentFee = (decimal)totalfee;
+                _db.Update(applicationInfo);
+                _db.SaveChanges();
             }
             else if (regiondata.RegionName == "Municipality") {
                 finaldata.LicencePrice = licensefees.MunicipaltyFee;
@@ -474,6 +530,11 @@ namespace LLB.Controllers
                 var managertotal = licensefees.MunicipaltyFee * managerscount;
                 finaldata.ManagersTotal = managertotal;
                 finaldata.Total = managertotal + licensefees.MunicipaltyFee;
+                var totalfee = finaldata.Total;
+
+                applicationInfo.PaymentFee = (decimal)totalfee;
+                _db.Update(applicationInfo);
+                _db.SaveChanges();
             }
             else if (regiondata.RegionName == "RDC") {
                 finaldata.LicencePrice = licensefees.RDCFee;
@@ -482,6 +543,11 @@ namespace LLB.Controllers
                 var managertotal = licensefees.RDCFee * managerscount;
                 finaldata.ManagersTotal = managertotal;
                 finaldata.Total = managertotal + licensefees.RDCFee;
+                var totalfee = finaldata.Total;
+
+                applicationInfo.PaymentFee = (decimal)totalfee;
+                _db.Update(applicationInfo);
+                _db.SaveChanges();
             }
             TempData["result"] = error;
 
@@ -490,27 +556,32 @@ namespace LLB.Controllers
             ViewBag.Payment = payment;
 
 
-return View();
+            return View();
         }
 
 
         [HttpGet("PaynowPayment")]
-        public IActionResult PaynowPayment(string Id, double amount)
+        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount)
         {
-          /*  var paynow = new Paynow("9885", "b99e1e71-908e-4bcb-b7a5-212dfce6a2e1");
+            //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
+            amount = 55.7;
+            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-            paynow.ResultUrl = "http://example.com/gateways/paynow/update";
-            paynow.ReturnUrl = "http://example.com/return?gateway=paynow";
+            paynow.ResultUrl = "https://localhost:7237/License/Submit?gateway=paynow";
+            paynow.ReturnUrl = "https://localhost:7237/License/Finalising?Id="+Id+"&gateway=paynow";
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
-            // Create a new payment 
-            var payment = paynow.CreatePayment("Invoice 35");
-
             
+            // Create a new payment 
+            var payment = paynow.CreatePayment("12345");
+
+            //payment.AuthEmail = "chimukaoliver@gmail.com";
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var licenseType = _db.LicenseTypes.Where(s => s.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
 
             // Add items to the payment
-            payment.Add("Bananas", 2.5);
-            payment.Add("Apples", 3.4);
+            payment.Add(licenseType.LicenseName, (decimal)amount);
+            
             // Send payment to paynow
             var response = paynow.Send(payment);
 
@@ -518,12 +589,43 @@ return View();
             if (response.Success())
             {
                 // Get the url to redirect the user to so they can make payment
+                Payments transaction = new Payments();
+                transaction.Id = Guid.NewGuid().ToString();
+
+                var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+                string id = userId.Id;
+                transaction.UserId = id;
+                transaction.Amount = payment.Total;
+                transaction.ApplicationId = Id;
+             //   transaction.PaynowRef = payment.Reference;
+                transaction.PollUrl = response.PollUrl();
+                transaction.PopDoc = "";
+                transaction.Status = "not paid";
+                transaction.DateAdded = DateTime.Now;
+                transaction.DateUpdated= DateTime.Now;
+
+                var pollUrl = response.PollUrl();
+                var status = paynow.PollTransaction(pollUrl);
+
+                var statusdata = status.GetData();
+                transaction.PaynowRef = statusdata["paynowreference"];
+                transaction.PaymentStatus = statusdata["status"];
+
+                _db.Add(transaction);
+                    _db.SaveChanges();
+               // [1]	{ [paynowreference, 17967752]}
+                //transaction.PaymentStatus = payment.st
+
+
                 var link = response.RedirectLink();
+                
 
                 // Get the poll url of the transaction
-                var pollUrl = response.PollUrl();
+      
+                // var instructions = response.
+                return Redirect(link);
             }
-          */
+
 
             return View();
         }
@@ -532,23 +634,29 @@ return View();
         [HttpGet("Submit")]
         public IActionResult Submit(string Id)
         {
-            var payment = _db.Payments.Where(s => s.ApplicationId == Id).FirstOrDefault();
+           
+            var payment = _db.Payments.Where(s => s.ApplicationId == Id && s.Status == "Paid").FirstOrDefault();
             if (payment == null || payment.PaymentStatus == "not paid")
             {
                 string error = "Please make payment to submit application";
-               // return RedirectToAction("OutletInfo", new { Id = Id, error = error });
+                 return RedirectToAction("Finalising", new { Id = Id, error = error });
 
-               // var applicationInfo = 
+                // var applicationInfo = 
             }
             else
             {
-
+                var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+                application.Status = "submitted";
+                _db.Update(application);
+                _db.SaveChanges();
+                return RedirectToAction("Dashboard", "Home");
             }
 
-            return View();
-        }
+            
 
         }
+
+    } 
 
     }
 

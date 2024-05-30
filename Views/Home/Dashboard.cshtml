@@ -74,42 +74,121 @@
 
         </div>
     </div><!-- End Revenue Card -->
-    <!-- Customers Card -->
-    <div b-36j9gympe5 class="col-xxl-4 col-xl-12">
 
-        <div b-36j9gympe5 class="card info-card customers-card">
 
-            <div b-36j9gympe5 class="filter">
-                <a b-36j9gympe5 class="icon" href="#" data-bs-toggle="dropdown"><i b-36j9gympe5 class="bi bi-three-dots"></i></a>
-                <ul b-36j9gympe5 class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                    <li b-36j9gympe5 class="dropdown-header text-start">
-                        <h6 b-36j9gympe5>Filter</h6>
-                    </li>
 
-                    <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">Today</a></li>
-                    <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">This Month</a></li>
-                    <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">This Year</a></li>
-                </ul>
-            </div>
 
-            <div b-36j9gympe5 class="card-body">
-                <h5 b-36j9gympe5 class="card-title">Customers <span b-36j9gympe5>| This Year</span></h5>
+    <div class="row">
+        <div class="card">
 
-                <div b-36j9gympe5 class="d-flex align-items-center">
-                    <div b-36j9gympe5 class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                        <i b-36j9gympe5 class="bi bi-people"></i>
-                    </div>
-                    <div b-36j9gympe5 class="ps-3">
-                        <h6 b-36j9gympe5>1244</h6>
-                        <span b-36j9gympe5 class="text-danger small pt-1 fw-bold">12%</span> <span b-36j9gympe5 class="text-muted small pt-2 ps-1">decrease</span>
-
-                    </div>
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+                    
+                    <h5 class="card-title">My Applications</h5>
+                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    *@
                 </div>
 
+
+
+
+                <div class="row">
+
+                    <table class="table table-responsiveß table-hover table-striped">
+
+
+                        <thead>
+                            <th>Trading Name </th>
+                            <th>Operating Address </th>
+                            <th>Application Date </th>
+                            <th>License </th>
+                            <th>For </th>
+                            <th>Status </th>
+                        </thead>
+                        <tbody>
+                            @foreach (var application in ViewBag.Applications)
+                            {
+
+                                <tr>
+                                    <td>
+                                        @foreach (var outlet in ViewBag.OutletInfo)
+                                        {
+                                            if (outlet.ApplicationId == application.Id)
+                                            {
+                                                @outlet.TradingName
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        @foreach (var outlet in ViewBag.OutletInfo)
+                                        {
+                                            if (outlet.ApplicationId == application.Id)
+                                            {
+                                                @outlet.Address
+                                            }
+                                        }
+                                    </td>
+
+                                    <td>@application.ApplicationDate</td>
+
+                                    <td>
+                                        @foreach (var licence in ViewBag.License)
+                                        {
+                                            if (licence.Id == application.LicenseTypeID)
+                                            {
+                                                @licence.LicenseName
+                                            }
+                                        }
+
+                                    </td>
+
+
+                                    <td>
+                                        @foreach (var region in ViewBag.Regions)
+                                        {
+                                            if (region.Id == application.ApplicationType)
+                                            {
+                                                @region.RegionName
+                                            }
+                                        }
+
+                                    </td>
+
+                                    <td>
+                                        @if (application.Status == "inprogress")
+                                        {
+                                            <span class="text-warning">@application.Status</span>
+                                        }
+                                        else if (application.Status == "submitted")
+                                        { <span class="text-success">@application.Status</span>}
+                                    </td>
+
+                                    <td><a class="btn btn-primary">View</a> </td>
+
+
+                                </tr>
+
+ }
+                        </tbody>
+
+
+
+                    </table>
+                </div>
+
+
+
+
+
+                
             </div>
         </div>
 
-    </div><!-- End Customers Card -->
+    </div>
+
+
+
+
     <!-- Recent Sales -->
     <div b-36j9gympe5 class="col-12">
         <div b-36j9gympe5 class="card recent-sales overflow-auto">

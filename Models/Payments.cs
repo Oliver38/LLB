@@ -15,8 +15,9 @@ namespace LLB.Models
         public string? SystemRef { get; set; }
         public string? PollUrl { get; set; }
         public string? PaymentStatus { get; set; }
-        public string? Amount { get; set; }
-        //public string? Status { get; set; }
+        public decimal? Amount { get; set; }
+        public string? Status { get; set; }
+        public string? PopDoc { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }
 
