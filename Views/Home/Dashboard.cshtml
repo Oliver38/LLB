@@ -164,6 +164,11 @@
                                     </td>
 
                                     <td><a class="btn btn-primary">View</a> </td>
+                                    <td>
+                                        @if (application.Status == "approved")
+                                                    { <a href="~/Documents/license.jpeg" class="btn btn-primary">Download License</a>
+                                            }
+                                                                    </td>
 
 
                                 </tr>

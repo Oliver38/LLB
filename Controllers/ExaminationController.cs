@@ -29,6 +29,25 @@ namespace LLB.Controllers
             this.signInManager = signInManager;
             _validatorService = validatorService;
         }
+        [HttpGet("Dashboard")]
+        public async Task<IActionResult> DashboardAsync()
+        {
+
+            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+            var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
+            var outletinfo = _db.OutletInfo.ToList();
+            var license = _db.LicenseTypes.ToList();
+            var regions = _db.LicenseRegions.ToList();
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+
+            ViewBag.User = user;
+            ViewBag.OutletInfo = outletinfo;
+            ViewBag.Regions = regions;
+            ViewBag.License = license;
+            ViewBag.Applications = applications;
+            return View();
+        }
 
 
         [HttpGet(("Apply"))]
@@ -364,6 +383,17 @@ namespace LLB.Controllers
 
 
 
+        }
+
+
+        [HttpGet("Approve")]
+        public IActionResult Approve(string Id)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            application.Status = "approved";
+            _db.Update(application);
+            _db.SaveChanges();
+            return RedirectToAction("Dashboard", "Examination");
         }
     }
 }
