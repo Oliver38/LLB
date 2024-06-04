@@ -45,6 +45,8 @@
     <None Remove="Views\License\" />
     <None Remove="Views\License\License\" />
     <None Remove="Views\Examination\" />
+    <None Remove="Views\Roles\" />
+    <None Remove="Views\Viewing\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
@@ -52,6 +54,8 @@
     <Folder Include="Views\License\" />
     <Folder Include="Views\License\License\" />
     <Folder Include="Views\Examination\" />
+    <Folder Include="Views\Roles\" />
+    <Folder Include="Views\Viewing\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

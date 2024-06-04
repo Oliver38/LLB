@@ -527,7 +527,7 @@ namespace LLB.Controllers
                 finaldata.LicencePrice = licensefees.MunicipaltyFee;
                 finaldata.ManagersPrice = managerfees.MunicipaltyFee;
 
-                var managertotal = licensefees.MunicipaltyFee * managerscount;
+                var managertotal = managerfees.MunicipaltyFee * managerscount;
                 finaldata.ManagersTotal = managertotal;
                 finaldata.Total = managertotal + licensefees.MunicipaltyFee;
                 var totalfee = finaldata.Total;
@@ -540,7 +540,7 @@ namespace LLB.Controllers
                 finaldata.LicencePrice = licensefees.RDCFee;
                 finaldata.ManagersPrice = managerfees.RDCFee;
 
-                var managertotal = licensefees.RDCFee * managerscount;
+                var managertotal = managerfees.RDCFee * managerscount;
                 finaldata.ManagersTotal = managertotal;
                 finaldata.Total = managertotal + licensefees.RDCFee;
                 var totalfee = finaldata.Total;
@@ -564,7 +564,7 @@ namespace LLB.Controllers
         public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount)
         {
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
-            amount = 55.7;
+            //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
             paynow.ResultUrl = "https://localhost:7237/License/Submit?gateway=paynow";
@@ -647,8 +647,19 @@ namespace LLB.Controllers
             {
                 var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
                 application.Status = "submitted";
+                application.ExaminationStatus = "unassigned";
                 _db.Update(application);
                 _db.SaveChanges();
+                Tasks tasks = new Tasks();
+                tasks.Id  = Guid.NewGuid().ToString();
+                tasks.ApplicationId = application.Id;
+                //tasks.AssignerId
+                tasks.Status = "unassigned";
+                tasks.DateAdded = DateTime.Now;
+                tasks.DateUpdated = DateTime.Now;
+                _db.Add(tasks);
+                _db.SaveChanges();
+
                 return RedirectToAction("Dashboard", "Home");
             }
 

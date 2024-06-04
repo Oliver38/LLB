@@ -59,14 +59,17 @@ namespace LLB.Controllers
         }
 
         [HttpPost(("CreateLicense"))]
-        public IActionResult CreateLicense(LicenseTypes types)
+        public async Task<IActionResult> CreateLicenseAsync(LicenseTypes types)
         {
 
 
             //public string LicenseTypeNameId { get; set; }
             types.Id = Guid.NewGuid().ToString();
         types.Status = "inactive";
-            types.UserId = userManager.GetUserId(User);
+
+            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+            types.UserId = id;
             types.TownFee = 0;
             types.CityFee = 0;
             types.RDCFee = 0;
@@ -86,10 +89,13 @@ namespace LLB.Controllers
 
 
         [HttpPost(("UpdateFee"))]
-        public IActionResult UpdateFee(LicenseTypes types)
+        public async Task<IActionResult> UpdateFeeAsync(LicenseTypes types)
         {
             var licensefee = _db.LicenseTypes.Where(a => a.Id == types.Id).FirstOrDefault();
-            licensefee.UserId = userManager.GetUserId(User);
+
+            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+            licensefee.UserId = id;
             licensefee.CityFee = types.CityFee;
             licensefee.MunicipaltyFee = types.MunicipaltyFee;
             licensefee.RDCFee = types.RDCFee;
@@ -135,15 +141,18 @@ namespace LLB.Controllers
         }
 
         [HttpPost(("LicenseRegion"))]
-        public IActionResult LicenseRegion(LicenseRegion licenseRegion)
+        public async Task<IActionResult> LicenseRegionAsync(LicenseRegion licenseRegion)
         {
 
 
             //public string LicenseTypeNameId { get; set; }
             licenseRegion.Id = Guid.NewGuid().ToString();
             licenseRegion.DateAdded = DateTime.Now;
-            licenseRegion.Status = "active";
-            licenseRegion.UserId = userManager.GetUserId(User);
+            licenseRegion.Status = "active"; var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+
+
+            licenseRegion.UserId = id;
             _db.Add(licenseRegion);
             _db.SaveChanges();
             // ViewBag.License = licenses;

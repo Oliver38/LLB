@@ -49,7 +49,7 @@
                         {
                 <tr>
                     <td>@attachment.DocumentTitle </td>
-                    <td><a href="~/@attachment.DocumentLocation" target="_blank">View Here</a></td>
+                    <td><a target="_blank" href="~/@attachment.DocumentLocation">View Here</a></td>
                     
                 </tr>
 
@@ -72,12 +72,12 @@
                 <div class="text-center">
                     @if (ViewBag.Attachments == null)
                     {
-                        <a href="/Examination/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/Viewing/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
                     }
                     else
                     {
-                        <a href="/Examination/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                        <a href="/Examination/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+                        <a href="/Viewing/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/Viewing/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
 
                     }
                 </div>

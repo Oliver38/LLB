@@ -17,6 +17,7 @@ string dbconnection = @"Server=localhost;Database=llb;;User Id=sa;Password=Passw
 builder.Services.AddDbContextPool<AppDbContext>(options => options.UseSqlServer(dbconnection));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
+         
 builder.Services.AddMvc(options =>
 {
     var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
@@ -58,8 +59,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(1000);
 
-    options.LoginPath = "";  // Set the path to the login page
-    options.AccessDeniedPath = "/Home/AccessDenied";
+    options.LoginPath = "/";  // Set the path to the login page
+    options.AccessDeniedPath = "/";
     options.SlidingExpiration = true;
 });
 builder.Services.Configure<PasswordHasherOptions>(options =>
@@ -72,7 +73,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/");
     app.UseHsts();
 }
 
@@ -93,11 +94,11 @@ app.Run();
 
 
 await app.InitialiseRoles();
-await app.InitialiseUsers();
+//await app.InitialiseUsers();
 
 
 app.InitialiseDatabase();
 //ApplicationBuilderExtension.I
 await ApplicationBuilderExtension.InitialiseRoles(app);
-await ApplicationBuilderExtension.InitialiseUsers(app);
+//await ApplicationBuilderExtension.InitialiseUsers(app);
 ApplicationBuilderExtension.InitialiseDatabase(app);

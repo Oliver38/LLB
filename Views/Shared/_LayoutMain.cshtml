@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 
+
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -271,7 +272,7 @@
 
   <!-- ======= Sidebar ======= -->
   <aside id="sidebar" class="sidebar">
-
+      @User.IsInRole("client"){ 
       <ul class="sidebar-nav" id="sidebar-nav">
 
           <li class="nav-item">
@@ -280,7 +281,6 @@
                   <span>Dashboard</span>
               </a>
           </li><!-- End Dashboard Nav -->
-
 
 
           <li class="nav-item">
@@ -302,14 +302,9 @@
                       <a href="/Settings/LicenseRegion">
                           <i class="bi bi-circle"></i><span>Licence Region</span>
                       </a>
-                  </li>
+                  </li>huy o
               </ul>
           </li><!-- End Icons Nav -->
-
-
-
-
-
 
           <li class="nav-item">
               <a class="nav-link collapsed" data-bs-target="#license-nav" data-bs-toggle="collapse" href="#">
@@ -369,6 +364,7 @@
 
 
       </ul>
+      }
 
   </aside><!-- End Sidebar-->
 

@@ -17,6 +17,7 @@ namespace LLB.Models
         public string? PaymentStatus { get; set; }
         public string? PaymentId { get; set; }
         public string? RefNum { get; set; }
+        public string? ExaminationStatus { get; set; }
         public decimal? PaymentFee { get; set; }
 
         //* Name**

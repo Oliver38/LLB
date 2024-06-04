@@ -20,14 +20,16 @@ namespace LLB.Controllers
     [Route("Auth")]
     public class AuthController : Controller
     {
+        private readonly RoleManager<IdentityRole> roleManager;
         private readonly UserManager<ApplicationUser> userManager;
         private readonly AppDbContext _db;
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IDNTCaptchaValidatorService _validatorService;
 
-        public AuthController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public AuthController(AppDbContext db, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
+            this.roleManager = roleManager;
             this.userManager = userManager;
             this.signInManager = signInManager;
             _validatorService = validatorService;
@@ -73,15 +75,21 @@ namespace LLB.Controllers
             if (getallUserName == null)
             {
 
+                var userid = Guid.NewGuid().ToString();
 
-                
-                        var user = new ApplicationUser
+                var user = new ApplicationUser
 
-                        {
-                            Id = Guid.NewGuid().ToString(),
-                Name = model.Name,
+                {
+                  // Id = userid,
+                    Name = model.Name,
 
+                   // UserId = userid,
+                    Nationality = model.CountryOfResidence,
+                    ApplicationBy = "",
+                    LockoutEnd = DateTime.Now,
+                UserPhoneNumber = model.PhoneNumber,
                             LastName = model.LastName,
+
                             PhysicalAddress = model.PhysicalAddress,
                             Email = model.Email,
                             UserEmail = model.Email,
@@ -102,58 +110,94 @@ namespace LLB.Controllers
                         };
 
                         var result = await userManager.CreateAsync(user, model.Password);
-                        if (result.Succeeded)
+                if (result.Succeeded)
+                { 
+                    if (await roleManager.RoleExistsAsync("client"))
+                    {
+                        try
                         {
-
-                            //modelx.Status = Constants.ApplicationStatus.Pending.ToString();
-                            //_db.AddAsync(modelx);
-                            //_db.SaveChanges();
-
-                            //if (result.Succeeded)
-                            //{
-                            //    var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                            //    var link = Url.Action(nameof(VerifyEmail), "Auth", new { userId = user.Id, code }, Request.Scheme, Request.Host.ToString());
-
-
-                            //    SmtpClient client = new SmtpClient("mail.ttcsglobal.com");
-                            //    client.UseDefaultCredentials = false;
-                            //    client.Credentials = new NetworkCredential("companiesonlinezw", "N3wPr0ducts@1");
-                            //    // client.Credentials = new NetworkCredential("username", "password");
-
-                            //    MailMessage mailMessage = new MailMessage();
-                            //    mailMessage.From = new MailAddress("companiesonlinezw@ttcsglobal.com");
-                            //    mailMessage.To.Add(user.Email);
-                            //    mailMessage.IsBodyHtml = true;
-                            //    mailMessage.Body = ("<!DOCTYPE html> " +
-                            //                        "<html xmlns=\"http://www.w3.org/1999/xhtml\">" +
-                            //                        "<head>" +
-                            //                        "<title>Email</title>" +
-                            //                        "</head>" +
-                            //                        "<body style=\"font-family:'Century Gothic'\">" +
-                            //                        "<p><b>Hi Dear valued Customer</b></p>" +
-                            //                        "<p>Your new password is " + $"<a href=\"{link}\">Verify Email</a> </p>" +
-                            //                        "<p> Thank You For Your Support</p> " +
-                            //                        "<p>Regards</p>" +
-                            //                        "<p>CIPZ</p>" +
-                            //                        "</body>" +
-                            //                        "</html>"); //GetFormattedMessageHTML();
-                            //    mailMessage.Subject = "Email Confirmation";
-                            //    client.Send(mailMessage);
-
-                            //    TempData["error"] = "Email Has Been Verified";
-                            //    TempData["flash"] = "2";
-                            //    return RedirectToAction("Login", "Account");
-
-                            //}
-
-                            //await signInManager.SignInAsync(user, isPersistent: false);
-                            return RedirectToAction("SignUp", "Home");
-                        }
-                        foreach (var error in result.Errors)
+                            // var roleuser = await userManager.FindByEmailAsync(user.Email);
+                            IdentityResult addclient = await userManager.AddToRoleAsync(user, "client");
+                            // _db.Asp
+                            if (addclient.Succeeded)
+                            {
+                                TempData["success"] = "user has successfully been created";
+                                return View();
+                            }
+                        }catch(Exception e)
                         {
-                            ModelState.AddModelError("", error.Description);
+                            TempData["error"] = e;
+                            return View();
+                            Console.WriteLine(e);
                         }
                     }
+                    else
+                    {
+                        TempData["error"] = "please contact admin";
+                        return View();
+
+                    }
+
+
+
+                    //modelx.Status = Constants.ApplicationStatus.Pending.ToString();
+                    //_db.AddAsync(modelx);
+                    //_db.SaveChanges();
+
+                    //if (result.Succeeded)
+                    //{
+                    //    var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
+                    //    var link = Url.Action(nameof(VerifyEmail), "Auth", new { userId = user.Id, code }, Request.Scheme, Request.Host.ToString());
+
+
+                    //    SmtpClient client = new SmtpClient("mail.ttcsglobal.com");
+                    //    client.UseDefaultCredentials = false;
+                    //    client.Credentials = new NetworkCredential("companiesonlinezw", "N3wPr0ducts@1");
+                    //    // client.Credentials = new NetworkCredential("username", "password");
+
+                    //    MailMessage mailMessage = new MailMessage();
+                    //    mailMessage.From = new MailAddress("companiesonlinezw@ttcsglobal.com");
+                    //    mailMessage.To.Add(user.Email);
+                    //    mailMessage.IsBodyHtml = true;
+                    //    mailMessage.Body = ("<!DOCTYPE html> " +
+                    //                        "<html xmlns=\"http://www.w3.org/1999/xhtml\">" +
+                    //                        "<head>" +
+                    //                        "<title>Email</title>" +
+                    //                        "</head>" +
+                    //                        "<body style=\"font-family:'Century Gothic'\">" +
+                    //                        "<p><b>Hi Dear valued Customer</b></p>" +
+                    //                        "<p>Your new password is " + $"<a href=\"{link}\">Verify Email</a> </p>" +
+                    //                        "<p> Thank You For Your Support</p> " +
+                    //                        "<p>Regards</p>" +
+                    //                        "<p>CIPZ</p>" +
+                    //                        "</body>" +
+                    //                        "</html>"); //GetFormattedMessageHTML();
+                    //    mailMessage.Subject = "Email Confirmation";
+                    //    client.Send(mailMessage);
+
+                    //    TempData["error"] = "Email Has Been Verified";
+                    //    TempData["flash"] = "2";
+                    //    return RedirectToAction("Login", "Account");
+
+                    //}
+
+                    //await signInManager.SignInAsync(user, isPersistent: false);
+                    //return RedirectToAction("SignUp", "Home");
+                }
+                else {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                        TempData["error"] = error.Description;
+                        return View();
+                    }
+                }
+            }
+            else
+            {
+                TempData["error"] = "User Already in system";
+                return View();
+            }
                
                
             return View(model);

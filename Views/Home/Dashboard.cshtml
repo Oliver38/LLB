@@ -98,12 +98,13 @@
 
 
                         <thead>
-                            <th>Trading Name </th>
-                            <th>Operating Address </th>
-                            <th>Application Date </th>
-                            <th>License </th>
-                            <th>For </th>
-                            <th>Status </th>
+                        <th>Trading Name </th>
+                        <th>Operating Address </th>
+                        <th>Application Date </th>
+                        <th>License </th>
+                        <th>For </th>
+                        <th>Status </th>
+                        <th></th>
                         </thead>
                         <tbody>
                             @foreach (var application in ViewBag.Applications)
@@ -161,19 +162,28 @@
                                         }
                                         else if (application.Status == "submitted")
                                         { <span class="text-success">@application.Status</span>}
+                                    else if (application.Status == "approved")
+                                    {
+                                        <span class="text-success">@application.Status</span>}
                                     </td>
 
-                                    <td><a class="btn btn-primary">View</a> </td>
                                     <td>
+                                        @if (application.Status == "inprogress")
+                                        {
+                                            <a href="/License/Apply?Id=@application.Id" class="btn btn-primary">Continue </a>
+                                        }   @if (application.Status == "submitted")
+                                        {<a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
+                                        }
                                         @if (application.Status == "approved")
-                                                    { <a href="~/Documents/license.jpeg" class="btn btn-primary">Download License</a>
-                                            }
-                                                                    </td>
+                                        {<a href="~/Documents/license.jpeg" class="btn btn-primary">Download License</a>
+                                        }
+                                    </td>
+
 
 
                                 </tr>
 
- }
+                            }
                         </tbody>
 
 

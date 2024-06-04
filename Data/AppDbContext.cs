@@ -24,6 +24,8 @@ namespace LLB.Data
         public DbSet<AttachmentInfo> AttachmentInfo { get; set; }
         public DbSet<DirectorDetails> DirectorDetails { get; set; }
         public DbSet<Payments> Payments { get; set; }
+        public DbSet<Queries> Queries{ get; set; }
+        public DbSet<Tasks> Tasks { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

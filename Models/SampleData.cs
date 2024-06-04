@@ -24,44 +24,46 @@ namespace LLB.Models
             }
 
 
-            var user = new ApplicationUser
-            {
-                Name = "XXXX",
-                LastName = "XXXX",
-                Email = "xxxx@example.com",
-                NormalizedEmail = "XXXX@EXAMPLE.COM",
-                UserName = "Owner",
-                NormalizedUserName = "OWNER",
-                PhoneNumber = "+111111111111",
-                EmailConfirmed = true,
-                PhoneNumberConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString("D")
-            };
+            /* var user = new ApplicationUser
+             {
+                 Id= "",
+                 Name = "XXXX",
+                 LastName = "XXXX",
+                 Email = "xxxx@example.com",
+                 NormalizedEmail = "XXXX@EXAMPLE.COM",
+                 UserName = "Owner",
+                 NormalizedUserName = "OWNER",
+                 PhoneNumber = "+111111111111",
+                 EmailConfirmed = true,
+                 PhoneNumberConfirmed = true,
+                 SecurityStamp = Guid.NewGuid().ToString("D")
+             };
 
 
-            if (!context.Users.Any(u => u.UserName == user.UserName))
-            {
-                var password = new PasswordHasher<ApplicationUser>();
-                var hashed = password.HashPassword(user, "Test123!");
-                user.PasswordHash = hashed;
+             if (!context.Users.Any(u => u.UserName == user.UserName))
+             {
+                 var password = new PasswordHasher<ApplicationUser>();
+                 var hashed = password.HashPassword(user, "Test123!");
+                 user.PasswordHash = hashed;
 
-                var userStore = new UserStore<ApplicationUser>(context);
-                var result = userStore.CreateAsync(user);
+                 var userStore = new UserStore<ApplicationUser>(context);
+                 var result = userStore.CreateAsync(user);
 
-            }
+             }
 
-            AssignRoles(serviceProvider, user.Email, roles);
+             AssignRoles(serviceProvider, user.Email, roles);
 
-            context.SaveChangesAsync();
-        }
+             context.SaveChangesAsync();
+         }
 
-        public static async Task<IdentityResult> AssignRoles(IServiceProvider services, string email, string[] roles)
-        {
-            UserManager<ApplicationUser> _userManager = services.GetService<UserManager<ApplicationUser>>();
-            ApplicationUser user = await _userManager.FindByEmailAsync(email);
-            var result = await _userManager.AddToRolesAsync(user, roles);
+         public static async Task<IdentityResult> AssignRoles(IServiceProvider services, string email, string[] roles)
+         {
+             UserManager<ApplicationUser> _userManager = services.GetService<UserManager<ApplicationUser>>();
+             ApplicationUser user = await _userManager.FindByEmailAsync(email);
+             var result = await _userManager.AddToRolesAsync(user, roles);
 
-            return result;
+             return result;
+         }*/
         }
     }
 }

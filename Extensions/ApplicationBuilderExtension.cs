@@ -38,7 +38,7 @@ namespace LLB.Extensions
             return app;
         }
 
-        public static async Task<IApplicationBuilder> InitialiseUsers(this IApplicationBuilder app)
+     /*   public static async Task<IApplicationBuilder> InitialiseUsers(this IApplicationBuilder app)
         {
             var scope = app.ApplicationServices.GetService<IServiceScopeFactory>()?.CreateScope();
             if (scope == null) return app;
@@ -81,7 +81,7 @@ namespace LLB.Extensions
 
 
             return app;
-        }
+        }*/
 
         public static void InitialiseDatabase(this IApplicationBuilder app)
         {

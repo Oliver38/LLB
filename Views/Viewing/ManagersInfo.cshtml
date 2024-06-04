@@ -15,8 +15,7 @@
                         <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>
                     <h5 class="card-title">Manager's Particulars'</h5>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Manager </button>
-
+                   
                 </div>
              
 
@@ -47,8 +46,8 @@
                         }
                         else
                         {
-                            <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                            <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+                            <a href="/Viewing/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                            <a href="/Viewing/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
 
                         }
                     </div>

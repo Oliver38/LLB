@@ -62,7 +62,7 @@ namespace LLB.Controllers
                 return Json($"Email {email} is already in use");
             }
         }
-
+/*
         [HttpPost("Register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register(RegisterViewModel model)
@@ -157,7 +157,7 @@ namespace LLB.Controllers
             }
             return View(model);
         }
-        
+        */
         [HttpGet("Logout")]
         public async Task<IActionResult> Logout()
         {
