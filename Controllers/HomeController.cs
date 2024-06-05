@@ -70,7 +70,16 @@ namespace LLB.Controllers
         [HttpGet("Dashboard")]
         public async Task<IActionResult> DashboardAsync()
         {
-          
+
+            if (User.IsInRole("admin"))
+            {
+                return RedirectToAction("AdminDashboard", "Tasks");
+            }
+            else if (User.IsInRole("inspector"))
+            {
+                return RedirectToAction("Dashboard", "Examination");
+            }
+
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             string id = userId.Id;
             var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();

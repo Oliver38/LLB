@@ -207,7 +207,7 @@ namespace LLB.Controllers
         public async Task<IActionResult> Logout()
         {
             await signInManager.SignOutAsync();
-            return RedirectToAction("LandingPage", "Account");
+            return RedirectToAction("", "");
         }
         [AllowAnonymous]
         public IActionResult Login()
@@ -229,8 +229,10 @@ namespace LLB.Controllers
                     {
                         return Redirect(returnUrl);
                     }
-                    else 
+                    else
+                    
                     {
+                      
                         return RedirectToAction("Dashboard", "Home");
                     }
 

@@ -256,7 +256,7 @@
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="#">
+              <a class="dropdown-item d-flex align-items-center" href="/Auth/Logout">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
@@ -272,100 +272,171 @@
 
   <!-- ======= Sidebar ======= -->
   <aside id="sidebar" class="sidebar">
-      @User.IsInRole("client"){ 
-      <ul class="sidebar-nav" id="sidebar-nav">
+      @if (User.IsInRole("client"))
+      {
+          <ul class="sidebar-nav" id="sidebar-nav">
+              <li class="nav-item">
+                  <a class="nav-link " href="/Home/Dashboard">
+                      <i class="bi bi-grid"></i>
+                      <span>Dashboard</span>
+                  </a>
+              </li><!-- End Dashboard Nav -->
 
-          <li class="nav-item">
-              <a class="nav-link " href="/Home/Dashboard">
-                  <i class="bi bi-grid"></i>
-                  <span>Dashboard</span>
-              </a>
-          </li><!-- End Dashboard Nav -->
+              <li class="nav-item">
+                  <a class="nav-link collapsed" data-bs-target="#license-nav" data-bs-toggle="collapse" href="#">
+                      <i class="bi bi-cogs"></i><span>Licenses</span><i class="bi bi-chevron-down ms-auto"></i>
+                  </a>
+                  <ul id="license-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                      <li>
+                          <a href="/License/Apply">
+                              <i class="bi bi-circle"></i><span>Apply</span>
+                          </a>
+                      </li>
+                      <li>
+                          <a href="/Settings/Licenses">
+                              <i class="bi bi-circle"></i><span>View Licences</span>
+                          </a>
+                      </li>
 
-
-          <li class="nav-item">
-              <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
-                  <i class="bi bi-cogs"></i><span>Settings</span><i class="bi bi-chevron-down ms-auto"></i>
-              </a>
-              <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-                  <li>
-                      <a href="/Settings/CreateLicense">
-                          <i class="bi bi-circle"></i><span>Create License</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="/Settings/Licenses">
-                          <i class="bi bi-circle"></i><span>View Licences</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="/Settings/LicenseRegion">
-                          <i class="bi bi-circle"></i><span>Licence Region</span>
-                      </a>
-                  </li>huy o
-              </ul>
-          </li><!-- End Icons Nav -->
-
-          <li class="nav-item">
-              <a class="nav-link collapsed" data-bs-target="#license-nav" data-bs-toggle="collapse" href="#">
-                  <i class="bi bi-cogs"></i><span>Licenses</span><i class="bi bi-chevron-down ms-auto"></i>
-              </a>
-              <ul id="license-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-                  <li>
-                      <a href="/License/Apply">
-                          <i class="bi bi-circle"></i><span>Apply</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="/Settings/Licenses">
-                          <i class="bi bi-circle"></i><span>View Licences</span>
-                      </a>
-                  </li>
-
-              </ul>
-          </li><!-- End Icons Nav -->
+                  </ul>
+              </li><!-- End Icons Nav -->
 
 
 
-          <li class="nav-item">
-              <a class="nav-link collapsed" href="pages-faq.html">
-                  <i class="bi bi-question-circle"></i>
-                  <span>F.A.Q</span>
-              </a>
-          </li><!-- End F.A.Q Page Nav -->
+              <li class="nav-item">
+                  <a class="nav-link collapsed" href="pages-faq.html">
+                      <i class="bi bi-question-circle"></i>
+                      <span>F.A.Q</span>
+                  </a>
+              </li><!-- End F.A.Q Page Nav -->
 
-          <li class="nav-item">
-              <a class="nav-link collapsed" href="pages-contact.html">
-                  <i class="bi bi-envelope"></i>
-                  <span>Contact</span>
-              </a>
-          </li><!-- End Contact Page Nav -->
+          
+              
 
-          <li class="nav-item">
-              <a class="nav-link collapsed" href="pages-register.html">
-                  <i class="bi bi-card-list"></i>
-                  <span>Register</span>
-              </a>
-          </li><!-- End Register Page Nav -->
-
-          <li class="nav-item">
-              <a class="nav-link collapsed" href="pages-login.html">
-                  <i class="bi bi-box-arrow-in-right"></i>
-                  <span>Login</span>
-              </a>
-          </li><!-- End Login Page Nav -->
-
-          <li class="nav-item">
-              <a class="nav-link " href="/Examination/Dashboard">
-                  <i class="bi bi-grid"></i>
-                  <span>Examiner Dashboard</span>
-              </a>
-          </li><!-- End Dashboard Nav -->
+              <li class="nav-item">
+                  <a class="nav-link collapsed" href="/Auth/Logout">
+                      <i class="bi bi-box-arrow-in-right"></i>
+                      <span>Log Out</span>
+                  </a>
+              </li><!-- End Login Page Nav -->
 
 
-      </ul>
+
+          </ul>
+      }
+      @if (User.IsInRole("admin"))
+      {
+          <ul class="sidebar-nav" id="sidebar-nav">
+
+              <li class="nav-item">
+                  <a class="nav-link " href="/Tasks/AdminDashboard">
+                      <i class="bi bi-grid"></i>
+                      <span>Dashboard</span>
+                  </a>
+              </li><!-- End Dashboard Nav -->
+
+
+              <li class="nav-item">
+                  <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
+                      <i class="bi bi-cogs"></i><span>Tasks</span><i class="bi bi-chevron-down ms-auto"></i>
+                  </a>
+                  <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                      <li>
+                          <a href="/Settings/CreateLicense">
+                              <i class="bi bi-circle"></i><span>Create License</span>
+                          </a>
+                      </li>
+                      <li>
+                          <a href="/Settings/Licenses">
+                              <i class="bi bi-circle"></i><span>View Licences</span>
+                          </a>
+                      </li>
+                      <li>
+                          <a href="/Settings/LicenseRegion">
+                              <i class="bi bi-circle"></i><span>Licence Region</span>
+                          </a>
+                      </li>
+                  </ul>
+              </li><!-- End Icons Nav -->
+          </ul>
+      }
+      @if (User.IsInRole("inspector"))
+      {
+          <ul class="sidebar-nav" id="sidebar-nav">
+
+              <li class="nav-item">
+                  <a class="nav-link " href="/Home/Dashboard">
+                      <i class="bi bi-grid"></i>
+                      <span>Inspector Dashboard</span>
+                  </a>
+              </li><!-- End Dashboard Nav -->
+
+
+              <li class="nav-item">
+                  <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
+                      <i class="bi bi-cogs"></i><span>Settings</span><i class="bi bi-chevron-down ms-auto"></i>
+                  </a>
+                  <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                      <li>
+                          <a href="/Settings/CreateLicense">
+                              <i class="bi bi-circle"></i><span>Create License</span>
+                          </a>
+                      </li>
+                      <li>
+                          <a href="/Settings/Licenses">
+                              <i class="bi bi-circle"></i><span>View Licences</span>
+                          </a>
+                      </li>
+                      <li>
+                          <a href="/Settings/LicenseRegion">
+                              <i class="bi bi-circle"></i><span>Licence Region</span>
+                          </a>
+                      </li>
+                  </ul>
+              </li><!-- End Icons Nav -->
+          </ul>
+
+
       }
 
+      @if (User.IsInRole("secretary"))
+      {
+          <ul class="sidebar-nav" id="sidebar-nav">
+
+              <li class="nav-item">
+                  <a class="nav-link " href="/Home/Dashboard">
+                      <i class="bi bi-grid"></i>
+                      <span>Secretary Dashboard</span>
+                  </a>
+              </li><!-- End Dashboard Nav -->
+
+
+              <li class="nav-item">
+                  <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
+                      <i class="bi bi-cogs"></i><span>Settings</span><i class="bi bi-chevron-down ms-auto"></i>
+                  </a>
+                  <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                      <li>
+                          <a href="/Settings/CreateLicense">
+                              <i class="bi bi-circle"></i><span>Create License</span>
+                          </a>
+                      </li>
+                      <li>
+                          <a href="/Settings/Licenses">
+                              <i class="bi bi-circle"></i><span>View Licences</span>
+                          </a>
+                      </li>
+                      <li>
+                          <a href="/Settings/LicenseRegion">
+                              <i class="bi bi-circle"></i><span>Licence Region</span>
+                          </a>
+                      </li>
+                  </ul>
+              </li><!-- End Icons Nav -->
+          </ul>
+
+
+      }
   </aside><!-- End Sidebar-->
 
   <main id="main" class="main">

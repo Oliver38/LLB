@@ -35,7 +35,21 @@ namespace LLB.Controllers
 
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             string id = userId.Id;
-            var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
+
+
+            List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
+            var tasks = _db.Tasks.Where(f => f.InspectorId == id).ToList();
+            foreach(var task in tasks)
+            {
+                ApplicationInfo getinfo = new ApplicationInfo();
+
+                var applications = _db.ApplicationInfo.Where(a => a.Id == task.ApplicationId).FirstOrDefault();
+
+                getinfo = applications;
+                appinfo.Add(getinfo);
+            }
+
+            //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
             var outletinfo = _db.OutletInfo.ToList();
             var license = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();
@@ -45,7 +59,7 @@ namespace LLB.Controllers
             ViewBag.OutletInfo = outletinfo;
             ViewBag.Regions = regions;
             ViewBag.License = license;
-            ViewBag.Applications = applications;
+            ViewBag.Applications = appinfo;
             return View();
         }
 
@@ -390,7 +404,7 @@ namespace LLB.Controllers
         public IActionResult Approve(string Id)
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
-            application.Status = "approved";
+            application.Status = "recommended";
             _db.Update(application);
             _db.SaveChanges();
             return RedirectToAction("Dashboard", "Examination");
