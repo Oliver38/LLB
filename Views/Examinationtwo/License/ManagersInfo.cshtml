@@ -15,11 +15,12 @@
                         <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>
                     <h5 class="card-title">Manager's Particulars'</h5>
-                   
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Manager </button>
+
                 </div>
              
 
-                <table class="table table-responsiveß table-hover table-stri ped">
+                <table class="table table-responsiveß table-hover table-striped">
                     <thead>
 
                     </thead>
@@ -30,13 +31,12 @@
                             <td>@manager.Name</td>
                             <td>@manager.Surname</td>
                             <td>@manager.NationalId</td>
-                            <td><a target="_blank" href="~/@manager.Attachment"> National Id Copy</a></td>
+                            <td><a href="~/@manager.Attachment"> National Id Copy</a></td>
                          
                         </tr>
                         }
                     </tbody>
                 </table>
-
 
 
                 <div class="card-footer">
@@ -47,8 +47,8 @@
                         }
                         else
                         {
-                            <a href="/Examination/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                            <a href="/Examination/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+                            <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                            <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
 
                         }
                     </div>

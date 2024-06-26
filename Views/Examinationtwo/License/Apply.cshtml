@@ -1,4 +1,4 @@
-﻿@{
+﻿D@{
     Layout = "_LayoutMain";
 
 
@@ -17,29 +17,29 @@
                 <form action="/License/Apply" method="post" ß enctytpe="multipart/form-data" class="row g-3">
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Name</label>
-                        <input readonly type="text" name="licenseName" value="@ViewBag.User.Name" readonly class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.Name" readonly class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Surname</label>
-                        <input readonly type="text" value="@ViewBag.User.LastName" name="licenseName" class="form-control" id="inputName5">
+                        <input type="text" value="@ViewBag.User.LastName" name="licenseName" class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">DOB</label>
-                        <input readonly type="text" name="licenseName" value="@ViewBag.User.DOB" class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.DOB" class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Gender</label>
-                        <input readonly type="text" name="licenseName" value="@ViewBag.User.Gender" class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.Gender" class="form-control" id="inputName5">
                     </div>
 
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Business Name</label>
-                        <input readonly type="text" name="businessName" value="" class="form-control" id="inputName5">
+                        <input type="text" name="businessName" value="" class="form-control" id="inputName5">
                     </div>
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
-                        <select readonly type="text" name="LicenseTypeID" value="" class="form-control" id="inputName5">
+                        <select type="text" name="LicenseTypeID" value="" class="form-control" id="inputName5">
                             @foreach (var licensetype in ViewBag.License)
                             {
                                 <option value="@licensetype.Id">@licensetype.LicenseName </option>
@@ -88,42 +88,42 @@ else
                 <form action="/License/Apply" method="post" ß enctytpe="multipart/form-data" class="row g-3">
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Name</label>
-                        <input readonly type="text" name="licenseName" value="@ViewBag.User.Name" readonly class="form-control" id="inputName5">
-                        <input readonly type="hidden" name="id" value="@ViewBag.ApplicationInfo.Id" readonly class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.Name" readonly class="form-control" id="inputName5">
+                        <input type="hidden" name="id" value="@ViewBag.ApplicationInfo.Id" readonly class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Surname</label>
-                        <input readonly type="text" value="@ViewBag.User.LastName" name="licenseName" class="form-control" id="inputName5">
+                        <input type="text" value="@ViewBag.User.LastName" name="licenseName" class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">DOB</label>
-                        <input readonly type="text" name="licenseName" value="@ViewBag.User.DOB" class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.DOB" class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Gender</label>
-                        <input readonly type="text" name="licenseName" value="@ViewBag.User.Gender" class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.Gender" class="form-control" id="inputName5">
                     </div>
 
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Business Name</label>
-                        <input readonly type="text" name="businessName" value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="inputName5">
+                        <input type="text" name="businessName" value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="inputName5">
                     </div>
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
                         <select type="text" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID" class="form-control" id="inputName5">
                             @foreach (var licensetype in ViewBag.License)
-                            {
+                                {
                                 @if (@ViewBag.ApplicationInfo.LicenseTypeID == @licensetype.Id)
-                                {
+                                    {
                                     <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
-                                }
-                                else
-                                {
-                                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
+                                    }
+                                    else
+                                    {
+                            <option  value="@licensetype.Id">@licensetype.LicenseName </option>
 
+                                    }
                                 }
-                            }
                         </select>
                     </div>
                     <div class="col-md-6">
@@ -137,7 +137,7 @@ else
                                 }
                                 else
                                 {
-                                    <option value="@region.Id">@region.RegionName </option>
+                                    <option  value="@region.Id">@region.RegionName </option>
                                 }
                             }
                             }
@@ -150,20 +150,15 @@ else
                         </div>
                     </div>
 
-
-                </form><!-- End Multi Columns Form -->
-                
-                <form>
-                    <div class="row"> 
-                        <input type="hidden" value="@ViewBag.ApplicationInfo.Id" />
-                        <textarea name="query" class="col-md-12"></textarea>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
                     </div>
-                </form>
-
+                </form><!-- End Multi Columns Form -->
                 <div class="card-footer">
                     <div class="text-center">
-                        <a href="/Examination/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Next</a>
-
+                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Next</a>
+                        
                     </div>
                 </div>
 

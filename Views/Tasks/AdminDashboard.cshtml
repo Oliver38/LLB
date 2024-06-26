@@ -161,6 +161,56 @@
             </div>
         </div>
 
+
+        <div class="card">
+
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+
+                    <h5 class="card-title">Assigned Tasks</h5>
+                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    *@
+                </div>
+
+                <div class="row">
+
+                    <table class="table table-responsiveß table-hover table-striped">
+
+
+                        <thead>
+                        <th>Task Id </th>
+
+                        <th>Task Status</th>
+                        <th>Task Status</th>
+                        </thead>
+                        <tbody>
+                            @foreach (var unass in ViewBag.Assigned)
+                            {
+                                <tr>
+
+
+                                    <td>@unass.Id </td>
+                                    <td>@unass.Status</td>
+                                    <td>@unass.InspectorId</td>
+                                    <td><a href="/Tasks/AssignTask?Id=@unass.Id" class="btn btn-primary">Assign Task</a></td>
+                                </tr>
+
+
+                            }
+                        </tbody>
+
+
+
+                    </table>
+                </div>
+
+
+
+
+
+
+            </div>
+        </div>
     </div>
 
 

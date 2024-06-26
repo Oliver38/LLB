@@ -12,8 +12,8 @@ namespace LLB.Controllers
 {
     
     [Route("")]
-    [Route("Examination")]
-    public class ExaminationController : Controller
+    [Route("Examinationtwo")]
+    public class ExaminationtwoController : Controller
     {
         
 
@@ -22,7 +22,7 @@ namespace LLB.Controllers
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IDNTCaptchaValidatorService _validatorService;
 
-        public ExaminationController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public ExaminationtwoController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
             this.userManager = userManager;
@@ -404,7 +404,7 @@ namespace LLB.Controllers
         public IActionResult Approve(string Id)
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
-            application.Status = "examined once";
+            application.Status = "recommended";
             _db.Update(application);
             _db.SaveChanges();
             return RedirectToAction("Dashboard", "Examination");

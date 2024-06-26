@@ -18,8 +18,8 @@
 
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Trading Name</label>
-                        <input readonly type="text" name="tradingName" value="" class="form-control" id="inputName5">
-                        <input readonly type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
+                        <input type="text" name="tradingName" value="" class="form-control" id="inputName5">
+                        <input type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
                     </div>
 
                     <div class="col-12">
@@ -30,12 +30,12 @@
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Province</label>
-                        <input readonly type="text" name="province" value="" class="form-control" id="inputName5">
+                        <input type="text" name="province" value="" class="form-control" id="inputName5">
                     </div>
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">City</label>
-                        <input readonly type="text" name="city" value="" class="form-control" id="inputName5">
+                        <input type="text" name="city" value="" class="form-control" id="inputName5">
                     </div>
 
 
@@ -48,38 +48,37 @@
                     </div>
                 </form><!-- End Multi Columns Form -->
 
-                <div class="row">
-                    @if (ViewBag.DirectorsCount <= 0)
-                    {
+
+                @if (ViewBag.DirectorsCount <= 0)
+                {
 
 
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                    }
-                    else
-                    {
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                }
+                else
+                {
 
 
-                        <table class="table table-responsiveß table-hover table-striped">
-                            @foreach (var director in ViewBag.Directors)
-                            {
-                                <tr>
-                                    <th scope="row">@director.Name</th>
-                                    <th scope="row">@director.Surname</th>
-                                    <th scope="row">@director.Address</th>
-                                    <th scope="row">
-                                        @* <button type="button" class="btn btn-primary">View</button>
-                            <button type="button" class="btn btn-default">Edit</button>
-                            <button type="button" class="btn btn-danger">Delete </button>
-                                        *@
-                                    </th>
+                    <table class="table table-responsiveß table-hover table-striped">
+                        @foreach (var director in ViewBag.Directors)
+                        {
+                            <tr>
+                                <th scope="row">@director.Name</th>
+                                <th scope="row">@director.Surname</th>
+                                <th scope="row">@director.Address</th>
+                                <th scope="row">
+                                    <button type="button" class="btn btn-primary">View</button>
+                                    <button type="button" class="btn btn-default">Edit</button>
+                                    <button type="button" class="btn btn-danger">Delete </button>
 
-                                </tr>
+                                </th>
 
-                            }
-                        </table>
+                            </tr>
 
-                    }
-                </div>
+                        }
+                    </table>
+                   
+                }
                 <div class="card-footer">
                     <div class="text-center">
                         <a href="/License/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
@@ -115,9 +114,9 @@ else
 
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Trading Name</label>
-                        <input readonly type="text" name="tradingName" value="@ViewBag.OutletInfo.TradingName" class="form-control" id="inputName5">
-                        <input readonly type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
-                        <input readonly type="hidden" name="Id" value="@ViewBag.OutletInfo.Id" class="form-control" id="inputName5">
+                        <input type="text" name="tradingName" value="@ViewBag.OutletInfo.TradingName" class="form-control" id="inputName5">
+                        <input type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
+                        <input type="hidden" name="Id" value="@ViewBag.OutletInfo.Id" class="form-control" id="inputName5">
                     </div>
 
                     <div class="col-12">
@@ -128,12 +127,12 @@ else
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Province</label>
-                        <input readonly type="text" name="province" value="@ViewBag.OutletInfo.Province" class="form-control" id="inputName5">
+                        <input type="text" name="province" value="@ViewBag.OutletInfo.Province" class="form-control" id="inputName5">
                     </div>
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">City</label>
-                        <input readonly type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
+                        <input type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
                     </div>
 
 
@@ -143,38 +142,37 @@ else
                    
                 </form><!-- End Multi Columns Form -->
 
-                <div class="row">
-                    @if (ViewBag.DirectorsCount <= 0)
-                    {
+
+                @if (ViewBag.DirectorsCount <= 0)
+                {
 
 
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                    }
-                    else
-                    {
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                }
+                else
+                {
 
 
-                        <table class="table table-responsiveß table-hover table-striped">
-                            @foreach (var director in ViewBag.Directors)
-                            {
-                                <tr>
-                                    <th scope="row">@director.Name</th>
-                                    <th scope="row">@director.Surname</th>
-                                    <th scope="row">@director.Address</th>
-                                    <th scope="row">
-                                        @*     <button type="button" class="btn btn-primary">View</button>
-                            <button type="button" class="btn btn-default">Edit</button>
-                            <button type="button" class="btn btn-danger">Delete </button>
-                                        *@
-                                    </th>
+                    <table class="table table-responsiveß table-hover table-striped">
+                        @foreach (var director in ViewBag.Directors)
+                        {
+                            <tr>
+                                <th scope="row">@director.Name</th>
+                                <th scope="row">@director.Surname</th>
+                                <th scope="row">@director.Address</th>
+                                <th scope="row">
+                                    <button type="button" class="btn btn-primary">View</button>
+                                    <button type="button" class="btn btn-default">Edit</button>
+                                    <button type="button" class="btn btn-danger">Delete </button>
 
-                                </tr>
+                                </th>
 
-                            }
-                        </table>
+                            </tr>
 
-                    }
-                </div>
+                        }
+                    </table>
+                  
+                }
                 <div class="card-footer">
                     <div class="text-center">
                         <a href="/Examination/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
@@ -201,16 +199,16 @@ else
                     <div class="row">
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label">Name</label>
-                            <input readonly type="hidden" name="applicationId" class="form-control" value="@ViewBag.Application.Id" id="Id">
-                            <input readonly type="text" name="name" class="form-control" id="name">
+                            <input type="hidden" name="applicationId" class="form-control" value="@ViewBag.Application.Id" id="Id">
+                            <input type="text" name="name" class="form-control" id="name">
                         </div>
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label">Surname</label>
-                            <input readonly type="text" name="surname" class="form-control" id="surname">
+                            <input type="text" name="surname" class="form-control" id="surname">
                         </div>
                         <div class="col-md-12">
                             <label for="inputName5" class="form-label">National Id</label>
-                            <input readonly type="text" name="nationalId" class="form-control" id="TownFee">
+                            <input type="text" name="nationalId" class="form-control" id="TownFee">
                         </div>
                         <div class="col-md-12">
                             <label for="inputName5" class="form-label">Address</label>

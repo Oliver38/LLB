@@ -14,7 +14,7 @@
                 <div class="text-center">
                     <h5 class="card-title text-success">@TempData["result"]</h5>
                 </div>
-                <h5 class="card-title">Attachments</h5>
+                <h5 class="card-title">Manager's Particulars'</h5>
                 @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
                 *@
             </div>
@@ -34,11 +34,11 @@
                                 <td>@attachment.DocumentTitle </td>
 
                                 <td>
-                                    <input readonly type="file" name="file" class="form-control" />
-                                    <input readonly type="hidden" name="id" value="@attachment.Id" />
-                                    <input readonly type="hidden" name="applicationId" value="@attachment.ApplicationId" />
+                                    <input type="file" name="file" class="form-control" />
+                                    <input type="hidden" name="id" value="@attachment.Id" />
+                                    <input type="hidden" name="applicationId" value="@attachment.ApplicationId" />
                                 </td>
-                                
+                                <td><input type="submit" class="btn btn-primary" /> </td>
 
 
                             </tr>
@@ -49,8 +49,8 @@
                         {
                 <tr>
                     <td>@attachment.DocumentTitle </td>
-                    <td><a href="~/@attachment.DocumentLocation" target="_blank">View Here</a></td>
-                    
+                    <td><a href="~/@attachment.DocumentLocation">View Here</a></td>
+                    <td><a href="#" class="btn btn-danger">Remove</a></td>
                 </tr>
 
                         }
@@ -72,12 +72,12 @@
                 <div class="text-center">
                     @if (ViewBag.Attachments == null)
                     {
-                        <a href="/Examination/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
                     }
                     else
                     {
-                        <a href="/Examination/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                        <a href="/Examination/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+                        <a href="/License/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/License/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
 
                     }
                 </div>
@@ -102,8 +102,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label">Name</label>
-                            <input readonly type="hidden" name="applicationId" class="form-control" value="@ViewBag.ApplicationInfo.Id" id="Id">
-                            <input readonly type="text" name="name" class="form-control" id="name">
+                            <input type="hidden" name="applicationId" class="form-control" value="@ViewBag.ApplicationInfo.Id" id="Id">
+                            <input type="text" name="name" class="form-control" id="name">
                         </div>
 
                         @foreach (var attachment in ViewBag.Attachments)

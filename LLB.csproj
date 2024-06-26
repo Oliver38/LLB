@@ -48,6 +48,7 @@
     <None Remove="Views\Roles\" />
     <None Remove="Views\Viewing\" />
     <None Remove="Views\Tasks\" />
+    <None Remove="Views\Examinationtwo\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
@@ -58,6 +59,7 @@
     <Folder Include="Views\Roles\" />
     <Folder Include="Views\Viewing\" />
     <Folder Include="Views\Tasks\" />
+    <Folder Include="Views\Examinationtwo\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

@@ -31,6 +31,7 @@ namespace LLB.Controllers
             this.signInManager = signInManager;
             _validatorService = validatorService;
         }
+
         [HttpGet("AdminDashboard")]
         public IActionResult AdminDashboard()
         {
@@ -49,6 +50,7 @@ namespace LLB.Controllers
         [HttpGet("AssignTask")]
         public async Task<IActionResult> AssignTaskAsync(string Id)
         {
+
             var task = _db.Tasks.Where(a => a.Id == Id).FirstOrDefault();
             var application = _db.ApplicationInfo.Where(s => s.Id == task.ApplicationId).FirstOrDefault();
            
