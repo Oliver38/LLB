@@ -38,7 +38,7 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(f => f.InspectorId == id).ToList();
+            var tasks = _db.Tasks.Where(f => f.VerifierId == id).ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();

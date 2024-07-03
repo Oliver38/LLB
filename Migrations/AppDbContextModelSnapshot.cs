@@ -502,6 +502,9 @@ namespace LLB.Migrations
                     b.Property<string>("InspectorId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Query")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Stage")
                         .HasColumnType("nvarchar(max)");
 
@@ -530,10 +533,19 @@ namespace LLB.Migrations
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("InspectorId")
+                    b.Property<DateTime?>("RecommendationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RecommenderId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("VerificationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("VerifierId")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

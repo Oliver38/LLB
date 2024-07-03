@@ -1,0 +1,128 @@
+﻿
+
+@{
+    Layout = "_LayoutMain";
+}
+
+
+<div b-36j9gympe5 class="row">
+
+
+
+    <div class="row">
+        <div class="card">
+
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+
+                    <h5 class="card-title">Applications For Verifications</h5>
+                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    *@
+                </div>
+
+
+
+
+                <div class="row">
+
+                    <table class="table table-responsiveß table-hover table-striped">
+
+
+                        <thead>
+                        <th>Trading Name </th>
+                        <th>Operating Address </th>
+                        <th>Application Date </th>
+                        <th>License </th>
+                        <th>For </th>
+                        <th>Status </th>
+                        </thead>
+                        <tbody>
+                            @foreach (var application in ViewBag.Applications)
+                            {
+
+                                <tr>
+                                    <td>
+                                        @foreach (var outlet in ViewBag.OutletInfo)
+                                        {
+                                            if (outlet.ApplicationId == application.Id)
+                                            {
+                                                @outlet.TradingName
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        @foreach (var outlet in ViewBag.OutletInfo)
+                                        {
+                                            if (outlet.ApplicationId == application.Id)
+                                            {
+                                                @outlet.Address
+                                            }
+                                        }
+                                    </td>
+
+                                    <td>@application.ApplicationDate</td>
+
+                                    <td>
+                                        @foreach (var licence in ViewBag.License)
+                                        {
+                                            if (licence.Id == application.LicenseTypeID)
+                                            {
+                                                @licence.LicenseName
+                                            }
+                                        }
+
+                                    </td>
+
+
+                                    <td>
+                                        @foreach (var region in ViewBag.Regions)
+                                        {
+                                            if (region.Id == application.ApplicationType)
+                                            {
+                                                @region.RegionName
+                                            }
+                                        }
+
+                                    </td>
+
+                                    <td>
+                                        @if (application.Status == "inprogress")
+                                        {
+                                            <span class="text-warning">@application.Status</span>
+                                        }
+                                        else if (application.Status == "submitted")
+                                        { <span class="text-success">@application.Status</span>}
+                                    else if (application.Status == "verified")
+                                    { <span class="text-success">@application.Status</span>}
+                                    </td>
+
+                                    <td>
+                                        @if (application.Status == "verified")
+                                        {}else{<a href="/Verify/Apply?Id=@application.Id" class="btn btn-primary">View</a>}
+                                    </td>
+
+
+                                </tr>
+
+                            }
+                        </tbody>
+
+
+
+                    </table>
+                </div>
+
+
+
+
+
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+

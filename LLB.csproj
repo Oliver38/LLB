@@ -4,6 +4,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DockerComposeProjectPath>docker-compose.dcproj</DockerComposeProjectPath>
+    <UserSecretsId>36113aa8-0b66-4a98-8a16-0966325b4666</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
@@ -37,6 +39,7 @@
     <PackageReference Include="MySqlConnector" Version="2.3.7" />
     <PackageReference Include="MySql.Data.EntityFrameworkCore" Version="8.0.22" />
     <PackageReference Include="Paynow" Version="1.2.0" />
+    <PackageReference Include="IronPdf" Version="2024.6.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,22 +47,22 @@
     <None Remove="Migrations\" />
     <None Remove="Views\License\" />
     <None Remove="Views\License\License\" />
-    <None Remove="Views\Examination\" />
     <None Remove="Views\Roles\" />
     <None Remove="Views\Viewing\" />
     <None Remove="Views\Tasks\" />
     <None Remove="Views\Examinationtwo\" />
+    <None Remove="Views\Verify\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
     <Folder Include="Migrations\" />
     <Folder Include="Views\License\" />
     <Folder Include="Views\License\License\" />
-    <Folder Include="Views\Examination\" />
     <Folder Include="Views\Roles\" />
     <Folder Include="Views\Viewing\" />
     <Folder Include="Views\Tasks\" />
     <Folder Include="Views\Examinationtwo\" />
+    <Folder Include="Views\Verify\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

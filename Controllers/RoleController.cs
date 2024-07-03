@@ -50,7 +50,7 @@ namespace LLB.Controllers
         {
             var roles = new[]
              {
-                    "super user", "admin", "inspector", "secretary", "client",
+                    "super user", "admin", "inspector", "secretary", "client","verifier","recommender"
                 };
 
             //var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -278,6 +278,114 @@ namespace LLB.Controllers
                 }
             }
 
+
+
+
+
+            // verifier
+            var verifier = await userManager.FindByEmailAsync("verifier@verifier.com");
+            if (verifier == null)
+            {
+                var user = new ApplicationUser
+                {
+                    Name = "verifier@verifier.com",
+                    Nationality = "Zimbabwean",
+                    ApplicationBy = "verifier@verifier.com",
+                    LockoutEnd = DateTime.Now,
+                    UserPhoneNumber = "0772772772",
+                    LastName = "verifier@verifier.com",
+                    PhysicalAddress = "verifier@verifier.com",
+                    Email = "verifier@verifier.com",
+                    UserEmail = "verifier@verifier.com",
+                    UserName = "verifier@verifier.com",
+                    IsActive = true,
+                    PhoneNumber = "0772772772",
+                    NatID = "63772T36",
+                    DateOfApplication = DateTime.Now,
+                    DOB = DateTime.Now.AddYears(-20),
+                    CountryOfResidence = "Zimbabwe",
+                    Gender = "male",
+                    Province = "Harare"
+                };
+                var result = await userManager.CreateAsync(user, "Test123!");
+                if (result.Succeeded)
+                {
+                    if (await roleManager.RoleExistsAsync("verifier"))
+                    {
+
+                        IdentityResult addrolea = await userManager.AddToRoleAsync(user, "verifier");
+                        IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
+                        if (addrolea.Succeeded && addroleb.Succeeded)
+                        {
+                            TempData["success"] = "user has successfully been created";
+                        }
+
+                    }
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                        TempData["error"] = error.Description;
+
+                    }
+                }
+            }
+
+
+
+
+            // verifier
+            var recommender = await userManager.FindByEmailAsync("recommender@recommender.com");
+            if (recommender == null)
+            {
+                var user = new ApplicationUser
+                {
+                    Name = "recommender@recommender.com",
+                    Nationality = "Zimbabwean",
+                    ApplicationBy = "recommender@recommender.com",
+                    LockoutEnd = DateTime.Now,
+                    UserPhoneNumber = "0772772772",
+                    LastName = "recommender@recommender.com",
+                    PhysicalAddress = "recommender@recommender.com",
+                    Email = "recommender@recommender.com",
+                    UserEmail = "recommender@recommender.com",
+                    UserName = "recommender@recommender.com",
+                    IsActive = true,
+                    PhoneNumber = "0772772772",
+                    NatID = "63772T36",
+                    DateOfApplication = DateTime.Now,
+                    DOB = DateTime.Now.AddYears(-20),
+                    CountryOfResidence = "Zimbabwe",
+                    Gender = "male",
+                    Province = "Harare"
+                };
+                var result = await userManager.CreateAsync(user, "Test123!");
+                if (result.Succeeded)
+                {
+                    if (await roleManager.RoleExistsAsync("recommender"))
+                    {
+
+                        IdentityResult addrolea = await userManager.AddToRoleAsync(user, "recommender");
+                        IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
+                        if (addrolea.Succeeded && addroleb.Succeeded)
+                        {
+                            TempData["success"] = "user has successfully been created";
+                        }
+
+                    }
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                        TempData["error"] = error.Description;
+
+                    }
+                }
+            }
             return View();
         }
 

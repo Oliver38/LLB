@@ -75,6 +75,11 @@ namespace LLB.Controllers
             {
                 return RedirectToAction("AdminDashboard", "Tasks");
             }
+           
+            else if (User.IsInRole("verifier"))
+            {
+                return RedirectToAction("Dashboard", "Verify");
+            }
             else if (User.IsInRole("inspector"))
             {
                 return RedirectToAction("Dashboard", "Examination");

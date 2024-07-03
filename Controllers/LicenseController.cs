@@ -441,7 +441,7 @@ namespace LLB.Controllers
 
             if (gateway == "paynow")
             {
-                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == Id).FirstOrDefault();
+                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
                 var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
                 
                 var status = paynow.PollTransaction(paymentTrans.PollUrl);
@@ -457,6 +457,34 @@ namespace LLB.Controllers
                 // applicationInfo.PaymentFee = paymentTrans.Amount;
                 applicationInfo.PaymentId = paymentTrans.Id;
                 applicationInfo.PaymentStatus = statusdata["status"];
+                _db.Update(applicationInfo);
+                _db.SaveChanges();
+            }
+
+
+            var paymentTransb = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
+
+            if (paymentTransb == null)
+            {
+
+            }
+                else
+            {
+                var paynowb = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+
+                var statusb = paynowb.PollTransaction(paymentTransb.PollUrl);
+
+                var statusdatab = statusb.GetData();
+                paymentTransb.PaynowRef = statusdatab["paynowreference"];
+                paymentTransb.PaymentStatus = statusdatab["status"];
+                paymentTransb.Status = statusdatab["status"];
+                paymentTransb.DateUpdated = DateTime.Now;
+
+                _db.Update(paymentTransb);
+                _db.SaveChanges();
+                // applicationInfo.PaymentFee = paymentTrans.Amount;
+                applicationInfo.PaymentId = paymentTransb.Id;
+                applicationInfo.PaymentStatus = statusdatab["status"];
                 _db.Update(applicationInfo);
                 _db.SaveChanges();
             }
@@ -490,7 +518,7 @@ namespace LLB.Controllers
             int managerscount = managers.Count();
             finaldata.ManagersCount = managerscount;
 
-            var payment = _db.Payments.Where(s => s.ApplicationId == Id).FirstOrDefault();
+            var payment = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
 
             if (regiondata.RegionName == "Town")
             {
@@ -550,8 +578,9 @@ namespace LLB.Controllers
                 _db.SaveChanges();
             }
             TempData["result"] = error;
+            var applicationInfob = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
 
-            ViewBag.ApplicationInfo = applicationInfo;
+            ViewBag.ApplicationInfo = applicationInfob;
             ViewBag.FinalData = finaldata;
             ViewBag.Payment = payment;
 
@@ -567,8 +596,8 @@ namespace LLB.Controllers
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-            paynow.ResultUrl = "https://localhost:44316/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "https://localhost:44316/License/Finalising?Id=" + Id+"&gateway=paynow";
+            paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
+            paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id+"&gateway=paynow";
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
             
@@ -632,11 +661,12 @@ namespace LLB.Controllers
 
 
         [HttpGet("Submit")]
-        public IActionResult Submit(string Id)
+        public async Task<IActionResult> SubmitAsync(string Id)
         {
            
             var payment = _db.Payments.Where(s => s.ApplicationId == Id && s.Status == "Paid").FirstOrDefault();
-            if (payment == null || payment.PaymentStatus == "not paid")
+            //var paymentvet = _db.Payments.Where(c => c.ApplicationId == Id && c.Status == "POP").FirstOrDefault();
+            if (payment == null || payment.PaymentStatus == "not paid" || payment.PaymentStatus == "Cancelled")
             {
                 string error = "Please make payment to submit application";
                  return RedirectToAction("Finalising", new { Id = Id, error = error });
@@ -647,14 +677,19 @@ namespace LLB.Controllers
             {
                 var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
                 application.Status = "submitted";
-                application.ExaminationStatus = "unassigned";
+                application.ExaminationStatus = "verification";
                 _db.Update(application);
                 _db.SaveChanges();
                 Tasks tasks = new Tasks();
                 tasks.Id  = Guid.NewGuid().ToString();
                 tasks.ApplicationId = application.Id;
                 //tasks.AssignerId
-                tasks.Status = "unassigned";
+
+                //auto allocation to replace
+                var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                tasks.VerifierId= userId.Id;
+               tasks.AssignerId = "system";
+                tasks.Status = "assigned";
                 tasks.DateAdded = DateTime.Now;
                 tasks.DateUpdated = DateTime.Now;
                 _db.Add(tasks);
@@ -663,7 +698,10 @@ namespace LLB.Controllers
                 return RedirectToAction("Dashboard", "Home");
             }
 
-            
+
+            var paymentvet = _db.Payments.Where(c => c.ApplicationId == Id && c.Status == "POP").FirstOrDefault();
+
+
 
         }
 

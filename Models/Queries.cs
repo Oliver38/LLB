@@ -12,6 +12,7 @@ namespace LLB.Models
         public string? ApplicationId { get; set; }
         public string? InspectorId { get; set; }
         public string? Stage { get; set; }
+        public string? Query { get; set; }
         public string? Status { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }

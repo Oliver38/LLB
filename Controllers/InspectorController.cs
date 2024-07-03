@@ -69,7 +69,7 @@ namespace LLB.Controllers
             string id = userId.Id;
             task.AssignerId = id;
             task.Status = "assigned";
-            task.InspectorId = tasks.InspectorId;
+            task.VerifierId = tasks.VerifierId;
             _db.Update(task);
             _db.SaveChanges();
 

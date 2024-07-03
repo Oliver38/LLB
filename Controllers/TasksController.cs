@@ -39,6 +39,8 @@ namespace LLB.Controllers
             var unassignedtasks = _db.Tasks.Where(a => a.Status == "unassigned").ToList();
             var assignedtasks = _db.Tasks.Where(a => a.Status == "assigned").ToList();
             var completedtasks = _db.Tasks.Where(a => a.Status == "completed").ToList();
+            //var unverifiedtasks = _db.Tasks.Where(a => a.Status == "completed").ToList();
+            //var completedtasks = _db.Tasks.Where(a => a.Status == "completed").ToList();
 
             ViewBag.UnAssigned = unassignedtasks;
             ViewBag.Assigned = assignedtasks;
@@ -71,7 +73,7 @@ namespace LLB.Controllers
             string id = userId.Id;
             task.AssignerId = id;
             task.Status = "assigned";
-            task.InspectorId = tasks.InspectorId;
+           // task.InspectorId = tasks.InspectorId;
             _db.Update(task);
             _db.SaveChanges();
 
