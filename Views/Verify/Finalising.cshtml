@@ -69,8 +69,16 @@
         <div class="card-footer">
             <div class="text-center">
                 <a href="/Verify/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                <a href="/Verify/Approve?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Approve</a>
+                @if (ViewBag.HasQuery.Count > 0)
+                {
+                    <a href="/Verify/HasQuery?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Submit Query</a>
 
+                }
+                else
+                {
+                    <a href="/Verify/Approve?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Approve Verification</a>
+
+                }
             </div>
         </div>
     </div>

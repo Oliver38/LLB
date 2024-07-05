@@ -32,6 +32,27 @@
                         <input type="text" name="licenseName" value="@ViewBag.User.Gender" class="form-control" id="inputName5">
                     </div>
 
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Nationality</label>
+                        <input type="text"readonly name="nationality" value="@ViewBag.User.Nationality" class="form-control" id="inputName5">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">National ID/Passport</label>
+                        <input type="text" readonly name="idPass" value="@ViewBag.User.NatID" class="form-control" id="inputName5">
+                    </div>
+
+
+                    @if (@ViewBag.User.Nationality != "Zimbabwe")
+                    {
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Place of Entry</label>
+                            <input type="text" name="placeOfEntry" value="" class="form-control" id="inputName5">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Date of Entry</label>
+                            <input type="date" name="dateofEntryIntoZimbabwe" value="" class="form-control" id="inputName5">
+                        </div>
+                    }
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Business Name</label>
                         <input type="text" name="businessName" value="" class="form-control" id="inputName5">
@@ -97,12 +118,34 @@ else
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">DOB</label>
-                        <input type="text" name="licenseName" value="@ViewBag.User.DOB" class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.DOB.Date" class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Gender</label>
                         <input type="text" name="licenseName" value="@ViewBag.User.Gender" class="form-control" id="inputName5">
                     </div>
+
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Nationality</label>
+                        <input type="text" name="nationality" value="@ViewBag.User.Nationality" class="form-control" id="inputName5">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">National ID/Passport</label>
+                        <input type="text" name="idPass" value="@ViewBag.User.NatID" class="form-control" id="inputName5">
+                    </div>
+
+
+                    @if (@ViewBag.User.Nationality != "Zimbabwe")
+                    {
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Place of Entry</label>
+                            <input type="text" name="placeOfEntry" value="@ViewBag.ApplicationInfo.PlaceOfEntry" class="form-control" id="inputName5">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Date of Entry</label>
+                            <input type="date" name="dateofEntryIntoZimbabwe" value="@ViewBag.ApplicationInfo.DateofEntryIntoZimbabwe" class="form-control" id="inputName5">
+                        </div>
+                    }
 
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Business Name</label>

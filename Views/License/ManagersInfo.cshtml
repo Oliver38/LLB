@@ -22,16 +22,26 @@
 
                 <table class="table table-responsiveß table-hover table-striped">
                     <thead>
-
+                        <tr>
+                            <th>Name</th>
+                            <th>Surname</th>
+                            <th>National Id</th>
+                            <th>National Id Copy</th>
+                            <th>Fingerpints Copy</th>
+                        </tr>
                     </thead>
                     <tbody>
                         @foreach (var manager in ViewBag.ManagersInfo)
                         {
                         <tr>
                             <td>@manager.Name</td>
-                            <td>@manager.Surname</td>
+                            <td>@manager.Surname</td> 
                             <td>@manager.NationalId</td>
-                            <td><a target="_blank" href="~/@manager.Attachment"> National Id Copy</a></td>
+                            <td>@if (manager.Attachment == "" || manager.Attachment == null) {<a>No Attachment</a> }
+                                else{<a target="_blank" href="~/@manager.Attachment"> National Id Copy</a>}</td>
+                            <td>@if (manager.Fingerprints == "" || manager.Fingerprints == null) {<a>No Attachment</a>}
+                                else
+                                {<a target="_blank" href="~/@manager.Fingerprints"> Fingerprints</a>}</td>
                          
                         </tr>
                         }
@@ -93,6 +103,11 @@
                         <div class="col-md-12">
                             <label for="inputName5" class="form-label">National Id Copy</label>
                             <input type="file" name="file" class="form-control" id="file">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">Fingerprints Copy</label>
+                            <input type="file" name="fileb" class="form-control" id="fileb">
                         </div>
                     </div>
                 </div>

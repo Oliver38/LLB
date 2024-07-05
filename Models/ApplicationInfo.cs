@@ -19,16 +19,17 @@ namespace LLB.Models
         public string? RefNum { get; set; }
         public string? ExaminationStatus { get; set; }
         public decimal? PaymentFee { get; set; }
-
-        //* Name**
-        //* Surname**
-        //* DOB**
-        //* Gender**
         public string? PlaceOfBirth { get; set; }
         public string? DateofEntryIntoZimbabwe { get; set; }
         public string? PlaceOfEntry { get; set; }
         public string? OperationAddress { get; set; }//Place of operation
+
         public string? BusinessName { get; set; }//Place of operation
+        public string? Nationality { get; set; }//Place of operation
+        public string? IdPass { get; set; }//Place of operation
+        //public string? Foreigner  { get; set; }//Place of operation
+
+
         public string? Status { get; set; }
         public DateTime ApplicationDate { get; set; }
         public DateTime DateUpdated { get; set; }

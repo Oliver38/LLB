@@ -81,8 +81,8 @@ namespace LLB.Controllers
                 info.PaymentFee = 0;
 
                 info.PlaceOfBirth = "";
-                info.DateofEntryIntoZimbabwe = "";
-                info.PlaceOfEntry = "";
+                //info.DateofEntryIntoZimbabwe = "";
+                //info.PlaceOfEntry = "";
                 info.RejectionReason = "";
 
 
@@ -120,8 +120,8 @@ namespace LLB.Controllers
 
 
                 updateinfo.PlaceOfBirth = "";
-                updateinfo.DateofEntryIntoZimbabwe = "";
-                updateinfo.PlaceOfEntry = "";
+                //updateinfo.DateofEntryIntoZimbabwe = "";
+                //updateinfo.PlaceOfEntry = "";
 
                 updateinfo.Status = "inprogress";
                 updateinfo.ApplicationDate = DateTime.Now;
@@ -296,7 +296,7 @@ namespace LLB.Controllers
 
 
         [HttpPost("ManagersInfo")]
-        public async Task<IActionResult> ManagersInfoAsync(ManagersParticulars manager, IFormFile file)
+        public async Task<IActionResult> ManagersInfoAsync(ManagersParticulars manager, IFormFile file, IFormFile fileb)
         {
             /*  public string? Id { get; set; }
           public string? UserId { get; set; }
@@ -325,6 +325,27 @@ namespace LLB.Controllers
             {
                 manager.Attachment = "";
             }
+
+
+            if (fileb != null)
+            {
+                string picb = System.IO.Path.GetFileName(fileb.FileName);
+                string dicb = System.IO.Path.GetExtension(fileb.FileName);
+                string newname = manager.ApplicationId;
+                string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
+                manager.Fingerprints = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                manager.Fingerprints = "";
+            }
+
+
 
 
 
@@ -357,36 +378,83 @@ namespace LLB.Controllers
             var attachments = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
 
             if (attachments.Count() <= 0)
-            { string[] documents = { "Vetted fingerprints",
+            {
+                var userm = await userManager.FindByEmailAsync(User.Identity.Name);
+                //string[] documents = null;
+                if (userm.Nationality == "Zimbabwean")
+                {
+
+                    string[] documents = { "Vetted fingerprints",
 "Police report",
 "Form 55",
 "Affidavit by transferee",
 "Lease documents",
 "Advert",
-"Manager Applicant Fingerprints",};
-                foreach (var document in documents)
-                {
-                    AttachmentInfo documentInfo = new AttachmentInfo();
-                    documentInfo.Id = Guid.NewGuid().ToString();
-                    documentInfo.DocumentTitle = document.ToString();
+"Manager Applicant Fingerprints",
 
-                    var userId = await userManager.FindByEmailAsync(User.Identity.Name);
-                    string id = userId.Id;
-                    documentInfo.UserId = id;
-                    documentInfo.DateAdded = DateTime.Now;
-                    documentInfo.DateUpdated = DateTime.Now;
-                    documentInfo.Status = "empty";
-                    documentInfo.DocumentLocation = "";
-                    documentInfo.ApplicationId = Id;
-                    _db.Add(documentInfo);
-                    _db.SaveChanges();
+                };
+
+
+
+                    foreach (var document in documents)
+                    {
+                        AttachmentInfo documentInfo = new AttachmentInfo();
+                        documentInfo.Id = Guid.NewGuid().ToString();
+                        documentInfo.DocumentTitle = document.ToString();
+
+                        var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+                        string id = userId.Id;
+                        documentInfo.UserId = id;
+                        documentInfo.DateAdded = DateTime.Now;
+                        documentInfo.DateUpdated = DateTime.Now;
+                        documentInfo.Status = "empty";
+                        documentInfo.DocumentLocation = "";
+                        documentInfo.ApplicationId = Id;
+                        _db.Add(documentInfo);
+                        _db.SaveChanges();
+                    }
+                }
+                else
+                {
+
+
+                    string[] documents = { "Vetted fingerprints",
+"Police report",
+"Form 55",
+"Affidavit by transferee",
+"Lease documents",
+"Advert",
+"Manager Applicant Fingerprints",
+"Letter From the Minister"
+
+                };
+
+
+
+                    foreach (var document in documents)
+                    {
+                        AttachmentInfo documentInfo = new AttachmentInfo();
+                        documentInfo.Id = Guid.NewGuid().ToString();
+                        documentInfo.DocumentTitle = document.ToString();
+
+                        var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+                        string id = userId.Id;
+                        documentInfo.UserId = id;
+                        documentInfo.DateAdded = DateTime.Now;
+                        documentInfo.DateUpdated = DateTime.Now;
+                        documentInfo.Status = "empty";
+                        documentInfo.DocumentLocation = "";
+                        documentInfo.ApplicationId = Id;
+                        _db.Add(documentInfo);
+                        _db.SaveChanges();
+                    }
                 }
 
             }
             var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             var attachmentDocs = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
-
-
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+                 ViewBag.User = user;
             ViewBag.ApplicationInfo = applicationInfo;
             ViewBag.Attachments = attachmentDocs;
 
@@ -425,7 +493,8 @@ namespace LLB.Controllers
             var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == attachment.ApplicationId).FirstOrDefault();
             var attachmentDocs = _db.AttachmentInfo.Where(b => b.ApplicationId == attachment.ApplicationId).ToList();
 
-
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            ViewBag.User = user;
             ViewBag.ApplicationInfo = applicationInfo;
             ViewBag.Attachments = attachmentDocs;
 

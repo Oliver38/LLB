@@ -8,7 +8,7 @@
 
 <div class="row">
     <div class="card">
-       
+
         <div class="card-body" id="_step1">
             <div class="card-header">
                 <div class="text-center">
@@ -38,7 +38,7 @@
                                     <input readonly type="hidden" name="id" value="@attachment.Id" />
                                     <input readonly type="hidden" name="applicationId" value="@attachment.ApplicationId" />
                                 </td>
-                                
+
 
 
                             </tr>
@@ -47,11 +47,11 @@
                         }
                         else
                         {
-                <tr>
-                    <td>@attachment.DocumentTitle </td>
-                    <td><a href="~/@attachment.DocumentLocation" target="_blank">View Here</a></td>
-                    
-                </tr>
+                            <tr>
+                                <td>@attachment.DocumentTitle </td>
+                                <td><a href="~/@attachment.DocumentLocation" target="_blank">View Here</a></td>
+
+                            </tr>
 
                         }
 
@@ -82,7 +82,34 @@
                     }
                 </div>
             </div>
+
         </div>
+        <div class="card-body" id="_step1">
+            <div class="card-header">
+                <div class="text-center">
+                    <h5 class="card-title text-success">@TempData["result"]</h5>
+                </div>
+                <h5 class="card-title">Verify Managers Information</h5>
+            </div>
+
+
+            <form action="/Verify/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
+                <div class="row">
+                    <input type="hidden" name="applicationId" value="@ViewBag.ApplicationInfo.Id" />
+                    <input type="hidden" name="stage" value="Verify Managers" />
+
+                    <textarea class="form-control" name="query"></textarea>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="reset" class="btn btn-secondary">Reset</button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
     </div>
 
 </div>

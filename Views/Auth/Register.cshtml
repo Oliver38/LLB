@@ -88,7 +88,7 @@
             </div>
             <div class="col-lg-6">
                 <div class="wow fadeInUp" data-wow-delay="0.2s">
-                    <div class="row"><span class="text-success">@TempData["success"]</span>
+                    <div class="row center"><span class="text-success">@TempData["success"]</span>
                                      <span class="text-danger">@TempData["error"]</span></div>
                     <form action="/Auth/Register" method="post" enctype="multipart/form-data">
                         <div class="row g-3">
@@ -116,19 +116,27 @@
                                     <label for="checkin">Phone Number</label>
                                 </div>
                             </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating date">
+                                    <select type="text" class="form-control" id="countrySelect" name="Nationality" ></select>
+                                    <label for="checkin">Nationality</label>
+                                </div>
+                            </div>
+
                             <div class="col-md-6">
                                 <div class="form-floating date">
                                     <input type="text" class="form-control" id="natID" name="natID" />
-                                    <label for="checkin">National ID</label>
+                                    <label for="checkin">National ID/ Passport</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating date" id="date4" data-target-input="nearest">
-                                    <input type="date" class="form-control datetimepicker-input" id="checkout" name="dOB" placeholder="Check Out" data-target="#date4" data-toggle="datetimepicker" />
+                                    <input type="date" class="form-control" id="checkout" name="dOB" placeholder="Check Out" data-target="#date4" data-toggle="datetimepicker" />
                                     <label for="checkout">Date Of Birth </label>
                                 </div>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <div class="form-floating">
                                     <select class="form-select" name="gender" required id="select1">
                                         <option value="">Select Gender</option>
@@ -147,20 +155,16 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
-                                    <select class="form-select" required name="countryOfResidence" id="select2">
-                                        <option value="Zimbabwe">Zimbabwe</option>
-                                        <option value="2">Child 2</option>
-                                        <option value="3">Child 3</option>
+                                    <select class="form-select crs-country" data-region-id="one" required name="countryOfResidence" id="select2">
+                                        
                                     </select>
                                     <label for="select2">Country Of Residence</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
-                                    <select class="form-select" id="select2" name="province">
-                                        <option value="Harare">Harare</option>
-                                        <option value="2">Child 2</option>
-                                        <option value="3">Child 3</option>
+                                    <select class="form-select" id="one" name="province">
+                                       
                                     </select>
                                     <label for="select2">Province</label>
                                 </div>

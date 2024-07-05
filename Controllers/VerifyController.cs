@@ -174,7 +174,7 @@ namespace LLB.Controllers
         }
 
 
-       
+
         [HttpGet("Finalising")]
         public async Task<IActionResult> FinalisingAsync(string Id, string error, string gateway)
         {
@@ -182,7 +182,7 @@ namespace LLB.Controllers
 
             if (gateway == "paynow")
             {
-                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == Id).FirstOrDefault();
+                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
                 var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
                 var status = paynow.PollTransaction(paymentTrans.PollUrl);
@@ -198,6 +198,34 @@ namespace LLB.Controllers
                 // applicationInfo.PaymentFee = paymentTrans.Amount;
                 applicationInfo.PaymentId = paymentTrans.Id;
                 applicationInfo.PaymentStatus = statusdata["status"];
+                _db.Update(applicationInfo);
+                _db.SaveChanges();
+            }
+
+
+            var paymentTransb = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
+
+            if (paymentTransb == null)
+            {
+
+            }
+            else
+            {
+                var paynowb = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+
+                var statusb = paynowb.PollTransaction(paymentTransb.PollUrl);
+
+                var statusdatab = statusb.GetData();
+                paymentTransb.PaynowRef = statusdatab["paynowreference"];
+                paymentTransb.PaymentStatus = statusdatab["status"];
+                paymentTransb.Status = statusdatab["status"];
+                paymentTransb.DateUpdated = DateTime.Now;
+
+                _db.Update(paymentTransb);
+                _db.SaveChanges();
+                // applicationInfo.PaymentFee = paymentTrans.Amount;
+                applicationInfo.PaymentId = paymentTransb.Id;
+                applicationInfo.PaymentStatus = statusdatab["status"];
                 _db.Update(applicationInfo);
                 _db.SaveChanges();
             }
@@ -231,7 +259,7 @@ namespace LLB.Controllers
             int managerscount = managers.Count();
             finaldata.ManagersCount = managerscount;
 
-            var payment = _db.Payments.Where(s => s.ApplicationId == Id).FirstOrDefault();
+            var payment = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
 
             if (regiondata.RegionName == "Town")
             {
@@ -271,7 +299,7 @@ namespace LLB.Controllers
                 finaldata.LicencePrice = licensefees.MunicipaltyFee;
                 finaldata.ManagersPrice = managerfees.MunicipaltyFee;
 
-                var managertotal = licensefees.MunicipaltyFee * managerscount;
+                var managertotal = managerfees.MunicipaltyFee * managerscount;
                 finaldata.ManagersTotal = managertotal;
                 finaldata.Total = managertotal + licensefees.MunicipaltyFee;
                 var totalfee = finaldata.Total;
@@ -285,7 +313,7 @@ namespace LLB.Controllers
                 finaldata.LicencePrice = licensefees.RDCFee;
                 finaldata.ManagersPrice = managerfees.RDCFee;
 
-                var managertotal = licensefees.RDCFee * managerscount;
+                var managertotal = managerfees.RDCFee * managerscount;
                 finaldata.ManagersTotal = managertotal;
                 finaldata.Total = managertotal + licensefees.RDCFee;
                 var totalfee = finaldata.Total;
@@ -295,8 +323,12 @@ namespace LLB.Controllers
                 _db.SaveChanges();
             }
             TempData["result"] = error;
+            var applicationInfob = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var hasquery = _db.Queries.Where(a => a.ApplicationId == Id && a.Status == "Has Query").ToList();
 
-            ViewBag.ApplicationInfo = applicationInfo;
+
+            ViewBag.HasQuery = hasquery;
+            ViewBag.ApplicationInfo = applicationInfob;
             ViewBag.FinalData = finaldata;
             ViewBag.Payment = payment;
 
@@ -309,11 +341,11 @@ namespace LLB.Controllers
         public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount)
         {
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
-            amount = 55.7;
+            //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-            paynow.ResultUrl = "https://localhost:7237/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "https://localhost:7237/License/Finalising?Id=" + Id + "&gateway=paynow";
+            paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
+            paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
 
@@ -375,6 +407,10 @@ namespace LLB.Controllers
             return View();
         }
 
+
+
+
+       
 
         [HttpGet("Submit")]
         public IActionResult Submit(string Id)
@@ -446,8 +482,18 @@ namespace LLB.Controllers
 
         }
 
+        [HttpGet("HasQuery")]
+        public IActionResult HasQuery(string Id)
+        {
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            applicationInfo.Status = "Has Query";
+            _db.Update(applicationInfo);
+            _db.SaveChanges();
+            return RedirectToAction("Dashboard", "Examination");
+        }
 
-        [HttpGet("Approve")]
+
+            [HttpGet("Approve")]
         public IActionResult Approve(string Id)
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();

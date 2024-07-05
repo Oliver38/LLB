@@ -10,7 +10,7 @@
             <div class="text-center">
                 <h5 class="card-title text-danger">@TempData["result"]</h5>
             </div>
-            <h5 class="card-title">Outlet Information</h5>
+            <h5 class="card-title">Finalising Application</h5>
 
             <table class="table table-responsive table-hover table-striped">
                 <thead>
@@ -64,11 +64,13 @@
                     <tr>
                         <td>Pay Using </td>
                         <td>
-                            
 
+                            @if (ViewBag.Payment!= null &&ViewBag.Payment.Status  == "Paid")
+                                { }
+                                else {
                                 <a href="/License/PaynowPayment?Id=@ViewBag.ApplicationInfo.Id&amount=@ViewBag.ApplicationInfo.PaymentFee" class="btn btn-primary">Paynow</a>
-                            
-                        </td>
+                                }
+                            </td>
 
                     </tr>
                 </tbody>

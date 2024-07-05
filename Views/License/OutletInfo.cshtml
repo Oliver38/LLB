@@ -30,12 +30,24 @@
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Province</label>
-                        <input type="text" name="province" value="" class="form-control" id="inputName5">
+                        <select type="text" id="provinceSelect" name="province" value="" class="form-control">
+                            <option value="harare">Harare</option>
+                            <option value="manicaland">Manicaland</option>
+                            <option value="masvingo">Masvingo</option>
+                            <option value="mashonaland_central">Mashonaland Central</option>
+                            <option value="mashonaland_east">Mashonaland East</option>
+                            <option value="mashonaland_west">Mashonaland West</option>
+                            <option value="midlands">Midlands</option>
+                            <option value="bulawayo">Bulawayo</option>
+                            <option value="matabeleland_north">Matabeleland North</option>
+                            <option value="matabeleland_south">Matabeleland South</option>
+                        </select>
+
                     </div>
 
                     <div class="col-md-6">
-                        <label for="inputName5" class="form-label">City</label>
-                        <input type="text" name="city" value="" class="form-control" id="inputName5">
+                        <label for="inputName5" class="form-label">District</label>
+                        <select type="text" name="city" value="" class="form-control" id="districtSelect"></select>
                     </div>
 
 
@@ -126,16 +138,36 @@ else
                             <label for="floatingTextarea">Oulet Address</label>
                         </div>
                     </div>
+                    <!--div class="col-md-6">
+        <label for="inputName5" class="form-label">Province</label>
+        <se type="text" name="province" value="@ViewBag.OutletInfo.Province" class="form-control" id="inputName5">
+    </!--div>
+
+    <divclass="col-md-6">
+        <label for="inputName5" class="form-label">City</label>
+        <input type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
+    </div-->
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Province</label>
-                        <input type="text" name="province" value="@ViewBag.OutletInfo.Province" class="form-control" id="inputName5">
+                        <select type="text" id="provinceSelect" name="province" value="@ViewBag.OutletInfo.Province" class="form-control">
+                            <option value="harare">Harare</option>
+                            <option value="manicaland">Manicaland</option>
+                            <option value="masvingo">Masvingo</option>
+                            <option value="mashonaland_central">Mashonaland Central</option>
+                            <option value="mashonaland_east">Mashonaland East</option>
+                            <option value="mashonaland_west">Mashonaland West</option>
+                            <option value="midlands">Midlands</option>
+                            <option value="bulawayo">Bulawayo</option>
+                            <option value="matabeleland_north">Matabeleland North</option>
+                            <option value="matabeleland_south">Matabeleland South</option>
+                        </select>
+
                     </div>
 
                     <div class="col-md-6">
-                        <label for="inputName5" class="form-label">City</label>
-                        <input type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
+                        <label for="inputName5" class="form-label">District</label>
+                        <select type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="districtSelect"></select>
                     </div>
-
 
                     <div class="text-center">
                         <button type="submit" class="btn btn-primary">Update</button>
@@ -226,3 +258,53 @@ else
         </div>
     </div>
 </div><!-- End Basic Modal-->
+
+
+
+
+<script>
+    // Districts grouped by province
+    const districtsByProvince = {
+      harare: ["Harare"],
+      manicaland: ["Mutare", "Chipinge", "Nyanga"],
+      masvingo: ["Masvingo", "Zvishavane", "Chiredzi"],
+      mashonaland_central: ["Bindura", "Guruve", "Mazowe"],
+      mashonaland_east: ["Marondera", "Mutoko", "Goromonzi"],
+      mashonaland_west: ["Chinhoyi", "Karoi", "Chegutu"],
+      midlands: ["Gweru", "Kwekwe", "Zvishavane"],
+      bulawayo: ["Bulawayo"],
+      matabeleland_north: ["Bulawayo", "Hwange", "Victoria Falls"],
+      matabeleland_south: ["Gwanda", "Beitbridge", "Plumtree"]
+      // Add more districts as needed
+    };
+
+    // Get the select elements by ID
+    const provinceSelect = document.getElementById('provinceSelect');
+    const districtSelect = document.getElementById('districtSelect');
+
+    // Function to populate districts based on selected province
+    function populateDistricts() {
+      // Clear existing options
+      districtSelect.innerHTML = '';
+
+      // Get selected province
+      const selectedProvince = provinceSelect.value;
+
+      // Get districts for selected province
+      const districts = districtsByProvince[selectedProvince];
+
+      // Create and append options
+      districts.forEach(district => {
+        const option = document.createElement('option');
+        option.value = district;
+        option.textContent = district;
+        districtSelect.appendChild(option);
+      });
+    }
+
+    // Populate districts on initial page load
+    populateDistricts();
+
+    // Add event listener to province select
+    provinceSelect.addEventListener('change', populateDistricts);
+</script>

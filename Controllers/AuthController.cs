@@ -84,7 +84,8 @@ namespace LLB.Controllers
                     Name = model.Name,
 
                    // UserId = userid,
-                    Nationality = model.CountryOfResidence,
+                    Nationality = model.Nationality,
+                   // Nationality = model.CountryOfResidence,
                     ApplicationBy = "",
                     LockoutEnd = DateTime.Now,
                 UserPhoneNumber = model.PhoneNumber,
@@ -103,7 +104,7 @@ namespace LLB.Controllers
                             // Nationality = model.Nationality,
 
                             DateOfApplication = DateTime.Now,
-                            DOB = model.DOB,
+                            DOB = model.DOB.Date,
                             CountryOfResidence = model.CountryOfResidence,
                             Gender = model.Gender,
                             Province = model.Province
