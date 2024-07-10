@@ -45,6 +45,8 @@ namespace LLB.Controllers
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
             var licenses = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();
+            var queries = _db.Queries.Where(x => x.ApplicationId == Id && x.Status == "Has Query").ToList();
+            ViewBag.Queries = queries;
             ViewBag.ApplicationInfo = application;
             ViewBag.User = user;
             ViewBag.Regions = regions;
@@ -102,6 +104,8 @@ namespace LLB.Controllers
                 var user = await userManager.FindByEmailAsync(User.Identity.Name);
                 var licenses = _db.LicenseTypes.ToList();
                 var regions = _db.LicenseRegions.ToList();
+                var queries = _db.Queries.Where(x => x.ApplicationId == info.Id && x.Status == "Has Query").ToList();
+                ViewBag.Queries = queries;
                 ViewBag.ApplicationInfo = application;
                 ViewBag.User = user;
                 ViewBag.Regions = regions;
@@ -139,6 +143,8 @@ namespace LLB.Controllers
                 var user = await userManager.FindByEmailAsync(User.Identity.Name);
                 var licenses = _db.LicenseTypes.ToList();
                 var regions = _db.LicenseRegions.ToList();
+                var queries = _db.Queries.Where(x => x.ApplicationId == info.Id && x.Status == "Has Query").ToList();
+                ViewBag.Queries = queries;
                 ViewBag.ApplicationInfo = application;
                 ViewBag.User = user;
                 ViewBag.Regions = regions;
@@ -157,7 +163,8 @@ namespace LLB.Controllers
             var outletInfo = _db.OutletInfo.Where(b => b.ApplicationId == Id).FirstOrDefault();
             var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == Id).ToList();
             // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
-
+            var queries = _db.Queries.Where(x => x.ApplicationId == Id && x.Status == "Has Query").ToList();
+            ViewBag.Queries = queries;
             ViewBag.Application = application;
             ViewBag.OutletInfo = outletInfo;
             ViewBag.Directors = directorsInfo;
@@ -201,7 +208,8 @@ namespace LLB.Controllers
                 var outletInfob = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
                 var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == outletInfo.ApplicationId).ToList();
                 // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
-
+                var queries = _db.Queries.Where(x => x.ApplicationId == outletInfo.ApplicationId && x.Status == "Has Query").ToList();
+                ViewBag.Queries = queries;
                 ViewBag.Application = application;
                 ViewBag.OutletInfo = outletInfob;
                 ViewBag.Directors = directorsInfo;
@@ -220,7 +228,7 @@ namespace LLB.Controllers
                 //outletInfo.DateAdded = DateTime.Now;
                 updateOutletInfo.TradingName = outletInfo.TradingName;
                 updateOutletInfo.Address = outletInfo.Address;
-                updateOutletInfo.City = outletInfo.Province;
+                updateOutletInfo.Province = outletInfo.Province;
                 updateOutletInfo.City = outletInfo.City;
 
                 updateOutletInfo.DateUpdated = DateTime.Now;
@@ -233,7 +241,8 @@ namespace LLB.Controllers
                 var outletInfob = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
                 var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == outletInfo.ApplicationId).ToList();
                 // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
-
+                var queries = _db.Queries.Where(x => x.ApplicationId == outletInfo.ApplicationId && x.Status == "Has Query").ToList();
+                ViewBag.Queries = queries;
                 ViewBag.Application = application;
                 ViewBag.OutletInfo = outletInfob;
                 ViewBag.Directors = directorsInfo;
@@ -285,7 +294,8 @@ namespace LLB.Controllers
             var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             var managersInfo = _db.ManagersParticulars.Where(b => b.ApplicationId == Id).ToList();
 
-
+            var queries = _db.Queries.Where(x => x.ApplicationId == Id && x.Status == "Has Query").ToList();
+            ViewBag.Queries = queries;
             ViewBag.ApplicationInfo = applicationInfo;
             ViewBag.ManagersInfo = managersInfo;
 
@@ -363,7 +373,8 @@ namespace LLB.Controllers
             var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == manager.ApplicationId).FirstOrDefault();
             var managersInfo = _db.ManagersParticulars.Where(b => b.ApplicationId == manager.ApplicationId).ToList();
 
-
+            var queries = _db.Queries.Where(x => x.ApplicationId == manager.ApplicationId && x.Status == "Has Query").ToList();
+            ViewBag.Queries = queries;
             ViewBag.ApplicationInfo = applicationInfo;
             ViewBag.ManagersInfo = managersInfo;
             TempData["result"] = "Manager details successfully added";
@@ -455,6 +466,8 @@ namespace LLB.Controllers
             var attachmentDocs = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
                  ViewBag.User = user;
+            var queries = _db.Queries.Where(x => x.ApplicationId == Id && x.Status == "Has Query").ToList();
+            ViewBag.Queries = queries;
             ViewBag.ApplicationInfo = applicationInfo;
             ViewBag.Attachments = attachmentDocs;
 
@@ -494,6 +507,8 @@ namespace LLB.Controllers
             var attachmentDocs = _db.AttachmentInfo.Where(b => b.ApplicationId == attachment.ApplicationId).ToList();
 
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var queries = _db.Queries.Where(x => x.ApplicationId == attachment.ApplicationId && x.Status == "Has Query").ToList();
+            ViewBag.Queries = queries;
             ViewBag.User = user;
             ViewBag.ApplicationInfo = applicationInfo;
             ViewBag.Attachments = attachmentDocs;
@@ -648,7 +663,8 @@ namespace LLB.Controllers
             }
             TempData["result"] = error;
             var applicationInfob = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
-
+            var queries = _db.Queries.Where(x => x.ApplicationId == Id && x.Status == "Has Query").ToList();
+            ViewBag.Queries = queries;
             ViewBag.ApplicationInfo = applicationInfob;
             ViewBag.FinalData = finaldata;
             ViewBag.Payment = payment;
@@ -774,7 +790,44 @@ namespace LLB.Controllers
 
         }
 
-    } 
+        //ResolveQuery
 
-    }
+        [HttpGet("ResolveQuery")]
+        public IActionResult ResolveQuery(string Id, string stage, string applicationId)
+        {
+            if (stage == "apply")
+            {
+                var getquery = _db.Queries.Where(e => e.Id == Id).FirstOrDefault();
+                getquery.Status = "Resolved";
+                getquery.DateUpdated = DateTime.Now;
+                _db.Update(getquery);
+                _db.SaveChanges();
+                return RedirectToAction("Apply", new { Id = applicationId });
+            }
+
+            return View();
+
+        }
+
+        [HttpGet("ResolveApplication")]
+        public IActionResult ResolveApplication(  string applicationId)
+        {
+            var queries = _db.Queries.Where(x => x.ApplicationId == applicationId && x.Status == "Has Query").ToList();
+            if (queries.Count == 0)
+            {
+                var application = _db.ApplicationInfo.Where(x => x.Id == applicationId).FirstOrDefault();
+                application.Status = "submitted";
+                application.ExaminationStatus = "verification";
+                _db.Update(application);
+                _db.SaveChanges();
+                return RedirectToAction("Dashboard", "Home");
+            }
+            else
+            {
+                return RedirectToAction("Finalising", new { Id = applicationId,error ="Please CLick resolve query where necessary in your forms and then submit to reslove" });
+            }
+        }
+        }
+
+}
 

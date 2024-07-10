@@ -71,8 +71,15 @@
                 <a href="/Verify/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
                 @if (ViewBag.HasQuery.Count > 0)
                 {
-                    <a href="/Verify/HasQuery?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Submit Query</a>
+                    if (@ViewBag.ApplicationInfo.Status == "Has Query")
+                    {
 
+                    }
+                    else
+                    {
+                        <a href="/Verify/HasQuery?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Submit Query</a>
+
+                    }
                 }
                 else
                 {

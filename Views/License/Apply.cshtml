@@ -100,6 +100,37 @@ else
         <div class="card">
             <div class="card-body" id="_step1">
                 <div class="card-header">
+                    @if(ViewBag.ApplicationInfo.Status == "Has Query"){
+                    <!-- Default Accordion -->
+                    <div class="accordion" id="accordionExample">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    <b>Click to View Queries</b>(resolve and resubmit where necessary)
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                <div class="accordion-body">
+                                    <!-- List group With badges -->
+                                    <ul class="list-group">
+                                    @foreach (var queries in ViewBag.Queries)
+                                        {
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            @queries.Query
+                                            <span class="badge bg-danger rounded-pill"> @queries.Status</span>
+                                            <span class="badge bg-primary rounded-pill"><a class="text-white" href="/License/ResolveQuery?Id=@queries.Id&stage=apply&applicationId=@ViewBag.ApplicationInfo.Id">Click to Resolve Query</a></span>
+
+                                        </li>
+                                        }
+
+                                    </ul><!-- End List With badges -->
+                                </div>
+                            </div>
+                        </div>
+                       
+                      
+                    </div><!-- End Default Accordion Example -->
+                    }
                     <div class="text-center">
                         <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>

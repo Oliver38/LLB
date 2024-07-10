@@ -80,9 +80,15 @@
         <div class="card-footer">
             <div class="text-center">
                 <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                <a href="/License/Submit?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Submit</a>
-
-            </div>
+                @if (ViewBag.ApplicationInfo.Status == "Has Query")
+                    {
+                    <a href="/License/ResolveApplication?applicationId=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Resolve & Resubmit</a>
+                    }
+                    else
+                    {
+                    <a href="/License/Submit?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Submit</a>
+                    }
+                </div>
         </div>
     </div>
 </div>
@@ -108,7 +114,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save changes</button>
+                    
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    
+
+
                 </div>
             </form>
         </div>

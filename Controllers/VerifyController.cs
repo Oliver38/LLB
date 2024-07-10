@@ -489,7 +489,7 @@ namespace LLB.Controllers
             applicationInfo.Status = "Has Query";
             _db.Update(applicationInfo);
             _db.SaveChanges();
-            return RedirectToAction("Dashboard", "Examination");
+            return RedirectToAction("Dashboard", "Verify");
         }
 
 
@@ -498,9 +498,10 @@ namespace LLB.Controllers
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             application.Status = "verified";
+            application.ExaminationStatus= "recommendation";
             _db.Update(application);
             _db.SaveChanges();
-            return RedirectToAction("Dashboard", "Examination");
+            return RedirectToAction("Dashboard", "Verify");
         }
     }
 }
