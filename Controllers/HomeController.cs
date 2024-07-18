@@ -80,6 +80,15 @@ namespace LLB.Controllers
             {
                 return RedirectToAction("Dashboard", "Verify");
             }
+
+            else if (User.IsInRole("recommender"))
+            {
+                return RedirectToAction("Dashboard", "Recommend");
+            }
+            else if (User.IsInRole("secretary"))
+            {
+                return RedirectToAction("Dashboard", "Approval");
+            }
             else if (User.IsInRole("inspector"))
             {
                 return RedirectToAction("Dashboard", "Examination");

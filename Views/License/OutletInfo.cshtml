@@ -114,7 +114,7 @@ else
             <div class="card-body" id="_step1">
 
                 <div class="card-header">
-                    @if (ViewBag.Application.Status == "Has Query")
+                    @if (ViewBag.Queries.Count > 0)
                     {
                         <!-- Default Accordion -->
                         <div class="accordion" id="accordionExample">

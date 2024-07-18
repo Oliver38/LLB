@@ -13,7 +13,7 @@
                 <h5 class="card-title">Outlet Information</h5>
 
                 <!-- Multi Columns Form -->
-                <form action="/License/OutletInfo" method="post" enctytpe="multipart/form-data" class="row g-3">
+                <form action="/Recommend/OutletInfo" method="post" enctytpe="multipart/form-data" class="row g-3">
 
 
                     <div class="col-md-12">
@@ -82,7 +82,7 @@
                 </div>
                 <div class="card-footer">
                     <div class="text-center">
-                        <a href="/License/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
+                        <a href="/Recommend/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
 
                     </div>
                 </div>
@@ -186,11 +186,11 @@ else
             </div>
 
 
-            <form action="/Verify/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
+            <form action="/Recommend/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
                 <div class="row">
                     <input type="hidden" name="applicationId" value="@ViewBag.Application.Id" />
-                    <input type="hidden" name="stage" value="Verify Outlet" />
-                    <input type="hidden" name="taskId" value="@ViewBag.Task.Id" />
+                    <input type="hidden" name="stage" value="Recommend Outlet" />
+
                     <textarea class="form-control" name="query"></textarea>
                 </div>
 
@@ -204,8 +204,8 @@ else
     </div>
     <div class="card-footer">
         <div class="text-center">
-            <a href="/Verify/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
-            <a href="/Verify/ManagersInfo?Id=@ViewBag.Application.Id" class="btn btn-primary">Next</a>
+            <a href="/Recommend/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
+            <a href="/Recommend/ManagersInfo?Id=@ViewBag.Application.Id" class="btn btn-primary">Next</a>
 
         </div>
     </div>

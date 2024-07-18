@@ -13,8 +13,8 @@ namespace LLB.Controllers
 {
     
     [Route("")]
-    [Route("Verify")]
-    public class VerifyController : Controller
+    [Route("Approval")]
+    public class ApprovalController : Controller
     {
         
 
@@ -23,7 +23,7 @@ namespace LLB.Controllers
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IDNTCaptchaValidatorService _validatorService;
 
-        public VerifyController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public ApprovalController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
             this.userManager = userManager;
@@ -39,7 +39,7 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(f => f.VerifierId == id && f.Status == "assigned").ToList();
+            var tasks = _db.Tasks.ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
@@ -471,22 +471,22 @@ namespace LLB.Controllers
             _db.Add(queries);
             _db.SaveChanges();
             string error = "Query has been raised successfully";
-            if (queries.Stage == "Verify Application")
+            if (queries.Stage == "Approve Application")
             {
                 return RedirectToAction("Apply", new { Id = queries.ApplicationId, error = error });
 
-            }else if (queries.Stage == "Verify Outlet")
+            }else if (queries.Stage == "Approve Outlet")
             {
                 return RedirectToAction("OutletInfo", new { Id = queries.ApplicationId, error = error });
 
             }
-            else if (queries.Stage == "Verify Managers")
+            else if (queries.Stage == "Approve Managers")
             {
                 return RedirectToAction("ManagersInfo", new { Id = queries.ApplicationId, error = error });
 
             }
            
-            else if (queries.Stage == "Verify Attachments")
+            else if (queries.Stage == "Approve Attachments")
             {
                 return RedirectToAction("Attachments", new { Id = queries.ApplicationId, error = error });
 
@@ -520,14 +520,13 @@ namespace LLB.Controllers
         public async Task<IActionResult> ApproveAsync(string Id, string taskid)
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
-            application.Status = "verified";
+            application.Status = "approved";
             application.ExaminationStatus= "recommendation";
             _db.Update(application);
             _db.SaveChanges();
 
             var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
             task.Status = "completed";
-            task.VerificationDate = DateTime.Now;
             _db.Update(task);
             _db.SaveChanges();
             Tasks tasks = new Tasks();
@@ -537,7 +536,7 @@ namespace LLB.Controllers
 
             //auto allocation to replace
             var userId = await userManager.FindByEmailAsync("recommender@recommender.com");
-            tasks.RecommenderId = userId.Id;
+            tasks.VerifierId = userId.Id;
             tasks.AssignerId = "system";
             tasks.Status = "assigned";
             tasks.DateAdded = DateTime.Now;

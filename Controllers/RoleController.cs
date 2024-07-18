@@ -44,6 +44,17 @@ namespace LLB.Controllers
         //    return View();
 
         //}
+        [AllowAnonymous]
+        [HttpGet("Client")]
+
+        public async Task<IActionResult> Client()
+        {
+            var role = new IdentityRole { Name = "client"};
+            IdentityResult result = await roleManager.CreateAsync(role);
+            return View();
+        }
+
+        [AllowAnonymous]
         [HttpGet("AutoRoles")]
         
         public async Task<IActionResult> AutoRoles()
@@ -69,7 +80,7 @@ namespace LLB.Controllers
             return View();
         }
 
-
+        [AllowAnonymous]
         [HttpGet("UsersRoles")]
 
         public async Task<IActionResult> UsersRoles()

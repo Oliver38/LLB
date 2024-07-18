@@ -8,13 +8,15 @@ using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
 using Webdev.Payments;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Threading.Tasks;
+using Microsoft.Build.Framework;
 
 namespace LLB.Controllers
 {
     
     [Route("")]
-    [Route("Verify")]
-    public class VerifyController : Controller
+    [Route("Recommend")]
+    public class RecommendController : Controller
     {
         
 
@@ -23,7 +25,7 @@ namespace LLB.Controllers
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IDNTCaptchaValidatorService _validatorService;
 
-        public VerifyController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public RecommendController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
             this.userManager = userManager;
@@ -39,7 +41,7 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(f => f.VerifierId == id && f.Status == "assigned").ToList();
+            var tasks = _db.Tasks.Where(f => f.RecommenderId == id && f.Status == "assigned").ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
@@ -48,6 +50,19 @@ namespace LLB.Controllers
 
                 getinfo = applications;
                 appinfo.Add(getinfo);
+            }
+
+            List<ApplicationInfo> completeappinfo = new List<ApplicationInfo>();
+
+            var completetasks = _db.Tasks.Where(f => f.RecommenderId == id && f.Status == "completed").ToList();
+            foreach (var completetask in completetasks)
+            {
+                ApplicationInfo getcomplinfo = new ApplicationInfo();
+
+                var applications = _db.ApplicationInfo.Where(a => a.Id == completetask.ApplicationId).FirstOrDefault();
+
+                getcomplinfo = applications;
+                completeappinfo.Add(getcomplinfo);
             }
 
             //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
@@ -61,6 +76,7 @@ namespace LLB.Controllers
             ViewBag.Regions = regions;
             ViewBag.License = license;
             ViewBag.Applications = appinfo;
+            ViewBag.Completed = completeappinfo;
             return View();
         }
 
@@ -73,9 +89,6 @@ namespace LLB.Controllers
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
             var licenses = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();
-            var task = _db.Tasks.Where(q => q.ApplicationId == Id && q.Status == "assigned").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-
-            ViewBag.Task = task;
             TempData["result"] = error;
             ViewBag.ApplicationInfo = application;
             ViewBag.User = user;
@@ -96,9 +109,6 @@ namespace LLB.Controllers
             var outletInfo = _db.OutletInfo.Where(b => b.ApplicationId == Id).FirstOrDefault();
             var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == Id).ToList();
             // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
-            var task = _db.Tasks.Where(q => q.ApplicationId == Id && q.Status == "assigned").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-
-            ViewBag.Task = task;
             TempData["result"] = error;
             ViewBag.Application = application;
             ViewBag.OutletInfo = outletInfo;
@@ -117,15 +127,13 @@ namespace LLB.Controllers
         // ManagersInfo
 
         [HttpGet(("ManagersInfo"))]
-        public IActionResult ManagersInfo(string Id,string error)
+        public IActionResult ManagersInfo(string Id)
         {
 
             var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             var managersInfo = _db.ManagersParticulars.Where(b => b.ApplicationId == Id).ToList();
-            var task = _db.Tasks.Where(q => q.ApplicationId == Id && q.Status == "assigned").OrderByDescending(x => x.DateAdded).FirstOrDefault();
 
-            ViewBag.Task = task;
-            TempData["result"] = error;
+
             ViewBag.ApplicationInfo = applicationInfo;
             ViewBag.ManagersInfo = managersInfo;
 
@@ -138,7 +146,7 @@ namespace LLB.Controllers
        
 
         [HttpGet(("Attachments"))]
-        public async Task<IActionResult> AttachmentsAsync(string Id,string error)
+        public async Task<IActionResult> AttachmentsAsync(string Id)
         {
             var attachments = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
 
@@ -172,10 +180,8 @@ namespace LLB.Controllers
             }
             var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             var attachmentDocs = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
-            var task = _db.Tasks.Where(q => q.ApplicationId == Id && q.Status == "assigned").OrderByDescending(x => x.DateAdded).FirstOrDefault();
 
-            ViewBag.Task = task;
-            TempData["result"] = error;
+
             ViewBag.ApplicationInfo = applicationInfo;
             ViewBag.Attachments = attachmentDocs;
 
@@ -337,7 +343,8 @@ namespace LLB.Controllers
             var hasquery = _db.Queries.Where(a => a.ApplicationId == Id && a.Status == "Has Query").ToList();
             var task = _db.Tasks.Where(q => q.ApplicationId == Id && q.Status == "assigned").OrderByDescending(x => x.DateAdded).FirstOrDefault();
 
-            ViewBag.Task= task;
+            ViewBag.Task = task;
+
             ViewBag.HasQuery = hasquery;
             ViewBag.ApplicationInfo = applicationInfob;
             ViewBag.FinalData = finaldata;
@@ -471,22 +478,21 @@ namespace LLB.Controllers
             _db.Add(queries);
             _db.SaveChanges();
             string error = "Query has been raised successfully";
-            if (queries.Stage == "Verify Application")
+            if (queries.Stage == "Recommend Application")
             {
                 return RedirectToAction("Apply", new { Id = queries.ApplicationId, error = error });
 
-            }else if (queries.Stage == "Verify Outlet")
+            }else if (queries.Stage == "Recommend Outlet")
             {
                 return RedirectToAction("OutletInfo", new { Id = queries.ApplicationId, error = error });
 
             }
-            else if (queries.Stage == "Verify Managers")
+            else if (queries.Stage == "Recommend Managers")
             {
                 return RedirectToAction("ManagersInfo", new { Id = queries.ApplicationId, error = error });
 
             }
-           
-            else if (queries.Stage == "Verify Attachments")
+            else if (queries.Stage == "Recommend Attachments")
             {
                 return RedirectToAction("Attachments", new { Id = queries.ApplicationId, error = error });
 
@@ -499,20 +505,18 @@ namespace LLB.Controllers
 
         }
 
-        //ask if it returns to same verifier or not
         [HttpGet("HasQuery")]
         public IActionResult HasQuery(string Id, string taskid)
         {
             var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             applicationInfo.Status = "Has Query";
-            
             _db.Update(applicationInfo);
             _db.SaveChanges();
             var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
             task.Status = "completed";
             _db.Update(task);
             _db.SaveChanges();
-            return RedirectToAction("Dashboard", "Verify");
+            return RedirectToAction("Dashboard", "Recommend");
         }
 
 
@@ -520,31 +524,30 @@ namespace LLB.Controllers
         public async Task<IActionResult> ApproveAsync(string Id, string taskid)
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
-            application.Status = "verified";
+            application.Status = "recommended";
             application.ExaminationStatus= "recommendation";
             _db.Update(application);
             _db.SaveChanges();
 
             var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
             task.Status = "completed";
-            task.VerificationDate = DateTime.Now;
+            task.RecommendationDate = DateTime.Now;
             _db.Update(task);
             _db.SaveChanges();
+
             Tasks tasks = new Tasks();
             tasks.Id = Guid.NewGuid().ToString();
             tasks.ApplicationId = application.Id;
-            //tasks.AssignerId
-
             //auto allocation to replace
-            var userId = await userManager.FindByEmailAsync("recommender@recommender.com");
-            tasks.RecommenderId = userId.Id;
+            var userId = await userManager.FindByEmailAsync("secretary@secretary.com");
+            tasks.ApproverId= userId.Id;
             tasks.AssignerId = "system";
             tasks.Status = "assigned";
             tasks.DateAdded = DateTime.Now;
             tasks.DateUpdated = DateTime.Now;
             _db.Add(tasks);
             _db.SaveChanges();
-            return RedirectToAction("Dashboard", "Verify");
+            return RedirectToAction("Dashboard", "Recommend");
         }
     }
 }

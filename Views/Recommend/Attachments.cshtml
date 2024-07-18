@@ -8,13 +8,13 @@
 
 <div class="row">
     <div class="card">
-       
+
         <div class="card-body" id="_step1">
             <div class="card-header">
                 <div class="text-center">
                     <h5 class="card-title text-success">@TempData["result"]</h5>
                 </div>
-                <h5 class="card-title">Manager's Particulars'</h5>
+                <h5 class="card-title">Attachments</h5>
                 @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
                 *@
             </div>
@@ -34,11 +34,11 @@
                                 <td>@attachment.DocumentTitle </td>
 
                                 <td>
-                                    <input type="file" name="file" class="form-control" />
-                                    <input type="hidden" name="id" value="@attachment.Id" />
-                                    <input type="hidden" name="applicationId" value="@attachment.ApplicationId" />
+                                    <input readonly type="file" name="file" class="form-control" />
+                                    <input readonly type="hidden" name="id" value="@attachment.Id" />
+                                    <input readonly type="hidden" name="applicationId" value="@attachment.ApplicationId" />
                                 </td>
-                                <td><input type="submit" class="btn btn-primary" /> </td>
+
 
 
                             </tr>
@@ -47,11 +47,11 @@
                         }
                         else
                         {
-                <tr>
-                    <td>@attachment.DocumentTitle </td>
-                    <td><a href="~/@attachment.DocumentLocation">View Here</a></td>
-                    <td><a href="#" class="btn btn-danger">Remove</a></td>
-                </tr>
+                            <tr>
+                                <td>@attachment.DocumentTitle </td>
+                                <td><a href="~/@attachment.DocumentLocation" target="_blank">View Here</a></td>
+
+                            </tr>
 
                         }
 
@@ -72,17 +72,44 @@
                 <div class="text-center">
                     @if (ViewBag.Attachments == null)
                     {
-                        <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/Recommend/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
                     }
                     else
                     {
-                        <a href="/License/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                        <a href="/License/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+                        <a href="/Recommend/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/Recommend/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
 
                     }
                 </div>
             </div>
+
         </div>
+        <div class="card-body" id="_step1">
+            <div class="card-header">
+                <div class="text-center">
+                    <h5 class="card-title text-success">@TempData["result"]</h5>
+                </div>
+                <h5 class="card-title">Verify Managers Information</h5>
+            </div>
+
+
+            <form action="/Recommend/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
+                <div class="row">
+                    <input type="hidden" name="applicationId" value="@ViewBag.ApplicationInfo.Id" />
+                    <input type="hidden" name="stage" value="Recommend Attachments" />
+
+                    <textarea class="form-control" name="query"></textarea>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="reset" class="btn btn-secondary">Reset</button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
     </div>
 
 </div>
@@ -102,8 +129,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label">Name</label>
-                            <input type="hidden" name="applicationId" class="form-control" value="@ViewBag.ApplicationInfo.Id" id="Id">
-                            <input type="text" name="name" class="form-control" id="name">
+                            <input readonly type="hidden" name="applicationId" class="form-control" value="@ViewBag.ApplicationInfo.Id" id="Id">
+                            <input readonly type="text" name="name" class="form-control" id="name">
                         </div>
 
                         @foreach (var attachment in ViewBag.Attachments)

@@ -46,23 +46,25 @@
     <None Remove="Views\Settings\" />
     <None Remove="Migrations\" />
     <None Remove="Views\License\" />
-    <None Remove="Views\License\License\" />
     <None Remove="Views\Roles\" />
     <None Remove="Views\Viewing\" />
     <None Remove="Views\Tasks\" />
     <None Remove="Views\Examinationtwo\" />
     <None Remove="Views\Verify\" />
+    <None Remove="Views\Recommend\" />
+    <None Remove="Views\Approval\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
     <Folder Include="Migrations\" />
     <Folder Include="Views\License\" />
-    <Folder Include="Views\License\License\" />
     <Folder Include="Views\Roles\" />
     <Folder Include="Views\Viewing\" />
     <Folder Include="Views\Tasks\" />
     <Folder Include="Views\Examinationtwo\" />
     <Folder Include="Views\Verify\" />
+    <Folder Include="Views\Recommend\" />
+    <Folder Include="Views\Approval\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

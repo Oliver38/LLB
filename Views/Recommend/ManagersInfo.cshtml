@@ -15,28 +15,28 @@
                         <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>
                     <h5 class="card-title">Manager's Particulars'</h5>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Manager </button>
 
                 </div>
-             
 
-                <table class="table table-responsiveß table-hover table-striped">
+
+                <table class="table table-responsiveß table-hover table-stri ped">
                     <thead>
 
                     </thead>
                     <tbody>
                         @foreach (var manager in ViewBag.ManagersInfo)
                         {
-                        <tr>
-                            <td>@manager.Name</td>
-                            <td>@manager.Surname</td>
-                            <td>@manager.NationalId</td>
-                            <td><a href="~/@manager.Attachment"> National Id Copy</a></td>
-                         
-                        </tr>
+                            <tr>
+                                <td>@manager.Name</td>
+                                <td>@manager.Surname</td>
+                                <td>@manager.NationalId</td>
+                                <td><a target="_blank" href="~/@manager.Attachment"> National Id Copy</a></td>
+
+                            </tr>
                         }
                     </tbody>
                 </table>
+
 
 
                 <div class="card-footer">
@@ -47,13 +47,38 @@
                         }
                         else
                         {
-                            <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                            <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+                            <a href="/Recommend/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                            <a href="/Recommend/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
 
                         }
                     </div>
                 </div>
             </div>
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+                    <div class="text-center">
+                        <h5 class="card-title text-success">@TempData["result"]</h5>
+                    </div>
+                    <h5 class="card-title">Verify Managers Information</h5>
+                </div>
+
+
+                <form action="/Recommend/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
+                    <div class="row">
+                        <input type="hidden" name="applicationId" value="@ViewBag.ApplicationInfo.Id" />
+                        <input type="hidden" name="stage" value="Recommend Managers" />
+
+                        <textarea class="form-control" name="query"></textarea>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
         </div>
 
     </div>

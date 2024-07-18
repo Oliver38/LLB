@@ -61,25 +61,31 @@
 
                     </tr>
 
-                    <tr>
-                        <td>Pay Using </td>
-                        <td>
-                            
-
-                                <a href="/License/PaynowPayment?Id=@ViewBag.ApplicationInfo.Id&amount=@ViewBag.ApplicationInfo.PaymentFee" class="btn btn-primary">Paynow</a>
-                            
-                        </td>
-
-                    </tr>
+                  
                 </tbody>
         </table>
 
 
         <div class="card-footer">
             <div class="text-center">
-                <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                <a href="/License/Submit?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Submit</a>
+                <a href="/Recommend/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                @if (ViewBag.HasQuery.Count > 0)
+                {
+                    if (@ViewBag.ApplicationInfo.Status == "Has Query")
+                    {
 
+                    }
+                    else
+                    {
+                        <a href="/Recommend/HasQuery?Id=@ViewBag.ApplicationInfo.Id&taskid=@ViewBag.Task.Id" class="btn btn-primary">Submit Query</a>
+
+                    }
+                }
+                else
+                {
+                    <a href="/Recommend/Approve?Id=@ViewBag.ApplicationInfo.Id&taskid=@ViewBag.Task.Id" class="btn btn-success">Approve Verification</a>
+
+                }
             </div>
         </div>
     </div>

@@ -4,6 +4,7 @@ using LLB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LLB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240711092723_addingtaskidtoquery")]
+    partial class addingtaskidtoquery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -534,12 +537,6 @@ namespace LLB.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ApplicationId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ApprovedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ApproverId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("AssignerId")

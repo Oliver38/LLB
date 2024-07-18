@@ -80,7 +80,7 @@
         <div class="card-footer">
             <div class="text-center">
                 <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                @if (ViewBag.ApplicationInfo.Status == "Has Query")
+                @if (ViewBag.Queries.Count > 0)
                     {
                     <a href="/License/ResolveApplication?applicationId=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Resolve & Resubmit</a>
                     }
