@@ -39,7 +39,7 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.ToList();
+            var tasks = _db.Tasks.Where(s => s.ApproverId == id && s.Status == "assigned"   ).ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
@@ -521,7 +521,7 @@ namespace LLB.Controllers
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             application.Status = "approved";
-            application.ExaminationStatus= "recommendation";
+            application.ExaminationStatus= "Approved";
             _db.Update(application);
             _db.SaveChanges();
 
@@ -529,21 +529,8 @@ namespace LLB.Controllers
             task.Status = "completed";
             _db.Update(task);
             _db.SaveChanges();
-            Tasks tasks = new Tasks();
-            tasks.Id = Guid.NewGuid().ToString();
-            tasks.ApplicationId = application.Id;
-            //tasks.AssignerId
-
-            //auto allocation to replace
-            var userId = await userManager.FindByEmailAsync("recommender@recommender.com");
-            tasks.VerifierId = userId.Id;
-            tasks.AssignerId = "system";
-            tasks.Status = "assigned";
-            tasks.DateAdded = DateTime.Now;
-            tasks.DateUpdated = DateTime.Now;
-            _db.Add(tasks);
-            _db.SaveChanges();
-            return RedirectToAction("Dashboard", "Verify");
+        
+            return RedirectToAction("Dashboard", "Approval");
         }
     }
 }

@@ -20,6 +20,11 @@ using System.IO;
 using Microsoft.Extensions.Hosting;
 using System.Globalization;
 using IronPdf.Editing;
+using System.Threading.Tasks;
+using Microsoft.VisualStudio.Web.CodeGeneration;
+using QRCoder;
+using System.Drawing.Imaging;
+using System.Drawing;
 
 namespace LLB.Controllers
 {
@@ -44,49 +49,156 @@ namespace LLB.Controllers
     
 
     [Route("C")]
-        public IActionResult Tests(string searchref)
+        public async Task<IActionResult> TestsAsync(string searchref)
         {
+
+            searchref = "fa965cee-0e29-40f8-8484-630aca6eb8b3";
            // IronPdf.HtmlToPdf Renderer = new IronPdf.HtmlToPdf();
             var Renderer = new IronPdf.HtmlToPdf();
             string webRootPath = _env.WebRootPath;
-            string pdfFilePath = Path.Combine(webRootPath ,"COICODENEW.pdf");
+            string pdfFilePath = Path.Combine(webRootPath ,"Template.pdf");
            // string pdfFilePath = $"~/COICODENEW.pdf";
 
 
+
+
             var pdf = PdfDocument.FromFile(pdfFilePath);
+            var applications = _db.ApplicationInfo.Where(a => a.Id == searchref).FirstOrDefault();
+            var managers = _db.ManagersParticulars.Where(b => b.ApplicationId == searchref).ToList();
+            var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == searchref).FirstOrDefault();
+            //var outletinfo = _db.OutletInfo.ToList();
+            var license = _db.LicenseTypes.ToList();
+            var regions = _db.LicenseRegions.ToList();
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
 
             if (pdf == null)
             {
                 throw new InvalidOperationException($"Failed to load the PDF document from {pdfFilePath}.");
             }
 
-
-            TextStamper stamper2 = new TextStamper()
+            TextStamper licensee = new TextStamper()
             {
-                Text = "Hello World! Stamp Two Here lalala!",
+                Text = $"{user.Name} { user.LastName}",
                 FontFamily = "Times New Roman",
                 UseGoogleFont = false,
-                FontSize = 30,
-                VerticalAlignment = VerticalAlignment.Middle,
-                HorizontalOffset = new Length(10),
-                VerticalOffset = new Length(10),
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(22),
+                VerticalOffset = new Length(27),
             };
 
-            TextStamper stamper3 = new TextStamper()
+            TextStamper tradingname = new TextStamper()
             {
-                Text = "Hello World! Stamp Two Here bom bom tilaw!",
+                Text = $"{outletinfo.TradingName}",
                 FontFamily = "Times New Roman",
                 UseGoogleFont = false,
-                FontSize = 30,
-                VerticalAlignment = VerticalAlignment.Middle,
-                HorizontalOffset = new Length(30),
-                VerticalOffset = new Length(30),
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(25.2),
+                VerticalOffset = new Length(29.8),
             };
 
 
-            Stamper[] stampersToApply = { stamper2, stamper3 };
+
+
+            TextStamper location = new TextStamper()
+            {
+                Text = $"{outletinfo.Address}",
+                FontFamily = "Times New Roman",
+                UseGoogleFont = false,
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(28.4),
+                VerticalOffset = new Length(32.5),
+            };
+            var managersfig = managers.Count();
+
+            TextStamper managerscount = new TextStamper()
+            {
+                Text = $"{managersfig}",
+                FontFamily = "Times New Roman",
+                UseGoogleFont = false,
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(53),
+                VerticalOffset = new Length(36.2),
+            };
+
+
+           
+
+            //TextStamper managerslist;
+            string managerscontent = "<table style='font-family: Times New Roman; font-size: 14px;'>";
+            foreach (var mans in managers)
+            {
+                managerscontent += $"<tr><td>{mans.Name} {mans.Surname}</td></tr>";
+            }
+
+            managerscontent += "</table>";
+
+            // Render HTML content with text stamper
+           // pdf = PdfDocument.R(managerscontent);
+
+            HtmlStamper managerslist = new HtmlStamper()
+                {
+                  
+                Html = managerscontent ,
+                    
+                    VerticalAlignment = VerticalAlignment.Top,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    HorizontalOffset = new Length(23),
+                    VerticalOffset = new Length(40),
+            };
+
+            var payload = "content to be edited";
+            try
+
+
+
+            {
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
+                // QRCodeData qrCodeDatab = qrGenerator.CreateQrCode(qrText , QRCodeGenerator.ECCLevel.Q, QRCodeGenerator.EciMode.Utf8);//Url.Action("facebook.com")
+               // QRCode qrCodery = new QRCode(qrCodeData);
+
+               //Bitmap qrCodeImage = qrCode.GetGraphic(50);
+                // Image qrCodeImage = qrCode.GetGraphic(50);
+               // Bitmap qrCodeImage = qrCodeData.GetGraphic(20);
+                //(Bitmap)Bitmap.FromFile("wwwroot/team-2.jpg"), 80);
+
+                //qrCodeImage.
+                var qrpath = System.IO.Path.Combine($"wwwroot\\QRcodes\\", applications.Id + ".png");
+
+                qrCodeImage.Save(qrpath, ImageFormat.Png);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+
+            string rqcontent = $"<img  src='~/QRcodes/{applications.Id}.png'>";
+            HtmlStamper qrcode = new HtmlStamper()
+            {
+
+                Html = rqcontent,
+
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(23),
+                VerticalOffset = new Length(40),
+            };
+
+
+
+            Stamper[] stampersToApply = { licensee, tradingname, location,managerscount,managerslist };
             pdf.ApplyMultipleStamps(stampersToApply);
-            pdf.ApplyStamp(stamper2);
+           // pdf.ApplyStamp(stamper2);
 
             string savePath = Path.Combine(webRootPath, "HtmlToPDFRAW.pdf");
             pdf.SaveAs(savePath);
