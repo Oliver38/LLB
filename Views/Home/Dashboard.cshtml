@@ -181,7 +181,8 @@
                                         {<a href="~/License/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
                                         }
                                         @if (application.Status == "approved")
-                                        {<a href="~/Documents/license.jpeg" class="btn btn-primary">Download License</a>
+                                        {
+                                            <a href="/Documents/C?searchref=@application.Id" class="btn btn-primary">Download License</a>
                                         }
                                     </td>
 

@@ -52,7 +52,7 @@ namespace LLB.Controllers
         public async Task<IActionResult> TestsAsync(string searchref)
         {
 
-            searchref = "fa965cee-0e29-40f8-8484-630aca6eb8b3";
+          // searchref = "fa965cee-0e29-40f8-8484-630aca6eb8b3";
            // IronPdf.HtmlToPdf Renderer = new IronPdf.HtmlToPdf();
             var Renderer = new IronPdf.HtmlToPdf();
             string webRootPath = _env.WebRootPath;
@@ -155,25 +155,21 @@ namespace LLB.Controllers
             };
 
             var payload = "content to be edited";
+
             try
-
-
-
             {
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
-                QRCodeData qrCodeData = qrGenerator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.H);
                 // QRCodeData qrCodeDatab = qrGenerator.CreateQrCode(qrText , QRCodeGenerator.ECCLevel.Q, QRCodeGenerator.EciMode.Utf8);//Url.Action("facebook.com")
-               // QRCode qrCodery = new QRCode(qrCodeData);
+                QRCode qrCodery = new QRCode(qrCodeData);
 
-               //Bitmap qrCodeImage = qrCode.GetGraphic(50);
+                //Bitmap qrCodeImage = qrCode.GetGraphic(50);
                 // Image qrCodeImage = qrCode.GetGraphic(50);
-               // Bitmap qrCodeImage = qrCodeData.GetGraphic(20);
-                //(Bitmap)Bitmap.FromFile("wwwroot/team-2.jpg"), 80);
+                Bitmap qrCodeImage = qrCodery.GetGraphic(20, Color.Black, Color.Transparent,
+                    (Bitmap)Bitmap.FromFile("C:\\My\\logo.png"), 80);
 
                 //qrCodeImage.
-                var qrpath = System.IO.Path.Combine($"wwwroot\\QRcodes\\", applications.Id + ".png");
-
-                qrCodeImage.Save(qrpath, ImageFormat.Png);
+                qrCodeImage.Save($"C:\\My\\QRCodes\\{searchref}.png", ImageFormat.Png);
 
             }
             catch (Exception ex)
@@ -181,8 +177,8 @@ namespace LLB.Controllers
                 Console.WriteLine(ex.Message);
             }
 
-
-            string rqcontent = $"<img  src='~/QRcodes/{applications.Id}.png'>";
+            //string rqcontent = $"<img  src='~/QRcodes/{applications.Id}.png'>";
+            string rqcontent = $" <figure><img style='height:120px;width:120px; ' src='C:\\My\\QRCodes\\{searchref}.png'></figure>";
             HtmlStamper qrcode = new HtmlStamper()
             {
 
@@ -190,29 +186,38 @@ namespace LLB.Controllers
 
                 VerticalAlignment = VerticalAlignment.Top,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                HorizontalOffset = new Length(23),
-                VerticalOffset = new Length(40),
+                HorizontalOffset = new Length(55),
+                VerticalOffset = new Length(38),
             };
 
 
+            //signature
+            string sigcontent = $" <figure><img style='height:81px;width:81px; ' src='C:\\My\\llbsig.png'></figure>";
+            HtmlStamper signature = new HtmlStamper()
+            {
 
-            Stamper[] stampersToApply = { licensee, tradingname, location,managerscount,managerslist };
+                Html = sigcontent,
+
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(53),
+                VerticalOffset = new Length(63),
+            };
+
+
+            Stamper[] stampersToApply = { licensee, tradingname, location,managerscount,managerslist, qrcode,signature };
             pdf.ApplyMultipleStamps(stampersToApply);
            // pdf.ApplyStamp(stamper2);
 
             string savePath = Path.Combine(webRootPath, "HtmlToPDFRAW.pdf");
             pdf.SaveAs(savePath);
 
-             WebClient client = new WebClient();
-            Byte[] buffer = System.IO.File.ReadAllBytes(savePath);
-            
+            System.Net.WebClient client = new System.Net.WebClient();
+            Byte[] byteArray = client.DownloadData(savePath);
 
-           //// string filePath = savePath;
-            ////return File(filePath, "application/pdf");
-
-            // byte[] byteArray = System.IO.File.ReadAllBytes(savePath);
-
-             return File(buffer, "application/pdf", "HtmlToPDFRAW.pdf");
+            ViewBag.title = "New Search";
+            // return new FileContentResult(byteArray, "application/pdf");
+            return File(pdf.BinaryData, "application/pdf;");
 
         }
 

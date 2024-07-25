@@ -77,13 +77,13 @@
                     }
                     else
                     {
-                        <a href="/Approval/HasQuery?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Submit Query</a>
+                            <a href="/Approval/HasQuery?Id=@ViewBag.ApplicationInfo.Id&taskid=@ViewBag.Task.Id" class="btn btn-primary">Submit Query</a>
 
                     }
                 }
                 else
                 {
-                    <a href="/Approval/Approve?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Approve Verification</a>
+                        <a href="/Approval/Approve?Id=@ViewBag.ApplicationInfo.Id&taskid=@ViewBag.Task.Id" class="btn btn-success">Approve Verification</a>
 
                 }
             </div>

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LLB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240527234550_managerUpdate")]
-    partial class managerUpdate
+    [Migration("20240724044657_newllb")]
+    partial class newllb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -48,6 +48,12 @@ namespace LLB.Migrations
                     b.Property<string>("DateofEntryIntoZimbabwe")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ExaminationStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IdPass")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("InspectionDate")
                         .HasColumnType("datetime2");
 
@@ -57,13 +63,28 @@ namespace LLB.Migrations
                     b.Property<string>("LicenseTypeID")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Nationality")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("OperationAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("PaymentFee")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PaymentId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentStatus")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PlaceOfBirth")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PlaceOfEntry")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RefNum")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RejectionReason")
@@ -92,9 +113,6 @@ namespace LLB.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ApplicationBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClientId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -373,6 +391,9 @@ namespace LLB.Migrations
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Fingerprints")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
@@ -431,6 +452,126 @@ namespace LLB.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OutletInfo");
+                });
+
+            modelBuilder.Entity("LLB.Models.Payments", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal?>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ApplicationId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateAdded")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaynowRef")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PollUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PopDoc")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SystemRef")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("LLB.Models.Queries", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ApplicationId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateAdded")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InspectorId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Query")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Stage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TaskId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Queries");
+                });
+
+            modelBuilder.Entity("LLB.Models.Tasks", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ApplicationId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ApproverId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AssignerId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateAdded")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RecommendationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RecommenderId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("VerificationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("VerifierId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
