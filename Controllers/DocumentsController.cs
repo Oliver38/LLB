@@ -198,11 +198,13 @@ namespace LLB.Controllers
 
                 Html = sigcontent,
 
-                VerticalAlignment = VerticalAlignment.Top,
+                VerticalAlignment = VerticalAlignment.Middle,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                HorizontalOffset = new Length(53),
-                VerticalOffset = new Length(63),
+                HorizontalOffset = new Length(12),
+                VerticalOffset = new Length(42.5),
             };
+
+          
 
 
             Stamper[] stampersToApply = { licensee, tradingname, location,managerscount,managerslist, qrcode,signature };
