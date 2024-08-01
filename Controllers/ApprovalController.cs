@@ -522,6 +522,8 @@ namespace LLB.Controllers
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             application.Status = "approved";
             application.ExaminationStatus= "Approved";
+            application.ApprovedDate = DateTime.Now;
+            application.ExpiryDate = application.ApprovedDate.AddYears(1);
             _db.Update(application);
             _db.SaveChanges();
 

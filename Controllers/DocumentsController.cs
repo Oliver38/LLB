@@ -141,7 +141,59 @@ namespace LLB.Controllers
             managerscontent += "</table>";
 
             // Render HTML content with text stamper
-           // pdf = PdfDocument.R(managerscontent);
+
+
+            TextStamper expirydate = new TextStamper()
+            {
+                Text = $"{applications.ExpiryDate.Date}",
+                FontFamily = "Times New Roman",
+                UseGoogleFont = false,
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Middle,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(29.4),
+                VerticalOffset = new Length(24.5),
+            };
+
+
+
+            TextStamper grantdate = new TextStamper()
+            {
+                Text = $"{applications.ApprovedDate.Date}",
+                FontFamily = "Times New Roman",
+                UseGoogleFont = false,
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Middle,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(28.4),
+                VerticalOffset = new Length(26.1),
+            };
+
+
+            TextStamper expirydateuthority = new TextStamper()
+            {
+                Text = $"{applications.ExpiryDate.Date}",
+                FontFamily = "Times New Roman",
+                UseGoogleFont = false,
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Middle,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(34.4),
+                VerticalOffset = new Length(27.8),
+            };
+
+            TextStamper llbnum = new TextStamper()
+            {
+                Text = $"{applications.RefNum}",
+                FontFamily = "Times New Roman",
+                UseGoogleFont = false,
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Middle,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(31.4),
+                VerticalOffset = new Length(29.5),
+            };
+            // pdf = PdfDocument.R(managerscontent);
 
             HtmlStamper managerslist = new HtmlStamper()
                 {
@@ -207,7 +259,7 @@ namespace LLB.Controllers
           
 
 
-            Stamper[] stampersToApply = { licensee, tradingname, location,managerscount,managerslist, qrcode,signature };
+            Stamper[] stampersToApply = { licensee, tradingname, location,managerscount,managerslist, qrcode,signature ,expirydate, grantdate, expirydateuthority, llbnum};
             pdf.ApplyMultipleStamps(stampersToApply);
            // pdf.ApplyStamp(stamper2);
 

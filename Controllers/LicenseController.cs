@@ -133,6 +133,7 @@ namespace LLB.Controllers
 
                 //public DateTime InspectionDate 
                 updateinfo.Secretary = "";
+                updateinfo.DateUpdated = DateTime.Now;
                 // public DateTime ApprovedDate 
                 ///////////// info.RejectionReason = "";
                 //spublic DateTime DateCreated 
