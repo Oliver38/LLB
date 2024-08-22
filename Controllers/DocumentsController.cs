@@ -25,6 +25,7 @@ using Microsoft.VisualStudio.Web.CodeGeneration;
 using QRCoder;
 using System.Drawing.Imaging;
 using System.Drawing;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace LLB.Controllers
 {
@@ -206,6 +207,21 @@ namespace LLB.Controllers
                     VerticalOffset = new Length(40),
             };
 
+            string renconditions = "<ul style='font-family: Times New Roman; font-size: 13px;'><li>RENEW AL PERIOD IS FROM NOV. TO JAN. YEARLY.</li> " +
+                "<li>ATTACH COPY OF CURRENT UCENCE</li> " +
+                "<li>ATTACH HEALTH REPORT ON PREMISES OR INSPECTION REPORT</li> " +
+                "<li>ATTACH ZBC CLEARANCE CERTIFICATE</li></ul>";
+
+            HtmlStamper conditions = new HtmlStamper()
+            {
+
+                Html = renconditions,
+
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(13),
+                VerticalOffset = new Length(47.5),
+            };
             var payload = "content to be edited";
 
             try
@@ -259,7 +275,7 @@ namespace LLB.Controllers
           
 
 
-            Stamper[] stampersToApply = { licensee, tradingname, location,managerscount,managerslist, qrcode,signature ,expirydate, grantdate, expirydateuthority, llbnum};
+            Stamper[] stampersToApply = { licensee, tradingname, location,managerscount,managerslist, qrcode,signature ,expirydate, grantdate, expirydateuthority, llbnum, conditions };
             pdf.ApplyMultipleStamps(stampersToApply);
            // pdf.ApplyStamp(stamper2);
 
