@@ -1,0 +1,231 @@
+﻿@{
+    Layout = "_LayoutMain";
+
+
+}
+
+ 
+@if (ViewBag.OutletInfo == null)
+{
+    <div class="row">
+        <div class="card">
+            <div class="card-body" id="_step1">
+                <h5 class="card-title">Outlet Information</h5>
+
+                <!-- Multi Columns Form -->
+                <form action="/License/OutletInfo" method="post" enctytpe="multipart/form-data" class="row g-3">
+
+
+                    <div class="col-md-12">
+                        <label for="inputName5" class="form-label">Trading Name</label>
+                        <input type="text" name="tradingName" value="" class="form-control" id="inputName5">
+                        <input type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <textarea class="form-control" name="Address" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
+                            <label for="floatingTextarea">Oulet Address</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Province</label>
+                        <input type="text" name="province" value="" class="form-control" id="inputName5">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">City</label>
+                        <input type="text" name="city" value="" class="form-control" id="inputName5">
+                    </div>
+
+
+
+
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+                </form><!-- End Multi Columns Form -->
+
+
+                @if (ViewBag.DirectorsCount <= 0)
+                {
+
+
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                }
+                else
+                {
+
+
+                    <table class="table table-responsiveß table-hover table-striped">
+                        @foreach (var director in ViewBag.Directors)
+                        {
+                            <tr>
+                                <th scope="row">@director.Name</th>
+                                <th scope="row">@director.Surname</th>
+                                <th scope="row">@director.Address</th>
+                                <th scope="row">
+                                    <button type="button" class="btn btn-primary">View</button>
+                                    <button type="button" class="btn btn-default">Edit</button>
+                                    <button type="button" class="btn btn-danger">Delete </button>
+
+                                </th>
+
+                            </tr>
+
+                        }
+                    </table>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+
+                }
+                <div class="card-footer">
+                    <div class="text-center">
+                        <a href="/License/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+}
+else
+{
+
+    <div class="row">
+        <div class="card">
+            <div class="card-body" id="_step1">
+
+                <div class="card-header">
+                    <div class="text-center">
+                        <h5 class="card-title text-success">@TempData["result"]</h5>
+                    </div>
+                    <h5 class="card-title">Outlet Information</h5>
+                </div>
+
+
+                <!-- Multi Columns Form -->
+                <form action="/License/OutletInfo" method="post" enctytpe="multipart/form-data" class="row g-3">
+
+
+                    <div class="col-md-12">
+                        <label for="inputName5" class="form-label">Trading Name</label>
+                        <input type="text" name="tradingName" value="@ViewBag.OutletInfo.TradingName" class="form-control" id="inputName5">
+                        <input type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
+                        <input type="hidden" name="Id" value="@ViewBag.OutletInfo.Id" class="form-control" id="inputName5">
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <textarea class="form-control" name="Address" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.OutletInfo.Address</textarea>
+                            <label for="floatingTextarea">Oulet Address</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Province</label>
+                        <input type="text" name="province" value="@ViewBag.OutletInfo.Province" class="form-control" id="inputName5">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">City</label>
+                        <input type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
+                    </div>
+
+
+
+
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+                </form><!-- End Multi Columns Form -->
+
+
+                @if (ViewBag.DirectorsCount <= 0)
+                {
+
+
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                }
+                else
+                {
+
+
+                    <table class="table table-responsiveß table-hover table-striped">
+                        @foreach (var director in ViewBag.Directors)
+                        {
+                            <tr>
+                                <th scope="row">@director.Name</th>
+                                <th scope="row">@director.Surname</th>
+                                <th scope="row">@director.Address</th>
+                                <th scope="row">
+                                    <button type="button" class="btn btn-primary">View</button>
+                                    <button type="button" class="btn btn-default">Edit</button>
+                                    <button type="button" class="btn btn-danger">Delete </button>
+
+                                </th>
+
+                            </tr>
+
+                        }
+                    </table>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+
+                }
+                <div class="card-footer">
+                    <div class="text-center">
+                        <a href="/License/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
+                        <a href="/License/ManagersInfo?Id=@ViewBag.Application.Id" class="btn btn-primary">Next</a>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+
+
+<div class="modal fade" id="addDirector" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adding Director Details </h5> <h5 class="modal-title" id="feetitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/License/Director" enctype="multipart/form-data" method="post">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Name</label>
+                            <input type="hidden" name="applicationId" class="form-control" value="@ViewBag.Application.Id" id="Id">
+                            <input type="text" name="name" class="form-control" id="name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Surname</label>
+                            <input type="text" name="surname" class="form-control" id="surname">
+                        </div>
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">National Id</label>
+                            <input type="text" name="nationalId" class="form-control" id="TownFee">
+                        </div>
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">Address</label>
+                            <textarea type="text" name="address" class="form-control" id="RDCFee"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div><!-- End Basic Modal-->

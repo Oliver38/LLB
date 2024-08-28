@@ -90,6 +90,10 @@
                                         {
                                             <span class="text-warning">@application.Status</span>
                                         }
+                                        @if (application.Status == "payment verification")
+                                        {
+                                            <span class="text-warning">@application.Status</span>
+                                        }
                                         else if (application.Status == "submitted")
                                         { <span class="text-success">@application.Status</span>}
                                     else if (application.Status == "verified")
@@ -98,7 +102,13 @@
 
                                     <td>
                                         @if (application.Status == "verified")
-                                        {}else{<a href="/Verify/Apply?Id=@application.Id" class="btn btn-primary">View</a>}
+                                        { }
+                                        else if (application.Status == "payment verification")
+                                        { }
+                                        else
+                                        {
+                                            <a href="/Verify/Apply?Id=@application.Id" class="btn btn-primary">View</a>
+                                        }
                                     </td>
 
 

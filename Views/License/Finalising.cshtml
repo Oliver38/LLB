@@ -67,8 +67,14 @@
 
                             @if (ViewBag.Payment!= null &&ViewBag.Payment.Status  == "Paid")
                                 { }
-                                else {
+                            else if (ViewBag.Payment.Status == "awaiting verification")
+                            {
+
+                                <a href="/@ViewBag.Payment.PopDoc">View POP</a>    <a href="/License/RemovePop?Id=@ViewBag.Payment.Id" class="btn btn-danger">Remove POP</a>
+                            }
+                            else {
                                 <a href="/License/PaynowPayment?Id=@ViewBag.ApplicationInfo.Id&amount=@ViewBag.ApplicationInfo.PaymentFee" class="btn btn-primary">Paynow</a>
+                                <button data-bs-toggle="modal" data-bs-target="#paymentpop" class="btn btn-primary">Upload POP</button>
                                 }
                             </td>
 
@@ -98,17 +104,19 @@
 
 
 
-<div class="modal fade" id="paynow" tabindex="-1">
+<div class="modal fade" id="paymentpop" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Adding Director Details </h5> <h5 class="modal-title" id="feetitle"></h5>
+                <h5 class="modal-title">Upload Prof Of Payment </h5> <h5 class="modal-title" id="feetitle"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/License/Director" enctype="multipart/form-data" method="post">
+            <form action="/License/PaymentPOP" enctype="multipart/form-data" method="post">
                 <div class="modal-body">
                     <div class="row">
-
+                        <input type="file" name="file" class="form-control" />
+                        <input type="text" name="amount" value="@ViewBag.ApplicationInfo.PaymentFee" class="form-control" />
+                        <input type="hidden" name="id" value="@ViewBag.ApplicationInfo.Id" class="form-control" />
 
                     </div>
                 </div>

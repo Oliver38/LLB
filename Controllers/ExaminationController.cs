@@ -12,8 +12,8 @@ namespace LLB.Controllers
 {
     
     [Route("")]
-    [Route("Examinationtwo")]
-    public class ExaminationtwoController : Controller
+    [Route("Examination")]
+    public class ExaminationController : Controller
     {
         
 
@@ -22,7 +22,7 @@ namespace LLB.Controllers
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IDNTCaptchaValidatorService _validatorService;
 
-        public ExaminationtwoController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public ExaminationController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
             this.userManager = userManager;

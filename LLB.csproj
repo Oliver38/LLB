@@ -62,7 +62,7 @@
     <Folder Include="Views\Roles\" />
     <Folder Include="Views\Viewing\" />
     <Folder Include="Views\Tasks\" />
-    <Folder Include="Views\Examinationtwo\" />
+    <Folder Include="Views\Examination\" />
     <Folder Include="Views\Verify\" />
     <Folder Include="Views\Recommend\" />
     <Folder Include="Views\Approval\" />

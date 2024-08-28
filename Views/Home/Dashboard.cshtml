@@ -160,22 +160,39 @@
                                         @if (application.Status == "inprogress")
                                         {
                                             <span class="text-warning">@application.Status</span>
+                                        }  @if (application.Status == "payment verification")
+                                        {
+                                            <span class="text-success">
+                                                @application.Status
+                                            </span>
                                         }
                                         else if (application.Status == "submitted")
-                                        { <span class="text-success">@application.Status</span>}
-                                    else if (application.Status == "Has Query")
-                                    { <span class="text-warning">@application.Status</span>}
-                                else if (application.Status == "approved")
-                                {
-                                    <span class="text-success">@application.Status</span>}
+                                        {
+                                            <span class="text-success">@application.Status
+                                            </span>
+                                        }
+                                        else if (application.Status == "Has Query")
+                                        {
+                                            <span class="text-warning">@application.Status
+                                            </span>
+                                        }
+                                        else if (application.Status == "approved")
+                                        {
+                                            <span class="text-success">@application.Status</span>
+                                        }
                                     </td>
 
                                     <td>
                                         @if (application.Status == "inprogress")
                                         {
                                             <a href="/License/Apply?Id=@application.Id" class="btn btn-primary">Continue </a>
-                                        }   @if (application.Status == "submitted")
-                                        {<a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
+                                        }   @if (application.Status == "payment verification")
+                                        {
+                                            <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
+                                        }
+                                        @if (application.Status == "submitted")
+                                        {
+                                            <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
                                         }
                                         @if (application.Status == "Has Query")
                                         {<a href="~/License/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>

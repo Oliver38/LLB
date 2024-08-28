@@ -1,0 +1,126 @@
+﻿@{
+    Layout = "_LayoutMain";
+
+
+
+}
+
+
+<div class="row">
+    <div class="card">
+       
+        <div class="card-body" id="_step1">
+            <div class="card-header">
+                <div class="text-center">
+                    <h5 class="card-title text-success">@TempData["result"]</h5>
+                </div>
+                <h5 class="card-title">Attachments</h5>
+                @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                *@
+            </div>
+
+
+
+
+            <div class="row">
+
+                <table class="table table-responsiveß table-hover table-striped">
+                    @foreach (var attachment in ViewBag.Attachments)
+                    {
+                        if (attachment.DocumentLocation == "")
+                        {
+                            <form method="post" class="form-control" enctype="multipart/form-data" action="/License/Attachments">
+                            <tr>
+                                <td>@attachment.DocumentTitle </td>
+
+                                <td>
+                                    <input type="file" name="file" class="form-control" />
+                                    <input type="hidden" name="id" value="@attachment.Id" />
+                                    <input type="hidden" name="applicationId" value="@attachment.ApplicationId" />
+                                </td>
+                                
+
+
+                            </tr>
+                            </form>
+
+                        }
+                        else
+                        {
+                <tr>
+                    <td>@attachment.DocumentTitle </td>
+                    <td><a href="~/@attachment.DocumentLocation" target="_blank">View Here</a></td>
+                    
+                </tr>
+
+                        }
+
+
+                    }
+
+
+
+
+                </table>
+            </div>
+
+
+
+
+
+            <div class="card-footer">
+                <div class="text-center">
+                    @if (ViewBag.Attachments == null)
+                    {
+                        <a href="/Examination/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                    }
+                    else
+                    {
+                        <a href="/Examination/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/Examination/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+
+<div class="modal fade" id="addDirector" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adding Director Details </h5> <h5 class="modal-title" id="feetitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+             <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Name</label>
+                            <input type="hidden" name="applicationId" class="form-control" value="@ViewBag.ApplicationInfo.Id" id="Id">
+                            <input type="text" name="name" class="form-control" id="name">
+                        </div>
+
+                        @foreach (var attachment in ViewBag.Attachments)
+                        {
+                         
+                                
+
+
+                            
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+           
+        </div>
+    </div>
+</div><!-- End Basic Modal-->

@@ -15,6 +15,7 @@ using DNTCaptcha.Core;
 using LLB.Models.ViewModel;
 using Webdev.Payments;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Security.Cryptography.Xml;
 
 
 namespace LLB.Controllers
@@ -549,29 +550,41 @@ namespace LLB.Controllers
 
             var paymentTransb = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
 
-            if (paymentTransb == null)
+
+
+         
+
+                if (paymentTransb == null)
+                {
+
+                }
+            else
             {
 
-            }
-                else
-            {
+
+                if (paymentTransb.PollUrl == "transfer") 
+                {
+
+                }
+                else { 
                 var paynowb = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-                var statusb = paynowb.PollTransaction(paymentTransb.PollUrl);
+                    var statusb = paynowb.PollTransaction(paymentTransb.PollUrl);
 
-                var statusdatab = statusb.GetData();
-                paymentTransb.PaynowRef = statusdatab["paynowreference"];
-                paymentTransb.PaymentStatus = statusdatab["status"];
-                paymentTransb.Status = statusdatab["status"];
-                paymentTransb.DateUpdated = DateTime.Now;
+                    var statusdatab = statusb.GetData();
+                    paymentTransb.PaynowRef = statusdatab["paynowreference"];
+                    paymentTransb.PaymentStatus = statusdatab["status"];
+                    paymentTransb.Status = statusdatab["status"];
+                    paymentTransb.DateUpdated = DateTime.Now;
 
-                _db.Update(paymentTransb);
-                _db.SaveChanges();
-                // applicationInfo.PaymentFee = paymentTrans.Amount;
-                applicationInfo.PaymentId = paymentTransb.Id;
-                applicationInfo.PaymentStatus = statusdatab["status"];
-                _db.Update(applicationInfo);
-                _db.SaveChanges();
+                    _db.Update(paymentTransb);
+                    _db.SaveChanges();
+                    // applicationInfo.PaymentFee = paymentTrans.Amount;
+                    applicationInfo.PaymentId = paymentTransb.Id;
+                    applicationInfo.PaymentStatus = statusdatab["status"];
+                    _db.Update(applicationInfo);
+                    _db.SaveChanges();
+                }
             }
             Finalising finaldata = new Finalising();
             /*public string? Id { get; set; }
@@ -745,12 +758,74 @@ namespace LLB.Controllers
             return View();
         }
 
+        [HttpPost("PaymentPOP")]
+        public async Task<IActionResult> PaynowPOP(string Id, double amount, IFormFile file)
+        {
+            Payments transaction = new Payments();
+            transaction.Id = Guid.NewGuid().ToString();
 
-        [HttpGet("Submit")]
+            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+            transaction.UserId = id;
+            transaction.Amount = (decimal)amount;
+            transaction.ApplicationId = Id;
+            //   transaction.PaynowRef = payment.Reference;
+           // transaction.PollUrl = response.PollUrl();
+            transaction.PopDoc = "";
+            transaction.Status = "awaiting verification";
+            transaction.DateAdded = DateTime.Now;
+            transaction.DateUpdated = DateTime.Now;
+          transaction.PollUrl = "transfer";
+
+            transaction.PaynowRef = "";
+            transaction.PaymentStatus = "payment verification";
+            if (file != null)
+            {
+                string pic = System.IO.Path.GetFileName(file.FileName);
+                string dic = System.IO.Path.GetExtension(file.FileName);
+                string newname = Id;
+                string path = System.IO.Path.Combine($"POPS", newname + dic);
+                string docpath = System.IO.Path.Combine($"wwwroot/POPS", newname + dic);
+                transaction.PopDoc = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                transaction.PopDoc = "";
+            }
+            _db.Add(transaction);
+            _db.SaveChanges();
+
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            applicationInfo.PaymentId = transaction.Id;
+            applicationInfo.PaymentFee =(decimal)amount;
+            applicationInfo.PaymentStatus = "payment verification";
+            _db.Update(applicationInfo);
+            _db.SaveChanges();
+
+            string error = "POP Uploaded";
+            string gateway = "transfer";
+
+            return RedirectToAction("Finalising",  new { Id = Id, error = error, gateway = gateway });
+            return View();
+        }
+
+
+        //RemovePop
+        [HttpGet("RemovePop")]
+        public async Task<IActionResult> RemovePop(string Id)
+        {
+            return View();
+        }
+
+            [HttpGet("Submit")]
         public async Task<IActionResult> SubmitAsync(string Id)
         {
            
-            var payment = _db.Payments.Where(s => s.ApplicationId == Id && s.Status == "Paid").FirstOrDefault();
+            var payment = _db.Payments.Where(s => s.ApplicationId == Id ).OrderByDescending(x => x.DateAdded).FirstOrDefault();
             //var paymentvet = _db.Payments.Where(c => c.ApplicationId == Id && c.Status == "POP").FirstOrDefault();
             if (payment == null || payment.PaymentStatus == "not paid" || payment.PaymentStatus == "Cancelled")
             {
@@ -758,6 +833,14 @@ namespace LLB.Controllers
                  return RedirectToAction("Finalising", new { Id = Id, error = error });
 
                 // var applicationInfo = 
+            }else if (payment.Status == "awaiting verification" )
+
+            {
+                var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+                application.Status = "payment verification";
+                _db.Update(application);
+                _db.SaveChanges();
+                return RedirectToAction("Dashboard", "Home");
             }
             else
             {
