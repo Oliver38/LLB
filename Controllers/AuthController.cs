@@ -210,6 +210,8 @@ namespace LLB.Controllers
             await signInManager.SignOutAsync();
             return RedirectToAction("", "");
         }
+
+        [HttpGet("Login")]
         [AllowAnonymous]
         public IActionResult Login()
         {
