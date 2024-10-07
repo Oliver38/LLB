@@ -47,18 +47,18 @@ namespace LLB.Controllers
             _validatorService = validatorService;
             _env = env;
         }
-    
 
-    [Route("C")]
+
+        [Route("C")]
         public async Task<IActionResult> TestsAsync(string searchref)
         {
 
-          // searchref = "fa965cee-0e29-40f8-8484-630aca6eb8b3";
-           // IronPdf.HtmlToPdf Renderer = new IronPdf.HtmlToPdf();
+            // searchref = "fa965cee-0e29-40f8-8484-630aca6eb8b3";
+            // IronPdf.HtmlToPdf Renderer = new IronPdf.HtmlToPdf();
             var Renderer = new IronPdf.HtmlToPdf();
             string webRootPath = _env.WebRootPath;
-            string pdfFilePath = Path.Combine(webRootPath ,"Template.pdf");
-           // string pdfFilePath = $"~/COICODENEW.pdf";
+            string pdfFilePath = Path.Combine(webRootPath, "Template.pdf");
+            // string pdfFilePath = $"~/COICODENEW.pdf";
 
 
 
@@ -79,7 +79,7 @@ namespace LLB.Controllers
 
             TextStamper licensee = new TextStamper()
             {
-                Text = $"{user.Name} { user.LastName}",
+                Text = $"{user.Name} {user.LastName}",
                 FontFamily = "Times New Roman",
                 UseGoogleFont = false,
                 FontSize = 14,
@@ -130,7 +130,7 @@ namespace LLB.Controllers
             };
 
 
-           
+
 
             //TextStamper managerslist;
             string managerscontent = "<table style='font-family: Times New Roman; font-size: 14px;'>";
@@ -197,18 +197,19 @@ namespace LLB.Controllers
             // pdf = PdfDocument.R(managerscontent);
 
             HtmlStamper managerslist = new HtmlStamper()
-                {
-                  
-                Html = managerscontent ,
-                    
-                    VerticalAlignment = VerticalAlignment.Top,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    HorizontalOffset = new Length(23),
-                    VerticalOffset = new Length(40),
+            {
+
+                Html = managerscontent,
+
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(23),
+                VerticalOffset = new Length(40),
             };
 
-            string renconditions = "<ul style='font-family: Times New Roman; font-size: 13px;'><li>RENEW AL PERIOD IS FROM NOV. TO JAN. YEARLY.</li> " +
-                "<li>ATTACH COPY OF CURRENT UCENCE</li> " +
+            string renconditions = "<ul style='font-family: Times New Roman; font-size: 13px;'> " +
+                "<li>RENEWAL PERIOD IS FROM NOV. TO JAN. YEARLY.</li> " +
+                "<li>ATTACH COPY OF CURRENT LiCENCE</li> " +
                 "<li>ATTACH HEALTH REPORT ON PREMISES OR INSPECTION REPORT</li> " +
                 "<li>ATTACH ZBC CLEARANCE CERTIFICATE</li></ul>";
 
@@ -233,7 +234,7 @@ namespace LLB.Controllers
 
                 //Bitmap qrCodeImage = qrCode.GetGraphic(50);
                 // Image qrCodeImage = qrCode.GetGraphic(50);
-                Bitmap qrCodeImage = qrCodery.GetGraphic(20, Color.Black, Color.Transparent,
+                Bitmap qrCodeImage = qrCodery.GetGraphic(30, Color.Black, Color.Transparent,
                     (Bitmap)Bitmap.FromFile("C:\\My\\logo.png"), 80);
 
                 //qrCodeImage.
@@ -246,13 +247,13 @@ namespace LLB.Controllers
             }
 
             //string rqcontent = $"<img  src='~/QRcodes/{applications.Id}.png'>";
-            string rqcontent = $" <figure><img style='height:120px;width:120px; ' src='C:\\My\\QRCodes\\{searchref}.png'></figure>";
+            string rqcontent = $" <figure><img style='height:150px;width:150px; ' src='C:\\My\\QRCodes\\{searchref}.png'></figure>";
             HtmlStamper qrcode = new HtmlStamper()
             {
 
                 Html = rqcontent,
 
-                VerticalAlignment = VerticalAlignment.Top,
+                VerticalAlignment = VerticalAlignment.Middle,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 HorizontalOffset = new Length(55),
                 VerticalOffset = new Length(38),
@@ -272,12 +273,12 @@ namespace LLB.Controllers
                 VerticalOffset = new Length(42.5),
             };
 
-          
 
 
-            Stamper[] stampersToApply = { licensee, tradingname, location,managerscount,managerslist, qrcode,signature ,expirydate, grantdate, expirydateuthority, llbnum, conditions };
+
+            Stamper[] stampersToApply = { licensee, tradingname, location, managerscount, managerslist, qrcode, signature, expirydate, grantdate, expirydateuthority, llbnum, conditions };
             pdf.ApplyMultipleStamps(stampersToApply);
-           // pdf.ApplyStamp(stamper2);
+            // pdf.ApplyStamp(stamper2);
 
             string savePath = Path.Combine(webRootPath, "HtmlToPDFRAW.pdf");
             pdf.SaveAs(savePath);
@@ -298,10 +299,10 @@ namespace LLB.Controllers
             List<string> HtmlList = new List<string>();
             string[] HtmlArray;
 
-           string html =
-                  @" <meta http-equiv='content-type' content='text/html; charset=utf-8' /><img src='logo.jpeg'><html style = 'p.dashed {border - style: dashed;}'><table style='font-size:16px'><tr><td >Entity No.&nbsp;&nbsp;&nbsp;&nbsp;</td>"
-            + $"<td>3456</td></tr><tr> <td>Entity Name</td><td>Oliver PVT</td></tr>"
-            + $"<tr><td>Date of Incorporation<span></span></td><td>{DateTime.Now}</td></tr>";
+            string html =
+                   @" <meta http-equiv='content-type' content='text/html; charset=utf-8' /><img src='logo.jpeg'><html style = 'p.dashed {border - style: dashed;}'><table style='font-size:16px'><tr><td >Entity No.&nbsp;&nbsp;&nbsp;&nbsp;</td>"
+             + $"<td>3456</td></tr><tr> <td>Entity Name</td><td>Oliver PVT</td></tr>"
+             + $"<tr><td>Date of Incorporation<span></span></td><td>{DateTime.Now}</td></tr>";
             HtmlList.Add(html);
 
             string htmlb =
@@ -317,7 +318,7 @@ namespace LLB.Controllers
 
             Renderer.PrintOptions.PaperSize = PdfPrintOptions.PdfPaperSize.A4;
             //Renderer.PrintOptions.PaperSize = PdfPrintOptions.PdfPaperSize.A3;
-           // Renderer.PrintOptions.PaperOrientation = PdfPrintOptions.PdfPaperOrientation.Portrait;
+            // Renderer.PrintOptions.PaperOrientation = PdfPrintOptions.PdfPaperOrientation.Portrait;
             //Renderer.PrintOptions.PaperOrientation = PdfPrintOptions.PdfPaperOrientation.Landscape;
             // Renderer.PrintOptions.PaperOrientation = 0;
 
@@ -361,5 +362,5 @@ namespace LLB.Controllers
             return new FileContentResult(byteArray, "application/pdf");
         }
 
-        }
+    }
 }

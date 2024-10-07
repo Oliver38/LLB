@@ -26,6 +26,7 @@ namespace LLB.Data
         public DbSet<Payments> Payments { get; set; }
         public DbSet<Queries> Queries{ get; set; }
         public DbSet<Tasks> Tasks { get; set; }
+        public DbSet<DistrictCodes> DistrictCodes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

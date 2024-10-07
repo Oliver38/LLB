@@ -12,6 +12,7 @@ namespace LLB.Models
         public string? Description { get; set; }
         public string? Status { get; set; }
         public string? UserId { get; set; }
+        public string? LicenseCode { get; set; }
         public double CityFee { get; set; }
         public double MunicipaltyFee { get; set; }
         public double TownFee { get; set; }
