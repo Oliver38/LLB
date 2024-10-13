@@ -845,6 +845,11 @@ namespace LLB.Controllers
             else
             {
                 var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+                var refnum = _db.ReferenceNumbers.First();
+                int curentnum = (int)refnum.Number;
+               var reference=  $"D{curentnum.ToString("D4")}";
+
+                application.RefNum = reference;
                 application.Status = "submitted";
                 application.ExaminationStatus = "verification";
                 _db.Update(application);

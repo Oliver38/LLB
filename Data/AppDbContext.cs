@@ -27,6 +27,7 @@ namespace LLB.Data
         public DbSet<Queries> Queries{ get; set; }
         public DbSet<Tasks> Tasks { get; set; }
         public DbSet<DistrictCodes> DistrictCodes { get; set; }
+        public DbSet<ReferenceNumbers> ReferenceNumbers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

@@ -23,6 +23,7 @@ namespace LLB.Models
         public string? DateofEntryIntoZimbabwe { get; set; }
         public string? PlaceOfEntry { get; set; }
         public string? OperationAddress { get; set; }//Place of operation
+        public string? LLBNum { get; set; }//Place of operation
 
         public string? BusinessName { get; set; }//Place of operation
         public string? Nationality { get; set; }//Place of operation
