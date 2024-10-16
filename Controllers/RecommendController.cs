@@ -227,23 +227,30 @@ namespace LLB.Controllers
             }
             else
             {
-                var paynowb = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                if (paymentTransb.PollUrl == "transfer")
+                {
 
-                var statusb = paynowb.PollTransaction(paymentTransb.PollUrl);
+                }
+                else
+                {
+                    var paynowb = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-                var statusdatab = statusb.GetData();
-                paymentTransb.PaynowRef = statusdatab["paynowreference"];
-                paymentTransb.PaymentStatus = statusdatab["status"];
-                paymentTransb.Status = statusdatab["status"];
-                paymentTransb.DateUpdated = DateTime.Now;
+                    var statusb = paynowb.PollTransaction(paymentTransb.PollUrl);
 
-                _db.Update(paymentTransb);
-                _db.SaveChanges();
-                // applicationInfo.PaymentFee = paymentTrans.Amount;
-                applicationInfo.PaymentId = paymentTransb.Id;
-                applicationInfo.PaymentStatus = statusdatab["status"];
-                _db.Update(applicationInfo);
-                _db.SaveChanges();
+                    var statusdatab = statusb.GetData();
+                    paymentTransb.PaynowRef = statusdatab["paynowreference"];
+                    paymentTransb.PaymentStatus = statusdatab["status"];
+                    paymentTransb.Status = statusdatab["status"];
+                    paymentTransb.DateUpdated = DateTime.Now;
+
+                    _db.Update(paymentTransb);
+                    _db.SaveChanges();
+                    // applicationInfo.PaymentFee = paymentTrans.Amount;
+                    applicationInfo.PaymentId = paymentTransb.Id;
+                    applicationInfo.PaymentStatus = statusdatab["status"];
+                    _db.Update(applicationInfo);
+                    _db.SaveChanges();
+                }
             }
             Finalising finaldata = new Finalising();
             /*public string? Id { get; set; }
