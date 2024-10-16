@@ -13,6 +13,7 @@ using System.Net;
 using PasswordGenerator;
 using DNTCaptcha.Core;
 using LLB.Models.ViewModel;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace LLB.Controllers
 {
@@ -37,7 +38,9 @@ namespace LLB.Controllers
         
         public IActionResult Dashboard()
         {
+            var rejected = _db.Payments.Where(a => a.PaymentStatus == "Rejected").ToList();
             var paid = _db.Payments.Where(a => a.Status == "Paid").ToList();
+            var approved = _db.Payments.Where(a => a.PaymentStatus == "Approved").ToList();
             var notpaid = _db.Payments.Where(a => a.Status == "not paid").ToList();
             var Cancelled = _db.Payments.Where(a => a.Status == "Cancelled").ToList();
             var awaitin = _db.Payments.Where(a => a.Status == "awaiting verification").ToList();
@@ -45,23 +48,122 @@ namespace LLB.Controllers
             var manual = _db.Payments.Where(a => a.PollUrl == "manual").ToList();
             var paynow = _db.Payments.Where(a => a.PaynowRef != "").ToList();
 
+
             ViewBag.Paid = paid;
             ViewBag.notpaid = notpaid;
             ViewBag.Cancelled = Cancelled;
             ViewBag.awaitin = awaitin;
+            ViewBag.Approved = approved;
             return View();
         }
 
-        //[HttpGet]
-        //[AllowAnonymous]
-        //public async Task<IActionResult> Wangu()
-        //{
-        //    HttpClient client = new HttpClient();
-        //    var response = await client.GetAsync($"{Globals.Globals.service_end_point}/api/v1/reports/getCompanyInfosx").Result.Content.ReadAsStringAsync();
-        //    return View();
+        [HttpGet("VerifyPayments")]
+
+        public IActionResult VerifyPayments( string Id, string status)
+        {
+            var awaited = _db.ApplicationInfo.Where(a => a.PaymentStatus == "payment verification").ToList();
+
+            List<PaymentStatus> mystatuses = new List<PaymentStatus>();
+            foreach(var payment in awaited)
+            {
+                PaymentStatus paydetail = new PaymentStatus();
+                paydetail.ApplicationId = payment.Id;
+                paydetail.Amount = payment.PaymentFee;
+
+                var licenseType = _db.LicenseTypes.Where(s => s.Id == payment.LicenseTypeID).FirstOrDefault();
+                paydetail.LicenseType = licenseType.LicenseName;
+                var licenseArea = _db.LicenseRegions.Where(s => s.Id == payment.ApplicationType).FirstOrDefault();
+                paydetail.LicenseArea = licenseArea.RegionName;
+                paydetail.PaymentId = payment.PaymentId;
+                paydetail.Status = payment.PaymentStatus;
+                paydetail.ApplicationRefNum = payment.RefNum;
+                var transaction = _db.Payments.Where(d => d.Id == payment.PaymentId).FirstOrDefault();
+                paydetail.PopDoc = transaction.PopDoc;
+
+                mystatuses.Add(paydetail);
+
+
+            }
+            ViewBag.PaymentLogs = mystatuses;
+
+            return View();
+        }
+
+        [HttpGet("Verify")]
+
+        public async Task<IActionResult> VerifyAsync(string ApplicationId, string status, string paymentId)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == ApplicationId).FirstOrDefault();
+
+            if (status == "approved")
+            {
+                var refnum = _db.ReferenceNumbers.First();
+                var newrefnum = refnum.Number + 1;
+                refnum.Number = newrefnum;
+                _db.Update(refnum); 
+                int curentnum = (int)refnum.Number;
+                var reference = $"D{curentnum.ToString("D4")}";
+
+                application.RefNum = reference;
+                application.PaymentId = paymentId;
+                application.PaymentStatus = "Paid";
+                application.Status = "submitted";
+                application.ExaminationStatus = "verification";
+                _db.Update(application);
+                _db.SaveChanges();
+
+
+                var payment = _db.Payments.Where(s => s.Id == paymentId).FirstOrDefault();
+                payment.PaymentStatus= "Approved";
+                payment.Status = "Paid";
+                _db.Update(payment);
+                _db.SaveChanges();
+                //payment.SystemRef =
+
+                Tasks tasks = new Tasks();
+                tasks.Id = Guid.NewGuid().ToString();
+                tasks.ApplicationId = application.Id;
+                //tasks.AssignerId
+
+                //auto allocation to replace
+                var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                tasks.VerifierId = userId.Id;
+                tasks.AssignerId = "system";
+                tasks.Status = "assigned";
+                tasks.DateAdded = DateTime.Now;
+                tasks.DateUpdated = DateTime.Now;
+                _db.Add(tasks);
+                _db.SaveChanges();
+
+            }
+            else if( status== "rejected")
+            {
+                application.PaymentId = "";
+                application.PaymentStatus = "";
+                application.Status = "inprogress";
+                _db.Update(application);
+                _db.SaveChanges();
+
+
+                var payment = _db.Payments.Where(s => s.Id == paymentId).FirstOrDefault();
+                payment.PaymentStatus = "Rejected";
+                payment.Status = "not paid";
+                _db.Update(payment);
+                _db.SaveChanges();
+            }
+            return RedirectToAction("VerifyPayments");
+        }
+
+            //[HttpGet]
+            //[AllowAnonymous]
+            //public async Task<IActionResult> Wangu()
+            //{
+            //    HttpClient client = new HttpClient();
+            //    var response = await client.GetAsync($"{Globals.Globals.service_end_point}/api/v1/reports/getCompanyInfosx").Result.Content.ReadAsStringAsync();
+            //    return View();
 
         //}
-        [HttpGet("Register")]
+            [HttpGet("Register")]
         [AllowAnonymous]
         public IActionResult Register()
         {

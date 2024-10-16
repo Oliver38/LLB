@@ -695,8 +695,8 @@ namespace LLB.Controllers
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-            paynow.ResultUrl = "http://102.213.40.198/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "http://102.213.40.198/License/Finalising?Id=" + Id+"&gateway=paynow";
+            paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
+            paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id+"&gateway=paynow";
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
             
@@ -846,6 +846,10 @@ namespace LLB.Controllers
             {
                 var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
                 var refnum = _db.ReferenceNumbers.First();
+                var newrefnum = refnum.Number + 1;
+                refnum.Number = newrefnum;
+                _db.Update(refnum);
+
                 int curentnum = (int)refnum.Number;
                var reference=  $"D{curentnum.ToString("D4")}";
 

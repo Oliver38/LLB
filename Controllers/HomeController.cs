@@ -93,7 +93,12 @@ namespace LLB.Controllers
             {
                 return RedirectToAction("Dashboard", "Examination");
             }
+            else if (User.IsInRole("accountant"))
+            {
+                return RedirectToAction("Dashboard", "Accountant");
+            }
 
+            
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             string id = userId.Id;
             var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();

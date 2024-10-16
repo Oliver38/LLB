@@ -520,6 +520,22 @@ namespace LLB.Controllers
         public async Task<IActionResult> ApproveAsync(string Id, string taskid)
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            //LLB Number
+            var outlet = _db.OutletInfo.Where(n => n.ApplicationId == Id).FirstOrDefault();
+
+            //district code
+            var districtinfo = _db.DistrictCodes.Where(c => c.District == outlet.City).FirstOrDefault();
+
+            DateTime now = DateTime.Now;
+
+            // Extract last two digits of the year
+            string lastTwoDigits = now.ToString("yy");
+
+            var licensecode = _db.LicenseTypes.Where(a => a.Id == application.LicenseTypeID).FirstOrDefault();
+
+            string llbnumber = districtinfo.DistrictCode.ToString() + lastTwoDigits + application.RefNum + licensecode.LicenseCode;
+
+            application.LLBNum = llbnumber;
             application.Status = "approved";
             application.ExaminationStatus= "Approved";
             application.ApprovedDate = DateTime.Now;
