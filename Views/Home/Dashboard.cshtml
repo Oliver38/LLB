@@ -99,6 +99,8 @@
 
 
                         <thead>
+                            <th>Reference</th>
+                        <th>LLB Number</th>
                         <th>Trading Name </th>
                         <th>Operating Address </th>
                         <th>Application Date </th>
@@ -112,6 +114,8 @@
                             {
 
                                 <tr>
+                                    <td>@application.RefNum   </td>
+                                    <td>@application.LLBNUm</td>
                                     <td>
                                         @foreach (var outlet in ViewBag.OutletInfo)
                                         {
@@ -168,18 +172,20 @@
                                         }
                                         else if (application.Status == "submitted")
                                         {
-                                            <span class="text-success">@application.Status
-                                            </span>
-                                        }
-                                        else if (application.Status == "Has Query")
-                                        {
-                                            <span class="text-warning">@application.Status
-                                            </span>
-                                        }
-                                        else if (application.Status == "approved")
-                                        {
-                                            <span class="text-success">@application.Status</span>
-                                        }
+                                            <span class="text-success">
+                                                @application.Status
+                                        </span>
+                                    }
+                                    else if (application.Status == "Has Query")
+                                    {
+                                        <span class="text-warning">
+                                            @application.Status
+                                    </span>
+                                }
+                                else if (application.Status == "approved")
+                                {
+                                    <span class="text-success">@application.Status</span>
+                                }
                                     </td>
 
                                     <td>

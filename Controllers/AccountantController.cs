@@ -48,7 +48,8 @@ namespace LLB.Controllers
             var manual = _db.Payments.Where(a => a.PollUrl == "manual").ToList();
             var paynow = _db.Payments.Where(a => a.PaynowRef != "").ToList();
 
-
+            ViewBag.TotalPaid = paid.Sum(a => a.Amount);
+            
             ViewBag.Paid = paid;
             ViewBag.notpaid = notpaid;
             ViewBag.Cancelled = Cancelled;
