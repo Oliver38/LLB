@@ -2,144 +2,311 @@
     Layout = "_LayoutMain";
 }
 
+   
+        <div class="row">
 
-<!-- Recent Sales -->
-<div class="row">
-    <div class="col-lg-8">
-    <div class="col-12">
-    <div class="card recent-sales overflow-auto">
+            <!-- Revenue Card -->
+            <div class="col-xxl-4 col-md-3">
+                <div class="card info-card revenue-card">
 
-        <div class="filter">
-            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                <li class="dropdown-header text-start">
-                    <h6>Filter</h6>
-                </li>
+                    <div class="filter">
+                        <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <li class="dropdown-header text-start">
+                                <h6>Filter</h6>
+                            </li>
 
-                <li><a class="dropdown-item" href="#">Today</a></li>
-                <li><a class="dropdown-item" href="#">This Month</a></li>
-                <li><a class="dropdown-item" href="#">This Year</a></li>
-            </ul>
+                            <li><a class="dropdown-item" href="#">Today</a></li>
+                            <li><a class="dropdown-item" href="#">This Month</a></li>
+                            <li><a class="dropdown-item" href="#">This Year</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body">
+                        <h5 class="card-title">Total Revenue <span>| This Month</span></h5>
+
+                        <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h6>@ViewBag.TotalPaidnow</h6>
+                                <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div><!-- End Revenue Card -->
+            <!-- Revenue Card -->
+            <div class="col-xxl-4 col-md-3">
+                <div class="card info-card revenue-card">
+
+                    <div class="filter">
+                        <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <li class="dropdown-header text-start">
+                                <h6>Filter</h6>
+                            </li>
+
+                            <li><a class="dropdown-item" href="#">Today</a></li>
+                            <li><a class="dropdown-item" href="#">This Month</a></li>
+                            <li><a class="dropdown-item" href="#">This Year</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body">
+                        <h5 class="card-title">Total Revenue <span>| Since start</span></h5>
+
+                        <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h6>@ViewBag.TotalPaid</h6>
+                                <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div><!-- End Revenue Card -->
+            <!-- Revenue Card -->
+            <div class="col-xxl-4 col-md-3">
+                <div class="card info-card revenue-card">
+
+                    <div class="filter">
+                        <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <li class="dropdown-header text-start">
+                                <h6>Filter</h6>
+                            </li>
+
+                            <li><a class="dropdown-item" href="#">Today</a></li>
+                            <li><a class="dropdown-item" href="#">This Month</a></li>
+                            <li><a class="dropdown-item" href="#">This Year</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body">
+                        <h5 class="card-title">Paynow Revenue <span>| Since start</span></h5>
+
+                        <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h6>@ViewBag.TotalPaynow</h6>
+                                <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div><!-- End Revenue Card -->
+            <!-- Revenue Card -->
+            <div class="col-xxl-4 col-md-3">
+                <div class="card info-card revenue-card">
+
+                    <div class="filter">
+                        <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <li class="dropdown-header text-start">
+                                <h6>Filter</h6>
+                            </li>
+
+                            <li><a class="dropdown-item" href="#">Today</a></li>
+                            <li><a class="dropdown-item" href="#">This Month</a></li>
+                            <li><a class="dropdown-item" href="#">This Year</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body">
+                        <h5 class="card-title">Paynow Revenue <span>| This Month</span></h5>
+
+                        <div class="d-flex align-items-center">
+                            <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                            <div class="ps-3">
+                                <h6>@ViewBag.TotalPaynownow</h6>
+                                <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div><!-- End Revenue Card -->
         </div>
-
-        <div class="card-body">
-            <h5 class="card-title">Recent Sales <span>| Today</span></h5>
-
-            <table class="table table-borderless datatable">
-                <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Payment Status</th>
-                        <th scope="col">POP</th>
-                        <th scope="col">Total Amount</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var awaitp in ViewBag.awaitin)
-                        {
-                    <tr>
-                        <th scope="row"><a href="#">#1</a></th>
-                        <td>@awaitp.DateAdded</td>
-                        <td><a href="~/@awaitp.PopDoc" target="_blank" class="text-primary">View POP</a></td>
-                        <td>@awaitp.Amount</td>
-                        <td><span class="badge bg-success">@awaitp.Status</span></td>
-                        <td>
-                            <a href="" class="btn btn-info">approve </a>
-                            <a href="" class="btn btn-danger">discard </a>
-                        </td>
-                    </tr>
-                        }
-
-                </tbody>
-            </table>
-
-        </div>
-
-    </div>
-</div><!-- End Recent Sales -->
-</div>
-
-        <div class="col-lg-4">
-    <!-- Website Traffic -->
-    <div class="card">
-        <div class="filter">
-            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                <li class="dropdown-header text-start">
-                    <h6>Filter</h6>
-                </li>
-
-                <li><a class="dropdown-item" href="#">Today</a></li>
-                <li><a class="dropdown-item" href="#">This Month</a></li>
-                <li><a class="dropdown-item" href="#">This Year</a></li>
-            </ul>
-        </div>
-
-        <div class="card-body pb-0">
-            <h5 class="card-title">Website Traffic <span>| Today</span></h5>
-
-            <div id="trafficChart" style="min-height: 400px;" class="echart"></div>
-
-            <script>
-                document.addEventListener("DOMContentLoaded", () => {
-                    echarts.init(document.querySelector("#trafficChart")).setOption({
-                        tooltip: {
-                            trigger: 'item'
-                        },
-                        legend: {
-                            top: '5%',
-                            left: 'center'
-                        },
-                        series: [{
-                            name: 'Access From',
-                            type: 'pie',
-                            radius: ['40%', '70%'],
-                            avoidLabelOverlap: false,
-                            label: {
-                                show: false,
-                                position: 'center'
-                            },
-                            emphasis: {
-                                label: {
-                                    show: true,
-                                    fontSize: '18',
-                                    fontWeight: 'bold'
-                                }
-                            },
-                            labelLine: {
-                                show: false
-                            },
-                            data: [{
-                                value: 1048,
-                                name: 'Total Paid'
-                            },
-                            {
-                                value: 735,
-                                name: 'Cancelled Transactions'
-                            },
-                            {
-                                value: 580,
-                                name: 'Paynow'
-                            },
-                            {
-                                value: 484,
-                                name: 'Transfer'
-                            },
-                            {
-                                value: 300,
-                                name: 'Video Ads'
-                            }
-                            ]
-                        }]
-                    });
-                });
-            </script>
-
-        </div>
-    </div><!-- End Website Traffic -->
-</div>
+    
+        <div class="row">
+            <div class="col-md-8">
 
 
-</div>
+                <!-- Recent Sales -->
+                <div class="col-12">
+                    <div class="card recent-sales overflow-auto">
+
+                        <div class="filter">
+                            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                <li class="dropdown-header text-start">
+                                    <h6>Filter</h6>
+                                </li>
+
+                                <li><a class="dropdown-item" href="#">Today</a></li>
+                                <li><a class="dropdown-item" href="#">This Month</a></li>
+                                <li><a class="dropdown-item" href="#">This Year</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title">Recent Sales <span>| Today</span></h5>
+
+                            <table class="table table-borderless datatable">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Criteria</th>
+                                        <th scope="col">Total</th>
+                                       
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th scope="row"><a href="#">#1</a></th>
+                                        <td>Rejected Transactions</td>
+
+                                        <td><span class="badge bg-danger">@ViewBag.Rejected.Count </span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><a href="#">#2</a></th>
+                                        <td>Approved Transactions (Accounts)</td>
+
+                                        <td><span class="badge bg-warning">@ViewBag.Approved.Count</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><a href="#">#3</a></th>
+                                        <td>Not Paid Transactions</td>
+
+                                        <td><span class="badge bg-success">@ViewBag.Notpaid.Count</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><a href="#">#4</a></th>
+                                        <td>Paynow Cancelled Transactions</td>
+
+                                        <td><span class="badge bg-danger">@ViewBag.Cancelled.Count</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><a href="#">#5</a></th>
+                                        <td>Awaiting Verification</td>
+
+                                        <td><span class="badge bg-success">@ViewBag.Awaiting.Count </span></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th scope="row"><a href="#">#5</a></th>
+                                        <td>Transfer Transactions</td>
+
+                                        <td><span class="badge bg-success">@ViewBag.Transfer.Count </span></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th scope="row"><a href="#">#5</a></th>
+                                        <td>Paynow Transactions</td>
+
+                                        <td><span class="badge bg-success">@ViewBag.Paynow.Count </span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                    </div>
+                </div><!-- End Recent Sales -->
+            </div>
+
+                <div class="col-md-4">
+
+                    <!-- Website Traffic -->
+                    <div class="card">
+                        <div class="filter">
+                            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                <li class="dropdown-header text-start">
+                                    <h6>Filter</h6>
+                                </li>
+
+                                <li><a class="dropdown-item" href="#">Today</a></li>
+                                <li><a class="dropdown-item" href="#">This Month</a></li>
+                                <li><a class="dropdown-item" href="#">This Year</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="card-body pb-0">
+                            <h5 class="card-title">CashFlow Traffic <span>| This Month</span></h5>
+
+                            <div id="trafficChart" style="min-height: 400px;" class="echart"></div>
+
+                            <script>document.addEventListener("DOMContentLoaded", () => {
+                                    echarts.init(document.querySelector("#trafficChart")).setOption({
+                                        tooltip: {
+                                            trigger: 'item'
+                                        },
+                                        legend: {
+                                            top: '5%',
+                                            left: 'center'
+                                        },
+                                        series: [{
+                                            name: 'Access From',
+                                            type: 'pie',
+                                            radius: ['40%', '70%'],
+                                            avoidLabelOverlap: false,
+                                            label: {
+                                                show: false,
+                                                position: 'center'
+                                            },
+                                            emphasis: {
+                                                label: {
+                                                    show: true,
+                                                    fontSize: '18',
+                                                    fontWeight: 'bold'
+                                                }
+                                            },
+                                            labelLine: {
+                                                show: false
+                                            },
+                                            data: [{
+                                                value: 1048,
+                                                name: 'Awaited Total'
+                                            },
+                                            {
+                                                value: 735,
+                                                name: 'Paid Total'
+                                            },
+                                            {
+                                                value: 580,
+                                                name: 'Paynow Total'
+                                            },
+                                            {
+                                                value: 484,
+                                                name: 'Transfer Total'
+                                            },
+                                            {
+                                                value: 300,
+                                                name: 'Rejected Transactions'
+                                            }
+                                            ]
+                                        }]
+                                    });
+                                });</script>
+
+                        </div>
+                    </div><!-- End Website Traffic -->
+                </div>
+
+            </div>

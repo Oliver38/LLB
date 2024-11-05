@@ -14,6 +14,7 @@ using PasswordGenerator;
 using DNTCaptcha.Core;
 using LLB.Models.ViewModel;
 using static System.Net.Mime.MediaTypeNames;
+using Microsoft.EntityFrameworkCore;
 
 namespace LLB.Controllers
 {
@@ -36,10 +37,12 @@ namespace LLB.Controllers
 
         [HttpGet("Dashboard")]
         
-        public IActionResult Dashboard()
+        public async Task<IActionResult> DashboardAsync()
         {
+            int userCount = (await userManager.Users.ToListAsync()).Count;
             var rejected = _db.Payments.Where(a => a.PaymentStatus == "Rejected").ToList();
             var paid = _db.Payments.Where(a => a.Status == "Paid").ToList();
+            var paidnow = _db.Payments.Where(a => a.Status == "Paid" && a.DateAdded.Month == DateTime.Now.Month).ToList();
             var approved = _db.Payments.Where(a => a.PaymentStatus == "Approved").ToList();
             var notpaid = _db.Payments.Where(a => a.Status == "not paid").ToList();
             var Cancelled = _db.Payments.Where(a => a.Status == "Cancelled").ToList();
@@ -47,14 +50,21 @@ namespace LLB.Controllers
             var transfer = _db.Payments.Where(a => a.PollUrl == "transfer").ToList();
             var manual = _db.Payments.Where(a => a.PollUrl == "manual").ToList();
             var paynow = _db.Payments.Where(a => a.PaynowRef != "").ToList();
+            var paynownow = _db.Payments.Where(a => a.PaynowRef != "" && a.DateAdded.Month == DateTime.Now.Month).ToList();
 
+            ViewBag.TotalPaidnow = paidnow.Sum(a => a.Amount);
             ViewBag.TotalPaid = paid.Sum(a => a.Amount);
-            
+            ViewBag.TotalPaynow = paynow.Sum(a => a.Amount);
+            ViewBag.TotalPaynownow = paynownow.Sum(a => a.Amount);
+            ViewBag.Rejected = rejected;
+            ViewBag.SystemUsers = userCount;
             ViewBag.Paid = paid;
-            ViewBag.notpaid = notpaid;
+            ViewBag.Notpaid = notpaid;
             ViewBag.Cancelled = Cancelled;
-            ViewBag.awaitin = awaitin;
+            ViewBag.Awaiting = awaitin;
             ViewBag.Approved = approved;
+            ViewBag.Transfer = transfer;
+            ViewBag.Paynow = paynow;
             return View();
         }
 
