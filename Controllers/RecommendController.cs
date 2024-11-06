@@ -86,7 +86,7 @@ namespace LLB.Controllers
         {
             //using Microsoft.AspNetCore.Identity;
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByIdAsync(application.UserID);
             var licenses = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();
             TempData["result"] = error;
