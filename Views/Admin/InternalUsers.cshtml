@@ -1,0 +1,95 @@
+﻿@{
+    Layout = "_LayoutMain";
+}
+
+
+
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">View Internal User</h5>
+        <div class="card-header">
+            <div class="row center">
+                <span class="text-success">@TempData["success"]</span>
+                <span class="text-danger">@TempData["error"]</span>
+            </div>
+            <div class="row">
+                <form class="row g-3" method="post" action="/Admin/InternalUsers">
+
+                    <div class="col-md-6">
+                       
+                        <select id="inputState" name="role" class="form-select">
+                            <option selected value="">Select Role</option>
+                            @foreach (var role in ViewBag.Roles)
+                            {
+                                <option value="@role.Name">@role.Name</option>
+
+                            }
+
+
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="submit" class="btn btn-primary form-control" value="Search" />
+                    </div>
+                </form><!-- End Multi Columns Form -->
+
+            </div>
+
+
+                <div class="card-body">
+                    <h5 class="card-title">@ViewBag.Role<span>| Today</span></h5>
+
+                    <table class="table table-responsive table-borderless datatable">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Surname</th>
+                                <th scope="col">User Status</th>
+                                
+                                <th scope="col">Leave Status</th>
+                                <th colspan="2">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.Users != null)
+                                {
+
+                            @foreach (var user in ViewBag.Users)
+                                {
+                                <tr>
+                                    <th scope="row"><a href="#">#1</a></th>
+                                    <td>@user.Name</td>
+                                    <td>@user.LastName</td>
+                                    <td>@if (user.IsActive == true) { <span class="badge bg-success">Active</span> } else {<span class="badge bg-danger">Blocked</span> } </td>
+                                   
+                                    <td>@user.LeaveStatus</td>
+
+                                    <td>
+                                        <a href="/Accountant/Verify?ApplicationId=12345" class="btn btn-primary">Send On Leave</a>
+                                    </td>
+                                    <td>
+                                        @if (user.IsActive == true)
+                                            {
+                                                    <a href="/Admin/Block?UserId=@user.Id&status=block&role=@ViewBag.Role"  class="btn btn-danger">Block</a>
+                                                    }
+                                                    else {
+                                                <a href="/Admin/Block?UserId=@user.Id&status=unblock&role=@ViewBag.Role" class="btn btn-success">UnBlock</a>
+                                                    }
+                                        </td>
+                                </tr>
+                                }
+                                }
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+      
+
+    </div>
+</div>
+
+       
+

@@ -22,6 +22,7 @@ namespace LLB.Models
 
         public string? Gender { get; set; }
         public string? Province { get; set; }
+        public string? LeaveStatus { get; set; }
 
         public bool IsActive { get; set; }
     }

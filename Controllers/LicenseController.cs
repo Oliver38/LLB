@@ -16,6 +16,8 @@ using LLB.Models.ViewModel;
 using Webdev.Payments;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Security.Cryptography.Xml;
+using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Crypto;
 
 
 namespace LLB.Controllers
@@ -827,6 +829,7 @@ namespace LLB.Controllers
            
             var payment = _db.Payments.Where(s => s.ApplicationId == Id ).OrderByDescending(x => x.DateAdded).FirstOrDefault();
             //var paymentvet = _db.Payments.Where(c => c.ApplicationId == Id && c.Status == "POP").FirstOrDefault();
+
             if (payment == null || payment.PaymentStatus == "not paid" || payment.PaymentStatus == "Cancelled")
             {
                 string error = "Please make payment to submit application";
@@ -858,20 +861,62 @@ namespace LLB.Controllers
                 application.ExaminationStatus = "verification";
                 _db.Update(application);
                 _db.SaveChanges();
-                Tasks tasks = new Tasks();
-                tasks.Id  = Guid.NewGuid().ToString();
-                tasks.ApplicationId = application.Id;
-                //tasks.AssignerId
 
-                //auto allocation to replace
-                var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-                tasks.VerifierId= userId.Id;
-               tasks.AssignerId = "system";
-                tasks.Status = "assigned";
-                tasks.DateAdded = DateTime.Now;
-                tasks.DateUpdated = DateTime.Now;
-                _db.Add(tasks);
-                _db.SaveChanges();
+
+
+                // running the task allocation method, to be optimised
+                var verifiers = await userManager.GetUsersInRoleAsync("Verifier");
+
+                // Get task counts for each verifier
+                var taskCounts = await _db.Tasks
+                    .Where(t => verifiers.Select(v => v.Id).Contains(t.VerifierId) &&
+                    t.DateAdded.Month == DateTime.Now.Month)
+                    .GroupBy(t => t.VerifierId)
+                    .Select(g => new { VerifierId = g.Key, TaskCount = g.Count() })
+                    .ToDictionaryAsync(x => x.VerifierId, x => x.TaskCount);
+
+                // Find the verifier with the least tasks
+                IdentityUser selectedUser = null;
+                int minTaskCount = int.MaxValue;
+
+                foreach (var verifier in verifiers)
+                {
+                    if (verifier.LeaveStatus == "onleave" && verifier.IsActive == false) { }
+                    else
+                    {
+                        int taskCount = taskCounts.ContainsKey(verifier.Id) ? taskCounts[verifier.Id] : 0;
+
+                        if (taskCount < minTaskCount)
+                        {
+                            minTaskCount = taskCount;
+                            selectedUser = verifier;
+
+
+
+                            //var verifierId = await TaskAllocator()
+                            Tasks tasks = new Tasks();
+                            tasks.Id = Guid.NewGuid().ToString();
+                            tasks.ApplicationId = application.Id;
+                            //tasks.AssignerId
+
+                            //auto allocation to replace
+                            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                            tasks.VerifierId = selectedUser.Id;
+                            tasks.AssignerId = "system";
+                            tasks.Status = "assigned";
+                            tasks.DateAdded = DateTime.Now;
+                            tasks.DateUpdated = DateTime.Now;
+                            _db.Add(tasks);
+                            _db.SaveChanges();
+
+                        }
+                    }
+                }
+
+
+
+               
 
                 return RedirectToAction("Dashboard", "Home");
             }
@@ -920,7 +965,40 @@ namespace LLB.Controllers
                 return RedirectToAction("Finalising", new { Id = applicationId,error ="Please CLick resolve query where necessary in your forms and then submit to reslove" });
             }
         }
+
+        [HttpGet("TaskAllocator")]
+        public async Task<IActionResult> TaskAllocator(string applicationId)
+        {
+            var verifiers = await userManager.GetUsersInRoleAsync("Verifier");
+
+            // Get task counts for each verifier
+            var taskCounts = await _db.Tasks
+                .Where(t => verifiers.Select(v => v.Id).Contains(t.VerifierId)  &&
+                t.DateAdded.Month == DateTime.Now.Month) 
+                .GroupBy(t => t.VerifierId)
+                .Select(g => new { VerifierId = g.Key, TaskCount = g.Count() })
+                .ToDictionaryAsync(x => x.VerifierId, x => x.TaskCount);
+
+            // Find the verifier with the least tasks
+            IdentityUser selectedUser = null;
+            int minTaskCount = int.MaxValue;
+
+            foreach (var verifier in verifiers)
+            {
+                int taskCount = taskCounts.ContainsKey(verifier.Id) ? taskCounts[verifier.Id] : 0;
+
+                if (taskCount < minTaskCount)
+                {
+                    minTaskCount = taskCount;
+                    selectedUser = verifier;
+                    
+                }
+            }
+          
+        
+            return View();
         }
+}
 
 }
 

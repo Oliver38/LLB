@@ -87,10 +87,13 @@
                 </div>
             </div>
             <div class="col-lg-6">
+
                 <div class="wow fadeInUp" data-wow-delay="0.2s">
                     <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
-                        
+
                         <h1 class="mb-5">Please <span class="text-primary text-uppercase">Login</span></h1>
+                        <span class="text-danger">@TempData["error"]</span>
+                    </div>
                     </div>
                     <form action="/Auth/Login" method="post" enctype="multipart/form-data">
                         <div class="row g-3">

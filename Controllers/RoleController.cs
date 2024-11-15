@@ -61,7 +61,7 @@ namespace LLB.Controllers
         {
             var roles = new[]
              {
-                    "super user", "admin", "inspector", "secretary", "client","verifier","recommender", "accountant"
+                     "internal","super user", "admin", "inspector", "secretary", "client","verifier","recommender", "accountant"
                 };
 
             //var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -118,7 +118,8 @@ namespace LLB.Controllers
                     {
                        
                          IdentityResult addclient = await userManager.AddToRoleAsync(user, "super user");                         
-                            if (addclient.Succeeded)
+                         IdentityResult addclientinternal = await userManager.AddToRoleAsync(user, "internal");                         
+                            if (addclient.Succeeded && addclientinternal.Succeeded)
                             {
                                 TempData["success"] = "user has successfully been created";
                                                         }
@@ -170,7 +171,9 @@ namespace LLB.Controllers
                     {
 
                         IdentityResult addclient = await userManager.AddToRoleAsync(user, "inspector");
-                        if (addclient.Succeeded)
+                        IdentityResult addinternal = await userManager.AddToRoleAsync(user, "internal");
+
+                        if (addclient.Succeeded && addinternal.Succeeded)
                         {
                             TempData["success"] = "user has successfully been created";
                         }
@@ -220,8 +223,9 @@ namespace LLB.Controllers
                     if (await roleManager.RoleExistsAsync("secretary"))
                     {
 
-                        IdentityResult addclient = await userManager.AddToRoleAsync(user, "secretary");
-                        if (addclient.Succeeded)
+                        IdentityResult addclient = await userManager.AddToRoleAsync(user, "inspector");
+                        IdentityResult addinternal = await userManager.AddToRoleAsync(user, "internal");
+                        if (addclient.Succeeded && addinternal.Succeeded)
                         {
                             TempData["success"] = "user has successfully been created";
                         }
@@ -271,7 +275,8 @@ namespace LLB.Controllers
                     {
 
                         IdentityResult addclient = await userManager.AddToRoleAsync(user, "admin");
-                        if (addclient.Succeeded)
+                        IdentityResult addinternal = await userManager.AddToRoleAsync(user, "internal");
+                        if (addclient.Succeeded && addinternal.Succeeded) 
                         {
                             TempData["success"] = "user has successfully been created";
                         }
@@ -326,7 +331,8 @@ namespace LLB.Controllers
 
                         IdentityResult addrolea = await userManager.AddToRoleAsync(user, "verifier");
                         IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
-                        if (addrolea.Succeeded && addroleb.Succeeded)
+                        IdentityResult addinternal = await userManager.AddToRoleAsync(user, "internal");
+                        if (addrolea.Succeeded && addroleb.Succeeded && addinternal.Succeeded)
                         {
                             TempData["success"] = "user has successfully been created";
                         }
@@ -349,6 +355,7 @@ namespace LLB.Controllers
 
             // verifier
             var recommender = await userManager.FindByEmailAsync("recommender@recommender.com");
+           // var recommender = await userManager.FindByEmailAsync("recommender@recommender.com");
             if (recommender == null)
             {
                 var user = new ApplicationUser
@@ -379,8 +386,9 @@ namespace LLB.Controllers
                     {
 
                         IdentityResult addrolea = await userManager.AddToRoleAsync(user, "recommender");
-                        IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
-                        if (addrolea.Succeeded && addroleb.Succeeded)
+                        IdentityResult  addroleb = await userManager.AddToRoleAsync(user, "inspector");
+                        IdentityResult addrolebinternal = await userManager.AddToRoleAsync(user, "internal"); 
+                        if (addrolea.Succeeded && addroleb.Succeeded && addrolebinternal.Succeeded)
                         {
                             TempData["success"] = "user has successfully been created";
                         }
@@ -433,8 +441,9 @@ namespace LLB.Controllers
                     {
 
                         IdentityResult addrolea = await userManager.AddToRoleAsync(user, "accountant");
-                       // IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
-                        if (addrolea.Succeeded )
+                        IdentityResult addroleinternal = await userManager.AddToRoleAsync(user, "internal");
+                        //IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
+                        if (addrolea.Succeeded && addroleinternal.Succeeded)
                         {
                             TempData["success"] = "user has successfully been created";
                         }

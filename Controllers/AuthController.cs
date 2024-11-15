@@ -68,7 +68,7 @@ namespace LLB.Controllers
 
         [HttpPost("Register")]
         [AllowAnonymous]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model, string role)
         {
 
             var getallUserName = await userManager.FindByEmailAsync(model.Email);
@@ -243,7 +243,7 @@ namespace LLB.Controllers
                ModelState.AddModelError(string.Empty, "Invalid Login Attempt");
             }
             ModelState.AddModelError(string.Empty, "Invalid Login Attempt");
-
+            TempData["error"] = "please check username and password";
             return View(model);
         }
         [HttpGet]
