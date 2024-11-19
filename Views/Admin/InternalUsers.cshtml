@@ -47,9 +47,10 @@
                                 <th scope="col">Name</th>
                                 <th scope="col">Surname</th>
                                 <th scope="col">User Status</th>
-                                
+
                                 <th scope="col">Leave Status</th>
-                                <th colspan="2">Action</th>
+                                <th scope="col">Action</th>
+                                @*<th colspan="2">Action</th>*@
                             </tr>
                         </thead>
                         <tbody>
@@ -59,23 +60,21 @@
                             @foreach (var user in ViewBag.Users)
                                 {
                                 <tr>
-                                    <th scope="row"><a href="#">#1</a></th>
+                                    <th scope="row"><a href="/Admin/ViewUser?Id=@user.Id">View</a></th>
                                     <td>@user.Name</td>
                                     <td>@user.LastName</td>
                                     <td>@if (user.IsActive == true) { <span class="badge bg-success">Active</span> } else {<span class="badge bg-danger">Blocked</span> } </td>
                                    
                                     <td>@user.LeaveStatus</td>
 
-                                    <td>
-                                        <a href="/Accountant/Verify?ApplicationId=12345" class="btn btn-primary">Send On Leave</a>
-                                    </td>
+                                   
                                     <td>
                                         @if (user.IsActive == true)
                                             {
-                                                    <a href="/Admin/Block?UserId=@user.Id&status=block&role=@ViewBag.Role"  class="btn btn-danger">Block</a>
+                                                    <a href="/Admin/Block?UserId=@user.Id&status=block&role=@ViewBag.Role" onclick="return confirm('Are you sure you want to block this person')"  class="btn btn-danger">Block</a>
                                                     }
                                                     else {
-                                                <a href="/Admin/Block?UserId=@user.Id&status=unblock&role=@ViewBag.Role" class="btn btn-success">UnBlock</a>
+                                                <a href="/Admin/Block?UserId=@user.Id&status=unblock&role=@ViewBag.Role" onclick="return confirm('Are you sure you want to UnBlock this person')" class="btn btn-success">UnBlock</a>
                                                     }
                                         </td>
                                 </tr>

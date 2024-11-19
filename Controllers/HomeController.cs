@@ -100,6 +100,7 @@ namespace LLB.Controllers
 
             
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            //var Id = await userManager.GetUserId(User.Identity.Name);
             string id = userId.Id;
             var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
             var outletinfo  = _db.OutletInfo.ToList();

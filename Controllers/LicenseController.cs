@@ -43,6 +43,13 @@ namespace LLB.Controllers
         [HttpGet(("Apply"))]
         public async Task<IActionResult> ApplyAsync(string Id)
         {
+
+            var userId = userManager.GetUserId(User);
+            var incompleteapplications = _db.ApplicationInfo.Where(a => a.UserID == userId && a.Status == "inprogress").ToList();
+            if(incompleteapplications.Count() > 2)
+            {
+                //condition will be set
+            }
             //using Microsoft.AspNetCore.Identity;
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
@@ -62,6 +69,9 @@ namespace LLB.Controllers
         [HttpPost(("Apply"))]
         public async Task<IActionResult> ApplyAsync(ApplicationInfo info)
         {
+
+
+
             if (info.Id == null)
             {
                 info.Id = Guid.NewGuid().ToString();

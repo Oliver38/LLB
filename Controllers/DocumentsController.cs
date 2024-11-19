@@ -79,7 +79,7 @@ namespace LLB.Controllers
 
             TextStamper licensee = new TextStamper()
             {
-                Text = $"{user.Name} {user.LastName}",
+                Text = $"{user.Name.ToUpper()} {user.LastName.ToUpper()}",
                 FontFamily = "Times New Roman",
                 UseGoogleFont = false,
                 FontSize = 14,
@@ -91,7 +91,7 @@ namespace LLB.Controllers
 
             TextStamper tradingname = new TextStamper()
             {
-                Text = $"{outletinfo.TradingName}",
+                Text = $"{outletinfo.TradingName.ToUpper()}",
                 FontFamily = "Times New Roman",
                 UseGoogleFont = false,
                 FontSize = 14,
@@ -106,7 +106,7 @@ namespace LLB.Controllers
 
             TextStamper location = new TextStamper()
             {
-                Text = $"{outletinfo.Address}",
+                Text = $"{outletinfo.Address.ToUpper()}",
                 FontFamily = "Times New Roman",
                 UseGoogleFont = false,
                 FontSize = 14,
@@ -136,7 +136,7 @@ namespace LLB.Controllers
             string managerscontent = "<table style='font-family: Times New Roman; font-size: 14px;'>";
             foreach (var mans in managers)
             {
-                managerscontent += $"<tr><td>{mans.Name} {mans.Surname}</td></tr>";
+                managerscontent += $"<tr><td>{mans.Name.ToUpper()} {mans.Surname.ToUpper()}</td></tr>";
             }
 
             managerscontent += "</table>";

@@ -25,7 +25,7 @@
                     <div class="col-12">
                         <div class="form-floating">
                             <textarea class="form-control" name="Address" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
-                            <label for="floatingTextarea">Oulet Address</label>
+                            <label for="floatingTextarea">Physical Operations Address</label>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -167,7 +167,7 @@ else
                     <div class="col-12">
                         <div class="form-floating">
                             <textarea class="form-control" name="Address" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.OutletInfo.Address</textarea>
-                            <label for="floatingTextarea">Oulet Address</label>
+                            <label for="floatingTextarea">Physical Operations Address</label>
                         </div>
                     </div>
                     <!--div class="col-md-6">
@@ -297,31 +297,17 @@ else
 <script>
     // Districts grouped by province
     const districtsByProvince = {
-      harare: ["Harare"],
-        manicaland: ["Buhera", "Chimanimani", "Chipinge", "Makoni", "Mutare", "Mutasa","Nyanga"],
-
-
-        masvingo: ["Bikita", "Chiredzi", "Chivi", "Gutu", "Masvingo", "Mwenezi", "Zaka"],
-       
-
+        bulawayo: ["Bulawayo"],
+        harare: ["Harare"],
+        manicaland: ["Buhera", "Chimanimani", "Chipinge", "Makoni", "Mutare", "Mutasa", "Nyanga"],
         mashonaland_central: ["Bindura", "Guruve", "Mazowe", "Mt Darwin", "Muzarabani", "Rushinga", "Shamva"],
+        mashonaland_east: ["Chikomba", "Goromonzi", "Hwedza", "Marondera", "Mudzi", "Murehwa", "Mutoko", "Seke", "U.M.P. (Uzumba, Maramba, Pfungwe)"],
+        mashonaland_west: ["Chegutu", "Hurungwe", "Kadoma", "Kariba", "Makonde", "Zvimba"],
+        masvingo: ["Bikita", "Chiredzi", "Chivi", "Gutu", "Masvingo", "Mwenezi", "Zaka"],
+        matabeleland_north: ["Binga", "Bubi", "Hwange", "Lupane", "Nkayi", "Tsholotsho", "Umguza"],
+        matabeleland_south: ["Beitbridge", "Bulilimamangwe", "Gwanda", "Insiza", "Matobo", "Umzingwane"],
+        midlands: ["Chirumanzu", "Gokwe North", "Gokwe South", "Gweru", "Kwekwe", "Mberengwa", "Shurugwi", "Zvishavane"]
 
-        mashonaland_east: ["Chikomba", "Goromonzi","Hwedza","Marondera","Mudzi","Murehwa","Mutoko","Seke","U.M.P. (Uzumba, Maramba, Pfungwe) "],
-
-      mashonaland_west: ["Chegutu", "Hurungwe", "Kadoma", "Kariba", "Makonde","Zvimba"],
-
-    
-
-            midlands: ["Chirumanzu", "Gokwe North", "Gokwe South", "Gweru", "Kwekwe", "Mberengwa", "Shurugwi", "Zvishavane"],
-          
-
-      bulawayo: ["Bulawayo"],
-            matabeleland_north: ["Binga", "Bubi", "Hwange", "Lupane", "Nkayi", "Tsholotsho","Umguza"],
-       
-
-
-            matabeleland_south: ["Beitbridge", "Bulilimamangwe", "Gwanda", "Insiza", "Matobo","Umzingwane", ]
-     
 
       // Add more districts as needed
     };

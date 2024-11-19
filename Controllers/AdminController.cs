@@ -15,6 +15,7 @@ using DNTCaptcha.Core;
 using LLB.Models.ViewModel;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using System.Data;
+using static QRCoder.PayloadGenerator;
 
 namespace LLB.Controllers
 {
@@ -313,17 +314,79 @@ namespace LLB.Controllers
             return View();
         }
 
-        [HttpGet("LandingPage")]
-        [AllowAnonymous]
-        public IActionResult LandingPage()
+        [HttpGet("ViewUser")]
+       
+        public async Task<IActionResult> ViewUser(string Id, string error, string success)
         {
+            var user = await userManager.FindByIdAsync(Id);
+            var roles = await userManager.GetRolesAsync(user);
+            var allroles = roleManager.Roles.ToList();
+
+            TempData["error"] = error;
+            TempData["success"] = success;
+            ViewBag.UserDetails = user;
+            ViewBag.UserRole = roles;
+            ViewBag.AllRoles = allroles;
+
             return View();
         }
 
-        [HttpGet("ChangePasswordx")]
+        [HttpPost("ChangeRole")]
+
+        public async Task<IActionResult> ChangeRole(string Id,string oldrole, string newrole)
+        {
+            var user = await userManager.FindByIdAsync(Id);
+            var removal = await userManager.RemoveFromRoleAsync(user, oldrole);
+            if (removal.Succeeded)
+            {
+                var addtorole = await userManager.AddToRoleAsync(user, newrole);
+                if (addtorole.Succeeded)
+                {
+                    return RedirectToAction("ViewUser", "Admin", new { Id = Id , success= $"successfully changed role from "+oldrole+" to "+newrole});
+                }
+            }
+
+            return RedirectToAction("ViewUser", "Admin", new { Id = Id, error = "failed to add to new role" } );
+
+        }
+
+            [HttpGet("TestEmail")]
         public IActionResult ChangePasswordx()
         {
-          
+
+
+            try
+            {
+                SmtpClient client = new SmtpClient("mail.ttcsglobal.com");
+                client.UseDefaultCredentials = false;
+                client.Credentials = new NetworkCredential("ochimuka", "Chimukilo@1");
+                // client.Credentials = new NetworkCredential("username", "password");
+
+                MailMessage mailMessage = new MailMessage();
+                mailMessage.From = new MailAddress("ochimuka@ttcsglobal.com");
+                mailMessage.To.Add("chimukaoliver@gmail.com");
+                mailMessage.IsBodyHtml = true;
+                mailMessage.Body = ("<!DOCTYPE html> " +
+                                    "<html xmlns=\"http://www.w3.org/1999/xhtml\">" +
+                                    "<head>" +
+                                    "<title>Email</title>" +
+                                    "</head>" +
+                                    "<body style=\"font-family:'Century Gothic'\">" +
+                                    "<p><b>Dear </b></p>" +
+                                    "<p>Congratulations, for being successfully registered on DCIP services portal.</p>" +
+                                    "<p>Kindly use the link below to access your account.Enjoy our services.</p>" +
+                                    "<a>https://deedsapp.ttcsglobal.com:6868/Auth/Login </a>" +
+                                    "<p>Regards</p>" +
+                                    "<p>DCIP</p>" +
+                                    "</body>" +
+                                    "</html>"); //GetFormattedMessageHTML();
+                mailMessage.Subject = "Successfull user";
+                client.Send(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send email. Error: {ex.Message}");
+            }
             return View();
         }
 
