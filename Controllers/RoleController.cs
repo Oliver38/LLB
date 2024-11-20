@@ -596,7 +596,7 @@ namespace LLB.Controllers
 
 
         [HttpPost("ChangePasswordx")]
-        public async Task<IActionResult> ChangePasswordx(ChangePasswords model)
+        public async Task<IActionResult> ChangePasswordx(ChangePassword model)
         {
             ViewBag.title = "Account / Change Password";
 

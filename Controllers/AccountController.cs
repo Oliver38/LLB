@@ -42,10 +42,48 @@ namespace LLB.Controllers
         //    return View();
 
         //}
-        [HttpGet("Register")]
-        [AllowAnonymous]
-        public IActionResult Register()
+
+        [HttpGet("ChangePassword")]
+        public IActionResult ChangePassword()
         {
+
+            return View();
+        }
+        [HttpPost("ChangePassword")]
+        
+        public async Task<IActionResult> ChangePassword(ChangePassword model)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Get the current user
+            var user = await userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                // Redirect to login if user is not authenticated
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Change the password
+            var result = await userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (result.Succeeded)
+            {
+                // Re-sign in the user to refresh the security stamp
+                await signInManager.RefreshSignInAsync(user);
+                TempData["success"] = "Your password has been changed successfully.";
+                return View();
+            }
+
+            // Handle errors
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+                TempData["error"] = error.Description;
+            }
+            
             return View();
         }
         [AcceptVerbs("Get", "Post")]
@@ -216,16 +254,11 @@ namespace LLB.Controllers
             return View();
         }
 
-        [HttpGet("ChangePasswordx")]
-        public IActionResult ChangePasswordx()
-        {
-          
-            return View();
-        }
+      
 
 
-        [HttpPost("ChangePasswordx")]
-        public async Task<IActionResult> ChangePasswordx(ChangePasswords model)
+        [HttpPost("ChangePasswordccc")]
+        public async Task<IActionResult> ChangePasswordccc(ChangePassword model)
         {
             ViewBag.title = "Account / Change Password";
 

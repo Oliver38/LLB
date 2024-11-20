@@ -16,6 +16,7 @@ using LLB.Models.ViewModel;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using System.Data;
 using static QRCoder.PayloadGenerator;
+using LLB.Helpers;
 
 namespace LLB.Controllers
 {
@@ -350,7 +351,59 @@ namespace LLB.Controllers
 
         }
 
-            [HttpGet("TestEmail")]
+        [HttpGet("ResetPassword")]
+        public async Task<IActionResult> ResetPasswordAsync( string userid, string email)
+        {
+            email = "chimukaoliver@gmail.com";
+            var user = await userManager.FindByIdAsync(userid);
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+            var newpassword = PasswordHelper.GenerateStrongPassword();
+
+            var result = await userManager.ResetPasswordAsync(user, token, newpassword);
+            if (result.Succeeded)
+            {
+           
+            try
+            {
+                SmtpClient client = new SmtpClient("mail.ttcsglobal.com");
+                client.UseDefaultCredentials = false;
+                client.Credentials = new NetworkCredential("ochimuka", "Chimukilo@1");
+                // client.Credentials = new NetworkCredential("username", "password");
+
+                MailMessage mailMessage = new MailMessage();
+                mailMessage.From = new MailAddress("ochimuka@ttcsglobal.com");
+                mailMessage.To.Add(email) ;
+                mailMessage.IsBodyHtml = true;
+                mailMessage.Body = ("<!DOCTYPE html> " +
+                                    "<html xmlns=\"http://www.w3.org/1999/xhtml\">" +
+                                    "<head>" +
+                                    "<title>Email</title>" +
+                                    "</head>" +
+                                    "<body style=\"font-family:'Century Gothic'\">" +
+                                    $"<p><b>Dear {user.Name} {user.LastName} </b></p>" +
+                                    $"<p> Your password has been reset to {newpassword}</p>" +
+                                    $"<p>Kindly use the link below to access your account.Enjoy our services.{user.Email}</p>" +
+                                    "<a>https://llb.gov.zw </a>" +
+                                    "<p>Regards</p>" +
+                                    "<p>Liquor Licensing Board</p>" +
+                                    "</body>" +
+                                    "</html>"); //GetFormattedMessageHTML();
+                mailMessage.Subject = "Password Reset";
+                client.Send(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send email. Error: {ex.Message}");
+            }
+                return RedirectToAction("InternalUsers", "Admin");
+            }
+            return View();
+        }
+
+
+
+        [HttpGet("TestEmail")]
         public IActionResult ChangePasswordx()
         {
 
@@ -392,7 +445,7 @@ namespace LLB.Controllers
 
 
         [HttpPost("ChangePasswordx")]
-        public async Task<IActionResult> ChangePasswordx(ChangePasswords model)
+        public async Task<IActionResult> ChangePasswordx(ChangePassword model)
         {
             ViewBag.title = "Account / Change Password";
 

@@ -55,6 +55,7 @@
     <None Remove="Views\Recommend\" />
     <None Remove="Views\Approval\" />
     <None Remove="Views\Admin\" />
+    <None Remove="Helpers\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
@@ -68,6 +69,7 @@
     <Folder Include="Views\Recommend\" />
     <Folder Include="Views\Approval\" />
     <Folder Include="Views\Admin\" />
+    <Folder Include="Helpers\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />
