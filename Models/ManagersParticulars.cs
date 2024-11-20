@@ -18,6 +18,8 @@ namespace LLB.Models
         public string? Status { get; set; }
         public string? Attachment { get; set; }
         public string? Fingerprints { get; set; }
+        public DateTime EffectiveDate { get; set; }
+        public DateTime DissmisalDate { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }
 

@@ -7,6 +7,7 @@ using LLB.Data;
 using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
 using Webdev.Payments;
+using LLB.Models.DataModel;
 
 namespace LLB.Controllers
 {
@@ -55,8 +56,35 @@ namespace LLB.Controllers
 
             var task = _db.Tasks.Where(a => a.Id == Id).FirstOrDefault();
             var application = _db.ApplicationInfo.Where(s => s.Id == task.ApplicationId).FirstOrDefault();
-           
+
+            TaskDetails details = new TaskDetails();
+            //get examiner details
+            //since the colums are different we have to search if taskdoer id is not null
+            ApplicationUser examiner = null;
+            if (task.VerifierId != null) {
+                examiner = await userManager.FindByIdAsync(task.VerifierId);
+            }else if (task.RecommenderId != null)
+            {
+                examiner = await userManager.FindByIdAsync(task.RecommenderId);
+            }
+            else if (task.ApproverId != null)
+            {
+                examiner = await userManager.FindByIdAsync(task.ApproverId);
+            }
+            var examinerfullname = examiner.Name + " " + examiner.LastName;
+            details.ExaminerName = examinerfullname;
+            details.RefNumber = application.RefNum;
+
+            //getting Bar name
+            var outletdetails = _db.OutletInfo.Where(s => s.ApplicationId == task.ApplicationId).FirstOrDefault();
+            details.BarName = outletdetails.TradingName;
+            details.DateSubmitted = application.ApplicationDate;
+            details.TaskStatus = task.Status;
+            details.Jobtatus = application.Status;
+
+
             var inspector = await userManager.GetUsersInRoleAsync("inspector");
+            ViewBag.TaskDetails = details;
             ViewBag.Task = task;
             ViewBag.ApplicationInfo = application;
             ViewBag.Inspectors = inspector;

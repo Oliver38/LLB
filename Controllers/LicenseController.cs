@@ -872,7 +872,14 @@ namespace LLB.Controllers
                 _db.Update(application);
                 _db.SaveChanges();
 
-
+                var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
+                foreach (var manager in managers)
+                {
+                    manager.Status = "submitted";
+                    manager.EffectiveDate = DateTime.Now;
+                    _db.Update(manager);
+                    _db.SaveChanges();
+                }
 
                 // running the task allocation method, to be optimised
                 var verifiers = await userManager.GetUsersInRoleAsync("Verifier");

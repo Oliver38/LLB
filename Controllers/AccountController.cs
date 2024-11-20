@@ -76,15 +76,24 @@ namespace LLB.Controllers
                 TempData["success"] = "Your password has been changed successfully.";
                 return View();
             }
-
-            // Handle errors
-            foreach (var error in result.Errors)
+            else
             {
-                ModelState.AddModelError(string.Empty, error.Description);
-                TempData["error"] = error.Description;
+                List<string> errorDescriptions = new List<string>();
+
+                // Handle errors
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                    errorDescriptions.Add(error.Description);
+                   
+                }
+
+                // Combine all error descriptions into a single string (separated by commas or line breaks)
+                TempData["error"] = string.Join(", ", errorDescriptions); // Or use '\n' for line breaks if needed
+
+                return View();
             }
             
-            return View();
         }
         [AcceptVerbs("Get", "Post")]
         [AllowAnonymous]

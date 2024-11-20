@@ -550,6 +550,15 @@ namespace LLB.Controllers
             _db.Update(application);
             _db.SaveChanges();
 
+            var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
+            foreach(var manager in managers)
+            {
+                manager.Status = "active";
+                manager.EffectiveDate = DateTime.Now;
+                _db.Update(manager);
+                _db.SaveChanges();
+            }
+
             var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
             task.Status = "completed";
             _db.Update(task);
