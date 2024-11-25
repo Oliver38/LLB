@@ -882,7 +882,7 @@ namespace LLB.Controllers
                 }
 
                 // running the task allocation method, to be optimised
-                var verifiers = await userManager.GetUsersInRoleAsync("Verifier");
+                var verifiers = await userManager.GetUsersInRoleAsync("verifier");
 
                 // Get task counts for each verifier
                 var taskCounts = await _db.Tasks

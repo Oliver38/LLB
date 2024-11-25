@@ -11,6 +11,7 @@ namespace LLB.Models
         public string? Id { get; set; }
         public string? ApplicationId { get; set; }
         public string? AssignerId { get; set; }  
+        public string? ReAssignerId { get; set; }  
         public string? VerifierId { get; set; }  
         public DateTime? VerificationDate { get; set; }  
         public string? RecommenderId { get; set; }  

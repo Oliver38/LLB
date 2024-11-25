@@ -10,6 +10,7 @@ using Webdev.Payments;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Threading.Tasks;
 using Microsoft.Build.Framework;
+using Microsoft.EntityFrameworkCore;
 
 namespace LLB.Controllers
 {
@@ -532,7 +533,7 @@ namespace LLB.Controllers
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             application.Status = "recommended";
-            application.ExaminationStatus= "recommendation";
+            application.ExaminationStatus= "approval";
             _db.Update(application);
             _db.SaveChanges();
 
@@ -542,18 +543,79 @@ namespace LLB.Controllers
             _db.Update(task);
             _db.SaveChanges();
 
-            Tasks tasks = new Tasks();
-            tasks.Id = Guid.NewGuid().ToString();
-            tasks.ApplicationId = application.Id;
-            //auto allocation to replace
-            var userId = await userManager.FindByEmailAsync("secretary@secretary.com");
-            tasks.ApproverId= userId.Id;
-            tasks.AssignerId = "system";
-            tasks.Status = "assigned";
-            tasks.DateAdded = DateTime.Now;
-            tasks.DateUpdated = DateTime.Now;
-            _db.Add(tasks);
-            _db.SaveChanges();
+            //Tasks tasks = new Tasks();
+            //tasks.Id = Guid.NewGuid().ToString();
+            //tasks.ApplicationId = application.Id;
+            ////auto allocation to replace
+            //var userId = await userManager.FindByEmailAsync("secretary@secretary.com");
+            //tasks.ApproverId= userId.Id;
+            //tasks.AssignerId = "system";
+            //tasks.Status = "assigned";
+            //tasks.DateAdded = DateTime.Now;
+            //tasks.DateUpdated = DateTime.Now;
+            //_db.Add(tasks);
+            //_db.SaveChanges();
+
+
+
+            var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
+            foreach (var manager in managers)
+            {
+                manager.Status = "recommended";
+                manager.EffectiveDate = DateTime.Now;
+                _db.Update(manager);
+                _db.SaveChanges();
+            }
+
+            // running the task allocation method, to be optimised
+            var secretaries = await userManager.GetUsersInRoleAsync("secretary");
+
+            // Get task counts for each verifier
+            var taskCounts = await _db.Tasks
+                .Where(t => secretaries.Select(v => v.Id).Contains(t.ApproverId) &&
+                t.DateAdded.Month == DateTime.Now.Month)
+                .GroupBy(t => t.ApproverId)
+                .Select(g => new { ApproverId = g.Key, TaskCount = g.Count() })
+                .ToDictionaryAsync(x => x.ApproverId, x => x.TaskCount);
+
+            // Find the verifier with the least tasks
+            IdentityUser selectedUser = null;
+            int minTaskCount = int.MaxValue;
+
+            foreach (var secretary in secretaries)
+            {
+                if (secretary.LeaveStatus == "onleave" && secretary.IsActive == false) { }
+                else
+                {
+                    int taskCount = taskCounts.ContainsKey(secretary.Id) ? taskCounts[secretary.Id] : 0;
+
+                    if (taskCount < minTaskCount)
+                    {
+                        minTaskCount = taskCount;
+                        selectedUser = secretary;
+
+
+
+                        //var verifierId = await TaskAllocator()
+                        Tasks tasksc = new Tasks();
+                        tasksc.Id = Guid.NewGuid().ToString();
+                        tasksc.ApplicationId = application.Id;
+                        //tasks.AssignerId
+
+                        //auto allocation to replace
+                        // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                        // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                        tasksc.ApproverId = selectedUser.Id;
+                        tasksc.AssignerId = "system";
+                        tasksc.Status = "assigned";
+                        tasksc.DateAdded = DateTime.Now;
+                        tasksc.DateUpdated = DateTime.Now;
+                        _db.Add(tasksc);
+                        _db.SaveChanges();
+
+                    }
+                }
+            }
             return RedirectToAction("Dashboard", "Recommend");
         }
     }

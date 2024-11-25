@@ -1,0 +1,121 @@
+﻿@{
+    Layout = "_LayoutMain";
+
+
+}
+
+<div class="row">
+    <div class="card">
+        <div class="card-body" id="_step1">
+            <h5 class="card-title">Bulk Task Reassignment</h5>
+            <div class="card-header">
+
+                <form action="/Tasks/BulkReassignment" method="post"  enctytpe="multipart/form-data" class="row g-3">
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <select type="text" name="stage" value="" class="form-control" id="inputName5">
+                                <option value="">Select Task Stage</option>
+
+                                <option value="verification">verification </option>
+                                <option value="recommendation">recommendation </option>
+                                <option value="approval">approval </option>
+
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="submit" value="Fetch Tasks" name="" class="btn btn-primary col-md-3 form-control" />
+
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            @*submiting for reassignment*@
+        <div class="card-body pt-5">
+
+            @if (ViewBag.AllDetails != null)
+            {
+
+
+                <form action="/Tasks/BulkAction" method="post" enctytpe="multipart/form-data" class="row g-3">
+                    @if (ViewBag.Examiners.Count <= 0) { }
+                     else
+                    {
+
+                        <div class="row">
+
+                            <div class="col-md-6">
+                                <input type="hidden" name="stage" value="@ViewBag.Stage" />
+                                <label for="inputName5" class="form-label">Reassign To</label>
+                                <select type="text" name="examiner" value="" class="form-control" id="inputName5">
+                                    <option value="">Select Examiner</option>
+                                    @foreach (var examiner in ViewBag.Examiners)
+                                    {
+                                        <option value="@examiner.Id">@examiner.Name @examiner.LastName </option>
+                                    }
+
+
+
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="submit" value="Reassign Task" name="" class="btn btn-primary col-md-3 form-control" />
+
+                            </div>
+                        </div>
+
+
+                    }
+
+                <table class="table table-responsive table-borderless ">
+                    <thead>
+                    <th>+#</th>
+                    <th>Ref #</th>
+                    <th>Examiner</th>
+                    <th>Date Submitted</th>
+                    <th>Application Status</th>
+                    <th>License</th>
+                    <th>Assigner</th>
+                    <th>Task Date</th>
+
+                    </thead>
+                    <tbody class="table-responsive">
+                        @foreach (var details in ViewBag.AllDetails)
+                        {
+                            <tr>
+                                <td><input type="checkbox" name="taskIds" value="@details.Id" id="gridCheck1" class="form-check-input" /></td>
+                                <td>@details.RefNumber</td>
+
+                                <td>@details.ExaminerName</td>
+
+                                <td>@details.DateSubmitted</td>
+
+                                <td>@details.JobStatus</td>
+
+                                <td>@details.LicenseType</td>
+
+                                <td>@details.Assigner</td>
+
+                                <td>@details.DateCreated</td>
+
+
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                </form>
+            }
+
+
+        </div>
+
+            <!-- End Multi Columns Form -->
+
+        </div>
+    </div>
+
+</div>

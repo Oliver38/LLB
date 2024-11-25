@@ -8,6 +8,7 @@ using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
 using Webdev.Payments;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Microsoft.EntityFrameworkCore;
 
 namespace LLB.Controllers
 {
@@ -542,15 +543,77 @@ namespace LLB.Controllers
             tasks.ApplicationId = application.Id;
             //tasks.AssignerId
 
-            //auto allocation to replace
-            var userId = await userManager.FindByEmailAsync("recommender@recommender.com");
-            tasks.RecommenderId = userId.Id;
-            tasks.AssignerId = "system";
-            tasks.Status = "assigned";
-            tasks.DateAdded = DateTime.Now;
-            tasks.DateUpdated = DateTime.Now;
-            _db.Add(tasks);
-            _db.SaveChanges();
+            ////auto allocation to replace
+            //var userId = await userManager.FindByEmailAsync("recommender@recommender.com");
+            //tasks.RecommenderId = userId.Id;
+            //tasks.AssignerId = "system";
+            //tasks.Status = "assigned";
+            //tasks.DateAdded = DateTime.Now;
+            //tasks.DateUpdated = DateTime.Now;
+            //_db.Add(tasks);
+            //_db.SaveChanges();
+
+
+            var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
+            foreach (var manager in managers)
+            {
+                manager.Status = "verified";
+                manager.EffectiveDate = DateTime.Now;
+                _db.Update(manager);
+                _db.SaveChanges();
+            }
+
+            // running the task allocation method, to be optimised
+            var recommenders = await userManager.GetUsersInRoleAsync("recommender");
+
+            // Get task counts for each verifier
+            var taskCounts = await _db.Tasks
+                .Where(t => recommenders.Select(v => v.Id).Contains(t.RecommenderId) &&
+                t.DateAdded.Month == DateTime.Now.Month)
+                .GroupBy(t => t.RecommenderId)
+                .Select(g => new { RecommenderId = g.Key, TaskCount = g.Count() })
+                .ToDictionaryAsync(x => x.RecommenderId, x => x.TaskCount);
+
+            // Find the verifier with the least tasks
+            IdentityUser selectedUser = null;
+            int minTaskCount = int.MaxValue;
+
+            foreach (var recomender in recommenders)
+            {
+                if (recomender.LeaveStatus == "onleave" && recomender.IsActive == false) { }
+                else
+                {
+                    int taskCount = taskCounts.ContainsKey(recomender.Id) ? taskCounts[recomender.Id] : 0;
+
+                    if (taskCount < minTaskCount)
+                    {
+                        minTaskCount = taskCount;
+                        selectedUser = recomender;
+
+
+
+                        //var verifierId = await TaskAllocator()
+                        Tasks tasksc = new Tasks();
+                        tasksc.Id = Guid.NewGuid().ToString();
+                        tasksc.ApplicationId = application.Id;
+                        //tasks.AssignerId
+
+                        //auto allocation to replace
+                        // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                        // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                        tasksc.RecommenderId = selectedUser.Id;
+                        tasksc.AssignerId = "system";
+                        tasksc.Status = "assigned";
+                        tasksc.DateAdded = DateTime.Now;
+                        tasksc.DateUpdated = DateTime.Now;
+                        _db.Add(tasksc);
+                        _db.SaveChanges();
+
+                    }
+                }
+            }
+
+
             return RedirectToAction("Dashboard", "Verify");
         }
     }

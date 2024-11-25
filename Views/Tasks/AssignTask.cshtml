@@ -10,55 +10,80 @@
             <h5 class="card-title">License Applicant Information</h5>
             <div class="card-header">
                 <form action="/Tasks/AssignTask" method="post" ß enctytpe="multipart/form-data" class="row g-3">
+                    @if (@ViewBag.TaskDetails.ReAssigner == "")
+                        {
                     <div class="row">
-                        <div class="col-md-4">
-                            <label for="inputName5" class="form-label">Task Id</label>
-                            <input type="text" name="Id" value="@ViewBag.Task.Id" readonly class="col-md-3 form-control" />
-                        </div>
-                        <div class="col-md-4">
-                            <label for="inputName5" class="form-label">Select Inspector</label>
-                            <select type="text" name="InspectorId" value="" class="form-control" id="inputName5">
-                                <option value="" >Select Inspector</option>
-                                @foreach (var inspector in ViewBag.Inspectors)
-                                {
-                                    <option value="@inspector.Id">@inspector.Name </option>
-                                }
+                        @*<div class="col-md-4">*@
+                            @*<label for="inputName5" class="form-label">Task Id</label>*@
+                            <input type="hidden" name="Id" value="@ViewBag.Task.Id" readonly class="col-md-3 form-control" />
+                            <input type="hidden" name="stage" value="@ViewBag.TaskDetails.JobStatus" readonly class="col-md-3 form-control" />
+                        @*</div>*@
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Reassign To</label>
+                            <select type="text" name="reassignedto" value="" class="form-control" id="inputName5">
+                                <option value="" >Select Examiner</option>
+                                @foreach (var examiner in ViewBag.Examiners)
+                                    {
+                                    <option value="@examiner.Id">@examiner.Name </option>
+                                    }
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <input type="submit" value="Assign" name="" class="btn btn-primary col-md-3 form-control" />
+                            <input type="submit" value="Reassign Task" name="" class="btn btn-primary col-md-3 form-control" />
 
                             </div>
                         </div>
+                        }
 </form>
             </div>
-            <!-- Multi Columns Form -->
-   
-                <div class="col-md-12">
-                    <label for="inputName5" class="form-label">@ViewBag.ApplicationInfo.BusinessName</label>
-                </div>
-                <div class="col-md-12">
-                    <label for="inputName5" class="form-label">@ViewBag.ApplicationInfo.OperationAddress</label>
-                </div>
-                <div class="col-md-12">
-                    <label for="inputName5" class="form-label">@ViewBag.ApplicationInfo.Status</label>
-                </div>
-                <div class="col-md-6">
-                    <label for="inputName5" class="form-label">@ViewBag.ApplicationInfo.ApplicationDate</label>
-               </div>
+            
 
-                <div class="col-md-12">
-                    <label for="inputName5" class="form-label">Business Name</label>
-                    <input type="text" name="businessName" value="" class="form-control" id="inputName5">
-                </div>
+                
+            <table class="table table-responsive table-borderless ">
+                <tbody>
+                    <tr>
+                        <th>Ref Number</th>
+                        <td>@ViewBag.TaskDetails.RefNumber</td>
+                    </tr>
+                    <tr>
+                        <th>Examiner</th>
+                        <td>@ViewBag.TaskDetails.ExaminerName</td>
+                    </tr>
+                    <tr>
+                        <th>Establishment Name</th>
+                        <td>@ViewBag.TaskDetails.BarName</td>
+                    </tr>
+                    <tr>
+                        <th>Date Submitted</th>
+                        <td>@ViewBag.TaskDetails.DateSubmitted</td>
+                    </tr>
+                    <tr>
+                        <th>Task Status</th>
+                        <td>@ViewBag.TaskDetails.TaskStatus</td>
+                    </tr>
 
+                    <tr>
+                        <th>Job Status</th>
+                        <td>@ViewBag.TaskDetails.JobStatus</td>
+                    </tr>
+                    <tr>
+                        <th>License Type</th>
+                        <td>@ViewBag.TaskDetails.LicenseType</td>
+                    </tr>
+                    <tr>
+                        <th>Assigner</th>
+                        <td>@ViewBag.TaskDetails.Assigner</td>
+                    </tr>
+                    <tr>
+                        <th>ReAssigner</th>
+                        <td>@ViewBag.TaskDetails.ReAssigner</td>
+                    </tr>
+                </tbody>
+            </table>
                 
                 
 
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                    <button type="reset" class="btn btn-secondary">Reset</button>
-                </div>
+              
             <!-- End Multi Columns Form -->
 
         </div>
