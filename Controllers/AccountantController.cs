@@ -105,7 +105,7 @@ namespace LLB.Controllers
         public async Task<IActionResult> VerifyAsync(string ApplicationId, string status, string paymentId)
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == ApplicationId).FirstOrDefault();
-
+            
             if (status == "approved")
             {
                 var refnum = _db.ReferenceNumbers.First();
@@ -169,26 +169,27 @@ namespace LLB.Controllers
 
 
 
-                            //var verifierId = await TaskAllocator()
-                            Tasks tasks = new Tasks();
-                            tasks.Id = Guid.NewGuid().ToString();
-                            tasks.ApplicationId = application.Id;
-                            //tasks.AssignerId
-
-                            //auto allocation to replace
-                            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-                            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-                            tasks.VerifierId = selectedUser.Id;
-                            tasks.AssignerId = "system";
-                            tasks.Status = "assigned";
-                            tasks.DateAdded = DateTime.Now;
-                            tasks.DateUpdated = DateTime.Now;
-                            _db.Add(tasks);
-                            _db.SaveChanges();
+                           
 
                         }
                     }
                 }
+                //var verifierId = await TaskAllocator()
+                Tasks tasks = new Tasks();
+                tasks.Id = Guid.NewGuid().ToString();
+                tasks.ApplicationId = application.Id;
+                //tasks.AssignerId
+
+                //auto allocation to replace
+                // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+                tasks.VerifierId = selectedUser.Id;
+                tasks.AssignerId = "system";
+                tasks.Status = "assigned";
+                tasks.DateAdded = DateTime.Now;
+                tasks.DateUpdated = DateTime.Now;
+                _db.Add(tasks);
+                _db.SaveChanges();
 
             }
             else if( status== "rejected")
@@ -381,13 +382,53 @@ namespace LLB.Controllers
             return View();
         }
 
-        [HttpGet("ChangePasswordx")]
-        public IActionResult ChangePasswordx()
+        [HttpGet("PaynowTransactions")]
+        public async Task<IActionResult> PaynowTransactions()
         {
-          
+            var transactions = _db.Payments.Where(a => a.PollUrl != "transfer" && a.DateAdded.Month == DateTime.Now.Month).ToList();
+            List<PaynowDetails> AllDetails = new List<PaynowDetails>();
+            foreach (var tran in transactions)
+            {
+                PaynowDetails detail =new PaynowDetails();
+                var application = _db.ApplicationInfo.Where(s => s.Id == tran.ApplicationId).FirstOrDefault();
+                detail.ApplicationRef = application.RefNum;
+                var userDetail = await userManager.FindByIdAsync(application.UserID);
+                detail.Payer = userDetail.Name + " " + userDetail.LastName;
+                detail.PollUrl = tran.PollUrl;
+                detail.PaynowRef = tran.PaynowRef;
+                detail.PaymentStatus = tran.PaymentStatus;
+                detail.Amount = (decimal)tran.Amount;
+                detail.TransDate = tran.DateAdded;
+                AllDetails.Add(detail);
+            }
+            ViewBag.Details = AllDetails;
             return View();
         }
 
+
+        [HttpPost("PaynowTransactions")]
+        public async Task<IActionResult> PaynowTransactions(DateTime startdate, DateTime enddate)
+        {
+            var transactions = _db.Payments.Where(a => a.PollUrl != "transfer" && a.DateAdded.Date >= startdate.Date && a.DateAdded.Date <= enddate).ToList();
+            List<PaynowDetails> AllDetails = new List<PaynowDetails>();
+            //var requestedDetails = _db.Payments.Where(a => a.PollUrl != "transfer" && a.DateAdded.Month == DateTime.Now.Month).ToList();
+            foreach (var tran in transactions)
+            {
+                PaynowDetails detail = new PaynowDetails();
+                var application = _db.ApplicationInfo.Where(s => s.Id == tran.ApplicationId).FirstOrDefault();
+                detail.ApplicationRef = application.RefNum;
+                var userDetail = await userManager.FindByIdAsync(application.UserID);
+                detail.Payer = userDetail.Name + " " + userDetail.LastName;
+                detail.PollUrl = tran.PollUrl;
+                detail.PaynowRef = tran.PaynowRef;
+                detail.PaymentStatus = tran.PaymentStatus;
+                detail.Amount = (decimal)tran.Amount;
+                detail.TransDate = tran.DateAdded;
+                AllDetails.Add(detail);
+            }
+            ViewBag.Details = AllDetails;
+            return View();
+        }
 
         [HttpPost("ChangePasswordx")]
         public async Task<IActionResult> ChangePasswordx(ChangePassword model)

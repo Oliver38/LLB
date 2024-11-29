@@ -42,6 +42,8 @@ namespace LLB.Models
         public DateTime ExpiryDate { get; set; }
         public string? RejectionReason { get; set; }
         //spublic DateTime DateCreated { get; set; }
+        public bool rejectionFlag { get; set; }
+        public string? rejectionFlagComment { get; set; }
 
     }
 }

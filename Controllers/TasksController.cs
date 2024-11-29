@@ -54,7 +54,7 @@ namespace LLB.Controllers
 
 
 
-            var assignedtasks = _db.Tasks.Where(a => a.Status == "assigned" || a.Status == "reassigned").ToList();
+            var assignedtasks = _db.Tasks.Where(a => a.Status == "assigned" ).ToList();
 
             List<TaskDetails> Alldetails = new List<TaskDetails>();
             //List<ApplicationUser> examinerslist = new List<ApplicationUser>();

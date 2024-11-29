@@ -29,7 +29,7 @@
                 <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col">License Type</th>th>
+                        <th scope="col">License Type</th>
                         <th scope="col">License Region</th>
                         <th scope="col">POP</th>
                         <th scope="col">Total Amount</th>
@@ -52,8 +52,8 @@
                             <td>@payment.ApplicationRefNum</td>
                             <td><span class="badge bg-warning">@payment.Status</span></td>
                             <td>
-                                <a href="/Accountant/Verify?ApplicationId=@payment.ApplicationId&status=approved&paymentId=@payment.PaymentId" class="btn btn-primary">Approve</a>
-                                <a href="/Accountant/Verify?ApplicationId=@payment.ApplicationId&status=rejected&paymentId=@payment.PaymentId" class="btn btn-danger">Adiscard</a>
+                                <a href="/Accountant/Verify?ApplicationId=@payment.ApplicationId&status=approved&paymentId=@payment.PaymentId" onclick="return confirm('Are you sure all information has been rectified and it is correct')" class="btn btn-primary">Confirm Payment</a>
+                                <a href="/Accountant/Verify?ApplicationId=@payment.ApplicationId&status=rejected&paymentId=@payment.PaymentId" onclick="return confirm('Are you sure all information has been rectified and it is correct')" class="btn btn-danger">Cancel payment</a>
                                
                             </td>
                         </tr>

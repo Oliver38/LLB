@@ -1,0 +1,94 @@
+﻿@{
+    Layout = "_LayoutMain";
+}
+
+
+<!-- Recent Sales -->
+<div class="row">
+    <div class="col-lg-12">
+    <div class="col-12">
+        <div class="card  overflow-auto">
+
+            <div class="row card-body">
+                <h5 class="card-title ">Paynow Transactions</h5>
+            </div>
+            <div class="row">
+                <div class="card-header">
+                    <form action="/Accountant/PaynowTransactions" method="post" enctytpe="multipart/form-data" class="row g-3">
+
+                        <div class="row">
+
+                            <div class="col-md-4">
+                                <label for="inputName5" class="form-label">From</label>
+                                <input type="date" name="startdate" value="" class=" form-control" />
+
+                            </div>
+                            <div class="col-md-4">
+                                <label for="inputName5" class="form-label">To</label>
+                                <input type="date" name="enddate" value="" class=" form-control" />
+
+                            </div>
+                            <div class="col-md-4">
+                                <input type="submit" value="Get Transactions" name="" class="btn btn-primary col-md-3 form-control" />
+
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+
+
+                <table class="table table-borderless datatable">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Application Ref</th>
+                            <th scope="col">Payer</th>
+                            <th scope="col">Paynow Ref</th>
+                            <th scope="col">Amount</th>
+
+                            <th scope="col">Status</th>
+                            <th scope="col">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+
+                        @foreach (var payment in ViewBag.Details)
+                        {
+                            <tr>
+                                <th scope="row"><a href="#">#1</a></th>
+                                <td>@payment.ApplicationRef</td>
+                                <td>@payment.Payer</td>
+                                <td><a href="~/@payment.PaynowRef" target="_blank" class="text-primary">@payment.PaynowRef</a></td>
+                                <td>@payment.Amount</td>
+                                @if (payment.PaymentStatus == "Paid")
+                                {
+                                    <td><span class="badge bg-success">@payment.PaymentStatus</span></td>
+                                }
+                                else if (payment.PaymentStatus == "Cancelled")
+                                {
+                                    <td><span class="badge bg-danger">@payment.PaymentStatus</span></td>
+
+
+                                }
+                                <td>@payment.TransDate</td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+
+            </div>
+
+        </div>
+</div><!-- End Recent Sales -->
+</div>
+
+       
+
+
+</div>
