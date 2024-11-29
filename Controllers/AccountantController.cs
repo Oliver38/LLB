@@ -385,7 +385,7 @@ namespace LLB.Controllers
         [HttpGet("PaynowTransactions")]
         public async Task<IActionResult> PaynowTransactions()
         {
-            var transactions = _db.Payments.Where(a => a.PollUrl != "transfer" && a.DateAdded.Month == DateTime.Now.Month).ToList();
+            var transactions = _db.Payments.Where(a => a.PollUrl != "transfer" && a.DateAdded.Month == DateTime.Now.Month).ToList().OrderBy(a => a.DateAdded); ;
             List<PaynowDetails> AllDetails = new List<PaynowDetails>();
             foreach (var tran in transactions)
             {
@@ -409,7 +409,7 @@ namespace LLB.Controllers
         [HttpPost("PaynowTransactions")]
         public async Task<IActionResult> PaynowTransactions(DateTime startdate, DateTime enddate)
         {
-            var transactions = _db.Payments.Where(a => a.PollUrl != "transfer" && a.DateAdded.Date >= startdate.Date && a.DateAdded.Date <= enddate).ToList();
+            var transactions = _db.Payments.Where(a => a.PollUrl != "transfer" && a.DateAdded.Date >= startdate.Date && a.DateAdded.Date <= enddate).ToList().OrderBy(a => a.DateAdded);
             List<PaynowDetails> AllDetails = new List<PaynowDetails>();
             //var requestedDetails = _db.Payments.Where(a => a.PollUrl != "transfer" && a.DateAdded.Month == DateTime.Now.Month).ToList();
             foreach (var tran in transactions)
