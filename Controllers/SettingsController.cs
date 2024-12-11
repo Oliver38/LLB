@@ -33,6 +33,14 @@ namespace LLB.Controllers
             _validatorService = validatorService;
         }
 
+        [HttpGet(("LicenseFees"))]
+        public IActionResult LicenseFees()
+        {
+            var licenses = _db.LicenseTypes.ToList();
+            ViewBag.License = licenses;
+            return View();
+        }
+
         [HttpGet(("Licenses"))]
         public IActionResult Licenses()
         {
@@ -40,7 +48,6 @@ namespace LLB.Controllers
             ViewBag.License = licenses;
             return View();
         }
-
 
         [HttpGet(("LicenseType"))]
         public IActionResult LicenseType()
@@ -106,7 +113,7 @@ namespace LLB.Controllers
             _db.Update(licensefee);
             if (_db.SaveChanges()==1)
             {
-                return RedirectToAction("Licenses", "Settings");
+                return RedirectToAction("LicenseFees", "Settings");
             }
           
             return View();
@@ -138,6 +145,30 @@ namespace LLB.Controllers
             ViewBag.LicenseRegions = licenseRegions;
 
             return View();
+        }
+
+        [HttpPost("UpdateConditions")]
+        public async Task<IActionResult> UpdateConditions(string Conditions, string Id)
+        {
+            var application = _db.LicenseTypes.Where(a => a.Id == Id).FirstOrDefault();
+            application.ConditionList = Conditions.ToUpper(); ;
+            application.DateUpdated = DateTime.Now;
+            _db.Update(application);
+            _db.SaveChanges();
+            return RedirectToAction("Licenses", "Settings");
+
+        }
+
+        [HttpPost("UpdateInstructions")]
+        public async Task<IActionResult> UpdateInstructions(string instruction, string Id)
+        {
+            var application = _db.LicenseTypes.Where(a => a.Id == Id).FirstOrDefault();
+            application.LicenseInstructions= instruction;
+            application.DateUpdated = DateTime.Now;
+            _db.Update(application);
+            _db.SaveChanges();
+            return RedirectToAction("Licenses", "Settings");
+
         }
 
         [HttpPost(("LicenseRegion"))]

@@ -4,6 +4,7 @@ using LLB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LLB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241209090602_rejectionflagItemsagainsuper")]
+    partial class rejectionflagItemsagainsuper
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,9 +53,6 @@ namespace LLB.Migrations
 
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("FlaggerUserId")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("IdPass")
                         .HasColumnType("nvarchar(max)");
@@ -109,9 +109,6 @@ namespace LLB.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("rejectionFlagComment")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("rejectionUnflagComment")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -376,10 +373,6 @@ namespace LLB.Migrations
                     b.Property<double>("CityFee")
                         .HasColumnType("float");
 
-                    b.Property<string>("ConditionList")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("DateAdded")
                         .HasColumnType("datetime2");
 
@@ -390,10 +383,6 @@ namespace LLB.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LicenseCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LicenseInstructions")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LicenseName")

@@ -61,7 +61,7 @@ namespace LLB.Controllers
         {
             var roles = new[]
              {
-                     "internal","super user", "admin", "inspector", "secretary", "client","verifier","recommender", "accountant"
+                   "chief accountant", "district accountant", "provincial accountant","internal","super user", "admin", "inspector", "secretary", "client","verifier","recommender", "accountant"
                 };
 
             //var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -441,6 +441,169 @@ namespace LLB.Controllers
                     {
 
                         IdentityResult addrolea = await userManager.AddToRoleAsync(user, "accountant");
+                        IdentityResult addroleinternal = await userManager.AddToRoleAsync(user, "internal");
+                        //IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
+                        if (addrolea.Succeeded && addroleinternal.Succeeded)
+                        {
+                            TempData["success"] = "user has successfully been created";
+                        }
+
+                    }
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                        TempData["error"] = error.Description;
+
+                    }
+                }
+            }
+
+
+
+
+            // provincial accountant
+            // accountant
+            var provincialaccountant = await userManager.FindByEmailAsync("provincialaccountant@provincialaccountant.com");
+            if (provincialaccountant == null)
+            {
+                var user = new ApplicationUser
+                {
+                    Name = "provincial",
+                    Nationality = "Zimbabwean",
+                    ApplicationBy = "accountant@accountant.com",
+                    LockoutEnd = DateTime.Now,
+                    UserPhoneNumber = "0772772772",
+                    LastName = "accountant",
+                    PhysicalAddress = "provincialaccountant@provincialaccountant.com",
+                    Email = "provincialaccountant@provincialaccountant.com",
+                    UserEmail = "provincialaccountant@provincialaccountant.com",
+                    UserName = "provincialaccountant@provincialaccountant.com",
+                    IsActive = true,
+                    PhoneNumber = "0772772772",
+                    NatID = "63772T36",
+                    DateOfApplication = DateTime.Now,
+                    DOB = DateTime.Now.AddYears(-20),
+                    CountryOfResidence = "Zimbabwe",
+                    Gender = "male",
+                    Province = "Harare"
+                };
+                var result = await userManager.CreateAsync(user, "Test123!");
+                if (result.Succeeded)
+                {
+                    if (await roleManager.RoleExistsAsync("provincial accountant"))
+                    {
+
+                        IdentityResult addrolea = await userManager.AddToRoleAsync(user, "provincial accountant");
+                        IdentityResult addroleinternal = await userManager.AddToRoleAsync(user, "internal");
+                        //IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
+                        if (addrolea.Succeeded && addroleinternal.Succeeded)
+                        {
+                            TempData["success"] = "user has successfully been created";
+                        }
+
+                    }
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                        TempData["error"] = error.Description;
+
+                    }
+                }
+            }
+
+            //district accountant
+            // provincial accountant
+            // accountant
+            var districtaccountant = await userManager.FindByEmailAsync("districtaccountant@districtaccountant.com");
+            if (districtaccountant == null)
+            {
+                var user = new ApplicationUser
+                {
+                    Name = "district",
+                    Nationality = "Zimbabwean",
+                    ApplicationBy = "accountant@accountant.com",
+                    LockoutEnd = DateTime.Now,
+                    UserPhoneNumber = "0772772772",
+                    LastName = "accountant",
+                    PhysicalAddress = "districtaccountant@districtaccountant.com",
+                    Email = "districtaccountant@districtaccountant.com",
+                    UserEmail = "districtaccountant@districtaccountant.com",
+                    UserName = "districtaccountant@districtaccountant.com",
+                    IsActive = true,
+                    PhoneNumber = "0772772772",
+                    NatID = "63772T36",
+                    DateOfApplication = DateTime.Now,
+                    DOB = DateTime.Now.AddYears(-20),
+                    CountryOfResidence = "Zimbabwe",
+                    Gender = "male",
+                    Province = "Harare"
+                };
+                var result = await userManager.CreateAsync(user, "Test123!");
+                if (result.Succeeded)
+                {
+                    if (await roleManager.RoleExistsAsync("district accountant"))
+                    {
+
+                        IdentityResult addrolea = await userManager.AddToRoleAsync(user, "district accountant");
+                        IdentityResult addroleinternal = await userManager.AddToRoleAsync(user, "internal");
+                        //IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
+                        if (addrolea.Succeeded && addroleinternal.Succeeded)
+                        {
+                            TempData["success"] = "user has successfully been created";
+                        }
+
+                    }
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                        TempData["error"] = error.Description;
+
+                    }
+                }
+            }
+
+            //chief accountant
+            // accountant
+            var chiefaccountant = await userManager.FindByEmailAsync("chiefaccountant@chiefaccountant.com");
+            if (chiefaccountant == null)
+            {
+                var user = new ApplicationUser
+                {
+                    Name = "chief",
+                    Nationality = "Zimbabwean",
+                    ApplicationBy = "accountant@accountant.com",
+                    LockoutEnd = DateTime.Now,
+                    UserPhoneNumber = "0772772772",
+                    LastName = "accountant",
+                    PhysicalAddress = "chiefaccountant@chiefaccountant.com",
+                    Email = "chiefaccountant@chiefaccountant.com",
+                    UserEmail = "chiefaccountant@chiefaccountant.com",
+                    UserName = "chiefaccountant@chiefaccountant.com",
+                    IsActive = true,
+                    PhoneNumber = "0772772772",
+                    NatID = "63772T36",
+                    DateOfApplication = DateTime.Now,
+                    DOB = DateTime.Now.AddYears(-20),
+                    CountryOfResidence = "Zimbabwe",
+                    Gender = "male",
+                    Province = "Harare"
+                };
+                var result = await userManager.CreateAsync(user, "Test123!");
+                if (result.Succeeded)
+                {
+                    if (await roleManager.RoleExistsAsync("chief accountant"))
+                    {
+
+                        IdentityResult addrolea = await userManager.AddToRoleAsync(user, "chief accountant");
                         IdentityResult addroleinternal = await userManager.AddToRoleAsync(user, "internal");
                         //IdentityResult addroleb = await userManager.AddToRoleAsync(user, "inspector");
                         if (addrolea.Succeeded && addroleinternal.Succeeded)

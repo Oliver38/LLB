@@ -17,6 +17,10 @@ namespace LLB.Models
         public double MunicipaltyFee { get; set; }
         public double TownFee { get; set; }
         public double RDCFee { get; set; }
+
+        public string ConditionList { get; set; }
+        public string LicenseInstructions { get; set; }
+
         //public double FeeId { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }

@@ -596,26 +596,27 @@ namespace LLB.Controllers
 
 
 
-                        //var verifierId = await TaskAllocator()
-                        Tasks tasksc = new Tasks();
-                        tasksc.Id = Guid.NewGuid().ToString();
-                        tasksc.ApplicationId = application.Id;
-                        //tasks.AssignerId
-
-                        //auto allocation to replace
-                        // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-                        // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-                        tasksc.ApproverId = selectedUser.Id;
-                        tasksc.AssignerId = "system";
-                        tasksc.Status = "assigned";
-                        tasksc.DateAdded = DateTime.Now;
-                        tasksc.DateUpdated = DateTime.Now;
-                        _db.Add(tasksc);
-                        _db.SaveChanges();
 
                     }
                 }
             }
+
+            //var verifierId = await TaskAllocator()
+            Tasks tasksc = new Tasks();
+            tasksc.Id = Guid.NewGuid().ToString();
+            tasksc.ApplicationId = application.Id;
+            //tasks.AssignerId
+
+            //auto allocation to replace
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+            tasksc.ApproverId = selectedUser.Id;
+            tasksc.AssignerId = "system";
+            tasksc.Status = "assigned";
+            tasksc.DateAdded = DateTime.Now;
+            tasksc.DateUpdated = DateTime.Now;
+            _db.Add(tasksc);
+            _db.SaveChanges();
             return RedirectToAction("Dashboard", "Recommend");
         }
     }

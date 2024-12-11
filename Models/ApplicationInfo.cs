@@ -44,6 +44,8 @@ namespace LLB.Models
         //spublic DateTime DateCreated { get; set; }
         public bool rejectionFlag { get; set; }
         public string? rejectionFlagComment { get; set; }
+        public string? FlaggerUserId { get; set; }
+        public string? rejectionUnflagComment { get; set; }
 
     }
 }

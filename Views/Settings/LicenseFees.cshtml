@@ -20,7 +20,10 @@
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Nature Of Fee</th>
-
+                                <th scope="col">City</th>
+                                <th scope="col">Municipalty</th>
+                                <th scope="col">Town</th>
+                                <th scope="col">RDC</th>
                                 <th scope="col">Date Updated</th>
                                 <th scope="col">Action</th>
                             </tr>
@@ -31,20 +34,19 @@
                                 <tr>
                                     <th scope="row">1</th>
                                     <td>@license.LicenseName</td>
-
+                                    <td>@license.CityFee</td>
+                                    <td>@license.MunicipaltyFee</td>
+                                    <td>@license.TownFee</td>
+                                    <td>@license.RDCFee</td>
                                     <td>@license.DateUpdated</td>
-
                                     <td>
-                                        <button type="button" onclick="conditionsModal('@license.Id','@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(license.ConditionList)')" class="btn btn-primary">
-                                            Edit conditions
+                                        <button type="button" onclick="feeModal('@license.Id', '@license.LicenseName','@license.CityFee','@license.MunicipaltyFee','@license.TownFee', '@license.RDCFee')" class="btn btn-primary">
+                                            View License
                                         </button>
                                     </td>
+                                   
 
-                                    <td>
-                                        <button type="button" onclick="instructionsModal('@license.Id','@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(license.LicenseInstructions)')" class="btn btn-primary">
-                                            Edit Instructions
-                                        </button>
-                                    </td>
+
                                 </tr>
                             }
                         </tbody>
@@ -96,12 +98,13 @@
         </div>
     </div>
 </div><!-- End Basic Modal-->
+
 @*editor for conditions list*@
 <div class="modal fade" id="ConditionsModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"> Conditions List</h5>
+                <h5 class="modal-title"> Conditions List</h5> 
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="/Settings/UpdateConditions" enctype="multipart/form-data" method="post">
@@ -109,7 +112,7 @@
 
                     <input type="hidden" id="Idcond" name="id" />
                     <!-- End Quill Editor Default -->
-                    <textarea name="conditions" ocnkeyup="convertToUppercase()" id="textacond" value="" class="tinymce-editor">
+                    <textarea name="conditions" id="textacond" value="" class="tinymce-editor">
                        
                             
                         
@@ -125,34 +128,6 @@
     </div>
 </div><!-- End Basic Modal-->
 
-@*editor for instructions list*@
-<div class="modal fade" id="instructionsModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"> Conditions List</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="/Settings/UpdateInstructions" enctype="multipart/form-data" method="post">
-                <div class="modal-body">
-
-                    <input type="hidden" id="Idinstr" name="id" />
-                    <!-- End Quill Editor Default -->
-                    <textarea name="instruction" id="textainstr" value="" class="tinymce-editor tinymce-editorb">
-                       
-                            
-                        
-                    </textarea>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div><!-- End Basic Modal-->
 <script>function feeModal(Id, Name, CityFee, MunicipaltyFee, TownFee, RDCFee) {
         // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
 
@@ -169,49 +144,21 @@
 
 <script>function conditionsModal(id, conditions) {
 
-        tinymce.init({
-            selector: '.tinymce-editor',
-            height: 200,
-            menubar: false,
-            plugins: 'lists',
-            toolbar: 'undo redo | bold italic | bullist numlist outdent indent',
-        });
-        tinymce.get('textacond').setContent(conditions);
+    tinymce.init({
+        selector: '.tinymce-editor',
+        height: 200,
+        menubar: false,
+        plugins: 'lists',
+        toolbar: 'undo redo | bold italic | bullist numlist outdent indent',
+    });
+    tinymce.get('textacond').setContent(conditions);
 
+  
+   // alert(conditions);
+    $('#Idcond').val(id);
 
-        // alert(conditions);
-        $('#Idcond').val(id);
-
-        //$('#textacond').val(conditions);
-
-        $('#ConditionsModal').modal('show');
-
-    }</script>
-
-<script>function convertToUppercase() {
-        // Select the textarea by its ID and update its value
-        $('#textacond').val($('#textacond').val().toUpperCase());
-    }</script>
-
-
-
-<script>function instructionsModal(id, instructions) {
-
-        tinymce.init({
-            selector: '.tinymce-editorb',
-            height: 200,
-            menubar: false,
-            plugins: 'lists',
-            toolbar: 'undo redo | bold italic | bullist numlist outdent indent',
-        });
-        tinymce.get('textainstr').setContent(instructions);
-
-
-        // alert(instructions);
-    $('#Idinstr').val(id);
-
-        //$('#textacond').val(instructions);
-
-        $('#instructionsModal').modal('show');
+    //$('#textacond').val(conditions);
+   
+    $('#ConditionsModal').modal('show');
 
     }</script>

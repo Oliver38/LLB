@@ -350,6 +350,8 @@ namespace LLB.Controllers
             ViewBag.ApplicationInfo = applicationInfob;
             ViewBag.FinalData = finaldata;
             ViewBag.Payment = payment;
+            var currentUserId = userManager.GetUserId(User);
+            ViewBag.CurrentUser = currentUserId;
 
 
             return View();
@@ -592,29 +594,63 @@ namespace LLB.Controllers
 
 
 
-                        //var verifierId = await TaskAllocator()
-                        Tasks tasksc = new Tasks();
-                        tasksc.Id = Guid.NewGuid().ToString();
-                        tasksc.ApplicationId = application.Id;
-                        //tasks.AssignerId
-
-                        //auto allocation to replace
-                        // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-                        // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-                        tasksc.RecommenderId = selectedUser.Id;
-                        tasksc.AssignerId = "system";
-                        tasksc.Status = "assigned";
-                        tasksc.DateAdded = DateTime.Now;
-                        tasksc.DateUpdated = DateTime.Now;
-                        _db.Add(tasksc);
-                        _db.SaveChanges();
 
                     }
                 }
             }
 
+            //var verifierId = await TaskAllocator()
+            Tasks tasksc = new Tasks();
+            tasksc.Id = Guid.NewGuid().ToString();
+            tasksc.ApplicationId = application.Id;
+            //tasks.AssignerId
+
+            //auto allocation to replace
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+            tasksc.RecommenderId = selectedUser.Id;
+            tasksc.AssignerId = "system";
+            tasksc.Status = "assigned";
+            tasksc.DateAdded = DateTime.Now;
+            tasksc.DateUpdated = DateTime.Now;
+            _db.Add(tasksc);
+            _db.SaveChanges();
+
 
             return RedirectToAction("Dashboard", "Verify");
         }
+
+
+
+        //FlagRejection
+
+        [HttpPost("FlagRejection")]
+        public async Task<IActionResult> FlagRejection(string id, string rejectionReason)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
+            application.rejectionFlag = true;
+            application.rejectionFlagComment = rejectionReason;
+            var userId = userManager.GetUserId(User);
+            application.FlaggerUserId = userId;
+            _db.Update(application);
+            _db.SaveChanges();
+
+            return RedirectToAction("Finalising", new { Id = id, error = "application has been flagged for rejection"});
+
+            return View();
+        }
+
+        [HttpGet("UnflagRejection")]
+        public async Task<IActionResult> UnflagRejection(string id)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
+            application.rejectionFlag = false;
+            _db.Update(application);
+            _db.SaveChanges();
+            return RedirectToAction("Finalising", new { Id = id, error = "application unflagged" });
+
+            return View();
+        }
+
     }
 }
