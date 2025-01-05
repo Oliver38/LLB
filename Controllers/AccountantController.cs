@@ -108,14 +108,7 @@ namespace LLB.Controllers
             
             if (status == "approved")
             {
-                var refnum = _db.ReferenceNumbers.First();
-                var newrefnum = refnum.Number + 1;
-                refnum.Number = newrefnum;
-                _db.Update(refnum); 
-                int curentnum = (int)refnum.Number;
-                var reference = $"D{curentnum.ToString("D4")}";
-
-                application.RefNum = reference;
+                
                 application.PaymentId = paymentId;
                 application.PaymentStatus = "Paid";
                 application.Status = "submitted";

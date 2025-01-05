@@ -60,40 +60,90 @@
                         </td>
 
                     </tr>
+                    <tr>
+                        <td>Flag Status</td>
+                        @if (ViewBag.ApplicationInfo.rejectionFlag == false)
+                        {
 
-                  
+
+                            <td>
+                                <input type="checkbox" class="" onclick="checkCheckbox()" name="rejectionFlag" id="rejectionFlag" />
+                            </td>
+                        }
+                        else if (ViewBag.ApplicationInfo.rejectionFlag == true)
+                        {
+                            @if (ViewBag.CurrentUser == ViewBag.ApplicationInfo.FlaggerUserId)
+                            {
+
+                                <td>
+                                    <span class="badge rounded-pill bg-danger">Flagger for rejection</span>
+                                    <a href="/Recommend/UnflagRejection?id=@ViewBag.ApplicationInfo.Id" onclick="confirm('Are you sure you want to remove flag')" class="btn btn-primary">Unflagg application</a>
+                                </td>
+                            }
+                            else
+                            {
+                                <td><span class="badge rounded-pill bg-danger">Flagger for rejection</span></td>
+                            }
+
+
+
+                        }
+                    </tr>
+
+
+
                 </tbody>
-        </table>
+            </table>
 
 
-        <div class="card-footer">
-            <div class="text-center">
-                <a href="/Recommend/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                @if (ViewBag.HasQuery.Count > 0)
-                {
-                    if (@ViewBag.ApplicationInfo.Status == "Has Query")
+            <div class="card-footer">
+                <div class="text-center">
+                    <a href="/Recommend/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                    @if (ViewBag.HasQuery.Count > 0)
                     {
+                        if (@ViewBag.ApplicationInfo.Status == "Has Query")
+                        {
 
+                        }
+                        else
+                        {
+                            <a href="/Recommend/HasQuery?Id=@ViewBag.ApplicationInfo.Id&taskid=@ViewBag.Task.Id" class="btn btn-primary">Submit Query</a>
+
+                        }
                     }
                     else
                     {
-                        <a href="/Recommend/HasQuery?Id=@ViewBag.ApplicationInfo.Id&taskid=@ViewBag.Task.Id" class="btn btn-primary">Submit Query</a>
+                        <a href="/Recommend/Approve?Id=@ViewBag.ApplicationInfo.Id&taskid=@ViewBag.Task.Id" class="btn btn-success">Approve Verification</a>
 
                     }
-                }
-                else
-                {
-                    <a href="/Recommend/Approve?Id=@ViewBag.ApplicationInfo.Id&taskid=@ViewBag.Task.Id" class="btn btn-success">Approve Verification</a>
-
-                }
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 </div>
 
+<script>function checkCheckbox() {
+        const checkbox = document.getElementById('rejectionFlag');
+        if (checkbox.checked) {
+            var trych = confirm("Are you sure you want to flag this application for rejection");
+            if (trych === true) {
+                $('#pop').modal('show');
+            } else {
+                //alert("uncheck immedia");
+                $('#rejectionFlag').prop('checked', false); // Uncheck the checkbox
+                $('#pop').modal('hide');
 
+            }
+
+
+        } else {
+
+            confirm("Are you sure you want to remove rejection flag");
+            var appid = $('#appid').val();
+
+        }
+    }</script>
 
 
 <div class="modal fade" id="paynow" tabindex="-1">
@@ -120,22 +170,27 @@
 </div><!-- End Basic Modal-->
 
 
+
+
 <div class="modal fade" id="pop" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Adding Director Details </h5> <h5 class="modal-title" id="feetitle"></h5>
+                <h5 class="modal-title">Comment reason for rejection flag </h5> <h5 class="modal-title" id="feetitle"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/License/Director" enctype="multipart/form-data" method="post">
+            <form action="/Recommend/FlagRejection" enctype="multipart/form-data" method="post">
                 <div class="modal-body">
                     <div class="row">
+                        <label for="inputName5" class="form-label">Please type a comment for rejection</label>
 
+                        <input type="hidden" id="appid" name="id" value="@ViewBag.ApplicationInfo.Id" />
+                        <textarea class="form-control" name="rejectionReason" type="text">Type your reason here</textarea>
 
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" onclick="$('#rejectionFlag').prop('checked', false);" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-primary">Save changes</button>
                 </div>
             </form>

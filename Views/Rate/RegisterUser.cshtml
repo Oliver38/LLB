@@ -1,0 +1,217 @@
+﻿@{
+    Layout = "_LayoutMain";
+}
+
+
+
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Register Internal User</h5>
+        <div class="card-header">
+            <div class="row center">
+                <span class="text-success">@TempData["success"]</span>
+                <span class="text-danger">@TempData["error"]</span>
+            </div>
+        </div>
+        <!-- Multi Columns Form -->
+        <form class="row g-3" method="post" action="/Admin/RegisterUser">
+            <div class="col-md-6">
+                <label for="inputName5" class="form-label">Your Name</label>
+                <input type="text" name="name" class="form-control" id="inputName5">
+            </div>
+            <div class="col-md-6">
+                <label for="inputEmail5" class="form-label">Surname</label>
+                <input type="text" name="lastname" class="form-control" id="inputEmail5">
+            </div>
+            <div class="col-md-12">
+                <label for="inputPassword5" class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" id="inputPassword5">
+            </div>
+
+            <div class="col-12">
+                <label for="inputAddress5" class="form-label">Phone Number</label>
+                <input type="text" name="phoneNumber" class="form-control" id="inputAddres5s" placeholder="1234 Main St">
+            </div>
+            <div class="col-12">
+                <label for="inputAddress2" class="form-label">National ID/ Passport</label>
+                <input type="text" class="form-control" name="natID" id="inputAddress2" placeholder="Apartment, studio, or floor">
+            </div>
+            <div class="col-md-6">
+                <label for="inputCity" class="form-label">Date Of Birth </label>
+                <input type="date" class="form-control" name="dOB" id="inputCity">
+            </div>
+            <div class="col-md-6">
+                <label for="inputState" class="form-label">Gender</label>
+                <select id="inputState" name="gender" class="form-select">
+
+                    <option selected value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+            </div>
+
+            <div class="col-md-12">
+                <label for="inputCity" class="form-label">Physical Address </label>
+                <textarea type="text" class="form-control" name="physicalAddress" id="inputCity"></textarea>
+            </div>
+
+            <div class="col-md-12">
+                <label for="inputState" class="form-label">User Role</label>
+                <select id="inputState" name="role" class="form-select">
+                    <option selected value="">Select Role</option>
+                    @foreach (var role in ViewBag.Allroles)
+                    {
+                        <option value="@role.Name">@role.Name</option>
+
+                    }
+
+
+                </select>
+            </div>
+
+
+
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="reset" class="btn btn-secondary">Reset</button>
+            </div>
+        </form><!-- End Multi Columns Form -->
+
+    </div>
+</div>
+
+       
+
+
+<!-- Booking Start -->
+<!--<div class="container-xxl py-5">
+    <div class="container">
+        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+            <h6 class="section-title text-center text-primary text-uppercase">Liquor Licensing Board</h6>
+            <h1 class="mb-5">Register for <span class="text-primary text-uppercase">Liquor Licensing</span></h1>
+        </div>
+        <div class="row g-5">
+            <div class="col-lg-6">
+                <div class="row g-3">
+                    <div class="col-6 text-end">
+                        <img class="img-fluid rounded w-75 wow zoomIn" data-wow-delay="0.1s" src="~/front/img/about-1.jpg" style="margin-top: 25%;">
+                    </div>
+                    <div class="col-6 text-start">
+                        <img class="img-fluid rounded w-100 wow zoomIn" data-wow-delay="0.3s" src="~/front/img/about-2.jpg">
+                    </div>
+                    <div class="col-6 text-end">
+                        <img class="img-fluid rounded w-50 wow zoomIn" data-wow-delay="0.5s" src="~/front/img/about-3.jpg">
+                    </div>
+                    <div class="col-6 text-start">
+                        <img class="img-fluid rounded w-75 wow zoomIn" data-wow-delay="0.7s" src="~/front/img/about-4.jpg">
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="wow fadeInUp" data-wow-delay="0.2s">
+                    <div class="row center">
+                        <span class="text-success">@TempData["success"]</span>
+                        <span class="text-danger">@TempData["error"]</span>
+                    </div>
+                    <form action="/Auth/Register" method="post" enctype="multipart/form-data">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="name" name="name" placeholder="Your Name">
+                                    <label for="name">Your Name</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Your Email">
+                                    <label for="email">Surname </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating date">
+                                    <input type="email" class="form-control" id="email" name="email" />
+                                    <label for="checkin">Email</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating date">
+                                    <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" />
+                                    <label for="checkin">Phone Number</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating date">
+                                    <select type="text" class="form-control" id="countrySelect" name="Nationality"></select>
+                                    <label for="checkin">Nationality</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating date">
+                                    <input type="text" class="form-control" id="natID" name="natID" />
+                                    <label for="checkin">National ID/ Passport</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating date" id="date4" data-target-input="nearest">
+                                    <input type="date" class="form-control" id="checkout" name="dOB" placeholder="Check Out" data-target="#date4" data-toggle="datetimepicker" />
+                                    <label for="checkout">Date Of Birth </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" name="gender" required id="select1">
+                                        <option value="">Select Gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                    <label for="select1">Gender</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-floating date">
+                                    <input type="text" class="form-control" id="physicalAddress" name="physicalAddress" />
+                                    <label for="checkin">Address</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select crs-country" data-region-id="one" required name="countryOfResidence" id="select2">
+                                    </select>
+                                    <label for="select2">Country Of Residence</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="one" name="province">
+                                    </select>
+                                    <label for="select2">Province</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating date">
+                                    <input type="password" class="form-control" id="password" name="password" />
+                                    <label for="checkin">Password</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating date">
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" />
+                                    <label for="checkin">Confirm Password</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-primary w-100 py-3" type="submit">Register</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>-->
+<!-- Booking End -->

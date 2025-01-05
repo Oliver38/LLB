@@ -349,7 +349,7 @@
                                 <i class="bi bi-circle"></i><span>Change Password</span>
                             </a>
                         </li>
-                      
+
                     </ul>
                 </li><!-- End Icons Nav -->
 
@@ -601,6 +601,59 @@
             </ul>
 
 
+        }
+
+
+        @if (User.IsInRole("chief accountant"))
+        {
+            <ul class="sidebar-nav" id="sidebar-nav">
+
+                <li class="nav-item">
+                    <a class="nav-link " href="/Accountant/Dashboard">
+                        <i class="bi bi-grid"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li><!-- End Dashboard Nav -->
+
+                <li class="nav-item">
+                    <a class="nav-link " href="/Rate/RateDashboard">
+                        <i class="bi bi-cogs"></i><span> Daily Rate</span>
+                    </a>
+                    </li>
+                <li class="nav-item">
+                    <a class="nav-link collapsed" data-bs-target="#icons-navc" data-bs-toggle="collapse" href="#">
+                        <i class="bi bi-cogs"></i><span>Profile</span><i class="bi bi-chevron-down ms-auto"></i>
+                    </a>
+                    <ul id="icons-navc" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                        <li>
+                            <a href="/Account/ChangePassword">
+                                <i class="bi bi-circle"></i><span>Change Password</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li><!-- End Icons Nav -->
+
+
+                <li class="nav-item">
+                    <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
+                        <i class="bi bi-cogs"></i><span> Payments</span><i class="bi bi-chevron-down ms-auto"></i>
+                    </a>
+                    <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                        <li>
+                            <a href="/Accountant/VerifyPayments">
+                                <i class="bi bi-circle"></i><span>Verify Payments</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Accountant/PaynowTransactions">
+                                <i class="bi bi-circle"></i><span>Paynow Transactions</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li><!-- End Icons Nav -->
+            </ul>
         }
     </aside><!-- End Sidebar-->
 

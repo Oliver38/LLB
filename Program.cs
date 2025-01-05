@@ -8,6 +8,7 @@ using LLB.Data;
 using LLB.Models;
 using LLB.Extensions;
 using Microsoft.AspNetCore.Builder;
+using LLB.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 string dbconnection = @"Server=localhost;Database=llb;;User Id=sa;Password=Password123;MultipleActiveResultSets=true;Initial Catalog=llb; Integrated Security=False  ;  TrustServerCertificate=True";
 builder.Services.AddDbContextPool<AppDbContext>(options => options.UseSqlServer(dbconnection));
-
+builder.Services.AddScoped<TaskAllocationHelper>();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
          
 builder.Services.AddMvc(options =>

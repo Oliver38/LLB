@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Webdev.Payments;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Microsoft.EntityFrameworkCore;
+using LLB.Helpers;
 
 namespace LLB.Controllers
 {
@@ -23,13 +24,15 @@ namespace LLB.Controllers
         private readonly AppDbContext _db;
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IDNTCaptchaValidatorService _validatorService;
+        private readonly TaskAllocationHelper _taskAllocationHelper;
 
-        public VerifyController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public VerifyController(TaskAllocationHelper taskAllocationHelper,AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
             this.userManager = userManager;
             this.signInManager = signInManager;
             _validatorService = validatorService;
+            _taskAllocationHelper = taskAllocationHelper;
         }
         [HttpGet("Dashboard")]
         public async Task<IActionResult> DashboardAsync()
@@ -565,39 +568,7 @@ namespace LLB.Controllers
                 _db.SaveChanges();
             }
 
-            // running the task allocation method, to be optimised
-            var recommenders = await userManager.GetUsersInRoleAsync("recommender");
-
-            // Get task counts for each verifier
-            var taskCounts = await _db.Tasks
-                .Where(t => recommenders.Select(v => v.Id).Contains(t.RecommenderId) &&
-                t.DateAdded.Month == DateTime.Now.Month)
-                .GroupBy(t => t.RecommenderId)
-                .Select(g => new { RecommenderId = g.Key, TaskCount = g.Count() })
-                .ToDictionaryAsync(x => x.RecommenderId, x => x.TaskCount);
-
-            // Find the verifier with the least tasks
-            IdentityUser selectedUser = null;
-            int minTaskCount = int.MaxValue;
-
-            foreach (var recomender in recommenders)
-            {
-                if (recomender.LeaveStatus == "onleave" && recomender.IsActive == false) { }
-                else
-                {
-                    int taskCount = taskCounts.ContainsKey(recomender.Id) ? taskCounts[recomender.Id] : 0;
-
-                    if (taskCount < minTaskCount)
-                    {
-                        minTaskCount = taskCount;
-                        selectedUser = recomender;
-
-
-
-
-                    }
-                }
-            }
+          
 
             //var verifierId = await TaskAllocator()
             Tasks tasksc = new Tasks();
@@ -608,7 +579,9 @@ namespace LLB.Controllers
             //auto allocation to replace
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            tasksc.RecommenderId = selectedUser.Id;
+            var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
+            
+            tasksc.RecommenderId = recommenderWithLeastTasks;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";
             tasksc.DateAdded = DateTime.Now;

@@ -18,6 +18,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Security.Cryptography.Xml;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Crypto;
+using LLB.Helpers;
 
 
 namespace LLB.Controllers
@@ -26,17 +27,21 @@ namespace LLB.Controllers
     [Route("License")]
     public class LicenseController : Controller
     {
+
+
         private readonly UserManager<ApplicationUser> userManager;
         private readonly AppDbContext _db;
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IDNTCaptchaValidatorService _validatorService;
+        private readonly TaskAllocationHelper _taskAllocationHelper;
 
-        public LicenseController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public LicenseController(TaskAllocationHelper taskAllocationHelper, AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
             this.userManager = userManager;
             this.signInManager = signInManager;
             _validatorService = validatorService;
+            _taskAllocationHelper = taskAllocationHelper;
         }
 
 
@@ -846,27 +851,35 @@ namespace LLB.Controllers
                  return RedirectToAction("Finalising", new { Id = Id, error = error });
 
                 // var applicationInfo = 
-            }else if (payment.Status == "awaiting verification" )
+            }else if ( payment.PaymentStatus == "Awaiting Delivery" || payment.PaymentStatus == "Cancelled")
+            {
+                string error = "Please make contact Paynow for Payment Clarification";
+                return RedirectToAction("Finalising", new { Id = Id, error = error });
+
+                // var applicationInfo = 
+            }
+
+            else if (payment.Status == "awaiting verification" )
 
             {
+                var newReferenceNumber = ReferenceHelper.GenerateReferenceNumber(_db);
+
                 var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
                 application.Status = "payment verification";
+                application.RefNum = newReferenceNumber;
                 _db.Update(application);
                 _db.SaveChanges();
+
+                //giving refnum for trace ability
+               
                 return RedirectToAction("Dashboard", "Home");
             }
             else
             {
                 var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
-                var refnum = _db.ReferenceNumbers.First();
-                var newrefnum = refnum.Number + 1;
-                refnum.Number = newrefnum;
-                _db.Update(refnum);
+                var newReferenceNumber = ReferenceHelper.GenerateReferenceNumber(_db);
 
-                int curentnum = (int)refnum.Number;
-               var reference=  $"D{curentnum.ToString("D4")}";
-
-                application.RefNum = reference;
+                application.RefNum = newReferenceNumber;
                 application.Status = "submitted";
                 application.ExaminationStatus = "verification";
                 _db.Update(application);
@@ -881,42 +894,7 @@ namespace LLB.Controllers
                     _db.SaveChanges();
                 }
 
-                // running the task allocation method, to be optimised
-                var verifiers = await userManager.GetUsersInRoleAsync("verifier");
-
-                // Get task counts for each verifier
-                var taskCounts = await _db.Tasks
-                    .Where(t => verifiers.Select(v => v.Id).Contains(t.VerifierId) &&
-                    t.DateAdded.Month == DateTime.Now.Month)
-                    .GroupBy(t => t.VerifierId)
-                    .Select(g => new { VerifierId = g.Key, TaskCount = g.Count() })
-                    .ToDictionaryAsync(x => x.VerifierId, x => x.TaskCount);
-
-                // Find the verifier with the least tasks
-                IdentityUser selectedUser = null;
-                int minTaskCount = int.MaxValue;
-
-                foreach (var verifier in verifiers)
-                {
-                    if (verifier.LeaveStatus == "onleave" && verifier.IsActive == false) { }
-                    else
-                    {
-                        int taskCount = taskCounts.ContainsKey(verifier.Id) ? taskCounts[verifier.Id] : 0;
-
-                        if (taskCount < minTaskCount)
-                        {
-                            minTaskCount = taskCount;
-                            selectedUser = verifier;
-
-
-
-                           
-
-                        }
-                    }
-                }
-
-
+               
                 //var verifierId = await TaskAllocator()
                 Tasks tasks = new Tasks();
                 tasks.Id = Guid.NewGuid().ToString();
@@ -926,7 +904,10 @@ namespace LLB.Controllers
                 //auto allocation to replace
                 // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
                 // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-                tasks.VerifierId = selectedUser.Id;
+
+                var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
+                //   tasks.VerifierId = selectedUser.Id;
+                   tasks.VerifierId = verifierWithLeastTasks;
                 tasks.AssignerId = "system";
                 tasks.Status = "assigned";
                 tasks.DateAdded = DateTime.Now;

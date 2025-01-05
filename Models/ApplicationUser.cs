@@ -25,5 +25,10 @@ namespace LLB.Models
         public string? LeaveStatus { get; set; }
 
         public bool IsActive { get; set; }
+
+        public static implicit operator string?(ApplicationUser? v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

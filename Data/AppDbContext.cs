@@ -28,6 +28,7 @@ namespace LLB.Data
         public DbSet<Tasks> Tasks { get; set; }
         public DbSet<DistrictCodes> DistrictCodes { get; set; }
         public DbSet<ReferenceNumbers> ReferenceNumbers { get; set; }
+        public DbSet<ExchangeRate> ExchangeRate { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

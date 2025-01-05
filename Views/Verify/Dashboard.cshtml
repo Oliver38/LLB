@@ -29,6 +29,7 @@
 
 
                         <thead>
+                            <th>Ref#</th>
                         <th>Trading Name </th>
                         <th>Operating Address </th>
                         <th>Application Date </th>
@@ -41,6 +42,9 @@
                             {
 
                                 <tr>
+                                    <td>
+                                        @application.RefNum
+                                    </td>
                                     <td>
                                         @foreach (var outlet in ViewBag.OutletInfo)
                                         {

@@ -11,6 +11,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Threading.Tasks;
 using Microsoft.Build.Framework;
 using Microsoft.EntityFrameworkCore;
+using LLB.Helpers;
 
 namespace LLB.Controllers
 {
@@ -19,19 +20,21 @@ namespace LLB.Controllers
     [Route("Recommend")]
     public class RecommendController : Controller
     {
-        
+
 
         private readonly UserManager<ApplicationUser> userManager;
         private readonly AppDbContext _db;
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IDNTCaptchaValidatorService _validatorService;
+        private readonly TaskAllocationHelper _taskAllocationHelper;
 
-        public RecommendController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public RecommendController(TaskAllocationHelper taskAllocationHelper, AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
             this.userManager = userManager;
             this.signInManager = signInManager;
             _validatorService = validatorService;
+            _taskAllocationHelper = taskAllocationHelper;
         }
         [HttpGet("Dashboard")]
         public async Task<IActionResult> DashboardAsync()
@@ -357,6 +360,8 @@ namespace LLB.Controllers
             ViewBag.ApplicationInfo = applicationInfob;
             ViewBag.FinalData = finaldata;
             ViewBag.Payment = payment;
+            var currentUserId = userManager.GetUserId(User);
+            ViewBag.CurrentUser = currentUserId;
 
 
             return View();
@@ -567,39 +572,8 @@ namespace LLB.Controllers
                 _db.SaveChanges();
             }
 
-            // running the task allocation method, to be optimised
-            var secretaries = await userManager.GetUsersInRoleAsync("secretary");
-
-            // Get task counts for each verifier
-            var taskCounts = await _db.Tasks
-                .Where(t => secretaries.Select(v => v.Id).Contains(t.ApproverId) &&
-                t.DateAdded.Month == DateTime.Now.Month)
-                .GroupBy(t => t.ApproverId)
-                .Select(g => new { ApproverId = g.Key, TaskCount = g.Count() })
-                .ToDictionaryAsync(x => x.ApproverId, x => x.TaskCount);
-
-            // Find the verifier with the least tasks
-            IdentityUser selectedUser = null;
-            int minTaskCount = int.MaxValue;
-
-            foreach (var secretary in secretaries)
-            {
-                if (secretary.LeaveStatus == "onleave" && secretary.IsActive == false) { }
-                else
-                {
-                    int taskCount = taskCounts.ContainsKey(secretary.Id) ? taskCounts[secretary.Id] : 0;
-
-                    if (taskCount < minTaskCount)
-                    {
-                        minTaskCount = taskCount;
-                        selectedUser = secretary;
-
-
-
-
-                    }
-                }
-            }
+           
+           
 
             //var verifierId = await TaskAllocator()
             Tasks tasksc = new Tasks();
@@ -610,7 +584,11 @@ namespace LLB.Controllers
             //auto allocation to replace
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            tasksc.ApproverId = selectedUser.Id;
+            var secretaryWithLeastTasks = await _taskAllocationHelper.GetSecretary(_db,userManager);
+            //   tasks.VerifierId = selectedUser.Id;
+           
+
+            tasksc.ApproverId = secretaryWithLeastTasks;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";
             tasksc.DateAdded = DateTime.Now;
@@ -618,6 +596,37 @@ namespace LLB.Controllers
             _db.Add(tasksc);
             _db.SaveChanges();
             return RedirectToAction("Dashboard", "Recommend");
+        }
+
+
+
+
+        [HttpPost("FlagRejection")]
+        public async Task<IActionResult> FlagRejection(string id, string rejectionReason)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
+            application.rejectionFlag = true;
+            application.rejectionFlagComment = rejectionReason;
+            var userId = userManager.GetUserId(User);
+            application.FlaggerUserId = userId;
+            _db.Update(application);
+            _db.SaveChanges();
+
+            return RedirectToAction("Finalising", new { Id = id, error = "application has been flagged for rejection" });
+
+            return View();
+        }
+
+        [HttpGet("UnflagRejection")]
+        public async Task<IActionResult> UnflagRejection(string id)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
+            application.rejectionFlag = false;
+            _db.Update(application);
+            _db.SaveChanges();
+            return RedirectToAction("Finalising", new { Id = id, error = "application unflagged" });
+
+            return View();
         }
     }
 }

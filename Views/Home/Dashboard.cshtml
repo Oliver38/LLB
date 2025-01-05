@@ -4,310 +4,317 @@
     Layout = "_LayoutMain";
 }
 
-<div b-36j9gympe5 class="row">
-    @if (User.Identity.IsAuthenticated && User.IsInRole("secretary"))
-    {
-        <!-- Sales Card -->
-        <div b-36j9gympe5 class="col-xxl-4 col-md-6">
-            <div b-36j9gympe5 class="card info-card sales-card">
 
-                <div b-36j9gympe5 class="filter">
-                    <a b-36j9gympe5 class="icon" href="#" data-bs-toggle="dropdown"><i b-36j9gympe5 class="bi bi-three-dots"></i></a>
-                    <ul b-36j9gympe5 class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                        <li b-36j9gympe5 class="dropdown-header text-start">
-                            <h6 b-36j9gympe5>Filter</h6>
-                        </li>
 
-                        <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">Today</a></li>
-                        <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">This Month</a></li>
-                        <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">This Year</a></li>
-                    </ul>
+
+
+
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            <div class="row w-100 align-items-center">
+                <div class="col">
+                    <h5 class="card-title mb-0">My Applications</h5>
                 </div>
-
-                <div b-36j9gympe5 class="card-body">
-                    <h5 b-36j9gympe5 class="card-title">Sales <span b-36j9gympe5>| Today</span></h5>
-
-                    <div b-36j9gympe5 class="d-flex align-items-center">
-                        <div b-36j9gympe5 class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                            <i b-36j9gympe5 class="bi bi-cart"></i>
-                        </div>
-                        <div b-36j9gympe5 class="ps-3">
-                            <h6 b-36j9gympe5>145</h6>
-                            <span b-36j9gympe5 class="text-success small pt-1 fw-bold">12%</span> <span b-36j9gympe5 class="text-muted small pt-2 ps-1">increase</span>
-
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div><!-- End Sales Card -->
-        <!-- Revenue Card -->
-        <div b-36j9gympe5 class="col-xxl-4 col-md-6">
-            <div b-36j9gympe5 class="card info-card revenue-card">
-
-            <div b-36j9gympe5 class="filter">
-                <a b-36j9gympe5 class="icon" href="#" data-bs-toggle="dropdown"><i b-36j9gympe5 class="bi bi-three-dots"></i></a>
-                <ul b-36j9gympe5 class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                    <li b-36j9gympe5 class="dropdown-header text-start">
-                        <h6 b-36j9gympe5>Filter</h6>
-                    </li>
-
-                    <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">Today</a></li>
-                    <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">This Month</a></li>
-                    <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">This Year</a></li>
-                </ul>
-            </div>
-
-            <div b-36j9gympe5 class="card-body">
-                <h5 b-36j9gympe5 class="card-title">Revenue <span b-36j9gympe5>| This Month</span></h5>
-
-                <div b-36j9gympe5 class="d-flex align-items-center">
-                    <div b-36j9gympe5 class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                        <i b-36j9gympe5 class="bi bi-currency-dollar"></i>
-                    </div>
-                    <div b-36j9gympe5 class="ps-3">
-                        <h6 b-36j9gympe5>$3,264</h6>
-                        <span b-36j9gympe5 class="text-success small pt-1 fw-bold">8%</span> <span b-36j9gympe5 class="text-muted small pt-2 ps-1">increase</span>
-
-                    </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">
+                        Apply For License
+                    </button>
                 </div>
             </div>
-
         </div>
-    </div><!-- End Revenue Card -->
+        <div class="card-body" id="_step1">
+
+            <ul class="nav nav-tabs nav-tabs-bordered d-flex" id="borderedTabJustified" role="tablist">
+                <li class="nav-item flex-fill" role="presentation">
+                    <button class="nav-link w-100 active" id="home-tab" data-bs-toggle="tab" data-bs-target="#bordered-justified-home" type="button" role="tab" aria-controls="home" aria-selected="true">In Progress</button>
+                </li>
+                <li class="nav-item flex-fill" role="presentation">
+                    <button class="nav-link w-100" id="profile-tab" data-bs-toggle="tab" data-bs-target="#bordered-justified-profile" type="button" role="tab" aria-controls="profile" aria-selected="false">My Licences</button>
+                </li>
+                <li class="nav-item flex-fill" role="presentation">
+                    <button class="nav-link w-100" id="contact-tab" data-bs-toggle="tab" data-bs-target="#bordered-justified-contact" type="button" role="tab" aria-controls="contact" aria-selected="false">Post Formations</button>
+                </li>
+            </ul>
+
+            <div class="tab-content pt-2" id="borderedTabJustifiedContent">
+                <div class="tab-pane fade show active" id="bordered-justified-home" role="tabpanel" aria-labelledby="home-tab">
+
+                    <div class="row">
+
+                        <table class="table table-responsiveß table-hover table-striped">
 
 
-}
-
-    <div class="row">
-        <div class="card">
-
-            <div class="card-body" id="_step1">
-                <div class="card-header">
-                    
-                    <h5 class="card-title">My Applications</h5>
-                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                    *@
-                </div>
-
-
-
-
-                <div class="row">
-
-                    <table class="table table-responsiveß table-hover table-striped">
-
-
-                        <thead>
+                            <thead>
                             <th>Reference</th>
-                        <th>LLB Number</th>
-                        <th>Trading Name </th>
-                        <th>Operating Address </th>
-                        <th>Application Date </th>
-                        <th>License </th>
-                        <th>For </th>
-                        <th>Status </th>
-                        <th></th>
-                        </thead>
-                        <tbody class="table-responsive">
-                            @foreach (var application in ViewBag.Applications)
-                            {
-
-                                <tr>
-                                    <td>@application.RefNum   </td>
-                                    <td>@application.LLBNum</td>
-                                    <td>
-                                        @foreach (var outlet in ViewBag.OutletInfo)
-                                        {
-                                            if (outlet.ApplicationId == application.Id)
-                                            {
-                                                @outlet.TradingName
-                                            }
-                                        }
-                                    </td>
-                                    <td>
-                                        @foreach (var outlet in ViewBag.OutletInfo)
-                                        {
-                                            if (outlet.ApplicationId == application.Id)
-                                            {
-                                                @outlet.Address
-                                            }
-                                        }
-                                    </td>
-
-                                    <td>@application.ApplicationDate</td>
-
-                                    <td>
-                                        @foreach (var licence in ViewBag.License)
-                                        {
-                                            if (licence.Id == application.LicenseTypeID)
-                                            {
-                                                @licence.LicenseName
-                                            }
-                                        }
-
-                                    </td>
-
-
-                                    <td>
-                                        @foreach (var region in ViewBag.Regions)
-                                        {
-                                            if (region.Id == application.ApplicationType)
-                                            {
-                                                @region.RegionName
-                                            }
-                                        }
-
-                                    </td>
-
-                                    <td>
-                                        @if (application.Status == "inprogress")
-                                        {
-                                            <span class="text-warning">@application.Status</span>
-                                        }  @if (application.Status == "payment verification")
-                                        {
-                                            <span class="text-success">
-                                                @application.Status
-                                            </span>
-                                        }
-                                        else if (application.Status == "submitted")
-                                        {
-                                            <span class="text-success">
-                                                @application.Status
-                                        </span>
-                                    }
-                                    else if (application.Status == "Has Query")
-                                    {
-                                        <span class="text-warning">
-                                            @application.Status
-                                    </span>
-                                }
-                                else if (application.Status == "approved")
+                            
+                            <th>Trading Name </th>
+                            <th>Operating Address </th>
+                            <th>Application Date </th>
+                            <th>License </th>
+                            <th>For </th>
+                            <th>Status </th>
+                            <th></th>
+                            </thead>
+                            <tbody class="table-responsive">
+                                @foreach (var application in ViewBag.Applications)
                                 {
-                                    <span class="text-success">@application.Status</span>
+
+                                    <tr>
+                                        <td>@application.RefNum   </td>
+                                        
+                                        <td>
+                                            @foreach (var outlet in ViewBag.OutletInfo)
+                                            {
+                                                if (outlet.ApplicationId == application.Id)
+                                                {
+                                                    @outlet.TradingName
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @foreach (var outlet in ViewBag.OutletInfo)
+                                            {
+                                                if (outlet.ApplicationId == application.Id)
+                                                {
+                                                    @outlet.Address
+                                                }
+                                            }
+                                        </td>
+
+                                        <td>@application.ApplicationDate</td>
+
+                                        <td>
+                                            @foreach (var licence in ViewBag.License)
+                                            {
+                                                if (licence.Id == application.LicenseTypeID)
+                                                {
+                                                    @licence.LicenseName
+                                                }
+                                            }
+
+                                        </td>
+
+
+                                        <td>
+                                            @foreach (var region in ViewBag.Regions)
+                                            {
+                                                if (region.Id == application.ApplicationType)
+                                                {
+                                                    @region.RegionName
+                                                }
+                                            }
+
+                                        </td>
+
+                                        <td>
+                                            @if (application.Status == "inprogress")
+                                            {
+                                                <span class="text-warning">@application.Status</span>
+                                            }  @if (application.Status == "payment verification")
+                                            {
+                                                <span class="text-success">
+                                                    @application.Status
+                                                </span>
+                                            }
+                                            else if (application.Status == "submitted")
+                                            {
+                                                <span class="text-success">
+                                                    @application.Status
+                                                </span>
+                                            }
+                                            else if (application.Status == "Has Query")
+                                            {
+                                                <span class="text-warning">
+                                                    @application.Status
+                                                </span>
+                                            }
+                                            else if (application.Status == "approved" || application.Status == "verified")
+                                            {
+                                                <span class="text-success">@application.Status</span>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @if (application.Status == "inprogress")
+                                            {
+                                                <a href="/License/Apply?Id=@application.Id" class="btn btn-primary">Continue </a>
+                                            }   @if (application.Status == "payment verification")
+                                            {
+                                                <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
+                                            }
+                                            @if (application.Status == "submitted")
+                                            {
+                                                <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
+                                            }
+                                            @if (application.Status == "Has Query")
+                                            {<a href="~/License/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
+                                            }
+                                            @if (application.Status == "approved")
+                                            {
+                                                <a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>
+                                            }
+                                        </td>
+
+
+
+                                    </tr>
+
                                 }
-                                    </td>
-
-                                    <td>
-                                        @if (application.Status == "inprogress")
-                                        {
-                                            <a href="/License/Apply?Id=@application.Id" class="btn btn-primary">Continue </a>
-                                        }   @if (application.Status == "payment verification")
-                                        {
-                                            <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
-                                        }
-                                        @if (application.Status == "submitted")
-                                        {
-                                            <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
-                                        }
-                                        @if (application.Status == "Has Query")
-                                        {<a href="~/License/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
-                                        }
-                                        @if (application.Status == "approved")
-                                        {
-                                            <a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>
-                                        }
-                                    </td>
+                            </tbody>
 
 
 
-                                </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="bordered-justified-profile" role="tabpanel" aria-labelledby="profile-tab">
 
-                            }
-                        </tbody>
+                    <div class="row">
+
+                        <table class="table table-responsiveß table-hover table-striped">
+
+
+                            <thead>
+                            <th>Reference</th>
+                            <th>LLB Number</th>
+                            <th>Trading Name </th>
+                            <th>Operating Address </th>
+                            <th>Application Date </th>
+                            <th>License </th>
+                            <th>For </th>
+                            <th>Status </th>
+                            <th></th>
+                            </thead>
+                            <tbody class="table-responsive">
+                                @foreach (var application in ViewBag.ApprovedApplications)
+                                {
+
+                                    <tr>
+                                        <td>@application.RefNum   </td>
+                                        <td>@application.LLBNum</td>
+                                        <td>
+                                            @foreach (var outlet in ViewBag.OutletInfo)
+                                            {
+                                                if (outlet.ApplicationId == application.Id)
+                                                {
+                                                    @outlet.TradingName
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @foreach (var outlet in ViewBag.OutletInfo)
+                                            {
+                                                if (outlet.ApplicationId == application.Id)
+                                                {
+                                                    @outlet.Address
+                                                }
+                                            }
+                                        </td>
+
+                                        <td>@application.ApplicationDate</td>
+
+                                        <td>
+                                            @foreach (var licence in ViewBag.License)
+                                            {
+                                                if (licence.Id == application.LicenseTypeID)
+                                                {
+                                                    @licence.LicenseName
+                                                }
+                                            }
+
+                                        </td>
+
+
+                                        <td>
+                                            @foreach (var region in ViewBag.Regions)
+                                            {
+                                                if (region.Id == application.ApplicationType)
+                                                {
+                                                    @region.RegionName
+                                                }
+                                            }
+
+                                        </td>
+
+                                        <td>
+                                            @if (application.Status == "inprogress")
+                                            {
+                                                <span class="text-warning">@application.Status</span>
+                                            }  @if (application.Status == "payment verification")
+                                            {
+                                                <span class="text-success">
+                                                    @application.Status
+                                                </span>
+                                            }
+                                            else if (application.Status == "submitted")
+                                            {
+                                                <span class="text-success">
+                                                    @application.Status
+                                                </span>
+                                            }
+                                            else if (application.Status == "Has Query")
+                                            {
+                                                <span class="text-warning">
+                                                    @application.Status
+                                                </span>
+                                            }
+                                            else if (application.Status == "approved")
+                                            {
+                                                <span class="text-success">@application.Status</span>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @if (application.Status == "inprogress")
+                                            {
+                                                <a href="/License/Apply?Id=@application.Id" class="btn btn-primary">Continue </a>
+                                            }   @if (application.Status == "payment verification")
+                                            {
+                                                <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
+                                            }
+                                            @if (application.Status == "submitted")
+                                            {
+                                                <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
+                                            }
+                                            @if (application.Status == "Has Query")
+                                            {<a href="~/License/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
+                                            }
+                                            @if (application.Status == "approved")
+                                            {
+                                                <a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>
+                                            }
+                                        </td>
 
 
 
-                    </table>
+                                    </tr>
+
+                                }
+                            </tbody>
+
+
+
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="bordered-justified-contact" role="tabpanel" aria-labelledby="contact-tab">
+                    Saepe animi et soluta ad odit soluta sunt. Nihil quos omnis animi debitis cumque. Accusantium quibusdam perspiciatis qui qui omnis magnam. Officiis accusamus impedit molestias nostrum veniam. Qui amet ipsum iure. Dignissimos fuga tempore dolor.
                 </div>
 
 
 
 
 
-                
+
+
+
             </div>
-        </div>
-
-    </div>
-
-
-
-       @if (User.Identity.IsAuthenticated && User.IsInRole("secretary"))
-    {
-        <!-- Recent Sales -->
-        <div b-36j9gympe5 class="col-12">
-            <div b-36j9gympe5 class="card recent-sales overflow-auto">
-
-                <div b-36j9gympe5 class="filter">
-                    <a b-36j9gympe5 class="icon" href="#" data-bs-toggle="dropdown"><i b-36j9gympe5 class="bi bi-three-dots"></i></a>
-                    <ul b-36j9gympe5 class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                        <li b-36j9gympe5 class="dropdown-header text-start">
-                            <h6 b-36j9gympe5>Filter</h6>
-                        </li>
-
-                        <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">Today</a></li>
-                        <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">This Month</a></li>
-                        <li b-36j9gympe5><a b-36j9gympe5 class="dropdown-item" href="#">This Year</a></li>
-                    </ul>
-                </div>
-
-                <div b-36j9gympe5 class="card-body">
-                    <h5 b-36j9gympe5 class="card-title">Recent Sales <span b-36j9gympe5>| Today</span></h5>
-
-                    <table b-36j9gympe5 class="table table-borderless datatable">
-                        <thead>
-                            <tr b-36j9gympe5>
-                                <th b-36j9gympe5 scope="col">#</th>
-                                <th b-36j9gympe5 scope="col">Customer</th>
-                                <th b-36j9gympe5 scope="col">Product</th>
-                                <th b-36j9gympe5 scope="col">Price</th>
-                                <th b-36j9gympe5 scope="col">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody b-36j9gympe5>
-                            <tr b-36j9gympe5>
-                                <th b-36j9gympe5 scope="row"><a b-36j9gympe5 href="#">#2457</a></th>
-                                <td b-36j9gympe5>Brandon Jacob</td>
-                                <td b-36j9gympe5><a b-36j9gympe5 href="#" class="text-primary">At praesentium minu</a></td>
-                                <td b-36j9gympe5>$64</td>
-                                <td b-36j9gympe5><span b-36j9gympe5 class="badge bg-success">Approved</span></td>
-                            </tr>
-                            <tr b-36j9gympe5>
-                                <th b-36j9gympe5 scope="row"><a b-36j9gympe5 href="#">#2147</a></th>
-                                <td b-36j9gympe5>Bridie Kessler</td>
-                                <td b-36j9gympe5><a b-36j9gympe5 href="#" class="text-primary">Blanditiis dolor omnis similique</a></td>
-                                <td b-36j9gympe5>$47</td>
-                                <td b-36j9gympe5><span b-36j9gympe5 class="badge bg-warning">Pending</span></td>
-                            </tr>
-                            <tr b-36j9gympe5>
-                                <th b-36j9gympe5 scope="row"><a b-36j9gympe5 href="#">#2049</a></th>
-                                <td b-36j9gympe5>Ashleigh Langosh</td>
-                                <td b-36j9gympe5><a b-36j9gympe5 href="#" class="text-primary">At recusandae consectetur</a></td>
-                                <td b-36j9gympe5>$147</td>
-                                <td b-36j9gympe5><span b-36j9gympe5 class="badge bg-success">Approved</span></td>
-                            </tr>
-                            <tr b-36j9gympe5>
-                                <th b-36j9gympe5 scope="row"><a b-36j9gympe5 href="#">#2644</a></th>
-                                <td b-36j9gympe5>Angus Grady</td>
-                                <td b-36j9gympe5><a b-36j9gympe5 href="#" class="text-primar">Ut voluptatem id earum et</a></td>
-                                <td b-36j9gympe5>$67</td>
-                                <td b-36j9gympe5><span b-36j9gympe5 class="badge bg-danger">Rejected</span></td>
-                            </tr>
-                            <tr b-36j9gympe5>
-                                <th b-36j9gympe5 scope="row"><a b-36j9gympe5 href="#">#2644</a></th>
-                                <td b-36j9gympe5>Raheem Lehner</td>
-                                <td b-36j9gympe5><a b-36j9gympe5 href="#" class="text-primary">Sunt similique distinctio</a></td>
-                                <td b-36j9gympe5>$165</td>
-                                <td b-36j9gympe5><span b-36j9gympe5 class="badge bg-success">Approved</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                </div>
-
             </div>
-        </div><!-- End Recent Sales -->
-        }
-        </div>
-   
+
+</div>
+
+
+
+
+
