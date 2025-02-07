@@ -2,476 +2,743 @@
     Layout = "_Layout";
 }
 
-<!-- Carousel Start -->
-<div class="container-fluid p-0 mb-5">
-    <div id="header-carousel" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-inner">
-            <div class="carousel-item active">
-                <img class="w-100" src="~/front/img/carousel-1a.jpg" alt="Image">
-                <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
-                    <div class="p-3" style="max-width: 700px;">
-                        <h6 class="section-title text-white text-uppercase mb-3 animated slideInDown">Liquor Licensing Board</h6>
-                        <h1 class="display-3 text-white mb-4 animated slideInDown">Liquor Licensing Board</h1>
-                        <a href="/Home/SignIn" class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft">Login</a>
-                        <a href="/Auth/Register" class="btn btn-light py-md-3 px-md-5 animated slideInRight">Register</a>
-                    </div>
-                </div>
-            </div>
-            <div class="carousel-item">
-                <img class="w-100" src="~/front/img/carousel-2b.jpg" alt="Image">
-                <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
-                    <div class="p-3" style="max-width: 700px;">
-                        <h6 class="section-title text-white text-uppercase mb-3 animated slideInDown">Streamlined Licensing</h6>
-                        <h1 class="display-3 text-white mb-4 animated slideInDown">Digital Means for Liquor Enterprising</h1>
-                        <a href="/Home/SignIn" class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft">Login</a>
-                        <a href="/Auth/Register" class="btn btn-light py-md-3 px-md-5 animated slideInRight">Register</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#header-carousel"
-                data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#header-carousel"
-                data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
-    </div>
-</div>
-<!-- Carousel End -->
-<!-- Booking Start -->
-@*
-<div class="container-fluid booking pb-5 wow fadeIn" data-wow-delay="0.1s">
-    <div class="container">
-        <div class="bg-white shadow" style="padding: 35px;">
-            <div class="row g-2">
-                <div class="col-md-10">
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <div class="date" id="date1" data-target-input="nearest">
-                                <input type="text" class="form-control datetimepicker-input"
-                                       placeholder="Check in" data-target="#date1" data-toggle="datetimepicker" />
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="date" id="date2" data-target-input="nearest">
-                                <input type="text" class="form-control datetimepicker-input" placeholder="Check out" data-target="#date2" data-toggle="datetimepicker" />
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select">
-                                <option selected>Adult</option>
-                                <option value="1">Adult 1</option>
-                                <option value="2">Adult 2</option>
-                                <option value="3">Adult 3</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select">
-                                <option selected>Child</option>
-                                <option value="1">Child 1</option>
-                                <option value="2">Child 2</option>
-                                <option value="3">Child 3</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-primary w-100">Submit</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-*@
-@*
-<div class="container-fluid p-0 mb-5">
-    <div id="header-carousel" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-inner">
-            <div class="carousel-item active">
-                <img class="w-100" src="img/carousel-1a.jpg" alt="Image">
-                <img class="w-100" src="~/front/img/carousel-1.jpg" alt="Image">
+<br />
+
+<br />
 
 
-                <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
-                    <div class="p-3" style="max-width: 700px;">
-                        <h6 class="section-title text-white text-uppercase mb-3 animated slideInDown">Streamlined Licensing</h6>
-                        <h1 class="display-3 text-white mb-4 animated slideInDown">Digital Means for Liquor Enterprising</h1>
-                        <a href="" class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft">About Us</a>
-                        <a href="" class="btn btn-light py-md-3 px-md-5 animated slideInRight">Understand Licensing</a>
-                    </div>
-                </div>
-            </div>
-            <div class="carousel-item">
-                <img class="w-100" src="img/carousel-2b.jpg" alt="Image">
-                <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
-                    <div class="p-3" style="max-width: 700px;">
-                        <h6 class="section-title text-white text-uppercase mb-3 animated slideInDown">Streamlined Licensing</h6>
-                        <h1 class="display-3 text-white mb-4 animated slideInDown">Digital Means for Liquor Enterprising</h1>
-                        <a href="" class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft">About Us</a>
-                        <a href="" class="btn btn-light py-md-3 px-md-5 animated slideInRight">Understand Licensing</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#header-carousel"
-                data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#header-carousel"
-                data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
-    </div>
-</div>*@
-<!-- Booking End -->
+<main class="main">
 
 
-<!-- Service Start -->
-<div class="container-xxl py-5">
-    <div class="container">
-        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
-            <h6 class="section-title text-center text-primary text-uppercase">Our Services</h6>
-            <h1 class="mb-5">Our Main Licensing<span class="text-primary text-uppercase"> Services</span></h1>
-        </div>
-        <div class="row g-4">
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                <a class="service-item rounded" href="">
-                    <div class="service-icon bg-transparent border rounded p-1">
-                        <div class="w-100 h-100 border rounded d-flex align-items-center justify-content-center">
-                            <i class="fa fa-hotel fa-2x text-primary"></i>
+
+    <!-- About Section -->
+    <section id="hero" class="about section">
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="row gy-4 align-items-center">
+                <!-- Image Column -->
+                <div class="col-lg-6 order-2 order-lg-2 d-flex align-items-center">
+
+                    <img src="/Gp/assets/img/kind_677517.jpg" class="img-fluid rounded shadow" alt="Liquor Licensing Board Office" style="max-height: 700px; object-fit: cover; width: 100%;">
+
+                </div>
+
+                <!-- Content Column -->
+                <div class="col-lg-6 order-2 order-lg-1 text-center">
+                    <h2 class="fw-bold text-success">Liquor Licensing Board<span>.</span></h2>
+                    <p class="lead text-muted">Digital Means for Liquor Enterprising</p>
+
+                    <style>
+                        .icon-box {
+                            transition: transform 0.3s ease-in-out;
+                        }
+
+                            .icon-box:hover {
+                                transform: scale(1.1);
+                            }
+                    </style>
+
+                    <!-- Buttons Section -->
+                    <div class="row gy-4 mt-4 justify-content-center">
+                        <div class="col-md-4">
+                            <a href="/Auth/Login" class="text-decoration-none">
+                                <div class="icon-box text-center p-3 shadow-sm rounded bg-light">
+                                    <i class="bi bi-gem text-success display-5"></i>
+                                    <h3 class="mt-2 text-dark fw-semibold">LOGIN</h3>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="col-md-4">
+                            <a href="/Auth/Register" class="text-decoration-none">
+                                <div class="icon-box text-center p-3 shadow-sm rounded bg-light">
+                                    <i class="bi bi-card-list text-success display-5"></i>
+                                    <h3 class="mt-2 text-dark fw-semibold">REGISTER</h3>
+                                </div>
+                            </a>
                         </div>
                     </div>
-                    <h5 class="mb-3">New Application</h5>
-                    <p class="text-body mb-0">
-                        Start Your Journey: Obtain Your Liquor License with Ease." (Focuses on ease and beginning)
-                        "Unlocking Possibilities: Your Gateway to a Liquor License in Zimbabwe." (Highlights opportunity and access)
-                        "Serving Zimbabwe: Get Licensed, Get Growing." (Emphasizes growth and contribution)
-                        Renewal
-                    </p>
-                </a>
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.2s">
-                <a class="service-item rounded" href="">
-                    <div class="service-icon bg-transparent border rounded p-1">
-                        <div class="w-100 h-100 border rounded d-flex align-items-center justify-content-center">
-                            <i class="fa fa-utensils fa-2x text-primary"></i>
-                        </div>
-                    </div>
-                    <h5 class="mb-3">Renewal</h5>
-                    <p class="text-body mb-0">
-                        Renew Your Liquor License Effortlessly." (Stresses compliance and simplicity)
-                        "Keep the Drinks Flowing: Seamless Liquor License Renewal." (Playful, emphasizes continuity)
-                        "Renew and Thrive: Maintain Your License with Our Guidance." (Focuses on support and success)
-                    </p>
-                </a>
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
-                <a class="service-item rounded" href="">
-                    <div class="service-icon bg-transparent border rounded p-1">
-                        <div class="w-100 h-100 border rounded d-flex align-items-center justify-content-center">
-                            <i class="fa fa-spa fa-2x text-primary"></i>
-                        </div>
-                    </div>
-                    <h5 class="mb-3">Transfer</h5>
-                    <p class="text-body mb-0">
-                        Smooth Transitions: Transfer Your Liquor License with Confidence." (Highlights ease and trust)
-                        "New Ownership, Same Great Service: Liquor License Transfers Made Easy." (Reassures customers, emphasizes simplicity)
-                        *"Changing Hands? We Make License Transfers Seamless." * (Direct, focuses on efficiency)
-                        Change Manager
-                    </p>
-                </a>
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.4s">
-                <a class="service-item rounded" href="">
-                    <div class="service-icon bg-transparent border rounded p-1">
-                        <div class="w-100 h-100 border rounded d-flex align-items-center justify-content-center">
-                            <i class="fa fa-swimmer fa-2x text-primary"></i>
-                        </div>
-                    </div>
-                    <h5 class="mb-3">Change Manager</h5>
-                    <p class="text-body mb-0">
-                        "Adapting to Change: Update Your Approved Manager Details." (Acknowledges change, clear about the service)
-                        "Stay in Control: Manage Your License with Our Simple Process." (Empowers the license holder, emphasizes ease)
-                        *"Personnel Updates: Effortless Approved Manager Changes." * (Formal and to the point)
-                        Removal
-                    </p>
-                </a>
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
-                <a class="service-item rounded" href="">
-                    <div class="service-icon bg-transparent border rounded p-1">
-                        <div class="w-100 h-100 border rounded d-flex align-items-center justify-content-center">
-                            <i class="fa fa-glass-cheers fa-2x text-primary"></i>
-                        </div>
-                    </div>
-                    <h5 class="mb-3">Removal</h5>
-                    <p class="text-body mb-0">
-                        "Need to Relocate? We Facilitate Liquor License Removals." (Highlights a common need, offers a solution)
-                        "Moving On? Simplify Your License Removal Process." (Understands the situation, offers support)
-                        "Changing Locations: Seamless License Removals." (Direct and clear)
-                        Alter Premises
-                    </p>
-                </a>
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.6s">
-                <a class="service-item rounded" href="">
-                    <div class="service-icon bg-transparent border rounded p-1">
-                        <div class="w-100 h-100 border rounded d-flex align-items-center justify-content-center">
-                            <i class="fa fa-dumbbell fa-2x text-primary"></i>
-                        </div>
-                    </div>
-                    <h5 class="mb-3">Alter Premises</h5>
-                    <p class="text-body mb-0">
-                        "Expanding Your Business? Update Your Licensed Premises with Ease." (Focuses on a positive reason for change)
-                        "Renovating or Restructuring? Amend Your License to Reflect Your Changes." (Addresses common scenarios)
-                        "Premises Modifications: Simple License Alterations." (Formal and straightforward)
-                    </p>
-                </a>
+
+
+
+
+                </div>
             </div>
         </div>
-    </div>
-</div>
-<!-- Service End -->
-<!-- About Start -->
-<div class="container-xxl py-5">
-    <div class="container">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-6">
-                <h6 class="section-title text-start text-primary text-uppercase">About Us</h6>
-                <h1 class="mb-4">Welcome to <span class="text-primary text-uppercase">Liquor Lisencing Board</span></h1>
-                <p class="mb-4">The Liquor Licensing Board of Zimbabwe plays a crucial role in balancing the interests of business, public health, and community welfare in the management of alcohol sales and consumption.</p>
-                <div class="row g-3 pb-4">
-                    <div class="col-sm-4 wow fadeIn" data-wow-delay="0.1s">
-                        <div class="border rounded p-1">
-                            <div class="border rounded text-center p-4">
-                                <i class="fa fa-hotel fa-2x text-primary mb-2"></i>
-                                <h2 class="mb-1" data-toggle="counter-up">8</h2>
-                                <p class="mb-0">Centres</p>
+    </section>
+
+    <!-- Clients Section -->
+    <!-- Features Section -->
+    <section id="about" class="features section">
+        <div class="container">
+
+            <div class="container section-title" data-aos="fade-up">
+                <h2>About</h2>
+                <p>All About Us</p>
+            </div>
+
+
+
+            <div class="text-center px-4">
+                <h3 class="fw-bold text-success">Revolutionizing Liquor Licensing Through Digital Innovation</h3>
+
+                <p class="fst-italic text-muted">
+                    Fast & Hassle-Free Licensing • Compliance Made Simple • Empowering Liquor Entrepreneurs
+                </p>
+
+                <ul class="list-unstyled text-start d-inline-block">
+                    <li class="mb-3">
+                        <i class="bi bi-check2-all text-success fs-4 me-2"></i>
+                        <span class="fw-medium">
+                            Apply for, renew, and manage liquor licenses online—no more paperwork!
+                            <br>Get approvals faster with our streamlined digital process.
+                        </span>
+                    </li>
+                    <li class="mb-3">
+                        <i class="bi bi-check2-all text-success fs-4 me-2"></i>
+                        <span class="fw-medium">
+                            Stay up to date with regulations and avoid penalties.
+                            <br>Automated reminders and digital tracking for seamless compliance.
+                        </span>
+                    </li>
+                    <li class="mb-3">
+                        <i class="bi bi-check2-all text-success fs-4 me-2"></i>
+                        <span class="fw-medium">
+                            Access business insights and industry resources to grow your enterprise.
+                            <br>A digital hub designed to support startups and established brands alike.
+                        </span>
+                    </li>
+                </ul>
+
+                <p class="text-justify mt-4">
+                    At <span class="fw-bold text-success">Liquor Licensing Board</span>, we are committed to transforming the liquor industry through digital innovation.
+                    Our mission is to streamline licensing processes, ensure compliance, and support responsible liquor entrepreneurship through modern, technology-driven solutions.
+                </p>
+
+                <p class="text-justify">
+                    We provide a seamless digital platform that simplifies liquor license applications, renewals, and regulatory compliance,
+                    reducing paperwork and improving efficiency for businesses of all sizes.
+                    By leveraging automation and data-driven insights, we enhance transparency and accountability in the industry while promoting responsible alcohol distribution.
+                </p>
+
+                <p class="text-justify">
+                    With a vision to modernize the liquor licensing landscape, we empower entrepreneurs with the tools they need to operate legally, efficiently, and sustainably.
+                    Whether you are a startup, a well-established brand, or a regulatory authority, <span class="fw-bold text-success">Liquor Licensing Board</span> is your trusted digital partner
+                    in navigating the complexities of liquor enterprise management.
+                </p>
+            </div>
+
+
+
+            <br />
+
+            <br />
+
+            <div class="row gy-6">
+                <div class="features-image col-lg-6" data-aos="fade-up" data-aos-delay="100"><img src="~/Gp/assets/img/features-bgtc.jpg" alt=""></div>
+                <div class="col-lg-6">
+                    <div class="features-item d-flex ps-0 ps-lg-3 pt-4 pt-lg-0" data-aos="fade-up" data-aos-delay="200">
+                        <i class="bi bi-archive flex-shrink-0"></i>
+                        <div>
+                            <h4>Secure & Transparent Process</h4>
+                            <p>
+                                ✅ Digital records ensure transparency and accountability.
+                            </p>
+                            <p>
+                                ✅ Secure platform protecting your business data and applications.
+                            </p>
+                        </div>
+                    </div><!-- End Features Item-->
+
+                    <div class="features-item d-flex mt-5 ps-0 ps-lg-3" data-aos="fade-up" data-aos-delay="300">
+                        <i class="bi bi-basket flex-shrink-0"></i>
+                        <div>
+                            <h4>24/7 Digital Access</h4>
+                            <p>
+                                ✅ Apply, track, and manage your liquor license anytime, anywhere.
+                            </p>
+                            <p>
+                                ✅ No need for office visits—handle everything online at your convenience.
+                            </p>
+                        </div>
+                    </div><!-- End Features Item-->
+
+                    <div class="features-item d-flex mt-5 ps-0 ps-lg-3" data-aos="fade-up" data-aos-delay="400">
+                        <i class="bi bi-broadcast flex-shrink-0"></i>
+                        <div>
+                            <h4>Business Growth & Networking</h4>
+                            <p>
+                                ✅ Connect with industry stakeholders and stay updated on liquor regulations.
+                            </p>
+                            <p>
+                                ✅ Access exclusive resources to expand and manage your business effectively.
+                            </p>
+                        </div>
+                    </div><!-- End Features Item-->
+
+                    <div class="features-item d-flex mt-5 ps-0 ps-lg-3" data-aos="fade-up" data-aos-delay="500">
+                        <i class="bi bi-camera-reels flex-shrink-0"></i>
+                        <div>
+                            <h4>Empowering Liquor Entrepreneurs</h4>
+                            <p>
+                                ✅ Access business insights and industry resources to grow your enterprise.
+                            </p>
+                            <p>
+                                ✅ A digital hub designed to support startups and established brands alike.
+                            </p>
+                        </div>
+                    </div><!-- End Features Item-->
+                </div>
+            </div>
+        </div>
+    </section><!-- /Features Section -->
+    <!-- Services Section -->
+    <section id="services" class="services section">
+        <div class="container section-title" data-aos="fade-up">
+            <h2>Services</h2>
+            <p>Check our Services</p>
+        </div><!-- End Section Title -->
+
+        <div class="container ">
+            <div class="row gy-4">
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="service-item position-relative">
+                        <div class="icon ">
+                            <i class="bi bi-activity" style="color: floralwhite;"></i>
+                        </div>
+
+                        <h3>Online Liquor License Application & Renewal</h3>
+
+                        <p>Seamlessly apply for new liquor licenses or renew existing ones through our secure digital platform.</p>
+                    </div>
+                </div><!-- End Service Item -->
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="service-item position-relative">
+                        <div class="icon">
+                            <i class="bi bi-broadcast" style="color: floralwhite;"></i>
+                        </div>
+
+                        <h3>Compliance Monitoring & Advisory</h3>
+
+                        <p>Stay compliant with liquor laws through automated reminders, regulatory updates, and expert guidance.</p>
+                    </div>
+                </div><!-- End Service Item -->
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="service-item position-relative">
+                        <div class="icon">
+                            <i class="bi bi-easel" style="color: floralwhite;"></i>
+                        </div>
+
+                        <h3>Digital License Verification & Tracking</h3>
+
+                        <p>Easily verify and track the status of liquor licenses in real time, ensuring transparency and accountability.</p>
+                    </div>
+                </div><!-- End Service Item -->
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="service-item position-relative">
+                        <div class="icon">
+                            <i class="bi bi-bounding-box-circles" style="color: floralwhite;"></i>
+                        </div>
+
+                        <h3>Business Consultation & Support</h3>
+
+                        <p>Get expert assistance on licensing requirements, business growth strategies, and legal compliance. </p>
+
+                    </div>
+                </div><!-- End Service Item -->
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
+                    <div class="service-item position-relative">
+                        <div class="icon">
+                            <i class="bi bi-calendar4-week" style="color: floralwhite;"></i>
+                        </div>
+
+                        <h3>License Transfer & Amendments</h3>
+
+                        <p>Easily request modifications, ownership transfers, or updates to your liquor license through our digital platform.</p>
+
+                    </div>
+                </div><!-- End Service Item -->
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
+                    <div class="service-item position-relative">
+                        <div class="icon">
+                            <i class="bi bi-chat-square-text" style="color: floralwhite;"></i>
+                        </div>
+
+                        <h3>Liquor Sales Data & Market Insights</h3>
+
+                        <p>Access valuable industry trends, sales analytics, and market insights to help grow your liquor business strategically.</p>
+
+                    </div>
+                </div><!-- End Service Item -->
+            </div>
+        </div>
+    </section><!-- /Services Section -->
+    <!-- Call To Action Section -->
+    <section id="call-to-action" class="call-to-action section dark-background">
+        <img src="~/Gp/assets/img/features-bgtcW.jpg" alt="">
+        <div class="container">
+            <div class="row justify-content-center" data-aos="zoom-in" data-aos-delay="100">
+                <div class="col-xl-10">
+                    <div class="text-center">
+                        <h3>Get Licensed, Stay Compliant, and Grow Your Business!</h3>
+
+                        <p>
+                            Join the digital revolution in liquor licensing today! Simplify your application process, ensure compliance, and gain valuable industry insights—all in one place.
+                        </p>
+                        <p>
+                            Apply Now |  Check Your License Status |  Get Expert Assistance
+
+                            Don’t wait—take the next step towards hassle-free liquor licensing!
+                        </p>
+                        <a class="cta-btn" href="#">Call To Action</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section><!-- /Call To Action Section -->
+   @* <!-- Portfolio Section -->
+    <section id="portfolio" class="portfolio section">
+        <div class="container section-title" data-aos="fade-up">
+            <h2>Portfolio</h2>
+            <p>Check our Portfolio</p>
+        </div><!-- End Section Title -->
+
+        <div class="container">
+            <div class="isotope-layout" data-default-filter="*" data-layout="masonry" data-sort="original-order">
+                <ul class="portfolio-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
+                    <li data-filter="*" class="filter-active">All</li>
+                    <li data-filter=".filter-app">App</li>
+                    <li data-filter=".filter-product">Card</li>
+                    <li data-filter=".filter-branding">Web</li>
+                </ul><!-- End Portfolio Filters -->
+
+                <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
+                    <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
+                        <img src="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-1 co.jpg" class="img-fluid" alt="">
+                        <div class="portfolio-info">
+                            <h4>App 1</h4>
+                            <p>Lorem ipsum, dolor sit</p>
+                            <a href="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-1.jpg" title="App 1" data-gallery="portfolio-gallery-app" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                            <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
+                        </div>
+                    </div><!-- End Portfolio Item -->
+
+                    <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-product">
+                        <img src="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-2 co.jpg" class="img-fluid" alt="">
+                        <div class="portfolio-info">
+                            <h4>Product 1</h4>
+                            <p>Lorem ipsum, dolor sit</p>
+                            <a href="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-2.jpg" title="Product 1" data-gallery="portfolio-gallery-product" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                            <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
+                        </div>
+                    </div><!-- End Portfolio Item -->
+
+                    <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-branding">
+                        <img src="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-3 co.jpg" class="img-fluid" alt="">
+                        <div class="portfolio-info">
+                            <h4>Branding 1</h4>
+                            <p>Lorem ipsum, dolor sit</p>
+                            <a href="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-3.jpg" title="Branding 1" data-gallery="portfolio-gallery-branding" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                            <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
+                        </div>
+                    </div><!-- End Portfolio Item -->
+
+                    <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
+                        <img src="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-4 co.jpg" class="img-fluid" alt="">
+                        <div class="portfolio-info">
+                            <h4>App 2</h4>
+                            <p>Lorem ipsum, dolor sit</p>
+                            <a href="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-4.jpg" title="App 2" data-gallery="portfolio-gallery-app" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                            <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
+                        </div>
+                    </div><!-- End Portfolio Item -->
+
+                    <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-product">
+                        <img src="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-5 co.jpg" class="img-fluid" alt="">
+                        <div class="portfolio-info">
+                            <h4>Product 2</h4>
+                            <p>Lorem ipsum, dolor sit</p>
+                            <a href="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-5.jpg" title="Product 2" data-gallery="portfolio-gallery-product" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                            <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
+                        </div>
+                    </div><!-- End Portfolio Item -->
+
+                    <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-branding">
+                        <img src="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-6 co.jpg" class="img-fluid" alt="">
+                        <div class="portfolio-info">
+                            <h4>Branding 2</h4>
+                            <p>Lorem ipsum, dolor sit</p>
+                            <a href="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-6.jpg" title="Branding 2" data-gallery="portfolio-gallery-branding" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                            <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
+                        </div>
+                    </div><!-- End Portfolio Item -->
+
+                    <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
+                        <img src="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-7.jpg" class="img-fluid" alt="">
+                        <div class="portfolio-info">
+                            <h4>App 3</h4>
+                            <p>Lorem ipsum, dolor sit</p>
+                            <a href="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-7.jpg" title="App 3" data-gallery="portfolio-gallery-app" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                            <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
+                        </div>
+                    </div><!-- End Portfolio Item -->
+
+                    <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-product">
+                        <img src="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-8.jpg" class="img-fluid" alt="">
+                        <div class="portfolio-info">
+                            <h4>Product 3</h4>
+                            <p>Lorem ipsum, dolor sit</p>
+                            <a href="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-8.jpg" title="Product 3" data-gallery="portfolio-gallery-product" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                            <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
+                        </div>
+                    </div><!-- End Portfolio Item -->
+
+                    <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-branding">
+                        <img src="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-9 co.jpg" class="img-fluid" alt="">
+                        <div class="portfolio-info">
+                            <h4>Branding 3</h4>
+                            <p>Lorem ipsum, dolor sit</p>
+                            <a href="~/Gp/assets/img/masonry-portfolio/masonry-portfolio-9.jpg" title="Branding 2" data-gallery="portfolio-gallery-branding" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                            <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
+                        </div>
+                    </div><!-- End Portfolio Item -->
+                </div><!-- End Portfolio Container -->
+            </div>
+        </div>
+    </section><!-- /Portfolio Section -->
+    <!-- Stats Section -->*@
+    <section id="stats" class="stats section">
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="row gy-4 align-items-center justify-content-between">
+                <div class="col-lg-5">
+                    <img src="~/Gp/assets/img/stats-ric.jpg" alt="" class="img-fluid">
+                </div>
+                <div class="col-lg-6">
+                    <h3 class="fw-bold fs-2 mb-3">Voluptatem dignissimos provident quasi</h3>
+                    <p>
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Duis aute irure dolor in reprehenderit
+                    </p>
+                    <div class="row gy-4">
+                        <div class="col-lg-6">
+                            <div class="stats-item d-flex">
+                                <i class="bi bi-emoji-smile flex-shrink-0"></i>
+                                <div>
+                                    <span data-purecounter-start="0" data-purecounter-end="232" data-purecounter-duration="1" class="purecounter"></span>
+                                    <p><strong>Happy Clients</strong> <span>consequuntur quae</span></p>
+                                </div>
+                            </div>
+                        </div><!-- End Stats Item -->
+
+                        <div class="col-lg-6">
+                            <div class="stats-item d-flex">
+                                <i class="bi bi-journal-richtext flex-shrink-0"></i>
+                                <div>
+                                    <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="1" class="purecounter"></span>
+                                    <p><strong>Projects</strong> <span>adipisci atque cum quia aut</span></p>
+                                </div>
+                            </div>
+                        </div><!-- End Stats Item -->
+
+                        <div class="col-lg-6">
+                            <div class="stats-item d-flex">
+                                <i class="bi bi-headset flex-shrink-0"></i>
+                                <div>
+                                    <span data-purecounter-start="0" data-purecounter-end="1453" data-purecounter-duration="1" class="purecounter"></span>
+                                    <p><strong>Hours Of Support</strong> <span>aut commodi quaerat</span></p>
+                                </div>
+                            </div>
+                        </div><!-- End Stats Item -->
+
+                        <div class="col-lg-6">
+                            <div class="stats-item d-flex">
+                                <i class="bi bi-people flex-shrink-0"></i>
+                                <div>
+                                    <span data-purecounter-start="0" data-purecounter-end="32" data-purecounter-duration="1" class="purecounter"></span>
+                                    <p><strong>Hard Workers</strong> <span>rerum asperiores dolor</span></p>
+                                </div>
+                            </div>
+                        </div><!-- End Stats Item -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section><!-- /Stats Section -->
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="testimonials section dark-background">
+        <img src="~/Gp/assets/img/testimonials-bga.jpg" class="testimonials-bg" alt="">
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="swiper init-swiper">
+                <script type="application/json" class="swiper-config">
+                    {
+                      "loop": true,
+                      "speed": 600,
+                      "autoplay": {
+                        "delay": 5000
+                      },
+                      "slidesPerView": "auto",
+                      "pagination": {
+                        "el": ".swiper-pagination",
+                        "type": "bullets",
+                        "clickable": true
+                      }
+                    }
+                </script>
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <div class="testimonial-item">
+                            <img src="~/Gp/assets/img/testimonials/testimonials-1.jpg" class="testimonial-img" alt="">
+                            <h3>Saul Goodman</h3>
+                            <h4>Ceo &amp; Founder</h4>
+                            <div class="stars">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                            </div>
+                            <p>
+                                <i class="bi bi-quote quote-icon-left"></i>
+                                <span>Proin iaculis purus consequat sem cure digni ssim donec porttitora entum suscipit rhoncus. Accusantium quam, ultricies eget id, aliquam eget nibh et. Maecen aliquam, risus at semper.</span>
+                                <i class="bi bi-quote quote-icon-right"></i>
+                            </p>
+                        </div>
+                    </div><!-- End testimonial item -->
+
+                    <div class="swiper-slide">
+                        <div class="testimonial-item">
+                            <img src="~/Gp/assets/img/testimonials/testimonials-2.jpg" class="testimonial-img" alt="">
+                            <h3>Sara Wilsson</h3>
+                            <h4>Designer</h4>
+                            <div class="stars">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                            </div>
+                            <p>
+                                <i class="bi bi-quote quote-icon-left"></i>
+                                <span>Export tempor illum tamen malis malis eram quae irure esse labore quem cillum quid cillum eram malis quorum velit fore eram velit sunt aliqua noster fugiat irure amet legam anim culpa.</span>
+                                <i class="bi bi-quote quote-icon-right"></i>
+                            </p>
+                        </div>
+                    </div><!-- End testimonial item -->
+
+                    <div class="swiper-slide">
+                        <div class="testimonial-item">
+                            <img src="~/Gp/assets/img/testimonials/testimonials-3.jpg" class="testimonial-img" alt="">
+                            <h3>Jena Karlis</h3>
+                            <h4>Store Owner</h4>
+                            <div class="stars">
+                                <i class="bi bi-star-fill"></i><<i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                            </div>
+                            <p>
+                                <i class="bi bi-quote quote-icon-left"></i>
+                                <span>Enim nisi quem export duis labore cillum quae magna enim sint quorum nulla quem veniam duis minim tempor labore quem eram duis noster aute amet eram fore quis sint minim.</span>
+                                <i class="bi bi-quote quote-icon-right"></i>
+                            </p>
+                        </div>
+                    </div><!-- End testimonial item -->
+
+                    <div class="swiper-slide">
+                        <div class="testimonial-item">
+                            <img src="~/Gp/assets/img/testimonials/testimonials-4.jpg" class="testimonial-img" alt="">
+                            <h3>Matt Brandon</h3>
+                            <h4>Freelancer</h4>
+                            <div class="stars">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                            </div>
+                            <p>
+                                <i class="bi bi-quote quote-icon-left"></i>
+                                <span>Fugiat enim eram quae cillum dolore dolor amet nulla culpa multos export minim fugiat minim velit minim dolor enim duis veniam ipsum anim magna sunt elit fore quem dolore labore illum veniam.</span>
+                                <i class="bi bi-quote quote-icon-right"></i>
+                            </p>
+                        </div>
+                    </div><!-- End testimonial item -->
+
+                    <div class="swiper-slide">
+                        <div class="testimonial-item">
+                            <img src="~/Gp/assets/img/testimonials/testimonials-5.jpg" class="testimonial-img" alt="">
+                            <h3>John Larson</h3>
+                            <h4>Entrepreneur</h4>
+                            <div class="stars">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                            </div>
+                            <p>
+                                <i class="bi bi-quote quote-icon-left"></i>
+                                <span>Quis quorum aliqua sint quem legam fore sunt eram irure aliqua veniam tempor noster veniam enim culpa labore duis sunt culpa nulla illum cillum fugiat legam esse veniam culpa fore nisi cillum quid.</span>
+                                <i class="bi bi-quote quote-icon-right"></i>
+                            </p>
+                        </div>
+                    </div><!-- End testimonial item -->
+                </div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+    </section><!-- /Testimonials Section -->
+    <!-- Team Section -->
+    <section id="team" class="team section">
+        <div class="container section-title" data-aos="fade-up">
+            <h2>Team</h2>
+            <p>Our Team</p>
+        </div><!-- End Section Title -->
+
+        <div class="container">
+            <div class="row gy-4">
+                <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="100">
+                    <div class="team-member">
+                        <div class="member-img">
+                            <img src="~/Gp/assets/img/team/ourteam-1.jpg" class="img-fluid" alt="">
+                            <div class="social">
+                                <a href=""><i class="bi bi-twitter-x"></i></a>
+                                <a href=""><i class="bi bi-facebook"></i></a>
+                                <a href=""><i class="bi bi-instagram"></i></a>
+                                <a href=""><i class="bi bi-linkedin"></i></a>
                             </div>
                         </div>
+                        <div class="member-info">
+                            <h4>Walter White</h4>
+                            <span>Chief Executive Officer</span>
+                        </div>
                     </div>
-                    <div class="col-sm-4 wow fadeIn" data-wow-delay="0.3s">
-                        <div class="border rounded p-1">
-                            <div class="border rounded text-center p-4">
-                                <i class="fa fa-users-cog fa-2x text-primary mb-2"></i>
-                                <h2 class="mb-1" data-toggle="counter-up">34</h2>
-                                <p class="mb-0">Staff Members</p>
+                </div><!-- End Team Member -->
+
+                <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="200">
+                    <div class="team-member">
+                        <div class="member-img">
+                            <img src="~/Gp/assets/img/team/ourteam-2.jpg" class="img-fluid" alt="">
+                            <div class="social">
+                                <a href=""><i class="bi bi-twitter-x"></i></a>
+                                <a href=""><i class="bi bi-facebook"></i></a>
+                                <a href=""><i class="bi bi-instagram"></i></a>
+                                <a href=""><i class="bi bi-linkedin"></i></a>
                             </div>
                         </div>
+                        <div class="member-info">
+                            <h4>Sarah Jhonson</h4>
+                            <span>Product Manager</span>
+                        </div>
                     </div>
-                    <div class="col-sm-4 wow fadeIn" data-wow-delay="0.5s">
-                        <div class="border rounded p-1">
-                            <div class="border rounded text-center p-4">
-                                <i class="fa fa-users fa-2x text-primary mb-2"></i>
-                                <h2 class="mb-1" data-toggle="counter-up">234</h2>
-                                <p class="mb-0">Clients</p>
+                </div><!-- End Team Member -->
+
+                <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="300">
+                    <div class="team-member">
+                        <div class="member-img">
+                            <img src="~/Gp/assets/img/team/ourteam-3.jpg" class="img-fluid" alt="">
+                            <div class="social">
+                                <a href=""><i class="bi bi-twitter-x"></i></a>
+                                <a href=""><i class="bi bi-facebook"></i></a>
+                                <a href=""><i class="bi bi-instagram"></i></a>
+                                <a href=""><i class="bi bi-linkedin"></i></a>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <a class="btn btn-primary py-3 px-5 mt-2" href="">Explore More</a>
-            </div>
-            <div class="col-lg-6">
-                <div class="row g-3">
-                    <div class="col-6 text-end">
-                        <img class="img-fluid rounded w-75 wow zoomIn" data-wow-delay="0.1s" src="~/front/img/about-1b.jpg" style="margin-top: 25%;">
-                    </div>
-                    <div class="col-6 text-start">
-                        <img class="img-fluid rounded w-100 wow zoomIn" data-wow-delay="0.3s" src="~/front/img/about-2b.jpg">
-                    </div>
-                    <div class="col-6 text-end">
-                        <img class="img-fluid rounded w-50 wow zoomIn" data-wow-delay="0.5s" src="~/front/img/about-3b.jpg">
-                    </div>
-                    <div class="col-6 text-start">
-                        <img class="img-fluid rounded w-75 wow zoomIn" data-wow-delay="0.7s" src="~/front/img/about-4a_.jpg">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- About End -->
-<!-- Room Start -->
-<div class="container-xxl py-5">
-    <div class="container">
-        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
-            <h6 class="section-title text-center text-primary text-uppercase">Our Licenses Suite</h6>
-            <h1 class="mb-5">Explore our portfolio of <span class="text-primary text-uppercase">Licenses</span></h1>
-        </div>
-        <div class="row g-4">
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="room-item shadow rounded overflow-hidden">
-                    <div class="position-relative">
-                        <img class="img-fluid" src="~/front/img/institution-1b.jpg" alt="">
-                        <small class="position-absolute start-0 top-100 translate-middle-y bg-primary text-white rounded py-1 px-3 ms-4">$450</small>
-                    </div>
-                    <div class="p-4 mt-2">
-                        <div class="d-flex justify-content-between mb-3">
-                            <h5 class="mb-0">Beer hall</h5>
-                            @* <div class="ps-2">
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            </div> *@
-                        </div>
-                        <div class="d-flex mb-3">
-                            <small class="border-end me-3 pe-3"><i class="fa-building text-primary me-2"></i>$400</small>
-                            <small class="border-end me-3 pe-3"><i class="fa-home text-primary me-2"></i>$350</small>
-                            <small><i class="fa-cabin text-primary me-2"></i>$325</small>
-                        </div>
-                        <p class="text-body mb-3">Erat ipsum justo amet duo et elitr dolor, est duo duo eos lorem sed diam stet diam sed stet lorem.</p>
-                        <div class="d-flex justify-content-between">
-                            <a class="btn btn-sm btn-primary rounded py-2 px-4" href="">View Detail</a>
-                            <a class="btn btn-sm btn-dark rounded py-2 px-4" href="">Apply Now</a>
+                        <div class="member-info">
+                            <h4>William Anderson</h4>
+                            <span>CTO</span>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
-                <div class="room-item shadow rounded overflow-hidden">
-                    <div class="position-relative">
-                        <img class="img-fluid" src="~/front/img/institution-2.jpg" alt="">
-                        <small class="position-absolute start-0 top-100 translate-middle-y bg-primary text-white rounded py-1 px-3 ms-4">$550</small>
-                    </div>
-                    <div class="p-4 mt-2">
-                        <div class="d-flex justify-content-between mb-3">
-                            <h5 class="mb-0">Restaurant</h5>
-                            @* <div class="ps-2">
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            </div> *@
+                </div><!-- End Team Member -->
+
+                <div class="col-lg-3 col-md-6 d-flex align-items-stretch" data-aos="fade-up" data-aos-delay="400">
+                    <div class="team-member">
+                        <div class="member-img">
+                            <img src="~/Gp/assets/img/team/ourteam-4a.jpg" class="img-fluid" alt="">
+                            <div class="social">
+                                <a href=""><i class="bi bi-twitter-x"></i></a>
+                                <a href=""><i class="bi bi-facebook"></i></a>
+                                <a href=""><i class="bi bi-instagram"></i></a>
+                                <a href=""><i class="bi bi-linkedin"></i></a>
+                            </div>
                         </div>
-                        <div class="d-flex mb-3">
-                            <small class="border-end me-3 pe-3"><i class="fa-building text-primary me-2"></i>$480</small>
-                            <small class="border-end me-3 pe-3"><i class="fa-home text-primary me-2"></i>$350</small>
-                            <small><i class="fa-cabin text-primary me-2"></i>$340</small>
-                        </div>
-                        <p class="text-body mb-3">Erat ipsum justo amet duo et elitr dolor, est duo duo eos lorem sed diam stet diam sed stet lorem.</p>
-                        <div class="d-flex justify-content-between">
-                            <a class="btn btn-sm btn-primary rounded py-2 px-4" href="">View Detail</a>
-                            <a class="btn btn-sm btn-dark rounded py-2 px-4" href="">Apply Now</a>
+                        <div class="member-info">
+                            <h4>Amanda Jepson</h4>
+                            <span>Accountant</span>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.6s">
-                <div class="room-item shadow rounded overflow-hidden">
-                    <div class="position-relative">
-                        <img class="img-fluid" src="~/front/img/institution-3.jpg" alt="">
-                        <small class="position-absolute start-0 top-100 translate-middle-y bg-primary text-white rounded py-1 px-3 ms-4">$700</small>
-                    </div>
-                    <div class="p-4 mt-2">
-                        <div class="d-flex justify-content-between mb-3">
-                            <h5 class="mb-0">Night Club</h5>
-                            @* <div class="ps-2">
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            <small class="fa fa-star text-primary"></small>
-                            </div> *@
-                        </div>
-                        <div class="d-flex mb-3">
-                            <small class="border-end me-3 pe-3"><i class="fa-building text-primary me-2"></i>$510</small>
-                            <small class="border-end me-3 pe-3"><i class="fa-home text-primary me-2"></i>$430</small>
-                            <small><i class="fa-cabin text-primary me-2"></i>$360</small>
-                        </div>
-                        <p class="text-body mb-3">Erat ipsum justo amet duo et elitr dolor, est duo duo eos lorem sed diam stet diam sed stet lorem.</p>
-                        <div class="d-flex justify-content-between">
-                            <a class="btn btn-sm btn-primary rounded py-2 px-4" href="">View Detail</a>
-                            <a class="btn btn-sm btn-dark rounded py-2 px-4" href="">Apply Now</a>
-                        </div>
-                    </div>
-                </div>
+                </div><!-- End Team Member -->
             </div>
         </div>
-    </div>
-</div>
-<!-- Room End -->
-<!-- Team Start -->
-<div class="container-xxl py-5">
-    <div class="container">
-        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
-            <h6 class="section-title text-center text-primary text-uppercase">Our Team</h6>
-            <h1 class="mb-5">Leadership and Expertise at <span class="text-primary text-uppercase">LLB</span></h1>
+    </section><!-- /Team Section -->
+    <!-- Contact Section -->
+    <section id="contact" class="contact section">
+        <div class="container section-title" data-aos="fade-up">
+            <h2>Contact</h2>
+            <p>Contact Us</p>
+        </div><!-- End Section Title -->
+
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="mb-4" data-aos="fade-up" data-aos-delay="200">
+                <iframe style="border:0; width: 100%; height: 270px;" src="    
+
+https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3778.3183491882875!2d31.0399113!3d-17.8235267!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1931a4fd90750d77%3A0x778a340450fd6851!2sMakombe%20Government%20Complex!5e0!3m2!1sen!2s!4v1234567890
+
+" frameborder="0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div><!-- End Google Maps -->
+
+            <div class="row gy-4">
+                <div class="col-lg-4">
+                    <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="300">
+                        <i class="bi bi-geo-alt flex-shrink-0"></i>
+                        <div>
+                            <h3>Address</h3>
+                            <p>Corner of Herbert Chitepo Avenue and Harare Street in Harare, Zimbabwe.</p>
+                        </div>
+                    </div><!-- End Info Item -->
+
+                    <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="400">
+                        <i class="bi bi-telephone flex-shrink-0"></i>
+                        <div>
+                            <h3>Call Us</h3>
+                            <p>(024)2792751</p>
+                        </div>
+                    </div><!-- End Info Item -->
+
+                    <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="500">
+                        <i class="bi bi-envelope flex-shrink-0"></i>
+
+
+
+
+                        <div>
+                            <h3>Email Us</h3>
+                            <p>info@example.com</p>
+                        </div>
+                    </div><!-- End Info Item -->
+
+                </div>
+
+                <div class="col-lg-8">
+                    <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
+                        <div class="row gy-4">
+
+                            <div class="col-md-6">
+                                <input type="text" name="name" class="form-control" placeholder="Your Name" required="">
+                            </div>
+
+                            <div class="col-md-6 ">
+                                <input type="email" class="form-control" name="email" placeholder="Your Email" required="">
+                            </div>
+
+                            <div class="col-md-12">
+                                <input type="text" class="form-control" name="subject" placeholder="Subject" required="">
+                            </div>
+
+                            <div class="col-md-12">
+                                <textarea class="form-control" name="message" rows="6" placeholder="Message" required=""></textarea>
+                            </div>
+
+                            <div class="col-md-12 text-center">
+                                <div class="loading">Loading</div>
+                                <div class="error-message"></div>
+                                <div class="sent-message">Your message has been sent. Thank you!</div>
+
+                                <button type="submit">Send Message</button>
+                            </div>
+
+                        </div>
+                    </form>
+                </div><!-- End Contact Form -->
+
+            </div>
+
         </div>
-        <div class="row g-4">
-            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="rounded shadow overflow-hidden">
-                    <div class="position-relative">
-                        <img class="img-fluid" src="~/front/img/ourteam-1.jpg" alt="">
-                        @* <div class="position-absolute start-50 top-100 translate-middle d-flex align-items-center">
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-facebook-f"></i></a>
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-twitter"></i></a>
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-instagram"></i></a>
-                        </div> *@
-                    </div>
-                    <div class="text-center p-4 mt-3">
-                        <h5 class="fw-bold mb-0">Mrs Loreta Chinoona</h5>
-                        <small>Secretary</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
-                <div class="rounded shadow overflow-hidden">
-                    <div class="position-relative">
-                        <img class="img-fluid" src="~/front/img/ourteam-2.jpg" alt="">
-                        @* <div class="position-absolute start-50 top-100 translate-middle d-flex align-items-center">
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-facebook-f"></i></a>
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-twitter"></i></a>
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-instagram"></i></a>
-                        </div> *@
-                    </div>
-                    <div class="text-center p-4 mt-3">
-                        <h5 class="fw-bold mb-0">Mrs Chipo Basa</h5>
-                        <small>Compliance Officer</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
-                <div class="rounded shadow overflow-hidden">
-                    <div class="position-relative">
-                        <img class="img-fluid" src="~/front/img/ourteam-3.jpg" alt="">
-                        @* <div class="position-absolute start-50 top-100 translate-middle d-flex align-items-center">
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-facebook-f"></i></a>
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-twitter"></i></a>
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-instagram"></i></a>
-                        </div> *@
-                    </div>
-                    <div class="text-center p-4 mt-3">
-                        <h5 class="fw-bold mb-0">Mr John Chiga</h5>
-                        <small>Chief Inspector</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.7s">
-                <div class="rounded shadow overflow-hidden">
-                    <div class="position-relative">
-                        <img class="img-fluid" src="~/front/img/ourteam-4a.jpg" alt="">
-                        @* <div class="position-absolute start-50 top-100 translate-middle d-flex align-items-center">
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-facebook-f"></i></a>
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-twitter"></i></a>
-                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-instagram"></i></a>
-                        </div> *@
-                    </div>
-                    <div class="text-center p-4 mt-3">
-                        <h5 class="fw-bold mb-0">Mr Peter Vamambo</h5>
-                        <small>Chairman</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Team End -->
+
+    </section><!-- /Contact Section -->
+
+</main>

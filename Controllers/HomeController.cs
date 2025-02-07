@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace LLB.Controllers
 {
-    
+
     [Route("")]
     [Route("Home")]
     public class HomeController : Controller
@@ -41,6 +41,12 @@ namespace LLB.Controllers
             return View();
         }
 
+
+
+
+
+
+       
         [HttpGet(("SignUp"))]
         [AllowAnonymous]
         public IActionResult SignUp()
@@ -48,6 +54,7 @@ namespace LLB.Controllers
             return View();
         }
 
+       
         [HttpGet("SignIn")]
         [AllowAnonymous]
         public IActionResult SignIn()
@@ -68,6 +75,8 @@ namespace LLB.Controllers
         }
 
         [HttpGet("Dashboard")]
+      
+
         public async Task<IActionResult> DashboardAsync()
         {
 
