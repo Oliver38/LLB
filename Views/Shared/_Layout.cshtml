@@ -1,4 +1,4 @@
-﻿@RenderBody()
+﻿@* @RenderBody() *@
 <!DOCTYPE html>
 <html lang="en">
 
@@ -28,146 +28,10 @@
     <!-- Main CSS File -->
     <link href="~/Gp/assets/css/main.css" rel="stylesheet">
 
-    @*  <!-- Custom Styles -->
-    <style>
-        /* Green, Yellow, and Black Theme */
-        :root {
-            --primary-color: #008000; /* Green */
-            --secondary-color: #006400; /* Yellow */
-            --dark-color: #000000; /* Black */
-            --light-color: #FFFFFF; /* White */
-        }
+   
 
-        .text-primary {
-            color: var(--primary-color) !important;
-        }
+    @RenderBody()
 
-        .text-secondary {
-            color: var(--secondary-color) !important;
-        }
-        
-
-
-
-        body {
-            color: var(--dark-color);
-        }
-
-        .dark-background {
-            background-color: var(--dark-color);
-            color: var(--light-color);
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-            .btn-primary:hover {
-                background-color: #006400; /* Darker Green */
-                border-color: #006400;
-            }
-
-        .btn-secondary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-            color: var(--dark-color);
-        }
-
-            .btn-secondary:hover {
-                background-color: #006400; /* Darker Yellow */
-                border-color: #006400;
-            }
-
-        .text-primary {
-            color: var(--primary-color) !important;
-        }
-
-        .text-secondary {
-            color: var(--secondary-color) !important;
-        }
-
-        .bg-primary {
-            background-color: var(--primary-color) !important;
-        }
-
-        .bg-secondary {
-            background-color: var(--secondary-color) !important;
-        }
-
-        .bg-dark {
-            background-color: var(--dark-color) !important;
-        }
-
-        .navbar-dark .navbar-nav .nav-link {
-            color: var(--light-color);
-        }
-
-            .navbar-dark .navbar-nav .nav-link:hover {
-                color: var(--secondary-color);
-            }
-
-        .footer {
-            background-color: var(--dark-color);
-            color: var(--light-color);
-        }
-
-            .footer a {
-                color: var(--secondary-color);
-            }
-
-                .footer a:hover {
-                    color: var(--primary-color);
-                }
-
-        .section-title h2 {
-            color: var(--primary-color);
-        }
-
-        .section-title p {
-            color: var(--dark-color);
-        }
-
-        .testimonials .testimonial-item {
-            background-color: var(--dark-color);
-            color: var(--light-color);
-        }
-
-            .testimonials .testimonial-item h3 {
-                color: var(--secondary-color);
-            }
-
-        .team .team-member {
-            background-color: var(--light-color);
-            border: 1px solid var(--primary-color);
-        }
-
-            .team .team-member h4 {
-                color: var(--primary-color);
-            }
-
-            .team .team-member span {
-                color: var(--dark-color);
-            }
-
-        .contact .info-item i {
-            color: var(--primary-color);
-        }
-
-        .contact .info-item h3 {
-            color: var(--primary-color);
-        }
-
-        .contact .php-email-form button[type="submit"] {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-            .contact .php-email-form button[type="submit"]:hover {
-                background-color: #006400;
-                border-color: #006400;
-            }
-    </style>*@
 </head>
 
 <body class="index-page">
@@ -189,7 +53,7 @@
                     <li><a href="/Home/LandingPage#about">About</a></li>
                     <li><a href="/Home/LandingPage#services">Services</a></li>
                   @*  <li><a href="/Home/LandingPage#portfolio">Portfolio</a></li> *@
-                    <li><a href="/Home/LandingPage#team">Team</a></li>
+                  @*   <li><a href="/Home/LandingPage#team">Team</a></li> *@
                     <li><a href="/Home/LandingPage#contact">Contact</a></li>
                     <li><a href="/Home/SignUP">Sign Up</a></li>
 
