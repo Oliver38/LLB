@@ -19,6 +19,7 @@ using System.Security.Cryptography.Xml;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Crypto;
 using LLB.Helpers;
+using System.Threading.Tasks;
 
 
 namespace LLB.Controllers
@@ -742,7 +743,8 @@ namespace LLB.Controllers
                 transaction.UserId = id;
                 transaction.Amount = payment.Total;
                 transaction.ApplicationId = Id;
-             //   transaction.PaynowRef = payment.Reference;
+                transaction.Service = "new application";
+                //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
                 transaction.PopDoc = "";
                 transaction.Status = "not paid";
@@ -787,7 +789,9 @@ namespace LLB.Controllers
             transaction.Amount = (decimal)amount;
             transaction.ApplicationId = Id;
             //   transaction.PaynowRef = payment.Reference;
-           // transaction.PollUrl = response.PollUrl();
+            // transaction.PollUrl = response.PollUrl();
+            transaction.Service = "new application";
+
             transaction.PopDoc = "";
             transaction.Status = "awaiting verification";
             transaction.DateAdded = DateTime.Now;
@@ -907,7 +911,8 @@ namespace LLB.Controllers
 
                 var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
                 //   tasks.VerifierId = selectedUser.Id;
-                   tasks.VerifierId = verifierWithLeastTasks;
+                tasks.Service = "new application";
+                tasks.VerifierId = verifierWithLeastTasks;
                 tasks.AssignerId = "system";
                 tasks.Status = "assigned";
                 tasks.DateAdded = DateTime.Now;

@@ -5,6 +5,7 @@
     var user = userManager.Users.Where(e => e.UserName == User.Identity.Name).FirstOrDefault();
     var username = user.Name + " " + user.LastName;
     var role = await userManager.GetRolesAsync(user);
+    
 }
 
 <!DOCTYPE html>
@@ -49,7 +50,7 @@
 
         <div class="d-flex align-items-center justify-content-between">
             <a href="index.html" class="logo d-flex align-items-center">
-                <img src="assets/img/logo.png" alt="">
+                @*<img src="assets/img/logo.png" alt="">*@
                 <span class="d-none d-lg-block">LLB</span>
             </a>
             <i class="bi bi-list toggle-sidebar-btn"></i>
@@ -78,14 +79,19 @@
                 <li class="nav-item dropdown pe-3">
 
                     <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-                        <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle">
+                        @*<img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle">*@
                         <span class="d-none d-md-block dropdown-toggle ps-2">@username</span>
                     </a><!-- End Profile Iamge Icon -->
 
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
                         <li class="dropdown-header">
                             <h6>@username</h6>
-                            <span>@role</span>
+                            <span>
+                                @foreach (var roler in role)
+                                {
+                                    <p> @roler</p>
+                                }
+                                                    </span>
                         </li>
                         <li>
                             <hr class="dropdown-divider">
@@ -163,9 +169,15 @@
                 </li><!-- End Icons Nav -->
 
 
+                <!--<li class="nav-item">
+                    <a class="nav-link collapsed" href="Home/PostFormation">
+                        <i class="bi bi-question-circle"></i>
+                        <span>Post Formation Services</span>
+                    </a>
+                </li>--><!-- End F.A.Q Page Nav -->
 
                 <li class="nav-item">
-                    <a class="nav-link collapsed" href="pages-faq.html">
+                    <a class="nav-link collapsed" href="/Home/FAQ">
                         <i class="bi bi-question-circle"></i>
                         <span>F.A.Q</span>
                     </a>
@@ -232,6 +244,12 @@
                             </a>
                         </li>
                         <li>
+                            <a href="/Postprocess/AddFee">
+                                <i class="bi bi-circle"></i><span>Post Formation Fees</span>
+                            </a>
+                        </li>
+                        
+                        <li>
                             <a href="/Tasks/BulkReassignment">
                                 <i class="bi bi-circle"></i><span>Bulk Reassignment</span>
                             </a>
@@ -277,6 +295,41 @@
                             </a>
                         </li>
 
+                    </ul>
+                </li><!-- End Icons Nav -->
+
+
+                <li class="nav-item">
+                    <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
+                        <i class="bi bi-cogs"></i><span>Tasks</span><i class="bi bi-chevron-down ms-auto"></i>
+                    </a>
+                    <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                        <li>
+                            <a href="/Settings/CreateLicense">
+                                <i class="bi bi-circle"></i><span>Create License</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Settings/Licenses">
+                                <i class="bi bi-circle"></i><span>View Licences</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Settings/LicenseFees">
+                                <i class="bi bi-circle"></i><span>View Licence Fees</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Postprocess/AddFee">
+                                <i class="bi bi-circle"></i><span>Post Formation Fees</span>
+                            </a>
+                        </li>
+
+                        @*<li>
+                            <a href="/Tasks/BulkReassignment">
+                                <i class="bi bi-circle"></i><span>Bulk Reassignment</span>
+                            </a>
+                        </li>*@
                     </ul>
                 </li><!-- End Icons Nav -->
 

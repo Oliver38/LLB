@@ -96,6 +96,12 @@ namespace LLB.Migrations
                     b.Property<string>("RejectionReason")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("RenewalDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RenewalStatus")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Secretary")
                         .HasColumnType("nvarchar(max)");
 
@@ -562,6 +568,9 @@ namespace LLB.Migrations
                     b.Property<string>("PopDoc")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Service")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
 
@@ -574,6 +583,45 @@ namespace LLB.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("LLB.Models.PostFormationFees", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateAdded")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Fee")
+                        .HasColumnType("float");
+
+                    b.Property<string>("ProcessName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PostFormationFees");
                 });
 
             modelBuilder.Entity("LLB.Models.Queries", b =>
@@ -623,6 +671,52 @@ namespace LLB.Migrations
                     b.ToTable("ReferenceNumbers");
                 });
 
+            modelBuilder.Entity("LLB.Models.Renewals", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ApplicationId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CertifiedLicense")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateApplied")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FeePaid")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HealthCert")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LLBNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PenaltyPaid")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PreviousExpiry")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Service")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Renewals");
+                });
+
             modelBuilder.Entity("LLB.Models.Tasks", b =>
                 {
                     b.Property<string>("Id")
@@ -653,6 +747,9 @@ namespace LLB.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("RecommenderId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Service")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")

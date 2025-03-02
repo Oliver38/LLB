@@ -19,6 +19,7 @@ namespace LLB.Models
         public string? ApproverId { get; set; }
         public DateTime? ApprovedDate { get; set; }
         public string? Status { get; set; }
+        public string? Service { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }
 

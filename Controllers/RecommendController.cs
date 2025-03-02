@@ -45,7 +45,7 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(f => f.RecommenderId == id && f.Status == "assigned").ToList();
+            var tasks = _db.Tasks.Where(f => f.RecommenderId == id && f.Status == "assigned" && f.Service == "new application").ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
@@ -586,8 +586,8 @@ namespace LLB.Controllers
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             var secretaryWithLeastTasks = await _taskAllocationHelper.GetSecretary(_db,userManager);
             //   tasks.VerifierId = selectedUser.Id;
-           
 
+            tasksc.Service = "new application";
             tasksc.ApproverId = secretaryWithLeastTasks;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";

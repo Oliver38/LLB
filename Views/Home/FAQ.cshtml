@@ -1,0 +1,179 @@
+﻿
+
+@{
+    Layout = "_Layout";
+}
+
+
+<br />
+<br />
+<br />
+
+<div class="container">
+
+    <section class="section faq">
+        <div class="row">
+            <div class="col-lg-12">
+
+                <div class="card basic">
+                    <div class="card-body">
+                        <h5 class="card-title">Basic Questions</h5>
+                        <div class="card-header">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search FAQs..."  onkeyup="filterFAQs()" >
+                        </div>
+                        <div id="faqContainer">
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: What is this portal for?</b></h6>
+                                <p>A: This online portal is your one-stop shop for all liquor licensing needs in Zimbabwe. You can apply for new licenses, renew existing ones, transfer ownership, update manager details, and manage changes to your licensed premises – all from the convenience of your computer or mobile device.</p>
+                            </div>
+
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: Who can use this portal?</b></h6>
+                                <p>A: Anyone who needs to apply for or manage a liquor license in Zimbabwe can use this portal. This includes individuals, businesses, and organizations.</p>
+                            </div>
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: Is there a fee to use the portal?</b></h6>
+                                <p>A: No, registration and general use of the portal are free. However, the standard liquor licensing fees set by the Liquor Licensing Board still apply to your applications and transactions.</p>
+                            </div>
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: What are the benefits of using this online portal?</b></h6>
+                                <p>
+                                    A: The portal offers numerous benefits, including:
+                                    Convenience: Apply and manage your license anytime, anywhere.
+                                    Efficiency: Faster processing times compared to traditional methods.
+                                    Transparency: Track your application status in real-time.
+                                    Reduced Paperwork: Submit all documents electronically.
+                                    Secure Transactions: Safe and reliable online payment options.
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: What if I need help using the portal?</b></h6>
+                                <p>
+                                    A: We offer comprehensive support! You can access our help guides and FAQs within the portal. If you require further assistance, our dedicated support team is available via email or phone during business hours.
+                                    Account & Registration
+                                </p>
+                            </div>
+
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q:  How do I create an account?</b></h6>
+                                <p>
+                                    A: Click the "Register" button on the homepage and follow the simple instructions to provide your details and set up your secure account.
+                                </p>
+                            </div>
+
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: I forgot my password. What do I do?</b></h6>
+                                <p>
+                                    A: Click the "Forgot Password" link on the login page. You'll receive an email with instructions to reset your password.
+                                    Applications
+                                </p>
+                            </div>
+
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: What types of liquor licenses can I apply for through this portal?</b></h6>
+                                <p>
+                                    A: You can apply for all types of liquor licenses offered by the Liquor Licensing Board in Zimbabwe. This includes licenses for:
+                                    Restaurants
+                                    Bars
+                                    Hotels
+                                    Nightclubs
+                                    Special events
+                                    And more...
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: What documents do I need to submit with my application?</b></h6>
+                                <p>A: The required documents vary depending on the type of license you are applying for. The portal will provide a clear checklist of all necessary documents during the application process.</p>
+                            </div>
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: How long does it take to process an application?</b></h6>
+                                <p>
+                                    A: Processing times vary, but the online portal generally expedites the process. You can track the status of your application in real-time through your account dashboard.
+                                    Renewals
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: How do I renew my liquor license?</b></h6>
+                                <p>A: Log in to your account, navigate to the "Renewals" section, and follow the instructions. You'll need your license number and other relevant details.</p>
+                            </div>
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: Can I renew my license before its expiration date?</b></h6>
+                                <p>
+                                    A: Yes, you can renew your license up to [number] days before its expiration date.
+                                    Transfers, Changes, and Removals
+                                </p>
+                            </div>
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: How do I transfer my liquor license to a new owner?</b></h6>
+                                <p>A: Use the "Transfer" section of the portal to initiate a transfer request. You'll need to provide information about the new owner and fulfill the required conditions.</p>
+                            </div>
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: How do I update the approved manager for my license?</b></h6>
+                                <p>A: The "Change Manager" section allows you to update your approved manager details. You'll need to provide the new manager's information and relevant documentation.</p>
+                            </div>
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: What if I need to change the address of my licensed premises?</b></h6>
+                                <p>
+                                    A: Use the "Alter Premises" section to notify the Board of any changes to your licensed premises, such as renovations, expansions, or relocations.
+                                    Payments
+                                </p>
+                            </div>
+
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: What payment methods are accepted?</b></h6>
+                                <p>A: The portal offers secure online payment options, including [list accepted payment methods, e.g., credit cards, debit cards, mobile money].    </p>
+                            </div>
+
+
+                            <div class="faq-item">
+                                <h6><b style="color:green;">Q: Will I receive a receipt for my payment?</b></h6>
+                                <p>A: Yes, you will receive an electronic receipt for all successful payments made through the portal.</p>
+                            </div>
+
+
+
+                        </div>
+                    </div>
+                </div>
+
+               
+
+           
+
+           
+            </div>
+
+        </div>
+    </section>
+</div>
+
+<script>
+    function filterFAQs() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const faqItems = document.querySelectorAll('.faq-item');
+
+        faqItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            // Show if searchText is found in the item text
+            if (text.includes(searchText)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+</script>

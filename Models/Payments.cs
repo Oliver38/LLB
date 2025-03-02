@@ -18,6 +18,7 @@ namespace LLB.Models
         public decimal? Amount { get; set; }
         public string? Status { get; set; }
         public string? PopDoc { get; set; }
+        public string? Service { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }
 

@@ -39,7 +39,7 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(s => s.ApproverId == id && s.Status == "assigned"   ).ToList();
+            var tasks = _db.Tasks.Where(s => s.ApproverId == id && s.Status == "assigned" && s.Service == "new application").ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
@@ -527,8 +527,12 @@ namespace LLB.Controllers
         public async Task<IActionResult> ApproveAsync(string Id, string taskid)
         {
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
-            //LLB Number
+            //LLB Numberl;l
             var outlet = _db.OutletInfo.Where(n => n.ApplicationId == Id).FirstOrDefault();
+            outlet.Status = "active";
+            outlet.DateUpdated = DateTime.Now;
+            _db.Update(outlet);
+            _db.SaveChanges();
 
             //district code
             var districtinfo = _db.DistrictCodes.Where(c => c.District == outlet.City).FirstOrDefault();
