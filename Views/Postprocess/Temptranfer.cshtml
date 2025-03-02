@@ -1,0 +1,195 @@
+﻿@{
+    Layout = "_LayoutMain";
+}
+
+
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-title mb-0">Post Formation Prices</div>
+        <button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Fee</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var fee in ViewBag.Fees)
+                    {
+                        <tr>
+                            <td>@fee.Code</td>
+                            <td>@fee.ProcessName</td>
+                            <td>@fee.Fee</td>
+                            <td>@fee.Status</td>
+                            <td><button class="btn btn-primary" onclick="UpdateFee('@fee.Id','@fee.ProcessName', '@fee.Description', '@fee.Fee', '@fee.Code' )">Edit</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- Basic Modal -->
+
+<div class="modal fade" id="PostFormationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Post Fomation For </h5> &nbsp;<b><h5 class="modal-title" id="feetitle"></h5></b>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/Postprocess/AddFee" enctype="multipart/form-data" method="post">
+
+                    <div class="col-md-12">
+                        @*<label for="inputName5" class="form-label">Select Post Formation Process</label>
+                            <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
+
+
+
+
+                        <!-- Radio Button -->
+                        <!--<div class="col-md-12 d-flex align-items-center mb-3">
+                            <input type="radio" name="selectProcess" class="form-check-input me-2" id="MunicipaltyFee">
+                            <label for="MunicipaltyFee" class="form-label mb-0">Municipalty Fee</label>
+                        </div>-->
+                        <!-- Process Name -->
+                        <div class="mb-3">
+                            <label for="processName" class="form-label">Process Name</label>
+                            <input type="text" class="form-control" id="processNameb" name="ProcessName" placeholder="Enter Process Name">
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="descriptionb" name="Description" placeholder="Enter Description">
+                        </div>
+
+                        <!-- Code -->
+                        <div class="mb-3">
+                            <label for="code" class="form-label">Code</label>
+                            <input type="text" class="form-control" id="codeb" name="Code" placeholder="Enter Code">
+                        </div>
+
+                        <!-- Fee -->
+                        <div class="mb-3">
+                            <label for="fee" class="form-label">Fee</label>
+                            <input type="number" class="form-control" id="feeb" name="Fee" placeholder="Enter Fee" step="0.01" min="0">
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div><!-- End Basic Modal-->
+<!-- Basic Modal -->
+
+<div class="modal fade" id="UpdateFeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Post Fomation For </h5> &nbsp;<b><h5 class="modal-title" id="processNametitle"></h5></b>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/Postprocess/UpdateFee" enctype="multipart/form-data" method="post">
+
+                    <div class="col-md-12">
+                        @*<label for="inputName5" class="form-label">Select Post Formation Process</label>
+                            <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
+
+
+
+
+                        <!-- Radio Button -->
+                        <!--<div class="col-md-12 d-flex align-items-center mb-3">
+                            <input type="radio" name="selectProcess" class="form-check-input me-2" id="MunicipaltyFee">
+                            <label for="MunicipaltyFee" class="form-label mb-0">Municipalty Fee</label>
+                        </div>-->
+                        <!-- Process Name -->
+                        <div class="mb-3">
+                            <label for="processName" class="form-label">Process Name</label>
+                            <input type="text" class="form-control" id="processName" name="ProcessName" placeholder="Enter Process Name">
+                            <input type="hidden" class="form-control" id="idd" name="Id" placeholder="Enter Process Name">
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" name="Description" placeholder="Enter Description">
+                        </div>
+
+                        <!-- Code -->
+                        <div class="mb-3">
+                            <label for="code" class="form-label">Code</label>
+                            <input type="text" class="form-control" id="code" name="Code" placeholder="Enter Code">
+                        </div>
+
+                        <!-- Fee -->
+                        <div class="mb-3">
+                            <label for="fee" class="form-label">Fee</label>
+                            <input type="number" class="form-control" id="fee" name="Fee" placeholder="Enter Fee" step="0.01" min="0">
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div><!-- End Basic Modal-->
+
+<script>function PostFormationModal() {
+        // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
+
+ 
+
+        $('#PostFormationModal').modal('show');
+
+    }</script>
+
+<script>function UpdateFee(id,processName, description, fee, code) {
+        // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
+
+       
+
+    $('#idd').val(id);
+    $('#processName').val(processName);
+    $('#description').val(description);
+    $('#fee').val(fee);
+    $('#code').val(code);
+    $('#processNametitle').html(processName);
+        $('#UpdateFeeModal').modal('show');
+
+    }</script>

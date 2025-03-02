@@ -6,10 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using LLB.Data;
 using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
-
 namespace LLB.Controllers
 {
-
     [Route("")]
     [Route("Home")]
     public class HomeController : Controller
@@ -41,12 +39,92 @@ namespace LLB.Controllers
             return View();
         }
 
+      
+        [HttpGet("FAQ")]
+        [AllowAnonymous]
+        public IActionResult FAQ()
+        {
+            return View();
+        }
 
 
 
-
-
+        [HttpPost("PostFormation")]
        
+        public IActionResult PostFormation(string id, string process)
+        {
+                     if(process==  "RNW")
+            {
+                return RedirectToAction("Renewal", "Postprocess", new { id = id, process = process });
+
+            }else if (process == "APM")
+            {
+                return RedirectToAction("Managerchange", "Postprocess", new { param1 = id, param2 = id });
+
+            }
+            else if (process == "GDP")
+            {
+                return RedirectToAction("Governmentpermit", "Postprocess", new { param1 = id, param2 = id });
+
+            }
+            else if (process == "INP")
+            {
+                return RedirectToAction("Inspection", "Postprocess", new { param1 = id, param2 = id });
+
+            }
+            else if (process == "DPL")
+            {
+                return RedirectToAction("Duplication", "Postprocess", new { param1 = id, param2 = id });
+
+            }
+            else if (process == "TRM")
+            {
+                return RedirectToAction("Tempremoval", "Postprocess", new { param1 = id, param2 = id });
+
+            }
+            else if (process == "TTR")
+            {
+                return RedirectToAction("Temptranfer", "Postprocess", new { param1 = id, param2 = id });
+
+            }
+            else if (process == "EXH")
+            {
+                return RedirectToAction("Extendhours", "Postprocess", new { param1 = id, param2 = id });
+
+            }
+            else if (process == "TRL")
+            {
+                return RedirectToAction("Temporalretail", "Postprocess", new { param1 = id, param2 = id });
+
+            }
+            else if (process == "ECF")
+            {
+                return RedirectToAction("Extracounter", "Postprocess", new { param1 = id, param2 = id });
+
+            }
+            else { }
+            //< option value = "APM" > Approval of a person as a Manager 100.00 </ option >
+            //@*< option value = "GDP" > Government Department Permit 100.00 </ option > *@
+            //< option value = "INP" > Inspection 150.00 </ option >
+            //< option value = "DPL" > Duplication 60.00 </ option >
+            //< option value = "TRM" > Temporal removal 200.00 </ option >
+            //< option value = "TTR" > Temporal Transfer 200.00 </ option >
+            //< option value = "EXH" > Extended hours(Occasional) liquor licence 300.00 </ option >
+            //< option value = "TRL" > Temporal Retail liquor license </ option >
+            var licenseInfo = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
+            var outletInfo = _db.OutletInfo.Where(b => b.ApplicationId == id).FirstOrDefault();
+
+
+            ViewBag.LicenseInfo = licenseInfo;
+            ViewBag.OutletInfo = outletInfo;
+            ViewBag.Id = id;
+            return View();
+        }
+
+
+
+
+
         [HttpGet(("SignUp"))]
         [AllowAnonymous]
         public IActionResult SignUp()
@@ -107,10 +185,12 @@ namespace LLB.Controllers
                 return RedirectToAction("Dashboard", "Accountant");
             }
 
-            
+           
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             //var Id = await userManager.GetUserId(User.Identity.Name);
             string id = userId.Id;
+            var renewals = _db.Renewals.Where(q => q.UserId == id).ToList();
+
             var applications = _db.ApplicationInfo.Where(a => a.UserID == id && a.Status != "approved").ToList();
             var approvedapplications = _db.ApplicationInfo.Where(a => a.UserID == id && a.Status == "approved").ToList();
             var outletinfo  = _db.OutletInfo.ToList();
@@ -118,6 +198,7 @@ namespace LLB.Controllers
             var regions = _db.LicenseRegions.ToList();
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
 
+            ViewBag.Renewals = renewals;
             ViewBag.User = user;
             ViewBag.OutletInfo = outletinfo;
             ViewBag.Regions = regions;

@@ -45,6 +45,9 @@ namespace LLB.Models
         public bool rejectionFlag { get; set; }
         public string? rejectionFlagComment { get; set; }
         public string? FlaggerUserId { get; set; }
+        public string? RenewalStatus { get; set; }
+        public DateTime RenewalDate { get; set; }
+
         public string? rejectionUnflagComment { get; set; }
 
     }

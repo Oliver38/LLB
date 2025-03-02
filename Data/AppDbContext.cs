@@ -29,6 +29,10 @@ namespace LLB.Data
         public DbSet<DistrictCodes> DistrictCodes { get; set; }
         public DbSet<ReferenceNumbers> ReferenceNumbers { get; set; }
         public DbSet<ExchangeRate> ExchangeRate { get; set; }
+        public DbSet<Renewals> Renewals { get; set; }
+        public DbSet<RenewalRegion> RenewalRegion { get; set; }
+        public DbSet<RenewalTypes> RenewalTypes { get; set; }
+        public DbSet<PostFormationFees> PostFormationFees { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

@@ -43,7 +43,7 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(f => f.VerifierId == id && f.Status == "assigned").ToList();
+            var tasks = _db.Tasks.Where(f => f.VerifierId == id && f.Status == "assigned" && f.Service == "new application").ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
@@ -574,13 +574,14 @@ namespace LLB.Controllers
             Tasks tasksc = new Tasks();
             tasksc.Id = Guid.NewGuid().ToString();
             tasksc.ApplicationId = application.Id;
+
             //tasks.AssignerId
 
             //auto allocation to replace
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
-            
+            tasksc.Service = "new application";
             tasksc.RecommenderId = recommenderWithLeastTasks;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";
