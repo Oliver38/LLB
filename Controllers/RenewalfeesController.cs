@@ -33,7 +33,7 @@ namespace LLB.Controllers
             _validatorService = validatorService;
         }
 
-        [HttpGet(("Renewalees"))]
+        [HttpGet(("RenewalFees"))]
         public IActionResult RenewalFees()
         {
             var Renewals = _db.RenewalTypes.ToList();
@@ -113,7 +113,7 @@ namespace LLB.Controllers
             _db.Update(Renewalfee);
             if (_db.SaveChanges()==1)
             {
-                return RedirectToAction("RenewalFees", "Settings");
+                return RedirectToAction("RenewalFees", "Renewalfees");
             }
           
             return View();

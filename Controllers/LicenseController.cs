@@ -415,9 +415,8 @@ namespace LLB.Controllers
                 if (userm.Nationality == "Zimbabwean")
                 {
 
-                    string[] documents = { "Vetted fingerprints",
-"Police report",
-"Form 55",
+                    string[] documents = {
+                        "",
 "Affidavit by transferee",
 "Lease documents",
 "Advert",

@@ -59,6 +59,8 @@
     <None Remove="Views\Rate\" />
     <None Remove="Views\Postprocess\" />
     <None Remove="Views\Renewalfees\" />
+    <None Remove="Views\Transferfees\" />
+    <None Remove="Views\Removalfees\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
@@ -76,6 +78,8 @@
     <Folder Include="Views\Rate\" />
     <Folder Include="Views\Postprocess\" />
     <Folder Include="Views\Renewalfees\" />
+    <Folder Include="Views\Transferfees\" />
+    <Folder Include="Views\Removalfees\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

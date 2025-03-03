@@ -4,11 +4,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LLB.Models
 {
-    public class RenewalTypes
+    public class TransferTypes
     {
         [Key]
         public string? Id { get; set; }
-        public string? RenewalName { get; set; }
+        public string? TransferName { get; set; }
         public string? Description { get; set; }
         public string? Status { get; set; }
         public string? UserId { get; set; }
@@ -19,7 +19,7 @@ namespace LLB.Models
         public double RDCFee { get; set; }
 
         public string ConditionList { get; set; }
-        public string RenewalInstructions { get; set; }
+        public string TransferInstructions { get; set; }
 
 
         //public double FeeId { get; set; }

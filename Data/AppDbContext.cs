@@ -33,6 +33,10 @@ namespace LLB.Data
         public DbSet<RenewalRegion> RenewalRegion { get; set; }
         public DbSet<RenewalTypes> RenewalTypes { get; set; }
         public DbSet<PostFormationFees> PostFormationFees { get; set; }
+        public DbSet<TransferRegion> TransferRegion { get; set; }
+        public DbSet<TransferTypes> TransferTypes { get; set; }
+        public DbSet<RemovalRegion> RemovalRegion { get; set; }
+        public DbSet<RemovalTypes> RemovalTypes{ get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

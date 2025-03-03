@@ -10,10 +10,10 @@
         <h5 class="card-title">Multi Columns Form</h5>
 
         <!-- Multi Columns Form -->
-        <form action="/Settings/CreateLicense" method="post"ß enctytpe="multipart/form-data" class="row g-3">
+        <form action="/Transferfees/CreateTransfer" method="post" ß enctytpe="multipart/form-data" class="row g-3">
             <div class="col-md-12">
                 <label for="inputName5" class="form-label">Licence Name</label>
-                <input type="text" name="licenseName" class="form-control" id="inputName5">
+                <input type="text" name="TransferName" class="form-control" id="inputName5">
             </div>
             <div class="col-12">
                 <div class="form-floating">
@@ -21,7 +21,21 @@
                     <label for="floatingTextarea">Description</label>
                 </div>
             </div>
-            
+
+            <div class="col-12">
+                <div class="form-floating">
+                    <textarea class="form-control" name="conditionList" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
+                    <label for="floatingTextarea">Conditions List</label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="form-floating">
+                    <textarea class="form-control" name="transferInstructions" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
+                    <label for="floatingTextarea">Renewal Instructions</label>
+                </div>
+            </div>
+
             <div class="text-center">
                 <button type="submit" class="btn btn-primary">Submit</button>
                 <button type="reset" class="btn btn-secondary">Reset</button>

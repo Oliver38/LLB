@@ -11,6 +11,8 @@ using LLB.Helpers;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Webdev.Payments;
+using System;
+using System.Runtime.Intrinsics.Arm;
 
 namespace LLB.Controllers
 {
@@ -100,8 +102,12 @@ namespace LLB.Controllers
         [HttpGet("Renewal")]
         public IActionResult Renewal(string id, string process)
         {
-            var serv = _db.PostFormationFees.Where(a => a.Code == process).FirstOrDefault();
+          //  var serv = _db.PostFormationFees.Where(a => a.Code == process).FirstOrDefault();
+         
             var appinfo = _db.ApplicationInfo.Where(b => b.Id == id).FirstOrDefault();
+            var mainlicense = _db.LicenseTypes.Where(z => z.Id == appinfo.LicenseTypeID).FirstOrDefault();
+            var licenseRegion = _db.LicenseRegions.Where(d => d.Id == appinfo.ApplicationType).FirstOrDefault();
+            var RenewalFees = _db.RenewalTypes.Where(a => a.LicenseCode == mainlicense.LicenseCode).FirstOrDefault();
             var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == id && c.Status == "active").FirstOrDefault();
 
             var today = DateTime.Now;
@@ -115,12 +121,35 @@ namespace LLB.Controllers
             else
             {
                 time = totalMonths;
-
             }
-            var Fees = _db.PostFormationFees.Where(n => n.Code == process).FirstOrDefault();
+
+            double getFee = 0;
+         
+            if (licenseRegion.RegionName == "RDC")
+            {
+                getFee = RenewalFees.RDCFee;
+            }
+            else if (licenseRegion.RegionName == "Town")
+            {
+                getFee = RenewalFees.TownFee;
+            }
+            else if (licenseRegion.RegionName == "City")
+            {
+                getFee = RenewalFees.CityFee;
+            }
+            else if (licenseRegion.RegionName == "Municipality")
+            {
+                getFee = RenewalFees.MunicipaltyFee;
+            }
+            else
+            {
+                getFee = 0;
+            }
+
+            // var Fees = _db.PostFormationFees.Where(n => n.Code == process).FirstOrDefault();
             var PenaltyFees = _db.PostFormationFees.Where(n => n.Code == "PNL").FirstOrDefault();
             var penalty = time * PenaltyFees.Fee;
-            var totalfee = penalty + Fees.Fee;
+            var totalfee = penalty +  getFee;
 
             Payments payment = null;
             var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "renewal").OrderByDescending(x => x.DateAdded).FirstOrDefault();
@@ -146,33 +175,87 @@ namespace LLB.Controllers
             }
             ViewBag.Payment = payment;
             ViewBag.Process = process;
-            ViewBag.Fee = Fees;
+            ViewBag.Fee = getFee;
             ViewBag.Penalty = penalty;
             ViewBag.TotalFee = totalfee;
             ViewBag.Months = time;
             ViewBag.Outletinfo = outletinfo;
             ViewBag.Appinfo = appinfo;
-            ViewBag.ServeFee = serv;
+            ViewBag.ServeFee = getFee;
             return View();
         }
 
 
-        [HttpPost("Renewal")]
-        public IActionResult Renewal(Renewals renewal, IFormFile HealthCert, IFormFile CertifiedLicense)
-        {
-            renewal.Id = Guid.NewGuid().ToString();
-            renewal.DateApplied = DateTime.Now;
-            _db.Add(renewal);
-            _db.SaveChanges();
+        //[HttpPost("Renewal")]
+        //public IActionResult Renewal(Renewals renewal, IFormFile HealthCert, IFormFile CertifiedLicense)
+        //{
+        //    renewal.Id = Guid.NewGuid().ToString();
+        //    renewal.DateApplied = DateTime.Now;
+        //    _db.Add(renewal);
+        //    _db.SaveChanges();
 
+        //    var serv = _db.PostFormationFees.Where(a => a.Code == process).FirstOrDefault();
+        //    var appinfo = _db.ApplicationInfo.Where(b => b.Id == renewal.ApplicationId).FirstOrDefault();
+        //    var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == renewal.ApplicationId && c.Status == "active").FirstOrDefault();
 
-            //var appl = _db.ApplicationInfo.Where(w => w.Id == renewal.ApplicationId).FirstOrDefault();
-            //var afteryear = DateTime.Now.AddYears(1);
-            //appl.ExpiryDate = afteryear;
-           // _db.Update(appl);
-           // _db.SaveChanges();
-            return RedirectToAction("Dashboard", "Home");
-        }
+        //    var today = DateTime.Now;
+        //    // var penalty = DateTime.Now.Month - appinfo.ExpiryDate.Month ;
+        //    int time;
+        //    int totalMonths = ((today.Year - appinfo.ExpiryDate.Year) * 12) + today.Month - appinfo.ExpiryDate.Month;
+        //    if (totalMonths <= 0)
+        //    {
+        //        time = 0;
+        //    }
+        //    else
+        //    {
+        //        time = totalMonths;
+
+        //    }
+        //    var Fees = _db.PostFormationFees.Where(n => n.Code == process).FirstOrDefault();
+        //    var PenaltyFees = _db.PostFormationFees.Where(n => n.Code == "PNL").FirstOrDefault();
+        //    var penalty = time * PenaltyFees.Fee;
+        //    var totalfee = penalty + Fees.Fee;
+
+        //    Payments payment = null;
+        //    var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "renewal").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+        //    if (paymentTrans == null)
+        //    {
+
+        //    }
+        //    else
+        //    {
+        //        var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+
+        //        var status = paynow.PollTransaction(paymentTrans.PollUrl);
+
+        //        var statusdata = status.GetData();
+        //        paymentTrans.PaynowRef = statusdata["paynowreference"];
+        //        paymentTrans.PaymentStatus = statusdata["status"];
+        //        paymentTrans.Status = statusdata["status"];
+        //        paymentTrans.DateUpdated = DateTime.Now;
+
+        //        _db.Update(paymentTrans);
+        //        _db.SaveChanges();
+        //        payment = paymentTrans;
+        //    }
+        //    //var appl = _db.ApplicationInfo.Where(w => w.Id == renewal.ApplicationId).FirstOrDefault();
+        //    //var afteryear = DateTime.Now.AddYears(1);
+        //    //appl.ExpiryDate = afteryear;
+        //    // _db.Update(appl);
+        //    // _db.SaveChanges();
+        //    // return RedirectToAction("Dashboard", "Home");
+        //    ViewBag.Payment = payment;
+        //    ViewBag.Process = process;
+        //    ViewBag.Fee = Fees;
+        //    ViewBag.Penalty = penalty;
+        //    ViewBag.TotalFee = totalfee;
+        //    ViewBag.Months = time;
+        //    ViewBag.Outletinfo = outletinfo;
+        //    ViewBag.Appinfo = appinfo;
+        //    ViewBag.ServeFee = serv;
+        //    return View();
+        //  //  return View();
+        //}
 
             //                 if(process==  "RNW")
             //            {

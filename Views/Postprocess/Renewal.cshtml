@@ -30,7 +30,7 @@
                     <tr>
                         <th>Fee</th>
                         <td>
-                            @ViewBag.Fee.Fee
+                            @ViewBag.Fee
                         </td>
                     </tr>
 
@@ -78,16 +78,6 @@
 
                     @if (ViewBag.Payment == null)
                     {
-                        <tr>
-
-                            <th></th>
-
-
-                            <td><button class="btn btn-primary" onclick="Payment()"> Pay For Renewal</button></td>
-                        </tr>
-                    }
-                    else
-                    {
 
                         <form action="/Postprocess/Renewal" enctype="multipart/form-data" method="post">
 
@@ -107,7 +97,7 @@
                             <input type="hidden" name="lLBNumber" value="@ViewBag.Appinfo.LLBNum" />
                             <input type="hidden" name="PaymentStatus" value="Paid" />
                             <input type="hidden" name="penaltyPaid" value="@ViewBag.Penalty" />
-                            <input type="hidden" name="feePaid" value="@ViewBag.Fee.Fee" />
+                            <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
                             <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
                             <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />
                             @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
@@ -121,6 +111,21 @@
 
 
                         </form>
+
+
+
+                    }
+                    else
+                    {
+
+                        <tr>
+
+                            <th></th>
+
+
+                            <td><button class="btn btn-primary" onclick="Payment()"> Pay For Renewal</button></td>
+                        </tr>
+
                     }
 
 
@@ -173,7 +178,7 @@
                                     <tr>
                                         <th>Fee</th>
                                         <td>
-                                            @ViewBag.Fee.Fee
+                                            @ViewBag.Fee
                                         </td>
                                     </tr>
 
