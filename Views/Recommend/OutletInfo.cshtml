@@ -21,6 +21,40 @@
                         <input readonly type="text" name="tradingName" value="" class="form-control" id="inputName5">
                         <input readonly type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
                     </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Licence Type</label>
+                        <select type="text" name="LicenseTypeID" value="@ViewBag.Application.LicenseTypeID" class="form-control" id="inputName5">
+                            @foreach (var licensetype in ViewBag.License)
+                            {
+                                @if (@ViewBag.Application.LicenseTypeID == @licensetype.Id)
+                                {
+                                    <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
+                                }
+                                else
+                                {
+                                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
+
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Region of Operation</label>
+                        <select type="text" name="ApplicationType" value="@ViewBag.Application.ApplicationType" class="form-control" id="inputName5">
+                            @foreach (var region in ViewBag.Regions)
+                            {
+                                @if (@ViewBag.Application.ApplicationType == region.Id)
+                                {
+                                    <option selected value="@region.Id">@region.RegionName </option>
+                                }
+                                else
+                                {
+                                    <option value="@region.Id">@region.RegionName </option>
+                                }
+                            }
+                            }
+                        </select>
+                    </div>
 
                     <div class="col-12">
                         <div class="form-floating">
@@ -119,7 +153,40 @@ else
                     <input readonly type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
                     <input readonly type="hidden" name="Id" value="@ViewBag.OutletInfo.Id" class="form-control" id="inputName5">
                 </div>
+                <div class="col-md-6">
+                    <label for="inputName5" class="form-label">Licence Type</label>
+                    <select type="text" name="LicenseTypeID" value="@ViewBag.Application.LicenseTypeID" class="form-control" id="inputName5">
+                        @foreach (var licensetype in ViewBag.License)
+                        {
+                            @if (@ViewBag.Application.LicenseTypeID == @licensetype.Id)
+                            {
+                                <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
+                            }
+                            else
+                            {
+                                <option value="@licensetype.Id">@licensetype.LicenseName </option>
 
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="inputName5" class="form-label">Region of Operation</label>
+                    <select type="text" name="ApplicationType" value="@ViewBag.Application.ApplicationType" class="form-control" id="inputName5">
+                        @foreach (var region in ViewBag.Regions)
+                        {
+                            @if (@ViewBag.Application.ApplicationType == region.Id)
+                            {
+                                <option selected value="@region.Id">@region.RegionName </option>
+                            }
+                            else
+                            {
+                                <option value="@region.Id">@region.RegionName </option>
+                            }
+                        }
+                        }
+                    </select>
+                </div>
                 <div class="col-12">
                     <div class="form-floating">
                         <textarea class="form-control" name="Address" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.OutletInfo.Address</textarea>
@@ -136,13 +203,17 @@ else
                     <input readonly type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
                 </div>
 
-
+                <div class="col-md-6">
+                    <label for="inputName5" class="form-label">Council</label>
+                    <input readonly type="text" name="city" value="@ViewBag.OutletInfo.Council" class="form-control" id="inputName5">
+                </div>
 
 
 
 
             </form><!-- End Multi Columns Form -->
 
+            <br />
             <div class="row g-3">
                 @if (ViewBag.DirectorsCount <= 0)
                 {
@@ -154,23 +225,54 @@ else
                 {
 
 
-                    <table class="table table-responsiveß table-hover table-striped">
-                        @foreach (var director in ViewBag.Directors)
-                        {
+                    <table class="table table-responsive table-hover table-striped">
+                        <thead>
                             <tr>
-                                <th scope="row">@director.Name</th>
-                                <th scope="row">@director.Surname</th>
-                                <th scope="row">@director.Address</th>
-                                <th scope="row">
-                                    @*     <button type="button" class="btn btn-primary">View</button>
-                                        <button type="button" class="btn btn-default">Edit</button>
-                                        <button type="button" class="btn btn-danger">Delete </button>
-                                    *@
-                                </th>
-
+                                <th>Name</th>
+                                <th>Surname</th>
+                                <th>Address</th>
+                                <th>National Id</th>
+                                <th>finger Prints</th>
+                                <th>Form 55</th>
                             </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var director in ViewBag.Directors)
+                            {
+                                <tr>
+                                    <th scope="row">@director.Name</th>
+                                    <th scope="row">@director.Surname</th>
+                                    <th scope="row">@director.Address</th>
+                                    <th scope="row">
+                                        @if (director.NatId == "" || director.NatId == null)
+                                        {<a>No Attachment</a>}
+                                        else
+                                        {<a target="_blank" href="~/@director.NatId"> National Id</a>}
+                                    </th>
+                                    <th scope="row">
+                                        @if (director.FingerPrints == "" || director.FingerPrints == null)
+                                        {<a>No Attachment</a>}
+                                        else
+                                        {<a target="_blank" href="~/@director.FingerPrints"> Fingerprints</a>
+                                        }
+                                    </th>
+                                    <th scope="row">
+                                        @if (director.Form55 == "" || director.Form55 == null)
+                                        {
+                                            <a>No Attachment</a>
+                                        }
+                                        else
+                                        {
+                                            <a target="_blank" href="~/@director.Form55"> Form 55</a>
+                                        }
+                                    </th>
 
-                        }
+
+
+                                </tr>
+
+                            }
+                        </tbody>
                     </table>
 
                 }

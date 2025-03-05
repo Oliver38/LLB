@@ -310,7 +310,16 @@ namespace LLB.Migrations
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("FingerPrints")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Form55")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NatId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NationalId")
@@ -479,6 +488,9 @@ namespace LLB.Migrations
                     b.Property<string>("Fingerprints")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Form55")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
@@ -510,7 +522,13 @@ namespace LLB.Migrations
                     b.Property<string>("ApplicationId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ApplicationType")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("City")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Council")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("DateAdded")
@@ -520,6 +538,9 @@ namespace LLB.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("DirectorNames")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LicenseTypeID")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Province")
@@ -992,6 +1013,82 @@ namespace LLB.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TransferTypes");
+                });
+
+            modelBuilder.Entity("LLB.Models.TransferwmanagerRegion", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateAdded")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Removalame")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TransferwmanagerRegion");
+                });
+
+            modelBuilder.Entity("LLB.Models.TransferwmanagerTypes", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double>("CityFee")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("DateAdded")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LicenseCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("MunicipaltyFee")
+                        .HasColumnType("float");
+
+                    b.Property<double>("RDCFee")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("TownFee")
+                        .HasColumnType("float");
+
+                    b.Property<string>("TransferwmanagerConditionList")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TransferwmanagerInstructions")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TransferwmanagerName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TransferwmanagerTypes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

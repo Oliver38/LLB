@@ -21,7 +21,14 @@
 
                 <table class="table table-responsiveß table-hover table-stri ped">
                     <thead>
-
+                        <tr>
+                            <th>Name</th>
+                            <th>Surname</th>
+                            <th>National ID</th>
+                            <th>National ID Copy</th>
+                            <th>Finger Prints</th>
+                            <th>Form 55</th>
+                        </tr>
                     </thead>
                     <tbody>
                         @foreach (var manager in ViewBag.ManagersInfo)
@@ -30,7 +37,26 @@
                                 <td>@manager.Name</td>
                                 <td>@manager.Surname</td>
                                 <td>@manager.NationalId</td>
-                                <td><a target="_blank" href="~/@manager.Attachment"> National Id Copy</a></td>
+                                <td>
+                                    @if (manager.Attachment == "" || manager.Attachment == null)
+                                    {<a>No Attachment</a> }
+                                    else
+                                    {<a target="_blank" href="~/@manager.Attachment"> National Id </a>}
+                                </td>
+                                <td>
+                                    @if (manager.Fingerprints == "" || manager.Fingerprints == null)
+                                    {<a>No Attachment</a>}
+                                    else
+                                    {<a target="_blank" href="~/@manager.Fingerprints"> Fingerprints</a>}
+                                </td>
+
+                                <td>
+                                    @if (manager.Form55 == "" || manager.Form55 == null)
+                                    {<a>No Attachment</a>}
+                                    else
+                                    {<a target="_blank" href="~/@manager.Form55"> Form 55</a>}
+                                </td>
+                               
 
                             </tr>
                         }

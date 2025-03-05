@@ -27,16 +27,18 @@
 
                     <table class="table table-responsiveß table-hover table-striped">
 
-                        <tr>
+                       
                         <thead>
-                        <th>Trading Name </th>
-                        <th>Operating Address </th>
-                        <th>Application Date </th>
-                        <th>License </th>
-                        <th>For </th>
-                        <th>Status </th>
+                            <tr>
+                                <th>Trading Name </th>
+                                <th>Operating Address </th>
+                                <th>Application Date </th>
+                                <th>License </th>
+                                <th>For </th>
+                                <th>Status </th>
+                            </tr>
                         </thead>
-                        </tr>
+                        
                         <tbody>
                             @foreach (var application in ViewBag.Applications)
                             {
@@ -130,17 +132,19 @@
 
                     <table class="table table-responsiveß table-hover table-striped">
 
-                        <tr>
+                        
                         <thead>
-                        <th>Trading Name </th>
-                        <th>Operating Address </th>
-                        <th>Application Date </th>
-                        <th>License </th>
-                        <th>For </th>
-                        <th>Status </th>
-                        <th>Task Status </th>
+                            <tr>
+                                <th>Trading Name </th>
+                                <th>Operating Address </th>
+                                <th>Application Date </th>
+                                <th>License </th>
+                                <th>For </th>
+                                <th>Status </th>
+                                <th>Task Status </th>
+                            </tr>
                         </thead>
-                        </tr>
+
                         <tbody>
                             @foreach (var application in ViewBag.Completed)
                             {
@@ -204,6 +208,9 @@
 
                                     </td>
 
+
+
+                                    <td><span class="text-success"> completed</span></td>
                                     <td>
                                         @if (application.Status == "verified")
                                         {
@@ -212,8 +219,6 @@
                                         else
                                         {<a href="/Verify/Apply?Id=@application.Id" class="btn btn-primary">View</a>}
                                     </td>
-
-                                    <td><span class="text-success"> completed</span></td>
                                 </tr>
 
                             }

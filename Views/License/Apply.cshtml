@@ -55,10 +55,10 @@
                     }
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Business Name</label>
-                        <input type="text" name="businessName" value="" class="form-control" id="inputName5">
+                        <input type="text" name="businessName" required value="" class="form-control" id="inputName5">
                     </div>
 
-                    <div class="col-md-6">
+                    @*<div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
                         <select type="text" name="LicenseTypeID" value="" class="form-control" id="inputName5">
                             @foreach (var licensetype in ViewBag.License)
@@ -75,11 +75,11 @@
                                 <option value="@region.Id">@region.RegionName </option>
                             }
                         </select>
-                    </div>
+                    </div>*@
                     <div class="col-12">
                         <div class="form-floating">
-                            <textarea class="form-control" name="OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
-                            <label for="floatingTextarea">Applicant Physical Address</label>
+                            <textarea class="form-control" required name="OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
+                            <label for="floatingTextarea">Applicant personal physical address</label>
                         </div>
                     </div>
 
@@ -184,40 +184,40 @@ else
                         <input type="text" name="businessName" value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="inputName5">
                     </div>
 
-                    <div class="col-md-6">
-                        <label for="inputName5" class="form-label">Licence Type</label>
-                        <select type="text" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID" class="form-control" id="inputName5">
-                            @foreach (var licensetype in ViewBag.License)
-                            {
-                                @if (@ViewBag.ApplicationInfo.LicenseTypeID == @licensetype.Id)
-                                {
-                                    <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
-                                }
-                                else
-                                {
-                                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
+                    @*<div class="col-md-6">
+            <label for="inputName5" class="form-label">Licence Type</label>
+            <select type="text" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID" class="form-control" id="inputName5">
+                @foreach (var licensetype in ViewBag.License)
+                {
+                    @if (@ViewBag.ApplicationInfo.LicenseTypeID == @licensetype.Id)
+                    {
+                        <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
+                    }
+                    else
+                    {
+                        <option value="@licensetype.Id">@licensetype.LicenseName </option>
 
-                                }
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="inputName5" class="form-label">Region of Operation</label>
-                        <select type="text" name="ApplicationType" value="@ViewBag.ApplicationInfo.ApplicationType" class="form-control" id="inputName5">
-                            @foreach (var region in ViewBag.Regions)
-                            {
-                                @if (@ViewBag.ApplicationInfo.ApplicationType == region.Id)
-                                {
-                                    <option selected value="@region.Id">@region.RegionName </option>
-                                }
-                                else
-                                {
-                                    <option value="@region.Id">@region.RegionName </option>
-                                }
-                            }
-                            }
-                        </select>
-                    </div>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="inputName5" class="form-label">Region of Operation</label>
+            <select type="text" name="ApplicationType" value="@ViewBag.ApplicationInfo.ApplicationType" class="form-control" id="inputName5">
+                @foreach (var region in ViewBag.Regions)
+                {
+                    @if (@ViewBag.ApplicationInfo.ApplicationType == region.Id)
+                    {
+                        <option selected value="@region.Id">@region.RegionName </option>
+                    }
+                    else
+                    {
+                        <option value="@region.Id">@region.RegionName </option>
+                    }
+                }
+                }
+            </select>
+        </div>*@
                     <div class="col-12">
                         <div class="form-floating">
                             <textarea class="form-control" name="OperationAddress" value="@ViewBag.ApplicationInfo.OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.ApplicationInfo.OperationAddress</textarea>

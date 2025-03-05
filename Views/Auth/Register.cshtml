@@ -2,65 +2,65 @@
     Layout = "_Layout";
 }
 @*
-<!-- Page Header Start -->
-<div class="container-fluid page-header mb-5 p-0" style="background-image: url(img/carousel-1.jpg);">
-    <div class="container-fluid page-header-inner py-5">
-        <div class="container text-center pb-5">
-            <h1 class="display-3 text-white mb-3 animated slideInDown">Booking</h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb justify-content-center text-uppercase">
-                    <li class="breadcrumb-item"><a href="#">Home</a></li>
-                    <li class="breadcrumb-item"><a href="#">Pages</a></li>
-                    <li class="breadcrumb-item text-white active" aria-current="page">Booking</li>
-                </ol>
-            </nav>
-        </div>
-    </div>
-</div>
-<!-- Page Header End -->
-<!-- Booking Start -->
-<div class="container-fluid booking pb-5 wow fadeIn" data-wow-delay="0.1s">
-    <div class="container">
-        <div class="bg-white shadow" style="padding: 35px;">
-            <div class="row g-2">
-                <div class="col-md-10">
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <div class="date" id="date1" data-target-input="nearest">
-                                <input type="text" class="form-control datetimepicker-input"
-                                       placeholder="Check in" data-target="#date1" data-toggle="datetimepicker" />
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="date" id="date2" data-target-input="nearest">
-                                <input type="text" class="form-control datetimepicker-input" placeholder="Check out" data-target="#date2" data-toggle="datetimepicker" />
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select">
-                                <option selected>Adult</option>
-                                <option value="1">Adult 1</option>
-                                <option value="2">Adult 2</option>
-                                <option value="3">Adult 3</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-select">
-                                <option selected>Child</option>
-                                <option value="1">Child 1</option>
-                                <option value="2">Child 2</option>
-                                <option value="3">Child 3</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-primary w-100">Submit</button>
-                </div>
+    <!-- Page Header Start -->
+    <div class="container-fluid page-header mb-5 p-0" style="background-image: url(img/carousel-1.jpg);">
+        <div class="container-fluid page-header-inner py-5">
+            <div class="container text-center pb-5">
+                <h1 class="display-3 text-white mb-3 animated slideInDown">Booking</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center text-uppercase">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                        <li class="breadcrumb-item"><a href="#">Pages</a></li>
+                        <li class="breadcrumb-item text-white active" aria-current="page">Booking</li>
+                    </ol>
+                </nav>
             </div>
         </div>
     </div>
-</div>*@
+    <!-- Page Header End -->
+    <!-- Booking Start -->
+    <div class="container-fluid booking pb-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container">
+            <div class="bg-white shadow" style="padding: 35px;">
+                <div class="row g-2">
+                    <div class="col-md-10">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <div class="date" id="date1" data-target-input="nearest">
+                                    <input type="text" class="form-control datetimepicker-input"
+                                           placeholder="Check in" data-target="#date1" data-toggle="datetimepicker" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="date" id="date2" data-target-input="nearest">
+                                    <input type="text" class="form-control datetimepicker-input" placeholder="Check out" data-target="#date2" data-toggle="datetimepicker" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select">
+                                    <option selected>Adult</option>
+                                    <option value="1">Adult 1</option>
+                                    <option value="2">Adult 2</option>
+                                    <option value="3">Adult 3</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select">
+                                    <option selected>Child</option>
+                                    <option value="1">Child 1</option>
+                                    <option value="2">Child 2</option>
+                                    <option value="3">Child 3</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>*@
 <!-- Booking End -->
 <!-- Booking Start -->
 <div class="container-xxl py-5">
@@ -94,8 +94,10 @@
             </div>
             <div class="col-lg-6">
                 <div class="wow fadeInUp" data-wow-delay="0.2s">
-                    <div class="row center"><span class="text-success">@TempData["success"]</span>
-                                     <span class="text-danger">@TempData["error"]</span></div>
+                    <div class="row center">
+                        <span class="text-success">@TempData["success"]</span>
+                        <span class="text-danger">@TempData["error"]</span>
+                    </div>
                     <form action="/Auth/Register" method="post" enctype="multipart/form-data">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -112,7 +114,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating date">
-                                    <input type="email" class="form-control" id="email" name="email" />
+                                    <input type="email" class="form-control" required id="email" name="email" />
                                     <label for="checkin">Email</label>
                                 </div>
                             </div>
@@ -125,17 +127,24 @@
 
                             <div class="col-md-6">
                                 <div class="form-floating date">
-                                    <select type="text" class="form-control" id="countrySelect" name="Nationality" ></select>
+                                    <select type="text" class="form-control" required onblur="checkNat()" id="countrySelect" name="Nationality"></select>
                                     <label for="checkin">Nationality</label>
                                 </div>
                             </div>
 
-                            <div class="col-md-6">
-                                <div class="form-floating date">
-                                    <input type="text" class="form-control" id="natID" name="natID" />
-                                    <label for="checkin">National ID/ Passport</label>
-                                </div>
+                            @*<div class="col-md-6">
+            <div class="form-floating date">
+                <input type="text" class="form-control" required id="natid" onblur="myFunction()" name="natID" />
+                <label for="checkin">National ID/ Passport</label>
+                <div style="color:red;" id="idbad"></div>
+                <div style="color:green;" id="idgood"></div>
+            </div>
+        </div>*@
+
+                            <div class="col-md-6" id="idContainer">
+                                <!-- The input field will be dynamically inserted here -->
                             </div>
+
                             <div class="col-md-6">
                                 <div class="form-floating date" id="date4" data-target-input="nearest">
                                     <input type="date" class="form-control" id="checkout" name="dOB" placeholder="Check Out" data-target="#date4" data-toggle="datetimepicker" />
@@ -162,7 +171,6 @@
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     <select class="form-select crs-country" data-region-id="one" required name="countryOfResidence" id="select2">
-                                        
                                     </select>
                                     <label for="select2">Country Of Residence</label>
                                 </div>
@@ -170,7 +178,6 @@
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     <select class="form-select" id="one" name="province">
-                                       
                                     </select>
                                     <label for="select2">Province</label>
                                 </div>
@@ -188,7 +195,7 @@
                                 </div>
                             </div>
                             <div class="col-12">
-                                <button style="background-color:#008000" class="btn btn-primary w-100 py-3" type="submit">Register</button>
+                                <button style="background-color:#008000" id="myBtnciti" class="btn btn-primary w-100 py-3" type="submit">Register</button>
                             </div>
                         </div>
                     </form>
@@ -215,3 +222,77 @@
     </div>
 </div>
 <!-- Newsletter Start -->
+
+
+<script>function myFunction() {
+
+        //$("#idbad").empty();
+        var x = document.getElementById("natid");
+        x.value = x.value.toUpperCase();
+
+        var data = $("#natid").val();
+        //console.log(data);
+        // $("#idgood").empty();
+
+        // alert(data);
+        // e.preventDefaut();
+
+
+        $.ajax({
+            type: 'GET',
+            url: '/Auth/CheckId',
+            contentType: "application/json; charset=utf-8",
+
+            datatype: 'text',
+            data: { natid: data },
+            success: function (data) {
+                if (data.success === "ok") {
+                    // alert();
+                    $('#idbad').html('');
+                    $('#idgood').html(data.msg);
+                    document.getElementById("myBtnciti").disabled = false;
+                } else {
+                    // DoSomethingElse()
+                    // alert(response.responseText);
+                    $('#idgood').html('');
+                    $('#idbad').html(data.msg);
+                    document.getElementById("myBtnciti").disabled = true;
+                }
+            },
+            error: function (data) {
+                $('#idgood').html('');
+                $('#idbad').html(data.msg); //
+                document.getElementById("myBtnciti").disabled = true;
+            }
+
+        });
+
+
+
+
+    }</script>
+
+<script>function checkNat() {
+        var country = $("#countrySelect").val();
+        var idContainer = $("#idContainer");
+
+        if (country === "Zimbabwe") {
+            idContainer.html(`
+                    <div class="form-floating date">
+                        <input type="text" class="form-control" required id="natid" onblur="myFunction()" name="natID" />
+                        <label for="checkin">National ID</label>
+                        <div style="color:red;" id="idbad"></div>
+                        <div style="color:green;" id="idgood"></div>
+                    </div>
+                `);
+        } else {
+            idContainer.html(`
+                    <div class="form-floating date">
+                        <input type="text" class="form-control" required id="natid" name="natID" />
+                        <label for="checkin">Passport</label>
+                        <div style="color:red;" id="idbad"></div>
+                        <div style="color:green;" id="idgood"></div>
+                    </div>
+                `);
+        }
+    }</script>

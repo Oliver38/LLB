@@ -56,8 +56,9 @@
                             <th>Name</th>
                             <th>Surname</th>
                             <th>National Id</th>
-                            <th>National Id Copy</th>
-                            <th>Fingerpints Copy</th>
+                            <th>National Id </th>
+                            <th>Fingerpints </th>
+                            <th>Form 55</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -65,14 +66,27 @@
                         {
                         <tr>
                             <td>@manager.Name</td>
-                            <td>@manager.Surname</td> 
+                            <td>@manager.Surname</td>
                             <td>@manager.NationalId</td>
-                            <td>@if (manager.Attachment == "" || manager.Attachment == null) {<a>No Attachment</a> }
-                                else{<a target="_blank" href="~/@manager.Attachment"> National Id Copy</a>}</td>
-                            <td>@if (manager.Fingerprints == "" || manager.Fingerprints == null) {<a>No Attachment</a>}
+                            <td>
+                                @if (manager.Attachment == "" || manager.Attachment == null)
+                                {<a>No Attachment</a> }
                                 else
-                                {<a target="_blank" href="~/@manager.Fingerprints"> Fingerprints</a>}</td>
-                         
+                                {<a target="_blank" href="~/@manager.Attachment"> National Id </a>}
+                        </td>
+                        <td>
+                            @if (manager.Fingerprints == "" || manager.Fingerprints == null)
+                            {<a>No Attachment</a>}
+                            else
+                            {<a target="_blank" href="~/@manager.Fingerprints"> Fingerprints</a>}
+                        </td>
+
+                        <td>
+                            @if (manager.Form55 == "" || manager.Form55 == null)
+                            {<a>No Attachment</a>}
+                            else
+                            {<a target="_blank" href="~/@manager.Form55"> Form 55</a>}
+                        </td>
                         </tr>
                         }
                     </tbody>
@@ -106,7 +120,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Adding Director Details </h5> <h5 class="modal-title" id="feetitle"></h5>
+                <h5 class="modal-title">Adding Manager Details </h5> <h5 class="modal-title" id="feetitle"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="/License/ManagersInfo" enctype="multipart/form-data" method="post">
@@ -138,6 +152,11 @@
                         <div class="col-md-12">
                             <label for="inputName5" class="form-label">Fingerprints Copy</label>
                             <input type="file" name="fileb" class="form-control" id="fileb">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">Form 55</label>
+                            <input type="file" name="form55" class="form-control" id="fileb">
                         </div>
                     </div>
                 </div>

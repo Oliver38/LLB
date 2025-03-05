@@ -16,6 +16,10 @@ namespace LLB.Models
         public string? NationalId { get; set; }
         public string? Address { get; set; }
         public string? Status { get; set; }
+        public string? NatId { get; set; }
+        public string? Form55 { get; set; }
+        public string? FingerPrints { get; set; }
+
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }
 

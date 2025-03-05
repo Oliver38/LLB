@@ -21,25 +21,25 @@
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Surname</label>
-                        <input type="text" value="@ViewBag.User.LastName" name="licenseName" class="form-control" id="inputName5">
+                        <input type="text" value="@ViewBag.User.LastName" name="licenseName" readonly class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">DOB</label>
-                        <input type="text" name="licenseName" value="@ViewBag.User.DOB" class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.DOB" readonly class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Gender</label>
-                        <input type="text" name="licenseName" value="@ViewBag.User.Gender" class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.Gender" readonly class="form-control" id="inputName5">
                     </div>
 
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Business Name</label>
-                        <input type="text" name="businessName" value="" class="form-control" id="inputName5">
+                        <input type="text" name="businessName" value="" class="form-control" readonly id="inputName5">
                     </div>
 
-                    <div class="col-md-6">
+                    @*<div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
-                        <select type="text" name="LicenseTypeID" value="" class="form-control" id="inputName5">
+                        <select type="text" name="LicenseTypeID" value="" class="form-control" readonly id="inputName5">
                             @foreach (var licensetype in ViewBag.License)
                             {
                                 <option value="@licensetype.Id">@licensetype.LicenseName </option>
@@ -48,16 +48,16 @@
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Region of Operation</label>
-                        <select type="text" name="ApplicationType" value="" class="form-control" id="inputName5">
+                        <select type="text" name="ApplicationType" value="" class="form-control" readonly id="inputName5">
                             @foreach (var region in ViewBag.Regions)
                             {
                                 <option value="@region.Id">@region.RegionName </option>
                             }
                         </select>
-                    </div>
+                    </div>*@
                     <div class="col-12">
                         <div class="form-floating">
-                            <textarea class="form-control" name="OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
+                            <textarea class="form-control" name="OperationAddress" readonly placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
                             <label for="floatingTextarea">Operational Address</label>
                         </div>
                     </div>
@@ -109,7 +109,7 @@ else
                         <input type="text" name="businessName" value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="inputName5">
                     </div>
 
-                    <div class="col-md-6">
+                    @*<div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
                         <select type="text" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID" class="form-control" id="inputName5">
                             @foreach (var licensetype in ViewBag.License)
@@ -142,7 +142,7 @@ else
                             }
                             }
                         </select>
-                    </div>
+                    </div>*@
                     <div class="col-12">
                         <div class="form-floating">
                             <textarea class="form-control" name="OperationAddress" value="@ViewBag.ApplicationInfo.OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.ApplicationInfo.OperationAddress</textarea>

@@ -113,6 +113,12 @@ namespace LLB.Controllers
             var outletInfo = _db.OutletInfo.Where(b => b.ApplicationId == Id).FirstOrDefault();
             var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == Id).ToList();
             // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
+
+            var licenses = _db.LicenseTypes.ToList();
+            var regions = _db.LicenseRegions.ToList();
+
+            ViewBag.Regions = regions;
+            ViewBag.License = licenses;
             TempData["result"] = error;
             ViewBag.Application = application;
             ViewBag.OutletInfo = outletInfo;

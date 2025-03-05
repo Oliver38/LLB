@@ -102,6 +102,11 @@ namespace LLB.Controllers
             // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
             var task = _db.Tasks.Where(q => q.ApplicationId == Id && q.Status == "assigned").OrderByDescending(x => x.DateAdded).FirstOrDefault();
 
+            var license = _db.LicenseTypes.ToList();
+            var regions = _db.LicenseRegions.ToList();
+
+            ViewBag.Regions = regions;
+            ViewBag.License = license;
             ViewBag.Task = task;
             TempData["result"] = error;
             ViewBag.Application = application;

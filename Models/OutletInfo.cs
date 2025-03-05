@@ -17,6 +17,10 @@ namespace LLB.Models
         public string? City { get; set; }
         public string? DirectorNames { get; set; }
         public string? Status { get; set; }
+        public string? ApplicationType { get; set; }
+        //public string BusinessName { get; set; }
+        public string? LicenseTypeID { get; set; }
+        public string? Council { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }
 

@@ -20,6 +20,9 @@ using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Crypto;
 using LLB.Helpers;
 using System.Threading.Tasks;
+using System.Drawing;
+using System.IO;
+using static Google.Protobuf.Compiler.CodeGeneratorResponse.Types;
 
 
 namespace LLB.Controllers
@@ -182,12 +185,16 @@ namespace LLB.Controllers
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             var outletInfo = _db.OutletInfo.Where(b => b.ApplicationId == Id).FirstOrDefault();
             var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == Id).ToList();
+            var licenses = _db.LicenseTypes.ToList();
+            var regions = _db.LicenseRegions.ToList();
             // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
             var queries = _db.Queries.Where(x => x.ApplicationId == Id && x.Status == "Has Query").ToList();
             ViewBag.Queries = queries;
             ViewBag.Application = application;
             ViewBag.OutletInfo = outletInfo;
             ViewBag.Directors = directorsInfo;
+            ViewBag.Regions = regions;
+            ViewBag.License = licenses;
             ViewBag.DirectorsCount = directorsInfo.Count();
             //ViewBag.User = user;
 
@@ -197,6 +204,7 @@ namespace LLB.Controllers
         [HttpPost(("OutletInfo"))]
         public async Task<IActionResult> OutletInfoAsync(OutletInfo outletInfo)
         {
+
             /*    public string? Id { get; set; }
           public string? ApplicationId { get; set; }
           public string? UserId { get; set; }
@@ -210,6 +218,15 @@ namespace LLB.Controllers
           public DateTime DateUpdated { get; set; }*/
             if (outletInfo.Id == null)
             {
+                var outletInfocb = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
+                if(outletInfocb != null)
+                {
+                   // return RedirectPermanent(Url.Action("OutletInfo", "Apply", new { Id = outletInfocb.ApplicationId }));
+                    
+            //return RedirectToAction("Finalising", new { Id = Id, error = error, gateway = gateway });
+
+                      return RedirectToAction("Apply", new { Id = outletInfocb.ApplicationId });
+                }
                 outletInfo.Id = Guid.NewGuid().ToString();
 
                 var userId = await userManager.FindByEmailAsync(User.Identity.Name);
@@ -225,14 +242,24 @@ namespace LLB.Controllers
 
                 // 00826805 - 0853 - 45c5 - 9fe3 - bce855854091
                 var application = _db.ApplicationInfo.Where(a => a.Id == outletInfo.ApplicationId).FirstOrDefault();
+                application.ApplicationType = outletInfo.ApplicationType;
+                application.LicenseTypeID = outletInfo.LicenseTypeID;
+                _db.Update(application);
+                _db.SaveChanges();
+
                 var outletInfob = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
                 var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == outletInfo.ApplicationId).ToList();
                 // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
                 var queries = _db.Queries.Where(x => x.ApplicationId == outletInfo.ApplicationId && x.Status == "Has Query").ToList();
+                var licenses = _db.LicenseTypes.ToList();
+                var regions = _db.LicenseRegions.ToList();
+
                 ViewBag.Queries = queries;
                 ViewBag.Application = application;
                 ViewBag.OutletInfo = outletInfob;
                 ViewBag.Directors = directorsInfo;
+                ViewBag.Regions = regions;
+                ViewBag.License = licenses;
                 ViewBag.DirectorsCount = directorsInfo.Count();
                 TempData["result"] = "Applicant details successfully added";
                 return View();
@@ -250,22 +277,37 @@ namespace LLB.Controllers
                 updateOutletInfo.Address = outletInfo.Address;
                 updateOutletInfo.Province = outletInfo.Province;
                 updateOutletInfo.City = outletInfo.City;
+                updateOutletInfo.ApplicationType = outletInfo.ApplicationType;
+                updateOutletInfo.LicenseTypeID = outletInfo.LicenseTypeID;
 
                 updateOutletInfo.DateUpdated = DateTime.Now;
                 _db.Update(updateOutletInfo);
                 _db.SaveChanges();
 
 
+             //   var applicationb = _db.ApplicationInfo.Where(a => a.Id == outletInfo.ApplicationId).FirstOrDefault();
+               
+
                 // 00826805 - 0853 - 45c5 - 9fe3 - bce855854091
                 var application = _db.ApplicationInfo.Where(a => a.Id == outletInfo.ApplicationId).FirstOrDefault();
+                application.ApplicationType = outletInfo.ApplicationType;
+                application.LicenseTypeID = outletInfo.LicenseTypeID;
+                _db.Update(application);
+                _db.SaveChanges();
+
                 var outletInfob = _db.OutletInfo.Where(b => b.ApplicationId == outletInfo.ApplicationId).FirstOrDefault();
                 var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == outletInfo.ApplicationId).ToList();
                 // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
                 var queries = _db.Queries.Where(x => x.ApplicationId == outletInfo.ApplicationId && x.Status == "Has Query").ToList();
+                var licenses = _db.LicenseTypes.ToList();
+                var regions = _db.LicenseRegions.ToList();
+
                 ViewBag.Queries = queries;
                 ViewBag.Application = application;
                 ViewBag.OutletInfo = outletInfob;
                 ViewBag.Directors = directorsInfo;
+                ViewBag.Regions = regions;
+                ViewBag.License = licenses;
                 ViewBag.DirectorsCount = directorsInfo.Count();
                 TempData["result"] = "Applicant details successfully Updated";
                 return View();
@@ -277,7 +319,7 @@ namespace LLB.Controllers
         }
 
         [HttpPost(("Director"))]
-        public async Task<IActionResult> DirectorAsync(DirectorDetails directorDetails)
+        public async Task<IActionResult> DirectorAsync(DirectorDetails directorDetails, IFormFile natid, IFormFile fingerprints , IFormFile form55)
         {
 
             /*     public string? Id { get; set; }
@@ -298,6 +340,63 @@ namespace LLB.Controllers
             directorDetails.UserId = id;
             directorDetails.DateAdded = DateTime.Now;
             directorDetails.DateUpdated = DateTime.Now;
+
+
+            if (natid != null)
+            {
+                string picb = System.IO.Path.GetFileName(natid.FileName);
+                string dicb = System.IO.Path.GetExtension(natid.FileName);
+                string newname =directorDetails.ApplicationId;
+                string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
+                directorDetails.NatId = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await natid.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                directorDetails.NatId = "";
+            }
+
+            if (form55 != null)
+            {
+                string picb = System.IO.Path.GetFileName(form55.FileName);
+                string dicb = System.IO.Path.GetExtension(form55.FileName);
+                string newname = directorDetails.ApplicationId;
+                string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
+                directorDetails.Form55 = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await form55.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                directorDetails.Form55 = "";
+            }
+
+
+            if (fingerprints != null)
+            {
+                string picb = System.IO.Path.GetFileName(fingerprints.FileName);
+                string dicb = System.IO.Path.GetExtension(fingerprints.FileName);
+                string newname = directorDetails.ApplicationId;
+                string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
+                directorDetails.FingerPrints = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await fingerprints.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                directorDetails.FingerPrints = "";
+            }
+
             _db.Add(directorDetails);
             _db.SaveChanges();
 
@@ -326,7 +425,7 @@ namespace LLB.Controllers
 
 
         [HttpPost("ManagersInfo")]
-        public async Task<IActionResult> ManagersInfoAsync(ManagersParticulars manager, IFormFile file, IFormFile fileb)
+        public async Task<IActionResult> ManagersInfoAsync(ManagersParticulars manager, IFormFile file, IFormFile fileb , IFormFile form55)
         {
             /*  public string? Id { get; set; }
           public string? UserId { get; set; }
@@ -367,7 +466,7 @@ namespace LLB.Controllers
                 manager.Fingerprints = path;
                 using (Stream fileStream = new FileStream(docpath, FileMode.Create))
                 {
-                    await file.CopyToAsync(fileStream);
+                    await fileb.CopyToAsync(fileStream);
                 }
             }
             else
@@ -376,7 +475,23 @@ namespace LLB.Controllers
             }
 
 
-
+            if (form55 != null)
+            {
+                string picb = System.IO.Path.GetFileName(form55.FileName);
+                string dicb = System.IO.Path.GetExtension(form55.FileName);
+                string newname = manager.ApplicationId;
+                string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
+                manager.Form55 = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await form55.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                manager.Form55 = "";
+            }
 
 
             manager.Id = Guid.NewGuid().ToString();
@@ -412,15 +527,18 @@ namespace LLB.Controllers
             {
                 var userm = await userManager.FindByEmailAsync(User.Identity.Name);
                 //string[] documents = null;
-                if (userm.Nationality == "Zimbabwean")
+                if (userm.Nationality == "Zimbabwe")
                 {
 
                     string[] documents = {
-                        "",
-"Affidavit by transferee",
-"Lease documents",
-"Advert",
-"Manager Applicant Fingerprints",
+                        "Local Authority Letter of approval",
+                        "Health Report",
+                        "A3 Plan approved by local Environmental Health",
+                        "Proof of publication in the Government Gazette",
+//"Affidavit by transferee",
+"Lease/Deeed documents",
+
+
 
                 };
 
@@ -449,13 +567,15 @@ namespace LLB.Controllers
 
 
                     string[] documents = { "Vetted fingerprints",
-"Police report",
-"Form 55",
-"Affidavit by transferee",
-"Lease documents",
-"Advert",
-"Manager Applicant Fingerprints",
-"Letter From the Minister"
+
+//"Affidavit by transferee",
+"Permit from the minister",
+"Lease/Deeed documents",
+"Proof of publication in the Government Gazette",
+"A3 Plan approved by local Environmental Health",
+//"Manager Applicant Fingerprints",
+"Letter From the Minister",
+ "Health Report",
 
                 };
 
@@ -630,7 +750,19 @@ namespace LLB.Controllers
             var licensefees = _db.LicenseTypes.Where(a => a.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
             var managerfees = _db.LicenseTypes.Where(a => a.Id == "080146d5-6427-4db4-a851-3adb95ee208a").FirstOrDefault();
             var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
-            int managerscount = managers.Count();
+            int managerscount = 0;
+            int thecount = managers.Count();
+
+                if (thecount > 1)
+            {
+                managerscount = thecount - 1;
+            }
+            else
+            {
+                managerscount = 0;
+            }
+               
+
             finaldata.ManagersCount = managerscount;
 
             var payment = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();

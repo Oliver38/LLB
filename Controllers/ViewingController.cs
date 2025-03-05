@@ -78,6 +78,12 @@ namespace LLB.Controllers
             var directorsInfo = _db.DirectorDetails.Where(b => b.ApplicationId == Id).ToList();
             // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
 
+            var license = _db.LicenseTypes.ToList();
+            var regions = _db.LicenseRegions.ToList();
+
+
+            ViewBag.Regions = regions;
+            ViewBag.License = license;
             ViewBag.Application = application;
             ViewBag.OutletInfo = outletInfo;
             ViewBag.Directors = directorsInfo;

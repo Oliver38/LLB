@@ -37,6 +37,8 @@ namespace LLB.Data
         public DbSet<TransferTypes> TransferTypes { get; set; }
         public DbSet<RemovalRegion> RemovalRegion { get; set; }
         public DbSet<RemovalTypes> RemovalTypes{ get; set; }
+        public DbSet<TransferwmanagerRegion> TransferwmanagerRegion{ get; set; }
+        public DbSet<TransferwmanagerTypes> TransferwmanagerTypes{ get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

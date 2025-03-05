@@ -392,5 +392,496 @@ namespace LLB.Controllers
             return RedirectToAction("Register", "Auth");
         }
 
+
+        [AllowAnonymous]
+        [HttpGet("CheckId")]
+        public async Task<IActionResult> CheckId(string natid)
+        {
+            var users = userManager.Users;
+
+            foreach (var userslist in users)
+            {
+                if (userslist.NatID == natid)
+                {
+                    return Json(new { success = "err", msg = "National ID already exists with another user" });
+                }
+            }
+            if (natid == null)
+            {
+                return Json(new { success = "err", msg = "Invalid national ID." });
+
+            }
+            //////////////////////////////////////////////////////////////////////////
+            ///National Id Test
+            //////////////////////////////////////////////////////////////////////////////
+            ///
+            string natidfronnt = natid.Substring(natid.Length - 2);
+            string natidback = natid.Substring(0, 2);
+            // string natidback = natid.Substring(0, natid.Length - 2);
+            var onlyLetters = new String(natid.Where(c => Char.IsLetter(c) && Char.IsUpper(c)).ToArray());
+
+            string modint = string.Empty;
+            int val;
+            //removing last 3 charachers from national ID
+            string modchars = natid.Substring(0, natid.Length - 3);
+            for (int i = 0; i < modchars.Length; i++)
+            {
+                if (Char.IsDigit(modchars[i]))
+                    modint += modchars[i];
+            }
+
+            if (modint.Length > 0)
+                val = Int32.Parse(modint);
+            int idnum = Int32.Parse(modint);
+            //calculating mod
+            // int idnumtest = 24;
+            int letternum = (idnum % 23);
+
+            int A = 1; int B = 2; int C = 3; int D = 4; int E = 5;
+            int F = 6; int G = 7; int H = 8; int J = 9; int K = 10;
+            int L = 11; int M = 12; int N = 13; int P = 14; int Q = 15;
+            int R = 16; int S = 17; int T = 18; int V = 19; int W = 20;
+            int X = 21; int Y = 22; int Z = 0;
+
+            string message = "";
+
+            string[] dcodes = { "08", "63", "07", "44", "13", "42", "75", "50", "34", "05", "71", "15", "45", "11", "61", "68", "18", "25", "80", "43", "49", "47", "48", "59", "85", "32", "38", "24", "37", "70", "86", "04", "14", "13", "27", "22", "54", "83", "06", "35", "79", "41", "53", "73", "84", "02", "56", "28", "21", "39", "19", "77", "26", "23", "29", "58", "03", "66", "67", "12", "00" };
+            if (dcodes.Contains(natidfronnt) && dcodes.Contains(natidback))
+            {
+                //Process.Start("BLAH BLAH CODE TO ADD PRINTER VIA WINDOWS EXEC"");
+
+                if (letternum == A)
+                {
+                    if (onlyLetters == "A")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == B)
+                {
+                    if (onlyLetters == "B")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+
+                if (letternum == C)
+                {
+                    if (onlyLetters == "C")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == D)
+                {
+                    if (onlyLetters == "D")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == E)
+                {
+                    if (onlyLetters == "E")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == F)
+                {
+                    if (onlyLetters == "F")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == G)
+                {
+                    if (onlyLetters == "G")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == H)
+                {
+                    if (onlyLetters == "H")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == J)
+                {
+                    if (onlyLetters == "J")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == K)
+                {
+                    if (onlyLetters == "K")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == L)
+                {
+                    if (onlyLetters == "L")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == M)
+                {
+                    if (onlyLetters == "M")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == N)
+                {
+                    if (onlyLetters == "N")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == P)
+                {
+                    if (onlyLetters == "P")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == Q)
+                {
+                    if (onlyLetters == "Q")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == R)
+                {
+                    if (onlyLetters == "R")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == S)
+                {
+                    if (onlyLetters == "S")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == T)
+                {
+                    if (onlyLetters == "T")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == V)
+                {
+                    if (onlyLetters == "V")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == W)
+                {
+                    if (onlyLetters == "W")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == X)
+                {
+                    if (onlyLetters == "X")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == Y)
+                {
+                    if (onlyLetters == "Y")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+                if (letternum == Z)
+                {
+                    if (onlyLetters == "Z")
+                    {
+                        return Json(new { success = "ok", msg = "Valid national ID" });
+                    }
+                    else
+                    {
+                        TempData["flash"] = "1";
+                        TempData["error"] = "Invalid National  ID";
+                        return Json(new { success = "err", msg = "Invalid national ID." });
+                    }
+                }
+                else
+                {
+                    message = " Invalid National ID";
+                }
+
+
+            }
+            else
+            {
+                TempData["flash"] = "1";
+                TempData["error"] = "Invalid National  ID";
+                return Json(new { success = "err", msg = "Invalid national ID." });
+
+            }
+
+            return Json(new { success = "err", msg = "Invalid national ID." });
+        }
+
+
+
     }
 }
