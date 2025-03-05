@@ -319,7 +319,7 @@ namespace LLB.Controllers
         }
 
         [HttpPost(("Director"))]
-        public async Task<IActionResult> DirectorAsync(DirectorDetails directorDetails, IFormFile natid, IFormFile fingerprints , IFormFile form55)
+        public async Task<IActionResult> DirectorAsync(DirectorDetails directorDetails, IFormFile natid, IFormFile fingerprints , IFormFile form)
         {
 
             /*     public string? Id { get; set; }
@@ -360,17 +360,17 @@ namespace LLB.Controllers
                 directorDetails.NatId = "";
             }
 
-            if (form55 != null)
+            if (form != null)
             {
-                string picb = System.IO.Path.GetFileName(form55.FileName);
-                string dicb = System.IO.Path.GetExtension(form55.FileName);
+                string picb = System.IO.Path.GetFileName(form.FileName);
+                string dicb = System.IO.Path.GetExtension(form.FileName);
                 string newname = directorDetails.ApplicationId;
                 string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
                 string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
                 directorDetails.Form55 = path;
                 using (Stream fileStream = new FileStream(docpath, FileMode.Create))
                 {
-                    await form55.CopyToAsync(fileStream);
+                    await form.CopyToAsync(fileStream);
                 }
             }
             else
