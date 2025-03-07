@@ -82,10 +82,14 @@
     <Folder Include="Views\Transferfees\" />
     <Folder Include="Views\Removalfees\" />
     <Folder Include="Views\Transferwmanagerfees\" />
+    <Folder Include="wwwroot\DirectorFingerprints\" />
+    <Folder Include="wwwroot\ApplicantInfo\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />
     <Content Remove="wwwroot\NiceAdmin\assets\js\jquery.min.js" />
+    <Content Remove="wwwroot\DirectorFingerprints\" />
+    <Content Remove="wwwroot\ApplicantInfo\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="wwwroot\NiceAdmin\assets\js\jquery.min.js" />

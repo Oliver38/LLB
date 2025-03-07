@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-string dbconnection = @"Server=WIN-O10LM7EQGIN\SQLEXPRESS;Database=llb;;User Id=sa;Password=Password123;MultipleActiveResultSets=true;Initial Catalog=llb; Integrated Security=False  ;  TrustServerCertificate=True";
+string dbconnection = @"Server=localhost,1433;Database=llb;;User Id=sa;Password=Password123;MultipleActiveResultSets=true;Initial Catalog=llb; Integrated Security=False  ;  TrustServerCertificate=True";
 builder.Services.AddDbContextPool<AppDbContext>(options => options.UseSqlServer(dbconnection));
 builder.Services.AddScoped<TaskAllocationHelper>();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();

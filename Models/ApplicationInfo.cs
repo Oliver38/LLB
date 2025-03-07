@@ -24,13 +24,15 @@ namespace LLB.Models
         public string? PlaceOfEntry { get; set; }
         public string? OperationAddress { get; set; }//Place of operation
         public string? LLBNum { get; set; }//Place of operation
-
+        public string? ApplicantType { get; set; }
         public string? BusinessName { get; set; }//Place of operation
-        public string? Nationality { get; set; }//Place of operation
+
+        public string? IdCopy { get; set; }
+        public string? Pclearance { get; set; }
         public string? IdPass { get; set; }//Place of operation
         //public string? Foreigner  { get; set; }//Place of operation
 
-
+       
         public string? Status { get; set; }
         public DateTime ApplicationDate { get; set; }
         public DateTime DateUpdated { get; set; }

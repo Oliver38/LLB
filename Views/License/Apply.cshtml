@@ -11,10 +11,11 @@
     <div class="row">
         <div class="card">
             <div class="card-body" id="_step1">
-                <h5 class="card-title">License Applicant Information</h5>
+                <h5 class="card-title">Licensee Information</h5>
+                <p><i>Here only the applicant's information is required </i></p>
 
                 <!-- Multi Columns Form -->
-                <form action="/License/Apply" method="post" ß enctytpe="multipart/form-data" class="row g-3">
+                <form action="/License/Apply" method="post"  enctype="multipart/form-data" class="row g-3">
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Name</label>
                         <input type="text" name="licenseName" value="@ViewBag.User.Name" readonly class="form-control" id="inputName5">
@@ -34,7 +35,7 @@
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Nationality</label>
-                        <input type="text"readonly name="nationality" value="@ViewBag.User.Nationality" class="form-control" id="inputName5">
+                        <input type="text" readonly name="nationality" value="@ViewBag.User.Nationality" class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">National ID/Passport</label>
@@ -53,29 +54,48 @@
                             <input type="date" name="dateofEntryIntoZimbabwe" value="" class="form-control" id="inputName5">
                         </div>
                     }
-                    <div class="col-md-12">
-                        <label for="inputName5" class="form-label">Business Name</label>
-                        <input type="text" name="businessName" required value="" class="form-control" id="inputName5">
-                    </div>
 
-                    @*<div class="col-md-6">
-                        <label for="inputName5" class="form-label">Licence Type</label>
-                        <select type="text" name="LicenseTypeID" value="" class="form-control" id="inputName5">
-                            @foreach (var licensetype in ViewBag.License)
-                            {
-                                <option value="@licensetype.Id">@licensetype.LicenseName </option>
-                            }
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Applicant Type</label>
+                        <select type="text" name="applicantType" required value="" class="form-control" id="inputName5">
+
+                            <option value="Individual"> Individual</option>
+                            <option value="Company"> Company</option>
+                            <option value="Company Unregistered"> Company Unregistered</option>
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label for="inputName5" class="form-label">Location of Premises</label>
-                        <select type="text" name="ApplicationType" value="" class="form-control" id="inputName5">
-                            @foreach (var region in ViewBag.Regions)
-                            {
-                                <option value="@region.Id">@region.RegionName </option>
-                            }
-                        </select>
-                    </div>*@
+                        <label for="inputName5" class="form-label">Licensee Name</label>
+                        <input type="text" name="businessName" required value="" class="form-control" id="inputName5">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">ID/Passport Copy</label>
+                        <input type="file" name="idCopyb"  value="" class="form-control" id="inputName5">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Police Clearance</label>
+                        <input type="file" name="pclearanceb" value="" class="form-control" id="inputName5">
+                    </div>
+
+                    @*<div class="col-md-6">
+            <label for="inputName5" class="form-label">Licence Type</label>
+            <select type="text" name="LicenseTypeID" value="" class="form-control" id="inputName5">
+                @foreach (var licensetype in ViewBag.License)
+                {
+                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="inputName5" class="form-label">Location of Premises</label>
+            <select type="text" name="ApplicationType" value="" class="form-control" id="inputName5">
+                @foreach (var region in ViewBag.Regions)
+                {
+                    <option value="@region.Id">@region.RegionName </option>
+                }
+            </select>
+        </div>*@
                     <div class="col-12">
                         <div class="form-floating">
                             <textarea class="form-control" required name="OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
@@ -99,50 +119,51 @@ else
     <div class="row">
         <div class="card">
             <div class="card-body" id="_step1">
+                <h5 class="card-title">Licensee Information</h5>
+                <p><i>Here only the applicant's information is required </i></p>
                 <div class="card-header">
-                    @if(ViewBag.Queries.Count > 0)
-                        {
-                    <!-- Default Accordion -->
-                    <div class="accordion" id="accordionExample">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingOne">
-                                <button class="accordion-button text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                    <b>Click to View Queries</b>(resolve and resubmit where necessary)
-                                </button>
-                            </h2>
-                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                <div class="accordion-body">
-                                    <!-- List group With badges -->
-                                    <ul class="list-group">
-                                    @foreach (var queries in ViewBag.Queries)
-                                        {
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            @queries.Query
-                                            <span class="badge bg-danger rounded-pill"> @queries.Status</span>
-                                            <span class="badge bg-primary rounded-pill"><a class="text-white" href="/License/ResolveQuery?Id=@queries.Id&stage=apply&applicationId=@ViewBag.ApplicationInfo.Id">Click to Resolve Query</a></span>
+                    @if (ViewBag.Queries.Count > 0)
+                    {
+                        <!-- Default Accordion -->
+                        <div class="accordion" id="accordionExample">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingOne">
+                                    <button class="accordion-button text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                        <b>Click to View Queries</b>(resolve and resubmit where necessary)
+                                    </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                    <div class="accordion-body">
+                                        <!-- List group With badges -->
+                                        <ul class="list-group">
+                                            @foreach (var queries in ViewBag.Queries)
+                                            {
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    @queries.Query
+                                                    <span class="badge bg-danger rounded-pill"> @queries.Status</span>
+                                                    <span class="badge bg-primary rounded-pill"><a class="text-white" href="/License/ResolveQuery?Id=@queries.Id&stage=apply&applicationId=@ViewBag.ApplicationInfo.Id">Click to Resolve Query</a></span>
 
-                                        </li>
-                                        }
+                                                </li>
+                                            }
 
-                                    </ul><!-- End List With badges -->
+                                        </ul><!-- End List With badges -->
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                       
-                      
-                    </div><!-- End Default Accordion Example -->
+
+
+                        </div><!-- End Default Accordion Example -->
                     }
                     <div class="text-center">
                         <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>
-                    <h5 class="card-title">License Applicant Information</h5>
+                  
                 </div>
                 <!-- Multi Columns Form -->
-                <form action="/License/Apply" method="post" ß enctytpe="multipart/form-data" class="row g-3">
+                <form action="/License/Apply" method="post" enctype="multipart/form-data" class="row g-3">
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Name</label>
                         <input type="text" name="licenseName" value="@ViewBag.User.Name" readonly class="form-control" id="inputName5">
-                        <input type="hidden" name="id" value="@ViewBag.ApplicationInfo.Id" readonly class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Surname</label>
@@ -179,11 +200,56 @@ else
                         </div>
                     }
 
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Applicant Type</label>
+                        <select type="text" name="applicantType" required value="" class="form-control" id="inputName5">
+
+                            <option value="Individual"> Individual</option>
+                            <option value="Company"> Company</option>
+                            <option value="Company Unregistered"> Company Unregistered</option>
+                        </select>
+                    </div>
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Business Name</label>
                         <input type="text" name="businessName" value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="inputName5">
                     </div>
+                    <input type="hidden" name="Id" value="@ViewBag.ApplicationInfo.Id" readonly class="form-control" id="inputName5">
+                    <input type="hidden" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID" readonly class="form-control" id="inputName5">
+                    <input type="hidden" name="ApplicationType" value="@ViewBag.ApplicationInfo.ApplicationType" readonly class="form-control" id="inputName5">
 
+
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Licensee Name</label>
+                        <input type="text" name="businessName" required value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="inputName5">
+                    </div>
+                    @if (@ViewBag.ApplicationInfo.IdCopy == "" || @ViewBag.ApplicationInfo.IdCopy == null)
+                    {
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">ID/Passport Copy</label>
+                            <input type="file" name="idCopyb" required value="" class="form-control" id="inputName5">
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label pt-5"><a target="_blank" href="~/@ViewBag.ApplicationInfo.IdCopy">ID/Passport Copy</a></label>
+                            @*<input type="file" name="idCopy" required value="" class="form-control" id="inputName5">*@
+                        </div>
+                    }
+                    @if (@ViewBag.ApplicationInfo.Pclearance == "" || @ViewBag.ApplicationInfo.Pclearance == null)
+                    {
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Police Clearance</label>
+                            <input type="file" name="pclearanceb" required value="" class="form-control" id="inputName5">
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label"><a target="_blank" href="~/@ViewBag.ApplicationInfo.Pclearance">Police Clearance</a></label>
+                            @*<input type="file" name="pclearance" required value="" class="form-control" id="inputName5">*@
+                        </div>
+                    }
                     @*<div class="col-md-6">
             <label for="inputName5" class="form-label">Licence Type</label>
             <select type="text" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID" class="form-control" id="inputName5">
@@ -235,7 +301,7 @@ else
                 <div class="card-footer">
                     <div class="text-center">
                         <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Next</a>
-                        
+
                     </div>
                 </div>
 

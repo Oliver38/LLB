@@ -13,6 +13,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using Webdev.Payments;
 using System;
 using System.Runtime.Intrinsics.Arm;
+using System.Linq;
 
 namespace LLB.Controllers
 {
@@ -102,8 +103,8 @@ namespace LLB.Controllers
         [HttpGet("Renewal")]
         public IActionResult Renewal(string id, string process)
         {
-          //  var serv = _db.PostFormationFees.Where(a => a.Code == process).FirstOrDefault();
-         
+            //  var serv = _db.PostFormationFees.Where(a => a.Code == process).FirstOrDefault();
+
             var appinfo = _db.ApplicationInfo.Where(b => b.Id == id).FirstOrDefault();
             var mainlicense = _db.LicenseTypes.Where(z => z.Id == appinfo.LicenseTypeID).FirstOrDefault();
             var licenseRegion = _db.LicenseRegions.Where(d => d.Id == appinfo.ApplicationType).FirstOrDefault();
@@ -124,7 +125,7 @@ namespace LLB.Controllers
             }
 
             double getFee = 0;
-         
+
             if (licenseRegion.RegionName == "RDC")
             {
                 getFee = RenewalFees.RDCFee;
@@ -149,7 +150,7 @@ namespace LLB.Controllers
             // var Fees = _db.PostFormationFees.Where(n => n.Code == process).FirstOrDefault();
             var PenaltyFees = _db.PostFormationFees.Where(n => n.Code == "PNL").FirstOrDefault();
             var penalty = time * PenaltyFees.Fee;
-            var totalfee = penalty +  getFee;
+            var totalfee = penalty + getFee;
 
             Payments payment = null;
             var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "renewal").OrderByDescending(x => x.DateAdded).FirstOrDefault();
@@ -173,6 +174,7 @@ namespace LLB.Controllers
                 _db.SaveChanges();
                 payment = paymentTrans;
             }
+            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id).OrderByDescending(s => s.DateApplied).FirstOrDefault();
             ViewBag.Payment = payment;
             ViewBag.Process = process;
             ViewBag.Fee = getFee;
@@ -182,9 +184,72 @@ namespace LLB.Controllers
             ViewBag.Outletinfo = outletinfo;
             ViewBag.Appinfo = appinfo;
             ViewBag.ServeFee = getFee;
+            ViewBag.Renewaldata = renewaldata;
             return View();
         }
 
+        [HttpPost("PostRenenwals")]
+        public async Task<IActionResult> PostRenDocsAsync(Renewals renewal, IFormFile prevcert, IFormFile healthcert)
+        {
+            if(renewal.Id == null) { 
+            renewal.Id = Guid.NewGuid().ToString();
+
+            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+            renewal.UserId = id;
+           
+
+            //spublic DateTime DateCreated
+            if (prevcert != null)
+            {
+                string picb = System.IO.Path.GetFileName(prevcert.FileName);
+                string dicb = System.IO.Path.GetExtension(prevcert.FileName);
+                string newname = "PreviousCertificate_" + renewal.Id;
+                string path = System.IO.Path.Combine($"Renewals", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/Renewals", newname + dicb);
+                renewal.CertifiedLicense = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await prevcert.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                renewal.CertifiedLicense = "";
+            }
+
+
+            //spublic DateTime DateCreated
+            if (prevcert != null)
+            {
+                string picb = System.IO.Path.GetFileName(healthcert.FileName);
+                string dicb = System.IO.Path.GetExtension(healthcert.FileName);
+                string newname = "PreviousCertificate_" + renewal.Id;
+                string path = System.IO.Path.Combine($"Renewals", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/Renewals", newname + dicb);
+                renewal.HealthCert = path;
+                using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                {
+                    await healthcert.CopyToAsync(fileStream);
+                }
+            }
+            else
+            {
+                renewal.HealthCert = "";
+            }
+
+                _db.Add(renewal);
+                _db.SaveChanges();
+
+            return RedirectToAction("", "");
+            }
+            else
+            {
+
+
+                return RedirectToAction("", "");
+            }
+        }
 
         //[HttpPost("Renewal")]
         //public IActionResult Renewal(Renewals renewal, IFormFile HealthCert, IFormFile CertifiedLicense)
@@ -257,56 +322,56 @@ namespace LLB.Controllers
         //  //  return View();
         //}
 
-            //                 if(process==  "RNW")
-            //            {
-            //                return RedirectToAction("Renewal", "Postprocess", new { id = id, process = id
-            //    });
+        //                 if(process==  "RNW")
+        //            {
+        //                return RedirectToAction("Renewal", "Postprocess", new { id = id, process = id
+        //    });
 
-            //            }else if (process == "APM")
-            //{
-            //    return RedirectToAction("Managerchange", "Postprocess", new { param1 = id, param2 = id });
+        //            }else if (process == "APM")
+        //{
+        //    return RedirectToAction("Managerchange", "Postprocess", new { param1 = id, param2 = id });
 
-            //}
-            //else if (process == "GDP")
-            //{
-            //    return RedirectToAction("Governmentpermit", "Postprocess", new { param1 = id, param2 = id });
+        //}
+        //else if (process == "GDP")
+        //{
+        //    return RedirectToAction("Governmentpermit", "Postprocess", new { param1 = id, param2 = id });
 
-            //}
-            //else if (process == "INP")
-            //{
-            //    return RedirectToAction("Inspection", "Postprocess", new { param1 = id, param2 = id });
+        //}
+        //else if (process == "INP")
+        //{
+        //    return RedirectToAction("Inspection", "Postprocess", new { param1 = id, param2 = id });
 
-            //}
-            //else if (process == "DPL")
-            //{
-            //    return RedirectToAction("Duplication", "Postprocess", new { param1 = id, param2 = id });
+        //}
+        //else if (process == "DPL")
+        //{
+        //    return RedirectToAction("Duplication", "Postprocess", new { param1 = id, param2 = id });
 
-            //}
-            //else if (process == "TRM")
-            //{
-            //    return RedirectToAction("Tempremoval", "Postprocess", new { param1 = id, param2 = id });
+        //}
+        //else if (process == "TRM")
+        //{
+        //    return RedirectToAction("Tempremoval", "Postprocess", new { param1 = id, param2 = id });
 
-            //}
-            //else if (process == "TTR")
-            //{
-            //    return RedirectToAction("Temptranfer", "Postprocess", new { param1 = id, param2 = id });
+        //}
+        //else if (process == "TTR")
+        //{
+        //    return RedirectToAction("Temptranfer", "Postprocess", new { param1 = id, param2 = id });
 
-            //}
-            //else if (process == "EXH")
-            //{
-            //    return RedirectToAction("Extendhours", "Postprocess", new { param1 = id, param2 = id });
+        //}
+        //else if (process == "EXH")
+        //{
+        //    return RedirectToAction("Extendhours", "Postprocess", new { param1 = id, param2 = id });
 
-            //}
-            //else if (process == "TRL")
-            //{
-            //    return RedirectToAction("Temporalretail", "Postprocess", new { param1 = id, param2 = id });
+        //}
+        //else if (process == "TRL")
+        //{
+        //    return RedirectToAction("Temporalretail", "Postprocess", new { param1 = id, param2 = id });
 
-            //}
-            //else if (process == "ECF")
-            //{
-            //    return RedirectToAction("Extracounter", "Postprocess", new { param1 = id, param2 = id });
+        //}
+        //else if (process == "ECF")
+        //{
+        //    return RedirectToAction("Extracounter", "Postprocess", new { param1 = id, param2 = id });
 
-            //}
+        //}
 
-        }
+    }
 }

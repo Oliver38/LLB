@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using System.Drawing;
 using System.IO;
 using static Google.Protobuf.Compiler.CodeGeneratorResponse.Types;
+using NuGet.Packaging.Core;
 
 
 namespace LLB.Controllers
@@ -76,7 +77,7 @@ namespace LLB.Controllers
 
 
         [HttpPost(("Apply"))]
-        public async Task<IActionResult> ApplyAsync(ApplicationInfo info)
+        public async Task<IActionResult> ApplyAsync(ApplicationInfo info,IFormFile IdCopyb,IFormFile Pclearanceb) 
         {
 
 
@@ -118,7 +119,44 @@ namespace LLB.Controllers
                 info.Secretary = "";
                 // public DateTime ApprovedDate 
                 ///////////// info.RejectionReason = "";
-                //spublic DateTime DateCreated 
+                //spublic DateTime DateCreated
+                if (IdCopyb != null)
+                {
+                    string picb = System.IO.Path.GetFileName(IdCopyb.FileName);
+                    string dicb = System.IO.Path.GetExtension(IdCopyb.FileName);
+                    string newname = "IDCopy_" + info.Id;
+                    string path = System.IO.Path.Combine($"ApplicantInfo", newname + dicb);
+                    string docpath = System.IO.Path.Combine($"wwwroot/ApplicantInfo", newname + dicb);
+                    info.IdCopy = path;
+                    using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                    {
+                        await IdCopyb.CopyToAsync(fileStream);
+                    }
+                }
+                else
+                {
+                   info.IdCopy = "";
+                }
+
+
+                if (Pclearanceb != null)
+                {
+                    string picb = System.IO.Path.GetFileName(Pclearanceb.FileName);
+                    string dicb = System.IO.Path.GetExtension(Pclearanceb.FileName);
+                    string newname = "CLearance_" + info.Id;
+                    string path = System.IO.Path.Combine($"ApplicantInfo",  newname + dicb);
+                    string docpath = System.IO.Path.Combine($"wwwroot/ApplicantInfo", newname + dicb);
+                    info.Pclearance = path;
+                    using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                    {
+                        await Pclearanceb.CopyToAsync(fileStream);
+                    }
+                }
+                else
+                {
+                    info.Pclearance = "";
+                }//        public string? idCopy { get; set; }
+                //public string? pclearance { get; set; }
                 _db.Add(info);
                 _db.SaveChanges();
                 // ViewBag.License = licenses;
@@ -156,6 +194,49 @@ namespace LLB.Controllers
                 //public DateTime InspectionDate 
                 updateinfo.Secretary = "";
                 updateinfo.DateUpdated = DateTime.Now;
+
+                if (updateinfo.IdCopy == null || updateinfo.IdCopy == "") { 
+                    if (IdCopyb != null)
+                    {
+                        string picb = System.IO.Path.GetFileName(IdCopyb.FileName);
+                        string dicb = System.IO.Path.GetExtension(IdCopyb.FileName);
+                        string newname = "IDCopy_" + updateinfo.Id;
+                        string path = System.IO.Path.Combine($"ApplicantInfo", newname + dicb);
+                        string docpath = System.IO.Path.Combine($"wwwroot/ApplicantInfo", newname + dicb);
+                        updateinfo.IdCopy = path;
+                        using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                        {
+                            await IdCopyb.CopyToAsync(fileStream);
+                        }
+                    }
+                    else
+                    {
+                        info.IdCopy = "";
+                    }
+                }
+                else
+                { }
+
+                if(updateinfo.Pclearance == null || updateinfo.Pclearance == "") { 
+                if (Pclearanceb != null)
+                {
+                    string picb = System.IO.Path.GetFileName(Pclearanceb.FileName);
+                    string dicb = System.IO.Path.GetExtension(Pclearanceb.FileName);
+                    string newname = "Clearance_" + updateinfo.Id;
+                    string path = System.IO.Path.Combine($"ApplicantInfo",  newname + dicb);
+                    string docpath = System.IO.Path.Combine($"wwwroot/ApplicantInfo", newname + dicb);
+                    updateinfo.Pclearance = path;
+                    using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                    {
+                        await Pclearanceb.CopyToAsync(fileStream);
+                    }
+                }
+                else
+                {
+                    info.Pclearance = "";
+                }
+                }
+                else { }
                 // public DateTime ApprovedDate 
                 ///////////// info.RejectionReason = "";
                 //spublic DateTime DateCreated 
@@ -347,8 +428,8 @@ namespace LLB.Controllers
                 string picb = System.IO.Path.GetFileName(natid.FileName);
                 string dicb = System.IO.Path.GetExtension(natid.FileName);
                 string newname =directorDetails.ApplicationId;
-                string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
-                string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
+                string path = System.IO.Path.Combine($"DirectorFingerprints", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/DirectorFingerprints", newname + dicb);
                 directorDetails.NatId = path;
                 using (Stream fileStream = new FileStream(docpath, FileMode.Create))
                 {
@@ -365,8 +446,8 @@ namespace LLB.Controllers
                 string picb = System.IO.Path.GetFileName(form.FileName);
                 string dicb = System.IO.Path.GetExtension(form.FileName);
                 string newname = directorDetails.ApplicationId;
-                string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
-                string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
+                string path = System.IO.Path.Combine($"DirectorFingerprints", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/DirectorFingerprints", newname + dicb);
                 directorDetails.Form55 = path;
                 using (Stream fileStream = new FileStream(docpath, FileMode.Create))
                 {
@@ -384,8 +465,8 @@ namespace LLB.Controllers
                 string picb = System.IO.Path.GetFileName(fingerprints.FileName);
                 string dicb = System.IO.Path.GetExtension(fingerprints.FileName);
                 string newname = directorDetails.ApplicationId;
-                string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
-                string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
+                string path = System.IO.Path.Combine($"DirectorFingerprints", newname + dicb);
+                string docpath = System.IO.Path.Combine($"wwwroot/DirectorFingerprints", newname + dicb);
                 directorDetails.FingerPrints = path;
                 using (Stream fileStream = new FileStream(docpath, FileMode.Create))
                 {

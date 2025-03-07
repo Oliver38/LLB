@@ -192,16 +192,23 @@ else
                         <select type="text" required name="LicenseTypeID" value="" class="form-control" id="inputName5">
                             @foreach (var licensetype in ViewBag.License)
                             {
+                                    @if(licensetype.LicenseName == "Managers Fees")
+                                    {
+
+                                    }
+                                    else { 
                                 @if (licensetype.Id == ViewBag.Application.LicenseTypeID)
                                 {
                                     <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
+
 
                                 }
                                 else
                                 {
                                     <option value="@licensetype.Id">@licensetype.LicenseName </option>
                                 }
-                            }
+                                        }
+                                }
                         </select>
                     </div>
                     <div class="col-md-6">
