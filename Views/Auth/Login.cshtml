@@ -71,53 +71,46 @@
         </div>
         <div class="row g-5">
             <div class="col-lg-6">
-                <div class="row g-3">
-                    <div class="col-6 text-end">
-                        <img class="img-fluid rounded w-75 wow zoomIn" data-wow-delay="0.1s" src="~/front/img/about-1.jpg" style="margin-top: 25%;">
-                    </div>
-                    <div class="col-6 text-start">
-                        <img class="img-fluid rounded w-100 wow zoomIn" data-wow-delay="0.3s" src="~/front/img/about-2.jpg">
-                    </div>
-                    <div class="col-6 text-end">
-                        <img class="img-fluid rounded w-50 wow zoomIn" data-wow-delay="0.5s" src="~/front/img/about-3.jpg">
-                    </div>
-                    <div class="col-6 text-start">
-                        <img class="img-fluid rounded w-75 wow zoomIn" data-wow-delay="0.7s" src="~/front/img/about-4.jpg">
-                    </div>
+                <div class="col-12 text-start">
+                    <img class="img-fluid rounded w-100 h-100 object-fit-contain wow zoomIn"
+                         data-wow-delay="0.3s"
+                         src="@Url.Content("~/front/img/IMG/Coat_of_arms_of_ZimbabweB.png")">
                 </div>
             </div>
             <div class="col-lg-6">
-
+                <br />
+                <br />
+                <br />
                 <div class="wow fadeInUp" data-wow-delay="0.2s">
                     <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
 
-                        <h1 class="mb-5">Please <span  style="color:#008000" class=" text-uppercase">Login</span></h1>
+                        <h1 class="mb-5">Please <span style="color:#008000" class=" text-uppercase">Login</span></h1>
                         <span class="text-danger">@TempData["error"]</span>
                     </div>
-                    </div>
-                    <form action="/Auth/Login" method="post" enctype="multipart/form-data">
-                        <div class="row g-3">
-                            <div class="col-md-12">
-                                <div class="form-floating">
-                                    <input type="email" class="form-control" id="email" name="email" placeholder="Your Email">
-                                    <label for="name">Your Email</label>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-12">
-                                <div class="form-floating date">
-                                    <input type="password" class="form-control" id="password" name="password" />
-                                    <label for="checkin">Password</label>
-                                </div>
-                            </div>
-                         
-                            <div class="col-12">
-
-                                <button style="background-color:#008000" class="btn btn-primary w-100 py-3" type="submit">Login</button>
+                </div>
+                <form action="/Auth/Login" method="post" enctype="multipart/form-data">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <div class="form-floating">
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Your Email">
+                                <label for="name">Your Email</label>
                             </div>
                         </div>
-                    </form>
-                </div>
+
+                        <div class="col-md-12">
+                            <div class="form-floating date">
+                                <input type="password" class="form-control" id="password" name="password" />
+                                <label for="checkin">Password</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+
+                            <button style="background-color:#008000" class="btn btn-primary w-100 py-3" type="submit">Login</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
             </div>
         </div>
     </div>
