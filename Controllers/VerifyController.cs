@@ -10,6 +10,9 @@ using Webdev.Payments;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Microsoft.EntityFrameworkCore;
 using LLB.Helpers;
+using LLB.Models.ViewModel;
+using System.Drawing;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace LLB.Controllers
 {
@@ -43,7 +46,7 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(f => f.VerifierId == id && f.Status == "assigned" && f.Service == "new application").ToList();
+            var tasks = _db.Tasks.Where(f => f.VerifierId == id && f.Status == "assigned" && f.Service == "new application" ).ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
@@ -53,6 +56,59 @@ namespace LLB.Controllers
                 getinfo = applications;
                 appinfo.Add(getinfo);
             }
+
+
+            List<RenewalViewModel> renewaltasks = new List<RenewalViewModel>();
+            var rentasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "renewal" && f.Status == "assigned").ToList();
+            foreach (var rentask in rentasks)
+            {
+                RenewalViewModel getreninfo = new RenewalViewModel();
+
+                var renapps = _db.Renewals.Where(a => a.Id == rentask.ApplicationId).FirstOrDefault();
+                var renappinfo = _db.ApplicationInfo.Where(s => s.Id == renapps.ApplicationId).FirstOrDefault();
+                var reaoutletinfo = _db.OutletInfo.Where(q => q.ApplicationId == renapps.ApplicationId).FirstOrDefault();
+                var licensetype = _db.LicenseTypes.Where(w => w.Id == renappinfo.LicenseTypeID).FirstOrDefault();
+                var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
+                getreninfo.ApplicationId = renapps.ApplicationId;
+                getreninfo.Id = renapps.Id;
+                getreninfo.LLBNumber = renapps.LLBNumber;
+                getreninfo.PreviousExpiry = renapps.PreviousExpiry;
+                getreninfo.TradingName = reaoutletinfo.TradingName;
+                getreninfo.Licensetype = licensetype.LicenseName;
+                getreninfo.LicenseRegion = licenseReg.RegionName;
+                getreninfo.Status = renapps.Status;
+
+                renewaltasks.Add(getreninfo);
+            }
+
+            List<InspectionViewModel> renewalinspectiontasks = new List<InspectionViewModel>();
+            var reninsptasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "renewal inspection" && f.Status == "assigned").ToList();
+            foreach(var insptask in reninsptasks)
+            {
+                var applId = insptask.ApplicationId;
+                var appinfoq = _db.ApplicationInfo.Where(i => i.Id == applId).FirstOrDefault();
+                var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
+
+
+                InspectionViewModel renewalinspectiontask = new InspectionViewModel();
+
+                renewalinspectiontask.TradingName = outletinfoq.TradingName;
+                renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
+             //   renewalinspectiontask.
+                //public string? Service { get; set; }
+                //       public string? TradingName { get; set; }
+                //       public string? LLBNumber { get; set; }
+                //       public string? Application { get; set; }
+                //       public string? Status { get; set; }
+                //       public string? UserId { get; set; }
+                //       public string? ApplicationId { get; set; }
+                //       public string? InspectorId { get; set; }
+                //       public DateTime InspectionDate { get; set; }
+                //       public DateTime DateApplied { get; set; }
+                //       public DateTime DateUpdate { get; set; }
+
+
+    }
 
             //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
             var outletinfo = _db.OutletInfo.ToList();
@@ -65,6 +121,9 @@ namespace LLB.Controllers
             ViewBag.Regions = regions;
             ViewBag.License = license;
             ViewBag.Applications = appinfo;
+            ViewBag.Renewals = renewaltasks;
+            ViewBag.RenewalIns = renewaltasks;
+
             return View();
         }
 
@@ -631,5 +690,95 @@ namespace LLB.Controllers
             return View();
         }
 
+
+
+        [HttpGet("Renewal")]
+        public async Task<IActionResult> Renewal(string id)
+        {
+
+         
+                RenewalViewModel getreninfo = new RenewalViewModel();
+
+                var renapps = _db.Renewals.Where(a => a.Id == id).FirstOrDefault();
+                var renappinfo = _db.ApplicationInfo.Where(s => s.Id == renapps.ApplicationId).FirstOrDefault();
+            //var licensetypeId = renappinfo.LicenseTypeID;
+            //var regiontypeId = renappinfo.ApplicantType;
+            var reaoutletinfo = _db.OutletInfo.Where(q => q.ApplicationId == renapps.ApplicationId).FirstOrDefault();
+                var licensetype = _db.LicenseTypes.Where(w => w.Id == renappinfo.LicenseTypeID).FirstOrDefault();
+                var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
+
+            getreninfo.ApplicationId = renapps.ApplicationId;
+                getreninfo.Id = renapps.Id;
+                getreninfo.LLBNumber = renapps.LLBNumber;
+                getreninfo.PreviousExpiry = renapps.PreviousExpiry;
+                getreninfo.TradingName = reaoutletinfo.TradingName;
+                getreninfo.Licensetype = licensetype.LicenseName;
+            getreninfo.PenaltyPaid = renapps.PenaltyPaid;
+            getreninfo.FeePaid = renapps.FeePaid;
+            getreninfo.LicenseRegion = licenseReg.RegionName;
+            getreninfo.Licensetype = licensetype.LicenseName;
+            getreninfo.Status = renapps.Status;
+            getreninfo.HealthCert = renapps.HealthCert;
+            getreninfo.CertifiedLicense = renapps.CertifiedLicense;
+            getreninfo.OutletName = reaoutletinfo.TradingName;
+            //   ViewBag.OutletInfo = outletinfo;
+            //ViewBag.Regions = regions;
+            //ViewBag.License = license;
+            //ViewBag.Applications = appinfo;
+            ViewBag.Renewals = getreninfo;
+
+            // var renewal
+            return View();
+        }
+
+
+
+        [HttpGet("ApproveRenewal")]
+        public async Task<IActionResult> ApproveRenewal(string Id)
+        {
+            //Add Inspection
+
+            var appinfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+
+            Inspection inspection = new Inspection();
+            inspection.Id  = Guid.NewGuid().ToString();
+            inspection.ApplicationId = Id;
+            inspection.Service = "Renewal Inspection";
+            inspection.Status = "Awaiting Action";
+            inspection.DateApplied = DateTime.Now;
+
+            var userId = userManager.GetUserId(User);
+            inspection.UserId = userId;
+            _db.Add(inspection);
+            _db.SaveChanges();
+            //Add to task
+            var oldtask = _db.Tasks.Where(q =>q.ApplicationId == Id && q.Service == "renewal").FirstOrDefault();
+            oldtask.Status = "completed";
+            _db.Update(oldtask);
+            _db.SaveChanges();
+
+
+            Tasks tasksc = new Tasks();
+            tasksc.Id = Guid.NewGuid().ToString();
+            tasksc.ApplicationId =Id;
+
+            //tasks.AssignerId
+
+            //auto allocation to replace
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+            var recommenderWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
+            tasksc.Service = "renewal inspection";
+            tasksc.VerifierId = recommenderWithLeastTasks;
+            tasksc.AssignerId = "system";
+            tasksc.Status = "assigned";
+            tasksc.DateAdded = DateTime.Now;
+            tasksc.DateUpdated = DateTime.Now;
+            _db.Add(tasksc);
+            _db.SaveChanges();
+            //
+            return RedirectToAction("Dashboard", "Home");
+        }
+
+        }
     }
-}

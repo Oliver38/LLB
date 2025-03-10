@@ -29,7 +29,7 @@
 
 
                         <thead>
-                            <th>Ref#</th>
+                        <th>Ref#</th>
                         <th>Trading Name </th>
                         <th>Operating Address </th>
                         <th>Application Date </th>
@@ -114,6 +114,84 @@
                                             <a href="/Verify/Apply?Id=@application.Id" class="btn btn-primary">View</a>
                                         }
                                     </td>
+
+
+                                </tr>
+
+                            }
+                        </tbody>
+
+
+
+                    </table>
+                </div>
+
+
+
+
+
+
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+
+
+    <div class="row">
+        <div class="card">
+
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+
+                    <h5 class="card-title">Renewal Applications</h5>
+                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    *@
+                </div>
+
+
+
+
+                <div class="row">
+
+                    <table class="table table-responsiveß table-hover table-striped">
+
+
+                        <thead>
+                            <tr>
+                                @*getreninfo.ApplicationId = renapps.ApplicationId;
+                                getreninfo.Id = renapps.Id;
+                                getreninfo.LLBNumber = renapps.LLBNumber;
+                                getreninfo.PreviousExpiry = renapps.PreviousExpiry;
+                                getreninfo.TradingName = reaoutletinfo.TradingName;
+                                getreninfo.Licensetype = licensetype.LicenseName;
+                                getreninfo.LicenseRegion = licenseReg.RegionName;*@
+
+                                <th>Trading Name </th>
+                                <th>LLB Number </th>
+                                <th>Expiry Date </th>
+                                <th>License </th>
+                                <th>For </th>
+                                <th>Status </th>
+                                <th>Action </th>
+                            </tr>
+                     
+                        </thead>
+                        <tbody>
+                            @foreach (var renewal in ViewBag.Renewals)
+                            {
+
+                                <tr>
+                                    <td>@renewal.TradingName</td>
+                                    <td>@renewal.LLBNumber</td>
+                                    <td>@renewal.PreviousExpiry</td>
+                                    <td>@renewal.Licensetype </td>
+                                    <td>@renewal.LicenseRegion</td>
+                                    <td>@renewal.Status</td>
+                                    <td><a class="btn btn-primary" href="/Verify/Renewal?Id=@renewal.Id"> View Renewal</a></td>
 
 
                                 </tr>

@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using LLB.Data;
 using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
+using LLB.Models.ViewModel;
+
 namespace LLB.Controllers
 {
     [Route("")]
@@ -113,8 +115,36 @@ namespace LLB.Controllers
             //< option value = "TRL" > Temporal Retail liquor license </ option >
             var licenseInfo = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
             var outletInfo = _db.OutletInfo.Where(b => b.ApplicationId == id).FirstOrDefault();
+            var userId = userManager.GetUserId(User);
+            var renewals = _db.Renewals.Where(n => n.UserId == userId).ToList();
 
 
+
+            List<RenewalViewModel> renewaltasks = new List<RenewalViewModel>();
+          //  var rentasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "renewal" && f.Status == "assigned").ToList();
+            foreach (var rentask in renewals)
+            {
+                RenewalViewModel getreninfo = new RenewalViewModel();
+
+                var renapps = _db.Renewals.Where(a => a.Id == rentask.ApplicationId).FirstOrDefault();
+                var renappinfo = _db.ApplicationInfo.Where(s => s.Id == renapps.ApplicationId).FirstOrDefault();
+                var reaoutletinfo = _db.OutletInfo.Where(q => q.ApplicationId == renapps.ApplicationId).FirstOrDefault();
+                var licensetype = _db.LicenseTypes.Where(w => w.Id == renappinfo.LicenseTypeID).FirstOrDefault();
+                var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
+                getreninfo.ApplicationId = renapps.ApplicationId;
+                getreninfo.Id = renapps.Id;
+                getreninfo.LLBNumber = renapps.LLBNumber;
+                getreninfo.PreviousExpiry = renapps.PreviousExpiry;
+                getreninfo.TradingName = reaoutletinfo.TradingName;
+                getreninfo.Licensetype = licensetype.LicenseName;
+                getreninfo.LicenseRegion = licenseReg.RegionName;
+                getreninfo.Status = renapps.Status;
+
+                renewaltasks.Add(getreninfo);
+            }
+
+            ViewBag.Renewaltasks = renewaltasks;
+            ViewBag.Renewals= renewals;
             ViewBag.LicenseInfo = licenseInfo;
             ViewBag.OutletInfo = outletInfo;
             ViewBag.Id = id;
@@ -198,6 +228,31 @@ namespace LLB.Controllers
             var regions = _db.LicenseRegions.ToList();
             var user = await userManager.FindByEmailAsync(User.Identity.Name);
 
+            List<RenewalViewModel> renewaltasks = new List<RenewalViewModel>();
+
+            foreach (var rentask in renewals)
+            {
+                RenewalViewModel getreninfo = new RenewalViewModel();
+
+               // var renapps = _db.Renewals.Where(a => a.Id == rentask.ApplicationId).FirstOrDefault();
+                var renappinfo = _db.ApplicationInfo.Where(s => s.Id == rentask.ApplicationId).FirstOrDefault();
+                var reaoutletinfo = _db.OutletInfo.Where(q => q.ApplicationId == rentask.ApplicationId).FirstOrDefault();
+                var licensetype = _db.LicenseTypes.Where(w => w.Id == renappinfo.LicenseTypeID).FirstOrDefault();
+                var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
+                getreninfo.ApplicationId = rentask.ApplicationId;
+                getreninfo.Id = rentask.Id;
+                getreninfo.LLBNumber = rentask.LLBNumber;
+                getreninfo.PreviousExpiry = rentask.PreviousExpiry;
+                getreninfo.TradingName = reaoutletinfo.TradingName;
+                getreninfo.Licensetype = licensetype.LicenseName;
+                getreninfo.LicenseRegion = licenseReg.RegionName;
+                getreninfo.Status = rentask.Status;
+
+                renewaltasks.Add(getreninfo);
+            }
+
+
+            ViewBag.RenewalTasks = renewaltasks;
             ViewBag.Renewals = renewals;
             ViewBag.User = user;
             ViewBag.OutletInfo = outletinfo;

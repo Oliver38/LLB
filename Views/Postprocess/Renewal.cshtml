@@ -118,16 +118,120 @@
                     }
                     else
                     {
-                            @if(ViewBag.Renewaldata.Healthcert =="" || ViewBag.Renewaldata.Pclearance == "") { } else {
-
-                        <tr>
-
-                            <th></th>
+                        <form action="/Postprocess/PostRenenwals" enctype="multipart/form-data" method="post">
 
 
-                            <td><button class="btn btn-primary" onclick="Payment()"> Pay For Renewal</button></td>
-                        </tr>
-                                }
+
+
+
+
+                            @if (ViewBag.Renewaldata.CertifiedLicense == "")
+                            {
+
+                            <tr>
+                                <th>Upload previous Council Certified Liquor License</th>
+                                <td><input type="file" name="prevcert" class="form-control" /></td>
+
+                            </tr>
+
+                        }
+                        else
+                        {
+
+                            <tr>
+
+                                <th>Upload previous Council Certified Liquor License</th>
+                                <td><a target="_blank" href="~/@ViewBag.Renewaldata.CertifiedLicense"> Previous Certified License</a></td>
+
+                            </tr>
+                        }
+
+
+                            @if (ViewBag.Renewaldata.HealthCert == "")
+                            {
+
+                                <tr>
+                                    <th>Upload Health Certificate for previous Liquor License </th>
+                                    <td><input type="file" name="healthcert" class="form-control" /></td>
+
+                                </tr>
+                            }
+                            else
+                            {
+
+                                <tr>
+
+                                    <th>Upload Health Certificate for previous Liquor License </th>
+                                    <td><a target="_blank" href="~/@ViewBag.Renewaldata.HealthCert"> Health Certificate</a></td>
+
+
+                                </tr>
+                            }
+
+                            @if (ViewBag.Renewaldata.HealthCert == "" || ViewBag.Renewaldata.CertifiedLicense == "")
+                            {
+                                <tr>
+                                    <th>
+                                        <input type="hidden" name="Id" value="@ViewBag.Renewaldata.Id" />
+                                        <input type="hidden" name="service" value="Renewal" />
+                                        <input type="hidden" name="lLBNumber" value="@ViewBag.Appinfo.LLBNum" />
+                                        <input type="hidden" name="PaymentStatus" value="Paid" />
+                                        <input type="hidden" name="penaltyPaid" value="@ViewBag.Penalty" />
+                                        <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
+                                        <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
+                                        <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />
+                                        @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
+
+
+                                    </th>
+
+
+                                    <td><button class="btn btn-primary" type="submit"> Submit For Renewal</button></td>
+                                </tr>
+
+                            }
+                            else
+                            {
+                <tr>
+
+                    @if (ViewBag.Payment == null)
+                    {
+                        @*<span style="color:red"> Not Paid</span>*@
+                        <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Renewal</button></td>
+
+                    }
+                    else
+                    {
+                        @if (ViewBag.Payment.Status == "Paid")
+                        {
+
+
+                            <td>
+                                your renewal application is ready to be submmited , Click Continue to set for awaiting verification and inspection.Click
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary" onclick="window.location.href='/Postprocess/Continue?Id=@ViewBag.Renewaldata.Id'">
+                                    Continue
+                                </button>
+                            </td>
+                            @*<td><button type="button" href="/Postprocess/Complete?Id=@ViewBag.Renewaldata.Id" class="btn btn-primary"> Continue</button></td>*@
+                        }
+                        else
+                        {
+                            <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Renewal</button></td>
+
+                        }
+                    }
+
+
+
+                </tr>
+
+
+
+                            }
+
+                            </form>
                         }
 
 
@@ -217,10 +321,12 @@
                                         <td>
                                             @if (ViewBag.Payment == null)
                                             {
-                                                <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process"> Make Payment</a>
+                                                <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process">
+                                            Make Payment</a>
                                             }
                                             else
-                                            { <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process"> Submit Renewal</a>
+                                            { <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process">
+                                            Make Payment</a>
                                             }
                                         </td>
                                     </tr>

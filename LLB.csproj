@@ -62,6 +62,9 @@
     <None Remove="Views\Transferfees\" />
     <None Remove="Views\Removalfees\" />
     <None Remove="Views\Transferwmanagerfees\" />
+    <None Remove="Views\Province\" />
+    <None Remove="Views\Council\" />
+    <None Remove="Views\District\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
@@ -84,12 +87,17 @@
     <Folder Include="Views\Transferwmanagerfees\" />
     <Folder Include="wwwroot\DirectorFingerprints\" />
     <Folder Include="wwwroot\ApplicantInfo\" />
+    <Folder Include="Views\Province\" />
+    <Folder Include="Views\Council\" />
+    <Folder Include="Views\District\" />
+    <Folder Include="wwwroot\Renewals\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />
     <Content Remove="wwwroot\NiceAdmin\assets\js\jquery.min.js" />
     <Content Remove="wwwroot\DirectorFingerprints\" />
     <Content Remove="wwwroot\ApplicantInfo\" />
+    <Content Remove="wwwroot\Renewals\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="wwwroot\NiceAdmin\assets\js\jquery.min.js" />

@@ -98,7 +98,9 @@
 
                                     <td>
                                         @if (application.Status == "approved")
-                                        {}else{<a href="/Examination/Apply?Id=@application.Id" class="btn btn-primary">View</a>}
+                                        { }
+                                        else
+                                        {<a href="/Examination/Apply?Id=@application.Id" class="btn btn-primary">View</a>}
                                     </td>
 
 
@@ -121,6 +123,11 @@
         </div>
 
     </div>
+
+
+
+
+
 </div>
 
 

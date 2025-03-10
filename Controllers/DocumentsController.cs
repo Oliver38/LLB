@@ -89,6 +89,20 @@ namespace LLB.Controllers
                 VerticalOffset = new Length(27),
             };
 
+
+
+            TextStamper council = new TextStamper()
+            {
+                Text = $"{outletinfo.Council}",
+                FontFamily = "Times New Roman",
+                UseGoogleFont = false,
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(78),
+                VerticalOffset = new Length(19.1),
+            };
+
             TextStamper tradingname = new TextStamper()
             {
                 Text = $"{outletinfo.TradingName.ToUpper()}",
@@ -276,7 +290,7 @@ namespace LLB.Controllers
 
 
 
-            Stamper[] stampersToApply = { licensee, tradingname, location, managerscount, managerslist, qrcode, signature, expirydate, grantdate, expirydateuthority, llbnum, conditions };
+            Stamper[] stampersToApply = { licensee, tradingname, location, managerscount, managerslist, qrcode, signature, expirydate, grantdate, expirydateuthority, llbnum, conditions, council };
             pdf.ApplyMultipleStamps(stampersToApply);
             // pdf.ApplyStamp(stamper2);
 

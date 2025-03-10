@@ -20,6 +20,9 @@ namespace LLB.Models
         public string? Service { get; set; }
         public string? HealthCert { get; set; }
         public string? CertifiedLicense { get; set; }
+        public string? Status { get; set; }
+        public string? Verifier { get; set; }
+        public string? Inspector { get; set; }
         public DateTime DateApplied { get; set; }
         public DateTime DateUpdated { get; set; }
 

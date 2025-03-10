@@ -4,6 +4,7 @@ using LLB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LLB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250308105035_adddistrict")]
+    partial class adddistrict
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -461,76 +464,6 @@ namespace LLB.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ExchangeRate");
-                });
-
-            modelBuilder.Entity("LLB.Models.Inspection", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Application")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ApplicationId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("DateApplied")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateUpdate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EquipmentAndAppointments")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FoodStorageArrangements")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HygieneStandards")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("InspectionDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("InspectorId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Lighting")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RubbishDisposal")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Service")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SewageDisposalAndDrainage")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StaffUniformsAndAccommodation")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StandardOfFood")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Toilets")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Ventilation")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("WaterSupply")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Inspection");
                 });
 
             modelBuilder.Entity("LLB.Models.LicenseRegion", b =>
@@ -1045,9 +978,6 @@ namespace LLB.Migrations
                     b.Property<string>("HealthCert")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Inspector")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("LLBNumber")
                         .HasColumnType("nvarchar(max)");
 
@@ -1063,13 +993,7 @@ namespace LLB.Migrations
                     b.Property<string>("Service")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Verifier")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

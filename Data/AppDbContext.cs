@@ -39,6 +39,12 @@ namespace LLB.Data
         public DbSet<RemovalTypes> RemovalTypes{ get; set; }
         public DbSet<TransferwmanagerRegion> TransferwmanagerRegion{ get; set; }
         public DbSet<TransferwmanagerTypes> TransferwmanagerTypes{ get; set; }
+        public DbSet<Province> Province { get; set; }
+        public DbSet<Council> Council { get; set; }
+        public DbSet<District> District { get; set; }
+        public DbSet<Inspection> Inspection { get; set; }
+
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

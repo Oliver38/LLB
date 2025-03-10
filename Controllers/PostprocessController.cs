@@ -14,6 +14,7 @@ using Webdev.Payments;
 using System;
 using System.Runtime.Intrinsics.Arm;
 using System.Linq;
+using LLB.Helpers;
 
 namespace LLB.Controllers
 {
@@ -28,13 +29,16 @@ namespace LLB.Controllers
         private readonly AppDbContext _db;
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly IDNTCaptchaValidatorService _validatorService;
+        private readonly TaskAllocationHelper _taskAllocationHelper;
+        
 
-        public PostprocessController(AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public PostprocessController(TaskAllocationHelper taskAllocationHelper, AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
             this.userManager = userManager;
             this.signInManager = signInManager;
             _validatorService = validatorService;
+            _taskAllocationHelper = taskAllocationHelper;
         }
 
         [HttpGet("AddFee")]
@@ -99,8 +103,51 @@ namespace LLB.Controllers
             return RedirectToAction("AddFee", "Postprocess");
         }
 
+        [HttpGet("Continue")]
+        public async Task<IActionResult> Continue(string Id)
+        {
+            var renewal = _db.Renewals.Where(a => a.Id == Id).FirstOrDefault();
+            renewal.Status = "renewed";
+            renewal.DateUpdated = DateTime.Now;
+            _db.Update(renewal);
+            _db.SaveChanges();
+            var appinfo = _db.ApplicationInfo.Where(a => a.Id == renewal.ApplicationId).FirstOrDefault();
+            if(appinfo.ExpiryDate > DateTime.Now)
+            {
+                appinfo.ExpiryDate = DateTime.Now.AddYears(1);
 
-        [HttpGet("Renewal")]
+            }
+            else
+            {
+                appinfo.ExpiryDate = appinfo.ExpiryDate.AddYears(1);
+            }
+
+            //var verifierId = await TaskAllocator()
+            Tasks tasks = new Tasks();
+            tasks.Id = Guid.NewGuid().ToString();
+            tasks.ApplicationId = Id;
+            //tasks.AssignerId
+
+            //auto allocation to replace
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+
+            var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
+            //   tasks.VerifierId = selectedUser.Id;
+            tasks.Service = "renewal";
+            tasks.VerifierId = verifierWithLeastTasks;
+            tasks.AssignerId = "system";
+            tasks.Status = "assigned";
+            tasks.DateAdded = DateTime.Now;
+            tasks.DateUpdated = DateTime.Now;
+            _db.Add(tasks);
+            _db.SaveChanges();
+
+            return RedirectToAction("Dashboard", "Home");
+
+        }
+
+            [HttpGet("Renewal")]
         public IActionResult Renewal(string id, string process)
         {
             //  var serv = _db.PostFormationFees.Where(a => a.Code == process).FirstOrDefault();
@@ -197,6 +244,7 @@ namespace LLB.Controllers
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             string id = userId.Id;
             renewal.UserId = id;
+                renewal.Status = "applied";
            
 
             //spublic DateTime DateCreated
@@ -220,11 +268,11 @@ namespace LLB.Controllers
 
 
             //spublic DateTime DateCreated
-            if (prevcert != null)
+            if (healthcert != null)
             {
                 string picb = System.IO.Path.GetFileName(healthcert.FileName);
                 string dicb = System.IO.Path.GetExtension(healthcert.FileName);
-                string newname = "PreviousCertificate_" + renewal.Id;
+                string newname = "HealthCertificate_" + renewal.Id;
                 string path = System.IO.Path.Combine($"Renewals", newname + dicb);
                 string docpath = System.IO.Path.Combine($"wwwroot/Renewals", newname + dicb);
                 renewal.HealthCert = path;
@@ -241,15 +289,76 @@ namespace LLB.Controllers
                 _db.Add(renewal);
                 _db.SaveChanges();
 
-            return RedirectToAction("", "");
+                return RedirectToAction("Renewal", "Postprocess", new { id = renewal.ApplicationId });
             }
             else
             {
+                var updaterenewal = _db.Renewals.Where(a => a.Id == renewal.Id).FirstOrDefault();
+                //renewal.Id = Guid.NewGuid().ToString();
+
+                //  var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+                //string id = userId.Id;
+                //  renewal.UserId = id;
 
 
-                return RedirectToAction("", "");
+                //spublic DateTime DateCreated
+                //  updaterenewal = renewal;
+                if (updaterenewal.CertifiedLicense != "") { }
+                else
+                {
+                    if (prevcert != null)
+                    {
+                        string picb = System.IO.Path.GetFileName(prevcert.FileName);
+                        string dicb = System.IO.Path.GetExtension(prevcert.FileName);
+                        string newname = "PreviousCertificate_" + updaterenewal.Id;
+                        string path = System.IO.Path.Combine($"Renewals", newname + dicb);
+                        string docpath = System.IO.Path.Combine($"wwwroot/Renewals", newname + dicb);
+                        updaterenewal.CertifiedLicense = path;
+                        using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                        {
+                            await prevcert.CopyToAsync(fileStream);
+                        }
+                    }
+                    else
+                    {
+                        updaterenewal.CertifiedLicense = "";
+                    }
+
+                }
+
+                if (updaterenewal.HealthCert != "") { } else { 
+                    //spublic DateTime DateCreated
+                    if (healthcert != null)
+                    {
+                        string picb = System.IO.Path.GetFileName(healthcert.FileName);
+                        string dicb = System.IO.Path.GetExtension(healthcert.FileName);
+                        string newname = "HealthCertificate_" + updaterenewal.Id;
+                        string path = System.IO.Path.Combine($"Renewals", newname + dicb);
+                        string docpath = System.IO.Path.Combine($"wwwroot/Renewals", newname + dicb);
+                    updaterenewal.HealthCert = path;
+                        using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                        {
+                            await healthcert.CopyToAsync(fileStream);
+                        }
+                    }
+                    else
+                    {
+                    updaterenewal.HealthCert = "";
+                    }
+                }
+
+                _db.Update(updaterenewal);
+                    _db.SaveChanges();
+
+                    return RedirectToAction("Renewal", "Postprocess", new { id = updaterenewal.ApplicationId });
+
+
+                   // return RedirectToAction("", "");
             }
         }
+
+
+
 
         //[HttpPost("Renewal")]
         //public IActionResult Renewal(Renewals renewal, IFormFile HealthCert, IFormFile CertifiedLicense)
