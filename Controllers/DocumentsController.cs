@@ -67,6 +67,7 @@ namespace LLB.Controllers
             var applications = _db.ApplicationInfo.Where(a => a.Id == searchref).FirstOrDefault();
             var managers = _db.ManagersParticulars.Where(b => b.ApplicationId == searchref).ToList();
             var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == searchref).FirstOrDefault();
+            var licenses = _db.LicenseTypes.Where(b => b.Id == applications.LicenseTypeID).FirstOrDefault();
             //var outletinfo = _db.OutletInfo.ToList();
             var license = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();
@@ -99,8 +100,21 @@ namespace LLB.Controllers
                 FontSize = 14,
                 VerticalAlignment = VerticalAlignment.Top,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                HorizontalOffset = new Length(78),
+                HorizontalOffset = new Length(78.5),
                 VerticalOffset = new Length(19.1),
+            };
+
+
+            TextStamper licenseName = new TextStamper()
+            {
+                Text = $"{licenses.LicenseName.ToUpper()}",
+                FontFamily = "Times New Roman",
+                UseGoogleFont = false,
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                HorizontalOffset = new Length(1),
+                VerticalOffset = new Length(20),
             };
 
             TextStamper tradingname = new TextStamper()
@@ -166,7 +180,7 @@ namespace LLB.Controllers
                 FontSize = 14,
                 VerticalAlignment = VerticalAlignment.Middle,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                HorizontalOffset = new Length(29.4),
+                HorizontalOffset = new Length(34.4),
                 VerticalOffset = new Length(24.5),
             };
 
@@ -180,7 +194,7 @@ namespace LLB.Controllers
                 FontSize = 14,
                 VerticalAlignment = VerticalAlignment.Middle,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                HorizontalOffset = new Length(28.4),
+                HorizontalOffset = new Length(34.4),
                 VerticalOffset = new Length(26.1),
             };
 
@@ -199,13 +213,13 @@ namespace LLB.Controllers
 
             TextStamper llbnum = new TextStamper()
             {
-                Text = $"{applications.RefNum}",
+                Text = $"{applications.LLBNum}",
                 FontFamily = "Times New Roman",
                 UseGoogleFont = false,
                 FontSize = 14,
                 VerticalAlignment = VerticalAlignment.Middle,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                HorizontalOffset = new Length(31.4),
+                HorizontalOffset = new Length(34.4),
                 VerticalOffset = new Length(29.5),
             };
             // pdf = PdfDocument.R(managerscontent);
@@ -237,7 +251,7 @@ namespace LLB.Controllers
                 HorizontalOffset = new Length(13),
                 VerticalOffset = new Length(47.5),
             };
-            var payload = "content to be edited";
+            var payload = $"https://https://llb.pfms.gov.zw/Home/CheckLicense?LLBNUMBER={applications.LLBNum}";
 
             try
             {
@@ -290,7 +304,7 @@ namespace LLB.Controllers
 
 
 
-            Stamper[] stampersToApply = { licensee, tradingname, location, managerscount, managerslist, qrcode, signature, expirydate, grantdate, expirydateuthority, llbnum, conditions, council };
+            Stamper[] stampersToApply = { licensee, tradingname, location, managerscount, managerslist, qrcode, signature, expirydate, grantdate, expirydateuthority, llbnum, conditions, council, licenseName };
             pdf.ApplyMultipleStamps(stampersToApply);
             // pdf.ApplyStamp(stamper2);
 

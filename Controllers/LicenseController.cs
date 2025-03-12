@@ -1121,7 +1121,7 @@ namespace LLB.Controllers
                 // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
                 // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
 
-                var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
+                var verifierWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db, userManager);
                 //   tasks.VerifierId = selectedUser.Id;
                 tasks.Service = "new application";
                 tasks.VerifierId = verifierWithLeastTasks;

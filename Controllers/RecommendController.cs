@@ -590,7 +590,7 @@ namespace LLB.Controllers
             //auto allocation to replace
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            var secretaryWithLeastTasks = await _taskAllocationHelper.GetSecretary(_db,userManager);
+            var secretaryWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db,userManager);
             //   tasks.VerifierId = selectedUser.Id;
 
             tasksc.Service = "new application";

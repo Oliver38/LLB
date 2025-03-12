@@ -98,7 +98,7 @@
                                 <td colspan="2" class="text-center">
                                     <a href="" class="btn btn-danger"> Reject Renewal</a>
                                     <a href="" class="btn btn-warning"> Raise Query</a>
-                                    <a href="/Verify/ApproveRenewal?Id=@ViewBag.Renewals.ApplicationId" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this renewal?');">
+                                    <a href="/Verify/ApproveRenewal?Id=@ViewBag.Renewals.ApplicationId&taskId=@ViewBag.TaskId" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this renewal?');">
                                         Approve Renewal
                                     </a>
 

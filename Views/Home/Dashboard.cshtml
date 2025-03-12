@@ -394,14 +394,98 @@
 
 
 
+
+                <!-- INSPECTION -->
+                <div class="row">
+                    <div class="card">
+
+                        <div class="card-body" id="_step1">
+                            <div class="card-header">
+
+                                <h5 class="card-title">Inspections</h5>
+                                @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                                *@
+                            </div>
+
+
+
+
+                            <div class="row">
+
+                                <table class="table table-responsiveß table-hover table-striped">
+
+
+                                    <thead>
+                                        <tr>
+                                            @*renewalinspectiontask.TradingName = outletinfoq.TradingName;
+                                            renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
+                                            renewalinspectiontask.ApplicationId = applId;
+                                            renewalinspectiontask.DateApplied = inspecy.DateApplied;
+                                            renewalinspectiontask.Id = inspecy.Id;
+                                            renewalinspectiontask.Status = inspecy.Status;
+                                            renewalinspectiontask.Service = inspecy.Service;
+                                            renewalinspectiontask.LicenseType = licensetype.LicenseName;
+                                            renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
+                                            renewalinspectiontask.TaskId = insptask.Id;*@
+
+                                            <th>Trading Name </th>
+                                            <th>LLB Number </th>
+                                            <th>Inspection Date </th>
+                                            <th>License </th>
+                                            <th>For </th>
+                                            <th>Service </th>
+                                            <th>Status </th>
+                                            <th>Action </th>
+                                        </tr>
+
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var inspection in ViewBag.Inspections)
+                                        {
+
+                                            <tr>
+                                                <td>@inspection.TradingName</td>
+                                                <td>@inspection.LLBNumber</td>
+                                                <td>@inspection.InspectionDate</td>
+                                                <td>@inspection.LicenseType </td>
+                                                <td>@inspection.LicenseRegion</td>
+                                                <td>@inspection.Service</td>
+                                                <td>@inspection.Status</td>
+                                                <td><a class="btn btn-primary" href="/Viewing/inspection?Id=@inspection.Id"> View inspection</a></td>
+
+
+                                            </tr>
+
+                                        }
+                                    </tbody>
+
+
+
+                                </table>
+                            </div>
+
+
+
+
+
+
+                        </div>
+                    </div>
+
+                </div>
+
+
+
+
             </div>
+
         </div><!-- End Bordered Tabs -->
 
     </div>
 </div>
 
 
-
+ 
 
 <!-- Basic Modal -->
 
@@ -460,7 +544,6 @@
         </div>
     </div>
 </div><!-- End Basic Modal-->
-
 
 
 

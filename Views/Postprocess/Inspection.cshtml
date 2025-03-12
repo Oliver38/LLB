@@ -6,36 +6,147 @@
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title mb-0">Post Formation Prices</div>
-        <button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>
+        <div class="card-title mb-0">Inspection For @ViewBag.Outletinfo.TradingName</div>
+        @*<button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>*@
     </div>
 
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
-                <thead class="table-light">
+                <tbody class="table-light">
+
                     <tr>
-                        <th>Code</th>
-                        <th>Name</th>
-                        <th>Fee</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th>Outlet Name</th>
+                        <td>
+                            @ViewBag.Outletinfo.TradingName
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var fee in ViewBag.Fees)
+                    <tr>
+                        <th>License ExpiryDate</th>
+                        <td>
+                            @ViewBag.Appinfo.ExpiryDate
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Fee</th>
+                        <td>
+                            @ViewBag.Fee
+                        </td>
+                    </tr>
+
+
+
+
+                    <tr>
+                        <th>Total Fee</th>
+                        <td>@ViewBag.TotalFee</td>
+                    </tr>
+                    <tr>
+                        <th>Payment Status</th>
+                        <td>
+                            @if (ViewBag.Payment == null)
+                            {<span style="color:red"> Not Paid</span>}
+                            else
+                            { <span style="color:green"> @ViewBag.Payment.Status</span>}
+                        </td>
+                    </tr>
+
+
+                    @*[Key]
+            // Liquor Outlet Info
+            public string? Id { get; set; }
+            public string? ApplicationId { get; set; }
+            public string? UserId { get; set; }
+            public string? PreviousExpiry { get; set; }
+            public string? FeePaid { get; set; }
+            public string? PenaltyPaid { get; set; }
+            public string? PaymentStatus { get; set; }
+            public string? LLBNumber { get; set; }
+
+            public string? Service { get; set; }
+            public DateTime DateApplied { get; set; }
+            public DateTime DateUpdated { get; set; }*@
+
+
+
+
+                    @if (ViewBag.Payment == null)
                     {
-                        <tr>
-                            <td>@fee.Code</td>
-                            <td>@fee.ProcessName</td>
-                            <td>@fee.Fee</td>
-                            <td>@fee.Status</td>
-                            <td><button class="btn btn-primary" onclick="UpdateFee('@fee.Id','@fee.ProcessName', '@fee.Description', '@fee.Fee', '@fee.Code' )">Edit</button></td>
-                        </tr>
+                        @*<span style="color:red"> Not Paid</span>*@
+                    <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Inspection</button></td>
+
+                }
+                else
+                {
+                    @if (ViewBag.Payment.Status == "Paid")
+                    {
+
+                        @if (ViewBag.Inspectiondata == null)
+                        {
+                            <form action="/Postprocess/PostInspection" enctype="multipart/form-data" method="post">
+
+                            <tr>
+                                <th>Inspection Submission </th>
+                                <td><span class="text-success"> Ready for submission</span></td>
+
+                            </tr>
+                            <tr>
+                                <th>
+                                    <input type="hidden" name="service" value="Inspection" />
+                                    <input type="hidden" name="lLBNumber" value="@ViewBag.Appinfo.LLBNum" />
+                                    <input type="hidden" name="PaymentStatus" value="Paid" />
+                                    <input type="hidden" name="penaltyPaid" value="@ViewBag.Penalty" />
+                                    <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
+                                    <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
+                                    <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />
+                                    @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
+
+
+                                </th>
+
+
+                                <td><button class="btn btn-primary" type="submit"> Submit For Inspection</button></td>
+                            </tr>
+
+                            </form>
+
+
+
+                        }
+                        else
+                        {
+                            <tr>
+                                <td>
+                                    your inspection application has been submmited , Click Continue to set for awaiting and inspection.
+                                </td>
+                                <td>
+                                    <a class="btn btn-primary" href="/Home/Dashboard">
+                                        Continue
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+
+
+
+                        @*<td><button type="button" href="/Postprocess/Complete?Id=@ViewBag.Inspectiondata.Id" class="btn btn-primary"> Continue</button></td>*@
                     }
-                </tbody>
-            </table>
-        </div>
+                    else
+                    {
+                        <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Inspection</button></td>
+
+                    }
+                }
+
+
+
+
+
+
+                    </tbody>
+
+                </table>
+        </div>`
     </div>
 </div>
 
@@ -44,7 +155,7 @@
 
 <!-- Basic Modal -->
 
-<div class="modal fade" id="PostFormationModal" tabindex="-1">
+<div class="modal fade" id="PaymentModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -60,46 +171,85 @@
 
 
 
+                        <form action="/Postprocess/UpdateFee" enctype="multipart/form-data" method="post">
 
-                        <!-- Radio Button -->
-                        <!--<div class="col-md-12 d-flex align-items-center mb-3">
-                            <input type="radio" name="selectProcess" class="form-check-input me-2" id="MunicipaltyFee">
-                            <label for="MunicipaltyFee" class="form-label mb-0">Municipalty Fee</label>
-                        </div>-->
-                        <!-- Process Name -->
-                        <div class="mb-3">
-                            <label for="processName" class="form-label">Process Name</label>
-                            <input type="text" class="form-control" id="processNameb" name="ProcessName" placeholder="Enter Process Name">
-                        </div>
 
-                        <!-- Description -->
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <input type="text" class="form-control" id="descriptionb" name="Description" placeholder="Enter Description">
-                        </div>
+                            <table class="table table-bordered table-hover">
+                                <tbody class="table-light">
 
-                        <!-- Code -->
-                        <div class="mb-3">
-                            <label for="code" class="form-label">Code</label>
-                            <input type="text" class="form-control" id="codeb" name="Code" placeholder="Enter Code">
-                        </div>
+                                    <tr>
+                                        <th>Outlet Name</th>
+                                        <td>
+                                            @ViewBag.Outletinfo.TradingName
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>License ExpiryDate</th>
+                                        <td>
+                                            @ViewBag.Appinfo.ExpiryDate
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fee</th>
+                                        <td>
+                                            @ViewBag.Fee
+                                        </td>
+                                    </tr>
 
-                        <!-- Fee -->
-                        <div class="mb-3">
-                            <label for="fee" class="form-label">Fee</label>
-                            <input type="number" class="form-control" id="feeb" name="Fee" placeholder="Enter Fee" step="0.01" min="0">
-                        </div>
+                                   
+
+                                   
+                                    <tr>
+                                        <th>Total Fee</th>
+                                        <td>@ViewBag.TotalFee</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Payment Status</th>
+                                        <td>
+                                            @if (ViewBag.Payment == null)
+                                            {<span style="color:red"> Not Paid</span>}
+                                            else
+                                            { <span style="color:green"> @ViewBag.Payment.Status</span>}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">
+
+                                            <p><b>NB:</b> After making this payment,the system will recognise that you have made a payment. You are required to return and submit your inspection </p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <td>
+                                            @if (ViewBag.Payment == null)
+                                            {
+                                                <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process">
+                                                    Make Payment
+                                                </a>
+                                            }
+                                            else
+                                            { <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process">
+                                                    Make Payment
+                                                </a>
+                                            }
+                                        </td>
+                                    </tr>
+                                </tbody>
+
+                            </table>
+                        </form>
+
 
                     </div>
 
 
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Submit</button>
+                    @*<div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Submit</button>
 
 
-                    </div>
+                        </div>*@
                 </form>
             </div>
         </div>
@@ -107,89 +257,11 @@
 </div><!-- End Basic Modal-->
 <!-- Basic Modal -->
 
-<div class="modal fade" id="UpdateFeeModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Post Fomation For </h5> &nbsp;<b><h5 class="modal-title" id="processNametitle"></h5></b>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form action="/Postprocess/UpdateFee" enctype="multipart/form-data" method="post">
-
-                    <div class="col-md-12">
-                        @*<label for="inputName5" class="form-label">Select Post Formation Process</label>
-                            <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
 
 
-
-
-                        <!-- Radio Button -->
-                        <!--<div class="col-md-12 d-flex align-items-center mb-3">
-                            <input type="radio" name="selectProcess" class="form-check-input me-2" id="MunicipaltyFee">
-                            <label for="MunicipaltyFee" class="form-label mb-0">Municipalty Fee</label>
-                        </div>-->
-                        <!-- Process Name -->
-                        <div class="mb-3">
-                            <label for="processName" class="form-label">Process Name</label>
-                            <input type="text" class="form-control" id="processName" name="ProcessName" placeholder="Enter Process Name">
-                            <input type="hidden" class="form-control" id="idd" name="Id" placeholder="Enter Process Name">
-                        </div>
-
-                        <!-- Description -->
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <input type="text" class="form-control" id="description" name="Description" placeholder="Enter Description">
-                        </div>
-
-                        <!-- Code -->
-                        <div class="mb-3">
-                            <label for="code" class="form-label">Code</label>
-                            <input type="text" class="form-control" id="code" name="Code" placeholder="Enter Code">
-                        </div>
-
-                        <!-- Fee -->
-                        <div class="mb-3">
-                            <label for="fee" class="form-label">Fee</label>
-                            <input type="number" class="form-control" id="fee" name="Fee" placeholder="Enter Fee" step="0.01" min="0">
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Submit</button>
-
-
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div><!-- End Basic Modal-->
-
-<script>function PostFormationModal() {
+<script>function Payment() {
         // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
 
- 
-
-        $('#PostFormationModal').modal('show');
-
-    }</script>
-
-<script>function UpdateFee(id,processName, description, fee, code) {
-        // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
-
-       
-
-    $('#idd').val(id);
-    $('#processName').val(processName);
-    $('#description').val(description);
-    $('#fee').val(fee);
-    $('#code').val(code);
-    $('#processNametitle').html(processName);
-        $('#UpdateFeeModal').modal('show');
+        $('#PaymentModal').modal('show');
 
     }</script>

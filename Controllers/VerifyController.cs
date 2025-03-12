@@ -13,6 +13,7 @@ using LLB.Helpers;
 using LLB.Models.ViewModel;
 using System.Drawing;
 using static System.Net.Mime.MediaTypeNames;
+using System.Threading.Tasks;
 
 namespace LLB.Controllers
 {
@@ -77,6 +78,7 @@ namespace LLB.Controllers
                 getreninfo.Licensetype = licensetype.LicenseName;
                 getreninfo.LicenseRegion = licenseReg.RegionName;
                 getreninfo.Status = renapps.Status;
+                getreninfo.TaskId = rentask.Id;
 
                 renewaltasks.Add(getreninfo);
             }
@@ -88,27 +90,58 @@ namespace LLB.Controllers
                 var applId = insptask.ApplicationId;
                 var appinfoq = _db.ApplicationInfo.Where(i => i.Id == applId).FirstOrDefault();
                 var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
-
-
+                var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
+                var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
+                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
                 InspectionViewModel renewalinspectiontask = new InspectionViewModel();
 
                 renewalinspectiontask.TradingName = outletinfoq.TradingName;
                 renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
-             //   renewalinspectiontask.
-                //public string? Service { get; set; }
-                //       public string? TradingName { get; set; }
-                //       public string? LLBNumber { get; set; }
-                //       public string? Application { get; set; }
-                //       public string? Status { get; set; }
-                //       public string? UserId { get; set; }
-                //       public string? ApplicationId { get; set; }
-                //       public string? InspectorId { get; set; }
-                //       public DateTime InspectionDate { get; set; }
-                //       public DateTime DateApplied { get; set; }
-                //       public DateTime DateUpdate { get; set; }
+                renewalinspectiontask.ApplicationId = applId;
+                renewalinspectiontask.DateApplied = inspecy.DateApplied;
+                renewalinspectiontask.Id = inspecy.Id;
+                renewalinspectiontask.Status = inspecy.Status;
+                renewalinspectiontask.Service = inspecy.Service;
+                renewalinspectiontask.LicenseType = licensetype.LicenseName;
+                renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
+                renewalinspectiontask.TaskId = insptask.Id;
+
+              
+                renewalinspectiontasks.Add(renewalinspectiontask);
 
 
     }
+
+
+
+            List<InspectionViewModel>inspectiontasks = new List<InspectionViewModel>();
+            var insptasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "inspection" && f.Status == "assigned").ToList();
+            foreach (var insptask in insptasks)
+            {
+                var applId = insptask.ApplicationId;
+                var appinfoq = _db.ApplicationInfo.Where(i => i.Id == applId).FirstOrDefault();
+                var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
+                var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
+                var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
+                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+                InspectionViewModel inspectiontask = new InspectionViewModel();
+
+                inspectiontask.TradingName = outletinfoq.TradingName;
+                inspectiontask.LLBNumber = appinfoq.LLBNum;
+                inspectiontask.ApplicationId = applId;
+                inspectiontask.DateApplied = inspecy.DateApplied;
+                inspectiontask.Id = inspecy.Id;
+                inspectiontask.Status = inspecy.Status;
+                inspectiontask.Service = inspecy.Service;
+                inspectiontask.LicenseType = licensetype.LicenseName;
+                inspectiontask.LicenseRegion = licenseregion.RegionName;
+                inspectiontask.TaskId = insptask.Id;
+
+
+                inspectiontasks.Add(inspectiontask);
+
+
+            }
 
             //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
             var outletinfo = _db.OutletInfo.ToList();
@@ -123,7 +156,11 @@ namespace LLB.Controllers
             ViewBag.Applications = appinfo;
             ViewBag.Renewals = renewaltasks;
             ViewBag.RenewalIns = renewaltasks;
-
+            ViewBag.RenewaInsTask = renewalinspectiontasks;
+           // ViewBag.RenewalIns = renewaltasks;
+            ViewBag.InsTask = inspectiontasks;
+            //crete view on dashboard
+            ;
             return View();
         }
 
@@ -644,7 +681,7 @@ namespace LLB.Controllers
             //auto allocation to replace
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
+            var recommenderWithLeastTasks = await _taskAllocationHelper.GetSecretary(_db,userManager);
             tasksc.Service = "new application";
             tasksc.RecommenderId = recommenderWithLeastTasks;
             tasksc.AssignerId = "system";
@@ -693,7 +730,7 @@ namespace LLB.Controllers
 
 
         [HttpGet("Renewal")]
-        public async Task<IActionResult> Renewal(string id)
+        public async Task<IActionResult> Renewal(string id, string taskId)
         {
 
          
@@ -726,15 +763,124 @@ namespace LLB.Controllers
             //ViewBag.License = license;
             //ViewBag.Applications = appinfo;
             ViewBag.Renewals = getreninfo;
+            ViewBag.TaskId = taskId;
 
             // var renewal
             return View();
         }
 
+        
+               [HttpGet("Inspect")]
+        public async Task<IActionResult> Inspect(string id, string taskId)
+        {
 
 
-        [HttpGet("ApproveRenewal")]
-        public async Task<IActionResult> ApproveRenewal(string Id)
+            //   List<InspectionViewModel> renewalinspectiontasks = new List<InspectionViewModel>();
+            //var reninsptasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "renewal inspection" && f.Status == "assigned").ToList();
+            var reninsptasks = _db.Tasks.Where(f => f.Id == taskId).FirstOrDefault();
+            //foreach (var insptask in reninsptasks)
+            //{
+            var applId = reninsptasks.ApplicationId;
+                var appinfoq = _db.ApplicationInfo.Where(i => i.Id == applId).FirstOrDefault();
+                var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
+                var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
+                var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
+                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+                InspectionViewModel renewalinspectiontask = new InspectionViewModel();
+
+                renewalinspectiontask.TradingName = outletinfoq.TradingName;
+                renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
+                renewalinspectiontask.ApplicationId = applId;
+                renewalinspectiontask.DateApplied = inspecy.DateApplied;
+                renewalinspectiontask.Id = inspecy.Id;
+                renewalinspectiontask.Status = inspecy.Status;
+                renewalinspectiontask.Service = inspecy.Service;
+                renewalinspectiontask.LicenseType = licensetype.LicenseName;
+                renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
+                renewalinspectiontask.TaskId = reninsptasks.Id;
+
+
+            //  renewalinspectiontasks.Add(renewalinspectiontask);
+
+
+            //   }
+            ViewBag.Inspection = renewalinspectiontask;
+            ViewBag.TaskId = taskId;
+            return View();
+        }
+
+
+
+        [HttpPost("Inspect")]
+        public async Task<IActionResult> Inspect(Inspection inspection, string TaskId)
+        {
+            var inspec = _db.Inspection.Where(a => a.Id == inspection.Id).FirstOrDefault();
+           // inspec = inspection;
+            inspec.DateUpdate = DateTime.Now;
+            inspec.InspectionDate = DateTime.Now;
+            inspec.Status = "Inspected";
+            inspec.Ventilation = inspection.Ventilation ;
+            var userId = userManager.GetUserId(User);
+            inspec.InspectorId = userId;
+
+            inspec.Lighting  = inspection.Lighting;
+            inspec.SewageDisposalAndDrainage  =inspection.SewageDisposalAndDrainage;
+            inspec.Toilets = inspection.Toilets;
+            inspec.WaterSupply = inspection.WaterSupply;
+            inspec.RubbishDisposal  = inspection.RubbishDisposal;
+            inspec.StandardOfFood  = inspection.StandardOfFood;
+            inspec.FoodStorageArrangements  = inspection.FoodStorageArrangements;
+            inspec.StaffUniformsAndAccommodation = inspection.StaffUniformsAndAccommodation;
+            inspec.EquipmentAndAppointments = inspection.EquipmentAndAppointments; 
+            inspec.HygieneStandards = inspection.HygieneStandards;
+            _db.Update(inspec);
+            _db.SaveChanges();
+
+            var task = _db.Tasks.Where(a => a.Id == TaskId).FirstOrDefault();
+            task.Status = "completed";
+            _db.Update(task);
+            _db.SaveChanges();
+
+
+
+            //   List<InspectionViewModel> renewalinspectiontasks = new List<InspectionViewModel>();
+            //var reninsptasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "renewal inspection" && f.Status == "assigned").ToList();
+           // var reninsptasks = _db.Tasks.Where(f => f.Id == TaskId).FirstOrDefault();
+            //foreach (var insptask in reninsptasks)
+            //{
+            var applId = inspec.ApplicationId;
+            var appinfoq = _db.ApplicationInfo.Where(i => i.Id == applId).FirstOrDefault();
+            var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
+            var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
+            var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
+            var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+            InspectionViewModel renewalinspectiontask = new InspectionViewModel();
+
+            renewalinspectiontask.TradingName = outletinfoq.TradingName;
+            renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
+            renewalinspectiontask.ApplicationId = applId;
+            renewalinspectiontask.DateApplied = inspecy.DateApplied;
+            renewalinspectiontask.Id = inspecy.Id;
+            renewalinspectiontask.Status = inspecy.Status;
+            renewalinspectiontask.Service = inspecy.Service;
+            renewalinspectiontask.LicenseType = licensetype.LicenseName;
+            renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
+            renewalinspectiontask.TaskId = inspec.Id;
+
+
+            //  renewalinspectiontasks.Add(renewalinspectiontask);
+
+
+            //   }
+            ViewBag.Inspection = renewalinspectiontask;
+            ViewBag.TaskId = TaskId;
+
+            return View();
+        }
+
+
+            [HttpGet("ApproveRenewal")]
+        public async Task<IActionResult> ApproveRenewal(string Id, string taskId)
         {
             //Add Inspection
 
@@ -748,11 +894,11 @@ namespace LLB.Controllers
             inspection.DateApplied = DateTime.Now;
 
             var userId = userManager.GetUserId(User);
-            inspection.UserId = userId;
+            inspection.UserId = appinfo.UserID;
             _db.Add(inspection);
             _db.SaveChanges();
             //Add to task
-            var oldtask = _db.Tasks.Where(q =>q.ApplicationId == Id && q.Service == "renewal").FirstOrDefault();
+            var oldtask = _db.Tasks.Where(q =>q.Id == taskId).FirstOrDefault();
             oldtask.Status = "completed";
             _db.Update(oldtask);
             _db.SaveChanges();

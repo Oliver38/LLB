@@ -163,12 +163,12 @@
                         <thead>
                             <tr>
                                 @*getreninfo.ApplicationId = renapps.ApplicationId;
-                                getreninfo.Id = renapps.Id;
-                                getreninfo.LLBNumber = renapps.LLBNumber;
-                                getreninfo.PreviousExpiry = renapps.PreviousExpiry;
-                                getreninfo.TradingName = reaoutletinfo.TradingName;
-                                getreninfo.Licensetype = licensetype.LicenseName;
-                                getreninfo.LicenseRegion = licenseReg.RegionName;*@
+                                    getreninfo.Id = renapps.Id;
+                                    getreninfo.LLBNumber = renapps.LLBNumber;
+                                    getreninfo.PreviousExpiry = renapps.PreviousExpiry;
+                                    getreninfo.TradingName = reaoutletinfo.TradingName;
+                                    getreninfo.Licensetype = licensetype.LicenseName;
+                                    getreninfo.LicenseRegion = licenseReg.RegionName;*@
 
                                 <th>Trading Name </th>
                                 <th>LLB Number </th>
@@ -178,7 +178,7 @@
                                 <th>Status </th>
                                 <th>Action </th>
                             </tr>
-                     
+
                         </thead>
                         <tbody>
                             @foreach (var renewal in ViewBag.Renewals)
@@ -191,7 +191,7 @@
                                     <td>@renewal.Licensetype </td>
                                     <td>@renewal.LicenseRegion</td>
                                     <td>@renewal.Status</td>
-                                    <td><a class="btn btn-primary" href="/Verify/Renewal?Id=@renewal.Id"> View Renewal</a></td>
+                                    <td><a class="btn btn-primary" href="/Verify/Renewal?Id=@renewal.Id&taskId=@renewal.TaskId"> View Renewal</a></td>
 
 
                                 </tr>
@@ -207,6 +207,171 @@
 
 
 
+
+
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <div class="row">
+        <div class="card">
+
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+
+                    <h5 class="card-title"> Renewal Inspection Applications</h5>
+                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    *@
+                </div>
+
+
+
+
+                <div class="row">
+
+                    <table class="table table-responsiveß table-hover table-striped">
+
+
+                        <thead>
+                            <tr>
+                                @*renewalinspectiontask.TradingName = outletinfoq.TradingName;
+                                    renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
+                                    renewalinspectiontask.ApplicationId = applId;
+                                    renewalinspectiontask.DateApplied = inspecy.DateApplied;
+                                    renewalinspectiontask.Id = inspecy.Id;
+                                    renewalinspectiontask.Status = inspecy.Status;
+                                    renewalinspectiontask.Service = inspecy.Service;
+                                    renewalinspectiontask.LicenseType = licensetype.LicenseName;
+                                    renewalinspectiontask.LicenseRegion = licenseregion.RegionName;*@
+
+                                <th>Trading Name </th>
+                                <th>LLB Number </th>
+                                <th>Application Date </th>
+                                <th>Status </th>
+                                <th>Service </th>
+                                <th>License </th>
+                                <th>For </th>
+
+                                <th>Action </th>
+                            </tr>
+
+                        </thead>
+                        <tbody>
+                            @foreach (var inspect in ViewBag.RenewaInsTask)
+                            {
+
+                                <tr>
+                                    <td>@inspect.TradingName</td>
+                                    <td>@inspect.LLBNumber</td>
+                                    <td>@inspect.DateApplied</td>
+                                    <td>@inspect.Status </td>
+                                    <td>@inspect.Service</td>
+                                    <td>@inspect.LicenseType</td>
+                                    <td>@inspect.LicenseRegion</td>
+                                    @*<td>@inspect.Status</td>*@
+                                    <td><a class="btn btn-primary" href="/Verify/Inspect?Id=@inspect.Id&taskId=@inspect.TaskId"> View Inspection</a></td>
+
+
+                                </tr>
+
+                            }
+                        </tbody>
+
+
+
+                    </table>
+                </div>
+
+
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+    <!-- inspections-->
+
+
+
+    <div class="row">
+        <div class="card">
+
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+
+                    <h5 class="card-title"> Inspection Applications</h5>
+                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    *@
+                </div>
+
+
+
+
+                <div class="row">
+
+                    <table class="table table-responsiveß table-hover table-striped">
+
+
+                        <thead>
+                            <tr>
+                                @*renewalinspectiontask.TradingName = outletinfoq.TradingName;
+                                    renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
+                                    renewalinspectiontask.ApplicationId = applId;
+                                    renewalinspectiontask.DateApplied = inspecy.DateApplied;
+                                    renewalinspectiontask.Id = inspecy.Id;
+                                    renewalinspectiontask.Status = inspecy.Status;
+                                    renewalinspectiontask.Service = inspecy.Service;
+                                    renewalinspectiontask.LicenseType = licensetype.LicenseName;
+                                    renewalinspectiontask.LicenseRegion = licenseregion.RegionName;*@
+
+                                <th>Trading Name </th>
+                                <th>LLB Number </th>
+                                <th>Application Date </th>
+                                <th>Status </th>
+                                <th>Service </th>
+                                <th>License </th>
+                                <th>For </th>
+
+                                <th>Action </th>
+                            </tr>
+
+                        </thead>
+                        <tbody>
+                            @foreach (var inspecta in ViewBag.InsTask)  
+                            {
+
+                                <tr>
+                                    <td>@inspecta.TradingName</td>
+                                    <td>@inspecta.LLBNumber</td>
+                                    <td>@inspecta.DateApplied</td>
+                                    <td>@inspecta.Status </td>
+                                    <td>@inspecta.Service</td>
+                                    <td>@inspecta.LicenseType</td>
+                                    <td>@inspecta.LicenseRegion</td>
+                                    @*<td>@inspect.Status</td>*@
+                                    <td><a class="btn btn-primary" href="/Verify/Inspect?Id=@inspecta.Id&taskId=@inspecta.TaskId"> View Inspection</a></td>
+
+
+                                </tr>
+
+                            }
+                        </tbody>
+
+
+
+                    </table>
+                </div>
 
 
             </div>

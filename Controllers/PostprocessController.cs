@@ -107,6 +107,7 @@ namespace LLB.Controllers
         public async Task<IActionResult> Continue(string Id)
         {
             var renewal = _db.Renewals.Where(a => a.Id == Id).FirstOrDefault();
+            //renewal.Status = "renewal inspection"; to change after getting inpection requirements.
             renewal.Status = "renewed";
             renewal.DateUpdated = DateTime.Now;
             _db.Update(renewal);
@@ -221,7 +222,8 @@ namespace LLB.Controllers
                 _db.SaveChanges();
                 payment = paymentTrans;
             }
-            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id).OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id  ).OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            //submitted check status
             ViewBag.Payment = payment;
             ViewBag.Process = process;
             ViewBag.Fee = getFee;
@@ -359,128 +361,134 @@ namespace LLB.Controllers
 
 
 
+        
+               [HttpGet("Inspection")]
+        public IActionResult Inspection(string id, string process)
+        {
 
-        //[HttpPost("Renewal")]
-        //public IActionResult Renewal(Renewals renewal, IFormFile HealthCert, IFormFile CertifiedLicense)
-        //{
-        //    renewal.Id = Guid.NewGuid().ToString();
-        //    renewal.DateApplied = DateTime.Now;
-        //    _db.Add(renewal);
-        //    _db.SaveChanges();
 
-        //    var serv = _db.PostFormationFees.Where(a => a.Code == process).FirstOrDefault();
-        //    var appinfo = _db.ApplicationInfo.Where(b => b.Id == renewal.ApplicationId).FirstOrDefault();
-        //    var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == renewal.ApplicationId && c.Status == "active").FirstOrDefault();
 
-        //    var today = DateTime.Now;
-        //    // var penalty = DateTime.Now.Month - appinfo.ExpiryDate.Month ;
-        //    int time;
-        //    int totalMonths = ((today.Year - appinfo.ExpiryDate.Year) * 12) + today.Month - appinfo.ExpiryDate.Month;
-        //    if (totalMonths <= 0)
-        //    {
-        //        time = 0;
-        //    }
-        //    else
-        //    {
-        //        time = totalMonths;
+            var appinfo = _db.ApplicationInfo.Where(b => b.Id == id).FirstOrDefault();
+            var mainlicense = _db.LicenseTypes.Where(z => z.Id == appinfo.LicenseTypeID).FirstOrDefault();
+            var licenseRegion = _db.LicenseRegions.Where(d => d.Id == appinfo.ApplicationType).FirstOrDefault();
+            var InspectionFees = _db.PostFormationFees.Where(a => a.ProcessName == "Inspection Fee").FirstOrDefault();
+            var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == id && c.Status == "active").FirstOrDefault();
 
-        //    }
-        //    var Fees = _db.PostFormationFees.Where(n => n.Code == process).FirstOrDefault();
-        //    var PenaltyFees = _db.PostFormationFees.Where(n => n.Code == "PNL").FirstOrDefault();
-        //    var penalty = time * PenaltyFees.Fee;
-        //    var totalfee = penalty + Fees.Fee;
+            var today = DateTime.Now;
+            // var penalty = DateTime.Now.Month - appinfo.ExpiryDate.Month ;
+            int time;
+            int totalMonths = ((today.Year - appinfo.ExpiryDate.Year) * 12) + today.Month - appinfo.ExpiryDate.Month;
+            if (totalMonths <= 0)
+            {
+                time = 0;
+            }
+            else
+            {
+                time = totalMonths;
+            }
 
-        //    Payments payment = null;
-        //    var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "renewal").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-        //    if (paymentTrans == null)
-        //    {
+            double getFee = InspectionFees.Fee;
 
-        //    }
-        //    else
-        //    {
-        //        var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            var totalfee = getFee;
 
-        //        var status = paynow.PollTransaction(paymentTrans.PollUrl);
+            Payments payment = null;
+            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "inspection").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+            if (paymentTrans == null)
+            {
 
-        //        var statusdata = status.GetData();
-        //        paymentTrans.PaynowRef = statusdata["paynowreference"];
-        //        paymentTrans.PaymentStatus = statusdata["status"];
-        //        paymentTrans.Status = statusdata["status"];
-        //        paymentTrans.DateUpdated = DateTime.Now;
+            }
+            else
+            {
+                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-        //        _db.Update(paymentTrans);
-        //        _db.SaveChanges();
-        //        payment = paymentTrans;
-        //    }
-        //    //var appl = _db.ApplicationInfo.Where(w => w.Id == renewal.ApplicationId).FirstOrDefault();
-        //    //var afteryear = DateTime.Now.AddYears(1);
-        //    //appl.ExpiryDate = afteryear;
-        //    // _db.Update(appl);
-        //    // _db.SaveChanges();
-        //    // return RedirectToAction("Dashboard", "Home");
-        //    ViewBag.Payment = payment;
-        //    ViewBag.Process = process;
-        //    ViewBag.Fee = Fees;
-        //    ViewBag.Penalty = penalty;
-        //    ViewBag.TotalFee = totalfee;
-        //    ViewBag.Months = time;
-        //    ViewBag.Outletinfo = outletinfo;
-        //    ViewBag.Appinfo = appinfo;
-        //    ViewBag.ServeFee = serv;
-        //    return View();
-        //  //  return View();
-        //}
+                var status = paynow.PollTransaction(paymentTrans.PollUrl);
 
-        //                 if(process==  "RNW")
-        //            {
-        //                return RedirectToAction("Renewal", "Postprocess", new { id = id, process = id
-        //    });
+                var statusdata = status.GetData();
+                paymentTrans.PaynowRef = statusdata["paynowreference"];
+                paymentTrans.PaymentStatus = statusdata["status"];
+                paymentTrans.Status = statusdata["status"];
+                paymentTrans.DateUpdated = DateTime.Now;
 
-        //            }else if (process == "APM")
-        //{
-        //    return RedirectToAction("Managerchange", "Postprocess", new { param1 = id, param2 = id });
+                _db.Update(paymentTrans);
+                _db.SaveChanges();
+                payment = paymentTrans;
+            }
+            var inspectiondata = _db.Inspection.Where(x => x.ApplicationId == id  &&  x.Status == "submitted").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            //check status
+           // var inspectiondatastate = 
+            //submitted check status
+            ViewBag.Payment = payment;
+            ViewBag.Process = process;
+            ViewBag.Fee = getFee;
+           // ViewBag.Penalty = penalty;
+            ViewBag.TotalFee = totalfee;
+            ViewBag.Months = time;
+            ViewBag.Outletinfo = outletinfo;
+            ViewBag.Appinfo = appinfo;
+            ViewBag.ServeFee = getFee;
+            ViewBag.Inspectiondata = inspectiondata;
 
-        //}
-        //else if (process == "GDP")
-        //{
-        //    return RedirectToAction("Governmentpermit", "Postprocess", new { param1 = id, param2 = id });
+            return View();
+        }
 
-        //}
-        //else if (process == "INP")
-        //{
-        //    return RedirectToAction("Inspection", "Postprocess", new { param1 = id, param2 = id });
+        //PostInspection
 
-        //}
-        //else if (process == "DPL")
-        //{
-        //    return RedirectToAction("Duplication", "Postprocess", new { param1 = id, param2 = id });
 
-        //}
-        //else if (process == "TRM")
-        //{
-        //    return RedirectToAction("Tempremoval", "Postprocess", new { param1 = id, param2 = id });
+        [HttpPost("PostInspection")]
+        public async Task<IActionResult> PostInspection(Renewals renewal)
+        {
+            Inspection newinspection = new Inspection();
+            //     [Key]
+            //     public string? Id { get; set; }
 
-        //}
-        //else if (process == "TTR")
-        //{
-        //    return RedirectToAction("Temptranfer", "Postprocess", new { param1 = id, param2 = id });
+            //public string? Service { get; set; }
+            // public string? Application { get; set; }
+            // public string? Status { get; set; }
+            // public string? UserId { get; set; }
+            // public string? ApplicationId { get; set; }
+            // public string? InspectorId { get; set; }
+            // public DateTime InspectionDate { get; set; }
+            // public DateTime DateApplied { get; set; }
+            // public DateTime DateUpdate { get; set; }
+            var userId = userManager.GetUserId(User);
 
-        //}
-        //else if (process == "EXH")
-        //{
-        //    return RedirectToAction("Extendhours", "Postprocess", new { param1 = id, param2 = id });
+            newinspection.Id = Guid.NewGuid().ToString();
+            newinspection.Service = renewal.Service;
 
-        //}
-        //else if (process == "TRL")
-        //{
-        //    return RedirectToAction("Temporalretail", "Postprocess", new { param1 = id, param2 = id });
+            newinspection.Status = "submitted";
+            newinspection.UserId = userId;
+            newinspection.ApplicationId = renewal.ApplicationId;
+            newinspection.DateApplied = DateTime.Now;
+            newinspection.DateUpdate = DateTime.Now;
+            _db.Add(newinspection);
+            _db.SaveChanges();
 
-        //}
-        //else if (process == "ECF")
-        //{
-        //    return RedirectToAction("Extracounter", "Postprocess", new { param1 = id, param2 = id });
+            //var verifierId = await TaskAllocator()
+            Tasks tasks = new Tasks();
+            tasks.Id = Guid.NewGuid().ToString();
+            tasks.ApplicationId = renewal.ApplicationId;
+            //tasks.AssignerId
 
-        //}
+            //auto allocation to replace
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
+            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
 
-    }
+            var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
+            //   tasks.VerifierId = selectedUser.Id;
+            tasks.Service = "inspection";
+            tasks.VerifierId = verifierWithLeastTasks;
+            tasks.AssignerId = "system";
+            tasks.Status = "assigned";
+            tasks.DateAdded = DateTime.Now;
+            tasks.DateUpdated = DateTime.Now;
+            _db.Add(tasks);
+            _db.SaveChanges();
+
+
+
+            return RedirectToAction("Inspection", "Postprocess", new { id = renewal.ApplicationId });
+
+            return View();
+        }
+        }
 }

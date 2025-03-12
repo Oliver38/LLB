@@ -1,0 +1,208 @@
+﻿@{
+    Layout = "_LayoutMain";
+
+
+
+}
+
+
+    <div class="row">
+        <div class="card">
+
+
+            <div class="card-header">
+                <div class="text-center">
+                    <h5 class="card-title text-success">@TempData["result"]</h5>
+                </div>
+                <h5 class="card-title">inspecting Liquor License Outlet</h5>
+
+            </div>
+
+            @*renewalinspectiontask.TradingName = outletinfoq.TradingName;
+            renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
+            renewalinspectiontask.ApplicationId = applId;
+            renewalinspectiontask.DateApplied = inspecy.DateApplied;
+            renewalinspectiontask.Id = inspecy.Id;
+            renewalinspectiontask.Status = inspecy.Status;
+            renewalinspectiontask.Service = inspecy.Service;
+            renewalinspectiontask.LicenseType = licensetype.LicenseName;
+            renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
+            renewalinspectiontask.TaskId = reninsptasks.Id;
+
+
+            //  renewalinspectiontasks.Add(renewalinspectiontask);
+
+
+            //   }
+            ViewBag.Inspection = renewalinspectiontask;*@
+
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <tbody class="table-light">
+
+                            <tr>
+                                <th>Outlet Name</th>
+                                <td colspan="2">
+                                    @ViewBag.Inspection.TradingName
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>LLB Number</th>
+                                <td colspan="2">
+                                    @ViewBag.Inspection.LLBNumber
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Application Date</th>
+                                <td colspan="2">
+                                    @ViewBag.Inspection.DateApplied
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td colspan="2">
+                                    @ViewBag.Inspection.Status
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th>PLicense</th>
+                                <td colspan="2">@ViewBag.Inspection.LicenseType</td>
+                            </tr>
+
+                            <tr>
+                                <th>For</th>
+                                <td colspan="2">@ViewBag.Inspection.LicenseRegion</td>
+                            </tr>
+
+
+                            @*public string? Id { get; set; }
+        public string? Ventilation { get; set; }
+
+        public string? Lighting { get; set; }
+        public string? SewageDisposalAndDrainage { get; set; }
+        public string? Toilets { get; set; }
+        public string? WaterSupply { get; set; }
+        public string? RubbishDisposal { get; set; }
+        public string? StandardOfFood { get; set; }
+        public string? FoodStorageArrangements { get; set; }
+        public string? StaffUniformsAndAccommodation { get; set; }
+        public string? EquipmentAndAppointments { get; set; }
+        public string? HygieneStandards { get; set; }*@
+
+
+                            <form action="/Verify/Inspect" method="post" enctytpe="multipart/form-data" class="row g-3">
+
+                            <tr>
+                                <th>Ventilation</th>
+                                <td>
+                                    <input type="hidden" name="Id" value="@ViewBag.Inspection.Id" />
+                                    <input type="hidden" name="TaskId" value="@ViewBag.TaskId" />
+                                    <input type="hidden" name="ApplicationId" value="@ViewBag.Inspection.ApplicationId" />
+
+                                    <input class="form-check-input" type="radio" name="Ventilation" id="Ventilation" value="true" checked>
+                                    <label class="form-check-label" for="Ventilation">
+                                        yes
+                                    </label>
+                                </td>
+                                <td>
+                                    <input class="form-check-input" type="radio" name="Ventilation" id="Ventilation" value="false" >
+                                    <label class="form-check-label" for="Ventilation">
+                                        No
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Lighting </th>
+                                <td>    <input class="form-check-input" type="radio" name="Lighting" id="Lighting" value="true" checked> <label class="form-check-label" for="Lighting">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="Lighting" id="Lighting" value="false" > <label class="form-check-label" for="Lighting">    No </label> </td>
+                            </tr>
+                            <tr>
+                                <th>Sewage Disposal And Drainage</th>
+                                <td>    <input class="form-check-input" type="radio" name="SewageDisposalAndDrainage" id="SewageDisposalAndDrainage" value="true" checked> <label class="form-check-label" for="SewageDisposalAndDrainage">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="SewageDisposalAndDrainage" id="SewageDisposalAndDrainage" value="false" > <label class="form-check-label" for="SewageDisposalAndDrainage">    No </label> </td>
+                            </tr>
+                            <tr>
+                                <th>Toilets</th>
+                                <td>    <input class="form-check-input" type="radio" name="Toilets" id="Toilets" value="true" checked> <label class="form-check-label" for="Toilets">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="Toilets" id="Toilets" value="false" > <label class="form-check-label" for="Toilets">    No </label> </td>
+                            </tr>
+                            <tr>
+                                <th>Water Supply</th>
+                                <td>    <input class="form-check-input" type="radio" name="WaterSupply" id="WaterSupply" value="true" checked> <label class="form-check-label" for="WaterSupply">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="WaterSupply" id="WaterSupply" value="false" > <label class="form-check-label" for="WaterSupply">    No </label> </td>
+                            </tr>
+                            <tr>
+                                <th>Rubbish Disposal</th>
+                                <td>    <input class="form-check-input" type="radio" name="RubbishDisposal" id="RubbishDisposal" value="true" checked> <label class="form-check-label" for="RubbishDisposal">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="RubbishDisposal" id="RubbishDisposal" value="false" > <label class="form-check-label" for="RubbishDisposal">    No </label> </td>
+                            </tr>
+                            <tr>
+                                <th>Standard Of Food</th>
+                                <td>    <input class="form-check-input" type="radio" name="StandardOfFood" id="StandardOfFood" value="true" checked> <label class="form-check-label" for="StandardOfFood">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="StandardOfFood" id="StandardOfFood" value="false" > <label class="form-check-label" for="StandardOfFood">    No </label> </td>
+                            </tr>
+                            <tr>
+                                <th>Food Storage Arrangements</th>
+                                <td>    <input class="form-check-input" type="radio" name="FoodStorageArrangements" id="FoodStorageArrangements" value="true" checked> <label class="form-check-label" for="FoodStorageArrangements">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="FoodStorageArrangements" id="FoodStorageArrangements" value="false" > <label class="form-check-label" for="FoodStorageArrangements">    No </label> </td>
+                            </tr>
+
+                            <tr>
+                                <th>Staff Uniforms And Accommodation</th>
+                                <td>    <input class="form-check-input" type="radio" name="StaffUniformsAndAccommodation" id="StaffUniformsAndAccommodation" value="true" checked> <label class="form-check-label" for="StaffUniformsAndAccommodation">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="StaffUniformsAndAccommodation" id="StaffUniformsAndAccommodation" value="false" > <label class="form-check-label" for="StaffUniformsAndAccommodation">    No </label> </td>
+                            </tr>
+
+                            <tr>
+                                <th>Equipment And Appointments</th>
+                                <td>    <input class="form-check-input" type="radio" name="EquipmentAndAppointments" id="EquipmentAndAppointments" value="true" checked> <label class="form-check-label" for="EquipmentAndAppointments">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="EquipmentAndAppointments" id="EquipmentAndAppointments" value="false" > <label class="form-check-label" for="EquipmentAndAppointments">    No </label> </td>
+                            </tr>
+                            <tr>
+                                <th>Hygiene Standards</th>
+                                <td>    <input class="form-check-input" type="radio" name="HygieneStandards" id="HygieneStandards" value="true" checked> <label class="form-check-label" for="HygieneStandards">     yes </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="HygieneStandards" id="HygieneStandards" value="false" > <label class="form-check-label" for="HygieneStandards">    No </label> </td>
+                            </tr>
+
+                            <tr class="text-center">
+                                <td colspan="3">
+                                    <input type="submit" value="Submit" class="btn btn-primary" />
+
+                                </td>
+                            </tr>
+                            </form>
+
+
+
+                      
+
+                            @*<tr>
+            <td colspan="2" class="text-center">
+                <a href="" class="btn btn-danger"> Reject Renewal</a>
+                <a href="" class="btn btn-warning"> Raise Query</a>
+                <a href="/Verify/ApproveRenewal?Id=@ViewBag.Renewals.ApplicationId&taskId=@ViewBag.TaskId" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this renewal?');">
+                    Approve Renewal
+                </a>
+
+            </td>
+        </tr>*@
+
+
+                        </tbody>
+                    </table>
+
+
+
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+
+
