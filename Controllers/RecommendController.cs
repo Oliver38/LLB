@@ -594,7 +594,7 @@ namespace LLB.Controllers
             //   tasks.VerifierId = selectedUser.Id;
 
             tasksc.Service = "new application";
-            tasksc.ApproverId = secretaryWithLeastTasks;
+            tasksc.VerifierId = secretaryWithLeastTasks;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";
             tasksc.DateAdded = DateTime.Now;

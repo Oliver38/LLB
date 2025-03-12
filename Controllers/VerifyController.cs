@@ -683,7 +683,7 @@ namespace LLB.Controllers
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             var recommenderWithLeastTasks = await _taskAllocationHelper.GetSecretary(_db,userManager);
             tasksc.Service = "new application";
-            tasksc.RecommenderId = recommenderWithLeastTasks;
+            tasksc.ApproverId = recommenderWithLeastTasks;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";
             tasksc.DateAdded = DateTime.Now;
