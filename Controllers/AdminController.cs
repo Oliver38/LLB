@@ -358,44 +358,45 @@ namespace LLB.Controllers
             var user = await userManager.FindByIdAsync(userid);
             var token = await userManager.GeneratePasswordResetTokenAsync(user);
 
-            var newpassword = PasswordHelper.GenerateStrongPassword();
+            // var newpassword = PasswordHelper.GenerateStrongPassword();
+             var newpassword = "Test123!";
 
             var result = await userManager.ResetPasswordAsync(user, token, newpassword);
             if (result.Succeeded)
             {
            
-            try
-            {
-                SmtpClient client = new SmtpClient("mail.ttcsglobal.com");
-                client.UseDefaultCredentials = false;
-                client.Credentials = new NetworkCredential("ochimuka", "Chimukilo@1");
-                // client.Credentials = new NetworkCredential("username", "password");
+            //try
+            //{
+            //    SmtpClient client = new SmtpClient("mail.ttcsglobal.com");
+            //    client.UseDefaultCredentials = false;
+            //    client.Credentials = new NetworkCredential("ochimuka", "Chimukilo@1");
+            //    // client.Credentials = new NetworkCredential("username", "password");
 
-                MailMessage mailMessage = new MailMessage();
-                mailMessage.From = new MailAddress("ochimuka@ttcsglobal.com");
-                mailMessage.To.Add(email) ;
-                mailMessage.IsBodyHtml = true;
-                mailMessage.Body = ("<!DOCTYPE html> " +
-                                    "<html xmlns=\"http://www.w3.org/1999/xhtml\">" +
-                                    "<head>" +
-                                    "<title>Email</title>" +
-                                    "</head>" +
-                                    "<body style=\"font-family:'Century Gothic'\">" +
-                                    $"<p><b>Dear {user.Name} {user.LastName} </b></p>" +
-                                    $"<p> Your password has been reset to {newpassword}</p>" +
-                                    $"<p>Kindly use the link below to access your account.Enjoy our services.{user.Email}</p>" +
-                                    "<a>https://llb.gov.zw </a>" +
-                                    "<p>Regards</p>" +
-                                    "<p>Liquor Licensing Board</p>" +
-                                    "</body>" +
-                                    "</html>"); //GetFormattedMessageHTML();
-                mailMessage.Subject = "Password Reset";
-                client.Send(mailMessage);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to send email. Error: {ex.Message}");
-            }
+            //    MailMessage mailMessage = new MailMessage();
+            //    mailMessage.From = new MailAddress("ochimuka@ttcsglobal.com");
+            //    mailMessage.To.Add(email) ;
+            //    mailMessage.IsBodyHtml = true;
+            //    mailMessage.Body = ("<!DOCTYPE html> " +
+            //                        "<html xmlns=\"http://www.w3.org/1999/xhtml\">" +
+            //                        "<head>" +
+            //                        "<title>Email</title>" +
+            //                        "</head>" +
+            //                        "<body style=\"font-family:'Century Gothic'\">" +
+            //                        $"<p><b>Dear {user.Name} {user.LastName} </b></p>" +
+            //                        $"<p> Your password has been reset to {newpassword}</p>" +
+            //                        $"<p>Kindly use the link below to access your account.Enjoy our services.{user.Email}</p>" +
+            //                        "<a>https://llb.gov.zw </a>" +
+            //                        "<p>Regards</p>" +
+            //                        "<p>Liquor Licensing Board</p>" +
+            //                        "</body>" +
+            //                        "</html>"); //GetFormattedMessageHTML();
+            //    mailMessage.Subject = "Password Reset";
+            //    client.Send(mailMessage);
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine($"Failed to send email. Error: {ex.Message}");
+            //}
                 return RedirectToAction("InternalUsers", "Admin");
             }
             return View();

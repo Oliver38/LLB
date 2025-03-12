@@ -215,7 +215,7 @@ namespace LLB.Controllers
                 examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
 
             }
-            else if (application.Status == "approval")
+            else if (application.ExaminationStatus == "approval")
             {
                 examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
 

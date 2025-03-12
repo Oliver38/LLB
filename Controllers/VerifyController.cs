@@ -681,9 +681,9 @@ namespace LLB.Controllers
             //auto allocation to replace
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            var recommenderWithLeastTasks = await _taskAllocationHelper.GetSecretary(_db,userManager);
+            var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
             tasksc.Service = "new application";
-            tasksc.ApproverId = recommenderWithLeastTasks;
+            tasksc.RecommenderId = recommenderWithLeastTasks;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";
             tasksc.DateAdded = DateTime.Now;
@@ -913,7 +913,7 @@ namespace LLB.Controllers
             //auto allocation to replace
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            var recommenderWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
+            var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db, userManager);
             tasksc.Service = "renewal inspection";
             tasksc.VerifierId = recommenderWithLeastTasks;
             tasksc.AssignerId = "system";
