@@ -864,7 +864,7 @@ namespace LLB.Controllers
         }
 
 
-        
+        [RequestSizeLimit(4194304)]
         [HttpPost("Attachments")]
         public async Task<IActionResult> AttachmentsAsync(AttachmentInfo attachment, IFormFile file)
         {
