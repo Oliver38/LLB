@@ -27,56 +27,57 @@
                         <select type="text" name="LicenseTypeID" value="" class="form-control" id="inputName5">
                             @foreach (var licensetype in ViewBag.License)
                             {
-                                <option value="@licensetype.Id">@licensetype.LicenseName </option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="inputName5" class="form-label">Location of Premises</label>
-                        <select type="text" name="ApplicationType" value="" class="form-control" id="inputName5">
-                            @foreach (var region in ViewBag.Regions)
-                            {
-                                <option value="@region.Id">@region.RegionName </option>
+                                @if (licensetype.LicenseName == "Managers Fees") { }
+                                else
+                                {
+                                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
+
+                                }
                             }
                         </select>
                     </div>
 
+
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Location of Premises</label>
+                        <input type="text" readonly required name="ApplicationTypeName" value="" class="form-control" id="ApplicationTypeName">
+
+                        <input type="hidden" name="ApplicationType" id="ApplicationType" />
+                    </div>
+
+
+
                     <div class="col-12">
                         <div class="form-floating">
-                            <textarea class="form-control" name="Address" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
+                            <textarea class="form-control" name="Address" placeholder="Address" required id="floatingTextarea" style="height: 100px;"></textarea>
                             <label for="floatingTextarea">Physical Operations Address</label>
                         </div>
                     </div>
+
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Province</label>
-                        <select type="text" id="provinceSelect" name="province" value="" class="form-control">
-                            <option value="harare">Harare</option>
-                            <option value="manicaland">Manicaland</option>
-                            <option value="masvingo">Masvingo</option>
-                            <option value="mashonaland_central">Mashonaland Central</option>
-                            <option value="mashonaland_east">Mashonaland East</option>
-                            <option value="mashonaland_west">Mashonaland West</option>
-                            <option value="midlands">Midlands</option>
-                            <option value="bulawayo">Bulawayo</option>
-                            <option value="matabeleland_north">Matabeleland North</option>
-                            <option value="matabeleland_south">Matabeleland South</option>
+                        <select type="text" id="provinceSelect" onchange="GetDistCounc()" name="province" value="" class="form-control">
+                            @foreach (var provinces in ViewBag.Provinces)
+                            {
+                                <option value="@provinces.Name">@provinces.Name</option>
+                            }
                         </select>
 
                     </div>
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">District</label>
-                        <select type="text" name="city" value="" class="form-control" id="districtSelect"></select>
+                        <select type="text" required name="city" value="" class="form-control" id="districtSelect"></select>
                     </div>
 
 
                     @*<div class="col-md-6">
-                                            <label for="inputName5" class="form-label">Town Council</labe            l>
-                                <select type="text" name="council" value="" class="form-control" id="co          uncilSelect"id="councilSelect" />
-                        </div>*@
+                                <label for="inputName5" class="form-label">Town Council</labe            l>
+                    <select type="text" name="council" value="" class="form-control" id="co          uncilSelect"id="councilSelect" />
+            </div>*@
                     <div class="col-md-6">
-                        <label for="councilSelect" class="form-label">Town Council</label>
-                        <select id="councilSelect" name="council" class="form-control"></select>
+                        <label for="councilSelect" class="form-label">Council</label>
+                        <select id="councilSelect" required onchange="getRegion()" value="" name="council" class="form-control"></select>
                     </div>
                     <div class="text-center">
                         <button type="submit" class="btn btn-primary">Submit</button>
@@ -86,13 +87,16 @@
 
 
                 @if (ViewBag.DirectorsCount <= 0)
-                {
-
+                    {
+                        if (@ViewBag.Application.ApplicantType == "Individual") { }
+                        else
+                        {
 
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                }
-                else
-                {
+                        }
+                    }
+                    else
+                    {
 
 
                     <table class="table table-responsiveß table-hover table-striped">
@@ -113,7 +117,11 @@
 
                         }
                     </table>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    if (@ViewBag.Application.ApplicantType == "Individual") { }
+                    else{
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+
+                    }
 
                 }
                 <div class="card-footer">
@@ -126,6 +134,8 @@
         </div>
 
     </div>
+
+
 
 
 
@@ -192,252 +202,213 @@ else
                         <select type="text" required name="LicenseTypeID" value="" class="form-control" id="inputName5">
                             @foreach (var licensetype in ViewBag.License)
                             {
-                                    @if(licensetype.LicenseName == "Managers Fees")
+                                @if (licensetype.LicenseName == "Managers Fees")
+                                {
+
+                                }
+                                else
+                                {
+                                    @if (licensetype.Id == ViewBag.Application.LicenseTypeID)
                                     {
+                                        <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
+
 
                                     }
-                                    else { 
-                                @if (licensetype.Id == ViewBag.Application.LicenseTypeID)
-                                {
-                                    <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
-
-
+                                    else
+                                    {
+                                        <option value="@licensetype.Id">@licensetype.LicenseName </option>
+                                    }
                                 }
-                                else
-                                {
-                                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
-                                }
-                                        }
-                                }
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="inputName5" class="form-label">Location of Premises</label>
-                        <select type="text" name="ApplicationType" value="" class="form-control" id="inputName5">
-                            @foreach (var region in ViewBag.Regions)
-                            {
-                                if (@region.Id == ViewBag.Application.ApplicationType)
-                                {
-                                    <option selected value="@region.Id">@region.RegionName </option>
-                                }
-                                else
-                                {
-                                    <option value="@region.Id">@region.RegionName </option>
-                                }
-
                             }
                         </select>
                     </div>
+
+
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Location of Premises</label>
+                        <input type="text" name="ApplicationTypePlaceholder" value="@ViewBag.Region" class="form-control" id="ApplicationTypePlaceholder">
+                        <input type="hidden" name="ApplicationType" value="@ViewBag.Application.ApplicationType" class="form-control" id="ApplicationTypeID">
+
+                    </div>
+                    @*<div class="col-md-6">
+                            <label for="inputName5" class="form-label">Location of Premises</label>
+                            <select type="text" name="ApplicationType" value="" class="form-control" id="inputName5">
+                                @foreach (var region in ViewBag.Regions)
+                                {
+                                    if (@region.Id == ViewBag.Application.ApplicationType)
+                                    {
+                                        <option selected value="@region.Id">@region.RegionName </option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@region.Id">@region.RegionName </option>
+                                    }
+
+                                }
+                            </select>
+                        </div>*@
                     <div class="col-12">
                         <div class="form-floating">
                             <textarea class="form-control" name="Address" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.OutletInfo.Address</textarea>
                             <label for="floatingTextarea">Physical Operations Address</label>
                         </div>
                     </div>
+
                     <!--div class="col-md-6">
-                <label for="inputName5" class="form-label">Province</label>
-                <se type="text" name="province" value="@ViewBag.OutletInfo.Province" class="form-control" id="inputName5">
-            </!--div>
+                        <label for="inputName5" class="form-label">Province</label>
+                        <se type="text" name="province" value="@ViewBag.OutletInfo.Province" class="form-control" id="inputName5">
+                    </!--div>
 
-            <divclass="col-md-6">
-                <label for="inputName5" class="form-label">City</label>
-                <input type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
-            </div-->
+                    <divclass="col-md-6">
+                        <label for="inputName5" class="form-label">City</label>
+                        <input type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
+                    </div-->
                     @*<div class="col-md-6">
-                    <label for="inputName5" class="form-label">Province</label>
-                    <input type="text" id="provinceSelect" name="province" value="@ViewBag.OutletInfo.Province" class="form-control">
+                            <label for="inputName5" class="form-label">Province</label>
+                            <input type="text" id="provinceSelect" name="province" value="@ViewBag.OutletInfo.Province" class="form-control">
 
 
-                </div>*@
-            
-    
+                        </div>*@
 
-            <div class="col-md-6">
-                <label for="inputName5" class="form-label">Province</label>
-                <select type="text" id="provinceSelect" name="province" value="" class="form-control">
-                    @if (@ViewBag.OutletInfo.Province == "harare")
-                    {
-                        <option selected value="harare">Harare</option>
-                    }
 
-                    else if (@ViewBag.OutletInfo.Province == "manicaland")
-                    {
-                        <option selected value="manicaland">Manicaland</option>
-                    }
 
-                    else if (@ViewBag.OutletInfo.Province == "masvingo")
-                    {
-                        <option selected value="masvingo">Masvingo</option>
-                    }
 
-                    else if (@ViewBag.OutletInfo.Province == "mashonaland_central")
-                    {
-                        <option selected value="mashonaland_central">Mashonaland Central</option>
-                    }
 
-                    else if (@ViewBag.OutletInfo.Province == "mashonaland_east")
-                    {
-                        <option selected value="mashonaland_east">Mashonaland East</option>
-                    }
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Province</label>
+                        <select type="text" id="provinceSelect" name="province" onchange="GetDistCounc()" value="" class="form-control">
+                            @foreach (var provinces in ViewBag.Provinces)
+                            {
+                                <option value="@provinces.Name">@provinces.Name</option>
+                            }
+                        </select>
 
-                    else if (@ViewBag.OutletInfo.Province == "mashonaland_west")
-                    {
-                        <option selected value="mashonaland_west">Mashonaland West</option>
-                    }
-
-                    else if (@ViewBag.OutletInfo.Province == "midlands")
-                    {
-                        <option selected value="midlands">Midlands</option>
-                    }
-
-                    else if (@ViewBag.OutletInfo.Province == "bulawayo")
-                    {
-                        <option selected value="bulawayo">Bulawayo</option>
-                    }
-
-                    else if (@ViewBag.OutletInfo.Province == "matabeleland_north")
-                    {
-                        <option selected value="matabeleland_north">Matabeleland North</option>
-                    }
-
-                    else if (@ViewBag.OutletInfo.Province == "matabeleland_south")
-                    {
-                        <option selected value="matabeleland_south">Matabeleland South</option>
-                    }
-
-                    <option value="harare">Harare</option>
-                    <option value="manicaland">Manicaland</option>
-                    <option value="masvingo">Masvingo</option>
-                    <option value="mashonaland_central">Mashonaland Central</option>
-                    <option value="mashonaland_east">Mashonaland East</option>
-                    <option value="mashonaland_west">Mashonaland West</option>
-                    <option value="midlands">Midlands</option>
-                    <option value="bulawayo">Bulawayo</option>
-                    <option value="matabeleland_north">Matabeleland North</option>
-                    <option value="matabeleland_south">Matabeleland South</option>
-                </select>
-
-            </div>
-            
-                <div class="col-md-6">
-                    <label for="inputName5" class="form-label">District</label>
-                    <div id="citychange">
-                        <input type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" />
-                        @*<input type="text" name="city" value="@ViewBag.OutletInfo.City" onclick="changeForm()" class="form-control" />*@
                     </div>
-            </div>
+
+                    <div id="regionuse"></div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">District</label>
+                        <div id="citychange">
+                            <input type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" />
+                            @*<input type="text" name="city" value="@ViewBag.OutletInfo.City" onclick="changeForm()" class="form-control" />*@
+                        </div>
+                    </div>
 
 
-            <div class="col-md-6">
-                <label for="inputName5" class="form-label">Council</label>
-                <input type="text" name="council" value="@ViewBag.OutletInfo.Council"  class="form-control" />
-            </div>
-
-
-
-
-            <!--<div class="col-md-6">
-                <label for="inputName5" class="form-label">District</label>
-                <select type="text" name="city" value="" class="form-control" id="districtSelect">
-                </select>
-                
-            </div>-->
-
-
-            @*<div class="col-md-6">
-                            <label for="inputName5" class="form-label">Town Council</label>
-                <select type="text" name="council" value="" class="form-control" id="co          uncilSelect"id="councilSelect" />
-        </div>*@
-            <!--<div class="col-md-6">
-                <label for="councilSelect" class="form-label">Town Council</label>
-                <select id="councilSelect" name="council" class="form-control"></select>
-            </div>-->
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Council</label>
+                        <input type="text" name="council" value="@ViewBag.OutletInfo.Council" class="form-control" />
+                    </div>
 
 
 
-            <div class="text-center">
-                <button type="submit" class="btn btn-primary">Update</button>
-                <button type="reset" class="btn btn-secondary">Reset</button>
-            </div>
-           
-            </form><!-- End Multi Columns Form -->
+
+                    <!--<div class="col-md-6">
+                        <label for="inputName5" class="form-label">District</label>
+                        <select type="text" name="city" value="" class="form-control" id="districtSelect">
+                        </select>
+
+                    </div>-->
+                    @*<div class="col-md-6">
+                                            <label for="inputName5" class="form-label">Town Council</label>
+                                <select type="text" name="council" value="" class="form-control" id="co          uncilSelect"id="councilSelect" />
+                        </div>*@
+                    <!--<div class="col-md-6">
+                        <label for="councilSelect" class="form-label">Town Council</label>
+                        <select id="councilSelect" name="council" class="form-control"></select>
+                    </div>-->
 
 
-            @if (ViewBag.DirectorsCount <= 0)
-            {
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+
+                </form><!-- End Multi Columns Form -->
 
 
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-            }
-            else
-            {
-
-
-                <table class="table table-responsive table-hover table-striped">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Surname</th>
-                            <th>Address</th>
-                            <th>National Id</th>
-                            <th>finger Prints</th>
-                            <th>Form 55</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var director in ViewBag.Directors)
+                @if (ViewBag.DirectorsCount <= 0)
+                    {
+                        if (@ViewBag.Application.ApplicantType == "Individual") { }
+                        else
                         {
-                            <tr>
-                                <th scope="row">@director.Name</th>
-                                <th scope="row">@director.Surname</th>
-                                <th scope="row">@director.Address</th>
-                                <th scope="row">
-                                    @if (director.NatId == "" || director.NatId == null)
-                                    {<a>No Attachment</a>}
-                                    else
-                                    {<a target="_blank" href="~/@director.NatId"> National Id</a>}
-                                </th>
-                                <th scope="row">
-                                    @if (director.FingerPrints == "" || director.FingerPrints == null)
-                                    {<a>No Attachment</a>}
-                                    else
-                                    {<a target="_blank" href="~/@director.FingerPrints"> Fingerprints</a>
-                                    }
-                                </th>
-                                <th scope="row">
-                                    @if (director.Form55 == "" || director.Form55 == null)
-                                    {
-                                        <a>No Attachment</a>
-                                    }
-                                    else
-                                    {
-                                        <a target="_blank" href="~/@director.Form55"> Form 55</a>
-                                    }
-                                </th>
 
-                                <th scope="row">
-                                    <button type="button" class="btn btn-primary">View</button>
-                                    <button type="button" class="btn btn-default">Edit</button>
-                                    <button type="button" class="btn btn-danger">Delete </button>
-
-                                </th>
-
-                            </tr>
-
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
                         }
-                    </tbody>
-                </table>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                
-            }
-            <div class="card-footer">
-                <div class="text-center">
-                    <a href="/License/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
-                    <a href="/License/ManagersInfo?Id=@ViewBag.Application.Id" class="btn btn-primary">Next</a>
+                    }
+                    else
+                    {
 
+
+                    <table class="table table-responsive table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Surname</th>
+                                <th>Address</th>
+                                <th>National Id</th>
+                                <th>finger Prints</th>
+                                <th>Form 55</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var director in ViewBag.Directors)
+                                {
+                                <tr>
+                                    <th scope="row">@director.Name</th>
+                                    <th scope="row">@director.Surname</th>
+                                    <th scope="row">@director.Address</th>
+                                    <th scope="row">
+                                        @if (director.NatId == "" || director.NatId == null)
+                                            {<a>No Attachment</a>}
+                                            else
+                                            {<a target="_blank" href="~/@director.NatId"> National Id</a>}
+                                    </th>
+                                    <th scope="row">
+                                        @if (director.FingerPrints == "" || director.FingerPrints == null)
+                                            {<a>No Attachment</a>}
+                                            else
+                                            {<a target="_blank" href="~/@director.FingerPrints"> Fingerprints</a>
+                                            }
+                                    </th>
+                                    <th scope="row">
+                                        @if (director.Form55 == "" || director.Form55 == null)
+                                            {
+                                            <a>No Attachment</a>
+                                            }
+                                            else
+                                            {
+                                            <a target="_blank" href="~/@director.Form55"> Form 55</a>
+                                            }
+                                    </th>
+
+                                    <th scope="row">
+                                        <button type="button" class="btn btn-primary">View</button>
+                                        <button type="button" class="btn btn-default">Edit</button>
+                                        <button type="button" class="btn btn-danger">Delete </button>
+
+                                    </th>
+
+                                </tr>
+
+                                }
+                        </tbody>
+                    </table>
+                        if (@ViewBag.Application.ApplicantType == "Individual") { }
+                        else
+                        {
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                        }
+                    }
+                <div class="card-footer">
+                    <div class="text-center">
+                        <a href="/License/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
+                        <a href="/License/ManagersInfo?Id=@ViewBag.Application.Id" class="btn btn-primary">Next</a>
+
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
 
     </div>
@@ -503,88 +474,142 @@ else
 
 
 
-<script>
-// Districts grouped by province
-    const districtsByProvince = {
-        bulawayo: ["Bulawayo"],
-        harare: ["Harare"],
-        manicaland: ["Buhera", "Chimanimani", "Chipinge", "Makoni", "Mutare", "Mutasa", "Nyanga"],
-        mashonaland_central: ["Bindura", "Guruve", "Mazowe", "Mt Darwin", "Muzarabani", "Rushinga", "Shamva"],
-        mashonaland_east: ["Chikomba", "Goromonzi", "Hwedza", "Marondera", "Mudzi", "Murehwa", "Mutoko", "Seke", "U.M.P. (Uzumba, Maramba, Pfungwe)"],
-        mashonaland_west: ["Chegutu", "Hurungwe", "Kadoma", "Kariba", "Makonde", "Zvimba"],
-        masvingo: ["Bikita", "Chiredzi", "Chivi", "Gutu", "Masvingo", "Mwenezi", "Zaka"],
-        matabeleland_north: ["Binga", "Bubi", "Hwange", "Lupane", "Nkayi", "Tsholotsho", "Umguza"],
-        matabeleland_south: ["Beitbridge", "Bulilimamangwe", "Gwanda", "Insiza", "Matobo", "Umzingwane"],
-        midlands: ["Chirumanzu", "Gokwe North", "Gokwe South", "Gweru", "Kwekwe", "Mberengwa", "Shurugwi", "Zvishavane"]
-    };
-
-    // Town Councils grouped by province (instead of districts)
-
-    const councilsByProvince = {
-        bulawayo: ["Bulawayo City Council"],
-        harare: ["Ruwa Local Board", "Epworth Local Board", "Chitungwiza Municipality", "City of Harare"],
-        manicaland: ["City of Mutare", "Mutare RDC", "Chipinge Town Council", "Chipinge RDC", "Rusape Town Council", "Makoni RDC", "Mutasa RDC", "Buhera RDC", "Chimanimani RDC", "Nyanga RDC"],
-        midlands: ["City of Gweru", "City of Kwekwe", "Zvishavane Town Council", "Gokwe Town Council", "Shurugwi Town Council", "Redcliff Municipality", "Tongogara RDC", "Zibagwe RDC", "Vungu RDC", "Chirumanzu RDC", "Runde RDC", "Mberengwa RDC", "Gokwe South RDC", "Gokwe North RDC"],
-        masvingo: ["City of Masvingo", "Masvingo RDC", "Chivi RDC", "Mwenezi RDC", "Zaka RDC", "Bikita RDC", "Gutu RDC", "Chiredzi Town Council", "Chiredzi RDC"],
-        mashonaland_west: ["City of Kadoma", "Sanyati RDC", "Mhondoro Ngezi RDC", "Municipality of Chegutu", "Chegutu RDC", "Zvimba RDC", "Municipality of Chinhoyi", "Makonde RDC", "Karoi Town Council", "Hurungwe RDC", "Nyaminyami RDC", "Municipality of Kariba", "Chirundu Local Board", "Norton Town Council"],
-        matabeleland_north: ["Umguza RDC", "Bubi RDC", "Tsholotsho RDC", "Nkayi RDC", "Lupane Local Board", "Kusile RDC", "Hwange Local Board", "Hwange RDC", "City of Victoria Falls", "Binga RDC", "Binga Local Board"],
-        mashonaland_central: ["Bindura Municipality", "Bindura RDC", "Mvurwi Town Council", "Mazowe RDC", "Guruve RDC", "Mbire RDC", "Chaminuka RDC", "Rushinga RDC", "Pfura RDC", "Muzarabani RDC"],
-        matabeleland_south: ["Gwanda RDC", "Gwanda Municipality", "Beitbridge RDC", "Umzingwane RDC", "Insiza RDC", "Bulilima RDC", "Mangwe RDC", "Matobo RDC", "Plumtree Town Council"],
-        mashonaland_east: ["Marondera Municipality", "Marondera RDC", "Hwedza RDC", "Chikomba RDC", "Goromonzi RDC", "Manyame RDC", "Mudzi RDC", "Mutoko RDC", "Murehwa RDC", "UMP-Zvataida RDC"]
-    };
-
-
-
-
-    // Get select elements
-    const provinceSelect = document.getElementById('provinceSelect');
-    const districtSelect = document.getElementById('districtSelect');
-    const councilSelect = document.getElementById('councilSelect');
-
-    // Function to populate districts based on selected province
-    function populateDistricts() {
-        districtSelect.innerHTML = ''; // Clear existing options
-        councilSelect.innerHTML = '';  // Clear council options
-
-        const selectedProvince = provinceSelect.value;
-        const districts = districtsByProvince[selectedProvince] || [];
-
-        districts.forEach(district => {
-            const option = document.createElement('option');
-            option.value = district;
-            option.textContent = district;
-            districtSelect.appendChild(option);
-        });
-
-        // Automatically populate councils based on selected province
-        populateCouncils();
-    }
-
-    // Function to populate councils based on selected province
-    function populateCouncils() {
-        councilSelect.innerHTML = ''; // Clear existing options
-
-        const selectedProvince = provinceSelect.value;
-        const councils = councilsByProvince[selectedProvince] || [];
-
-        councils.forEach(council => {
-            const option = document.createElement('option');
-            option.value = council;
-            option.textContent = council;
-            councilSelect.appendChild(option);
-        });
-    }
-
-    // Populate districts & councils on initial load
-    populateDistricts();
-
-    // Event listeners
-    provinceSelect.addEventListener('change', populateDistricts);</script>
-
-
-<script>
-    function changeForm() {
+<script>function changeForm() {
         var html = '<select type="text" name="city" value="" class="form-control" id="districtSelect"></select>';
         $('#citychange').html(html);
-    }
-</script>
+    }</script>
+
+
+<script>function GetDistCounc() {
+        //provinceSelect
+
+        var data = $("#provinceSelect").val();
+        //alert(data);
+
+
+
+        $.ajax({
+            type: 'GET',
+            url: '/License/GetDistCounc',
+            contentType: "application/json; charset=utf-8",
+
+            datatype: 'text',
+            data: { Province: data },
+            success: function (data) {
+                console.log(data);
+                //council
+
+                councilSelect
+                //city
+                $("#councilSelect").empty();
+                $("#councilSelect").append('<option value="">Select Site</option>');
+
+                // Append new options from response
+                $.each(data.councils, function (index, council) {
+                    $("#councilSelect").append('<option value="' + council.name + '">' + council.name + '</option>');
+                });
+
+
+                $("#districtSelect").empty();
+                $("#districtSelect").append('<option value="">Select Site</option>');
+
+                // Append new options from response
+                $.each(data.districts, function (index, district) {
+                    $("#districtSelect").append('<option value="' + district.name + '">' + district.name + '</option>');
+                });
+
+            },
+            error: function (data) {
+
+            }
+
+        });
+
+
+    }</script>
+
+
+
+
+
+<script>function myFunction() {
+
+        //$("#idbad").empty();
+        var x = document.getElementById("natid");
+        x.value = x.value.toUpperCase();
+
+        var data = $("#natid").val();
+        //console.log(data);
+        // $("#idgood").empty();
+
+        // alert(data);
+        // e.preventDefaut();
+
+
+        $.ajax({
+            type: 'GET',
+            url: '/Auth/CheckId',
+            contentType: "application/json; charset=utf-8",
+
+            datatype: 'text',
+            data: { natid: data },
+            success: function (data) {
+                if (data.success === "ok") {
+                    // alert();
+                    $('#idbad').html('');
+                    $('#idgood').html(data.msg);
+                    document.getElementById("myBtnciti").disabled = false;
+                } else {
+                    // DoSomethingElse()
+                    // alert(response.responseText);
+                    $('#idgood').html('');
+                    $('#idbad').html(data.msg);
+                    document.getElementById("myBtnciti").disabled = true;
+                }
+            },
+            error: function (data) {
+                $('#idgood').html('');
+                $('#idbad').html(data.msg); //
+                document.getElementById("myBtnciti").disabled = true;
+            }
+
+        });
+
+
+
+
+    }</script>
+
+
+
+
+<script>function getRegion() {
+
+        var zveregion = $("#councilSelect").val();
+        //alert(zveregion);
+
+
+
+        $.ajax({
+            type: 'GET',
+            url: '/License/GetCouncData',
+            contentType: "application/json; charset=utf-8",
+
+            datatype: 'text',
+            data: { council: zveregion },
+            success: function (data) {
+                console.log(data);
+                //council
+                // alert(data.councildata.councilRegion);
+                $("#ApplicationTypeName").val(data.councildata.councilRegion);
+                $("#ApplicationType").val(data.councildata.councilRegionId);
+
+
+            },
+            error: function (data) {
+
+            }
+
+        });
+
+    }</script>

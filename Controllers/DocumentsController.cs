@@ -80,7 +80,7 @@ namespace LLB.Controllers
 
             TextStamper licensee = new TextStamper()
             {
-                Text = $"{user.Name.ToUpper()} {user.LastName.ToUpper()}",
+                Text = $"{applications.BusinessName.ToUpper()} ",
                 FontFamily = "Times New Roman",
                 UseGoogleFont = false,
                 FontSize = 14,

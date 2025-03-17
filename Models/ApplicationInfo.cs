@@ -28,7 +28,11 @@ namespace LLB.Models
         public string? BusinessName { get; set; }//Place of operation
 
         public string? IdCopy { get; set; }
-        public string? Pclearance { get; set; }
+        //public string? Pclearance { get; set; }
+        public string? Fingerprints { get; set; }
+        public string? FormFF { get; set; }
+
+
         public string? IdPass { get; set; }//Place of operation
         //public string? Foreigner  { get; set; }//Place of operation
 

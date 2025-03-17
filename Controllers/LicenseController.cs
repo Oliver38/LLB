@@ -66,18 +66,21 @@ namespace LLB.Controllers
             var licenses = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();
             var queries = _db.Queries.Where(x => x.ApplicationId == Id && x.Status == "Has Query").ToList();
+            var provinces = _db.Province.ToList().OrderBy(a =>a.Name);
+
             ViewBag.Queries = queries;
             ViewBag.ApplicationInfo = application;
             ViewBag.User = user;
             ViewBag.Regions = regions;
             ViewBag.License = licenses;
+            ViewBag.Provinces = provinces;
             return View();
         }
 
 
 
         [HttpPost(("Apply"))]
-        public async Task<IActionResult> ApplyAsync(ApplicationInfo info,IFormFile IdCopyb,IFormFile Pclearanceb) 
+        public async Task<IActionResult> ApplyAsync(ApplicationInfo info,IFormFile IdCopyb,IFormFile Fingerprints, IFormFile FormFF) 
         {
 
 
@@ -138,24 +141,45 @@ namespace LLB.Controllers
                    info.IdCopy = "";
                 }
 
-
-                if (Pclearanceb != null)
+                //fingerprints
+                if (Fingerprints != null)
                 {
-                    string picb = System.IO.Path.GetFileName(Pclearanceb.FileName);
-                    string dicb = System.IO.Path.GetExtension(Pclearanceb.FileName);
-                    string newname = "CLearance_" + info.Id;
+                    string picb = System.IO.Path.GetFileName(Fingerprints.FileName);
+                    string dicb = System.IO.Path.GetExtension(Fingerprints.FileName);
+                    string newname = "Fingerprints_" + info.Id;
                     string path = System.IO.Path.Combine($"ApplicantInfo",  newname + dicb);
                     string docpath = System.IO.Path.Combine($"wwwroot/ApplicantInfo", newname + dicb);
-                    info.Pclearance = path;
+                    info.Fingerprints = path;
                     using (Stream fileStream = new FileStream(docpath, FileMode.Create))
                     {
-                        await Pclearanceb.CopyToAsync(fileStream);
+                        await Fingerprints.CopyToAsync(fileStream);
                     }
                 }
                 else
                 {
-                    info.Pclearance = "";
-                }//        public string? idCopy { get; set; }
+                    info.Fingerprints = "";
+                }
+
+                //form 55
+                if (FormFF != null)
+                {
+                    string picb = System.IO.Path.GetFileName(FormFF.FileName);
+                    string dicb = System.IO.Path.GetExtension(FormFF.FileName);
+                    string newname = "FormFF_" + info.Id;
+                    string path = System.IO.Path.Combine($"ApplicantInfo", newname + dicb);
+                    string docpath = System.IO.Path.Combine($"wwwroot/ApplicantInfo", newname + dicb);
+                    info.FormFF = path;
+                    using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                    {
+                        await FormFF.CopyToAsync(fileStream);
+                    }
+                }
+                else
+                {
+                    info.FormFF = "";
+                }
+
+                //        public string? idCopy { get; set; }
                 //public string? pclearance { get; set; }
                 _db.Add(info);
                 _db.SaveChanges();
@@ -181,7 +205,7 @@ namespace LLB.Controllers
                 updateinfo.BusinessName = info.BusinessName;
                 updateinfo.LicenseTypeID = info.LicenseTypeID;
                 updateinfo.ApplicationType = info.ApplicationType;
-
+                updateinfo.ApplicantType = info.ApplicantType;
 
                 updateinfo.PlaceOfBirth = "";
                 //updateinfo.DateofEntryIntoZimbabwe = "";
@@ -217,24 +241,49 @@ namespace LLB.Controllers
                 else
                 { }
 
-                if(updateinfo.Pclearance == null || updateinfo.Pclearance == "") { 
-                if (Pclearanceb != null)
+
+               // Fingerprints
+                if(updateinfo.Fingerprints == null || updateinfo.Fingerprints == "") { 
+                if (Fingerprints != null)
                 {
-                    string picb = System.IO.Path.GetFileName(Pclearanceb.FileName);
-                    string dicb = System.IO.Path.GetExtension(Pclearanceb.FileName);
-                    string newname = "Clearance_" + updateinfo.Id;
+                    string picb = System.IO.Path.GetFileName(Fingerprints.FileName);
+                    string dicb = System.IO.Path.GetExtension(Fingerprints.FileName);
+                    string newname = "Fingerprints_" + updateinfo.Id;
                     string path = System.IO.Path.Combine($"ApplicantInfo",  newname + dicb);
                     string docpath = System.IO.Path.Combine($"wwwroot/ApplicantInfo", newname + dicb);
-                    updateinfo.Pclearance = path;
+                    updateinfo.Fingerprints = path;
                     using (Stream fileStream = new FileStream(docpath, FileMode.Create))
                     {
-                        await Pclearanceb.CopyToAsync(fileStream);
+                        await Fingerprints.CopyToAsync(fileStream);
                     }
                 }
                 else
                 {
-                    info.Pclearance = "";
+                    info.Fingerprints = "";
                 }
+                }
+                else { }
+
+                //form 55
+                if (updateinfo.FormFF == null || updateinfo.FormFF == "")
+                {
+                    if (FormFF != null)
+                    {
+                        string picb = System.IO.Path.GetFileName(FormFF.FileName);
+                        string dicb = System.IO.Path.GetExtension(FormFF.FileName);
+                        string newname = "FormFF_" + updateinfo.Id;
+                        string path = System.IO.Path.Combine($"ApplicantInfo", newname + dicb);
+                        string docpath = System.IO.Path.Combine($"wwwroot/ApplicantInfo", newname + dicb);
+                        updateinfo.FormFF = path;
+                        using (Stream fileStream = new FileStream(docpath, FileMode.Create))
+                        {
+                            await FormFF.CopyToAsync(fileStream);
+                        }
+                    }
+                    else
+                    {
+                        info.FormFF = "";
+                    }
                 }
                 else { }
                 // public DateTime ApprovedDate 
@@ -259,6 +308,46 @@ namespace LLB.Controllers
             }
         }
 
+
+        //deleting clerance
+        
+            [HttpGet(("AppinfoFormFF"))]
+        public IActionResult AppinfoClearance(string Id)
+        {
+            var appinfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            appinfo.FormFF = "";
+            _db.Update(appinfo);
+            _db.SaveChanges();
+
+
+            return RedirectToAction("Apply","License", new {Id = Id });
+        }
+
+
+        [HttpGet(("AppinfoFingerprints"))]
+        public IActionResult AppinfoFingerprints(string Id)
+        {
+            var appinfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            appinfo.Fingerprints = "";
+            _db.Update(appinfo);
+            _db.SaveChanges();
+
+
+            return RedirectToAction("Apply", "License", new { Id = Id });
+        }
+        //deleting national id or passport
+        [HttpGet(("AppinfoIdCopy"))]
+        public IActionResult AppinfoIdCopy(string Id)
+        {
+            var appinfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            appinfo.IdCopy = "";
+            _db.Update(appinfo);
+            _db.SaveChanges();
+
+
+            return RedirectToAction("Apply", "License", new { Id = Id });
+        }
+
         [HttpGet(("OutletInfo"))]
         public IActionResult OutletInfo(string Id)
         {
@@ -270,13 +359,25 @@ namespace LLB.Controllers
             var regions = _db.LicenseRegions.ToList();
             // var application = await _db.ApplicationInfo.FindAsync(dd.Id);
             var queries = _db.Queries.Where(x => x.ApplicationId == Id && x.Status == "Has Query").ToList();
-            ViewBag.Queries = queries;
+            var provinces = _db.Province.ToList().OrderBy(a => a.Name);
+
+            var region="";
+            var regiondata = _db.LicenseRegions.Where(a => a.Id == application.ApplicationType).FirstOrDefault();
+            if(regiondata != null)
+            {
+                region = regiondata.RegionName;
+            }
+
+            ViewBag.Region = region;
+                ViewBag.Queries = queries;
             ViewBag.Application = application;
             ViewBag.OutletInfo = outletInfo;
             ViewBag.Directors = directorsInfo;
             ViewBag.Regions = regions;
             ViewBag.License = licenses;
             ViewBag.DirectorsCount = directorsInfo.Count();
+            ViewBag.Provinces = provinces;
+
             //ViewBag.User = user;
 
             return View();
@@ -317,6 +418,7 @@ namespace LLB.Controllers
                 outletInfo.DirectorNames = "";
                 outletInfo.DateAdded = DateTime.Now;
                 outletInfo.DateUpdated = DateTime.Now;
+
                 _db.Add(outletInfo);
                 _db.SaveChanges();
 
@@ -334,7 +436,15 @@ namespace LLB.Controllers
                 var queries = _db.Queries.Where(x => x.ApplicationId == outletInfo.ApplicationId && x.Status == "Has Query").ToList();
                 var licenses = _db.LicenseTypes.ToList();
                 var regions = _db.LicenseRegions.ToList();
+                var provinces = _db.Province.ToList().OrderBy(a => a.Name);
+                var region = "";
+                var regiondata = _db.LicenseRegions.Where(a => a.Id == application.ApplicationType).FirstOrDefault();
+                if (regiondata != null)
+                {
+                    region = regiondata.RegionName;
+                }
 
+                ViewBag.Region = region;
                 ViewBag.Queries = queries;
                 ViewBag.Application = application;
                 ViewBag.OutletInfo = outletInfob;
@@ -342,6 +452,8 @@ namespace LLB.Controllers
                 ViewBag.Regions = regions;
                 ViewBag.License = licenses;
                 ViewBag.DirectorsCount = directorsInfo.Count();
+                ViewBag.Provinces = provinces;
+
                 TempData["result"] = "Applicant details successfully added";
                 return View();
             }
@@ -382,7 +494,16 @@ namespace LLB.Controllers
                 var queries = _db.Queries.Where(x => x.ApplicationId == outletInfo.ApplicationId && x.Status == "Has Query").ToList();
                 var licenses = _db.LicenseTypes.ToList();
                 var regions = _db.LicenseRegions.ToList();
+                var provinces = _db.Province.ToList().OrderBy(a => a.Name);
 
+                var region = "";
+                var regiondata = _db.LicenseRegions.Where(a => a.Id == application.ApplicationType).FirstOrDefault();
+                if (regiondata != null)
+                {
+                    region = regiondata.RegionName;
+                }
+
+                ViewBag.Region = region;
                 ViewBag.Queries = queries;
                 ViewBag.Application = application;
                 ViewBag.OutletInfo = outletInfob;
@@ -390,6 +511,8 @@ namespace LLB.Controllers
                 ViewBag.Regions = regions;
                 ViewBag.License = licenses;
                 ViewBag.DirectorsCount = directorsInfo.Count();
+                ViewBag.Provinces = provinces;
+
                 TempData["result"] = "Applicant details successfully Updated";
                 return View();
 
@@ -616,8 +739,9 @@ namespace LLB.Controllers
                         "Health Report",
                         "A3 Plan approved by local Environmental Health",
                         "Proof of publication in the Government Gazette",
-//"Affidavit by transferee",
-"Lease/Deeed documents",
+                        "Government Gazette",
+
+                        "Lease/Deeed documents",
 
 
 
@@ -647,12 +771,14 @@ namespace LLB.Controllers
                 {
 
 
-                    string[] documents = { "Vetted fingerprints",
+                    string[] documents = {
+                        "Vetted fingerprints",
 
 //"Affidavit by transferee",
 "Permit from the minister",
 "Lease/Deeed documents",
 "Proof of publication in the Government Gazette",
+"Government Gazette",
 "A3 Plan approved by local Environmental Health",
 //"Manager Applicant Fingerprints",
 "Letter From the Minister",
@@ -1213,7 +1339,30 @@ namespace LLB.Controllers
         
             return View();
         }
-}
+
+
+
+
+        [HttpGet("GetDistCounc")]
+        public async Task<IActionResult> GetDistCounc(string Province)
+        {
+            var district = _db.District.Where(a => a.Province == Province).ToList();
+            var council = _db.Council.Where(a => a.Province == Province).ToList();
+            return Json(new { districts= district, councils = council });
+            //return View();
+        }
+
+        
+
+             [HttpGet("GetCouncData")]
+        public async Task<IActionResult> GetCouncData(string council)
+        {
+            //var district = _db.District.Where(a => a.Province == Province).ToList();
+            var councildata = _db.Council.Where(a => a.Name == council).FirstOrDefault();
+            return Json(new { councildata = councildata });
+            //return View();
+        }
+    }
 
 }
 

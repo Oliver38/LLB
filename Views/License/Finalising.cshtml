@@ -62,23 +62,28 @@
                     </tr>
 
                     <tr>
-                        <td>Pay Using </td>
-                        <td>
 
-                            @if (ViewBag.Payment!= null && ViewBag.Payment.Status  == "Paid")
-                                { }
-                                else if (ViewBag.Payment != null && ViewBag.Payment.Status == "awaiting verification")
-                                {
 
+                        @if (ViewBag.Payment != null && ViewBag.Payment.Status == "Paid")
+                        { }
+                        else if (ViewBag.Payment != null && ViewBag.Payment.Status == "awaiting verification")
+                        {
+                            <td>Pay Using </td>
+                            <td>
                                 <a href="/@ViewBag.Payment.PopDoc">View POP</a>    <a href="/License/RemovePop?Id=@ViewBag.Payment.Id" class="btn btn-danger">Remove POP</a>
-                            }
-                            else {
+                            </td>
+                        }
+                        else
+                        {
+                            <td>Pay Using </td>
+                            <td>
                                 <a href="/License/PaynowPayment?Id=@ViewBag.ApplicationInfo.Id&amount=@ViewBag.ApplicationInfo.PaymentFee" class="btn btn-primary">Paynow</a>
                                 <button data-bs-toggle="modal" data-bs-target="#paymentpop" class="btn btn-primary">Upload POP</button>
+                                </td>
                                 }
-                            </td>
+                            
 
-                    </tr>
+                        </tr>
                 </tbody>
         </table>
 
