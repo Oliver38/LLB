@@ -106,7 +106,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -159,7 +159,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -212,7 +212,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -263,7 +263,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -318,7 +318,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -374,7 +374,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -429,7 +429,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -485,7 +485,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -539,7 +539,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -592,7 +592,7 @@ namespace LLB.Controllers
                     PhoneNumber = "0772772772",
                     NatID = "63772T36",
                     DateOfApplication = DateTime.Now,
-                    DOB = DateTime.Now.AddYears(-20),
+                    DOB = DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd"),
                     CountryOfResidence = "Zimbabwe",
                     Gender = "male",
                     Province = "Harare"
@@ -672,7 +672,7 @@ namespace LLB.Controllers
                             // Nationality = model.Nationality,
 
                             DateOfApplication = DateTime.Now,
-                            DOB = model.DOB,
+                            DOB = model.DOB.ToString("yyyy-MM-dd"),
                             CountryOfResidence = model.CountryOfResidence,
                             Gender = model.Gender,
                             Province = model.Province

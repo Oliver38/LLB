@@ -273,7 +273,17 @@ namespace LLB.Controllers
             var licensefees = _db.LicenseTypes.Where(a => a.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
             var managerfees = _db.LicenseTypes.Where(a => a.Id == "080146d5-6427-4db4-a851-3adb95ee208a").FirstOrDefault();
             var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
-            int managerscount = managers.Count();
+            int managerscount = 0;
+            int thecount = managers.Count();
+
+            if (thecount > 1)
+            {
+                managerscount = thecount - 1;
+            }
+            else
+            {
+                managerscount = 0;
+            }
             finaldata.ManagersCount = managerscount;
 
             var payment = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();

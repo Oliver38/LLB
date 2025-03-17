@@ -550,7 +550,7 @@ namespace LLB.Controllers
             {
                 string picb = System.IO.Path.GetFileName(natid.FileName);
                 string dicb = System.IO.Path.GetExtension(natid.FileName);
-                string newname =directorDetails.ApplicationId;
+                string newname = "NatId_" + directorDetails.Id;
                 string path = System.IO.Path.Combine($"DirectorFingerprints", newname + dicb);
                 string docpath = System.IO.Path.Combine($"wwwroot/DirectorFingerprints", newname + dicb);
                 directorDetails.NatId = path;
@@ -568,7 +568,7 @@ namespace LLB.Controllers
             {
                 string picb = System.IO.Path.GetFileName(form.FileName);
                 string dicb = System.IO.Path.GetExtension(form.FileName);
-                string newname = directorDetails.ApplicationId;
+                string newname = "Form55_" + directorDetails.Id;
                 string path = System.IO.Path.Combine($"DirectorFingerprints", newname + dicb);
                 string docpath = System.IO.Path.Combine($"wwwroot/DirectorFingerprints", newname + dicb);
                 directorDetails.Form55 = path;
@@ -587,7 +587,7 @@ namespace LLB.Controllers
             {
                 string picb = System.IO.Path.GetFileName(fingerprints.FileName);
                 string dicb = System.IO.Path.GetExtension(fingerprints.FileName);
-                string newname = directorDetails.ApplicationId;
+                string newname = "FingerPrints_"+directorDetails.Id;
                 string path = System.IO.Path.Combine($"DirectorFingerprints", newname + dicb);
                 string docpath = System.IO.Path.Combine($"wwwroot/DirectorFingerprints", newname + dicb);
                 directorDetails.FingerPrints = path;
@@ -641,13 +641,23 @@ namespace LLB.Controllers
           public string? Status { get; set; }
           public DateTime DateAdded { get; set; }
           public DateTime DateUpdated { get; set; }*/
+
+            manager.Id = Guid.NewGuid().ToString();
+
+            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+            string id = userId.Id;
+            manager.UserId = id;
+            manager.Status = "UnSubmitted";
+            manager.DateAdded = DateTime.Now;
+            manager.DateUpdated = DateTime.Now;
+
             if (file != null)
             {
                 string pic = System.IO.Path.GetFileName(file.FileName);
                 string dic = System.IO.Path.GetExtension(file.FileName);
-                string newname = manager.ApplicationId;
-                string path = System.IO.Path.Combine($"ManagerIds", newname + dic);
-                string docpath = System.IO.Path.Combine($"wwwroot/ManagerIds", newname + dic);
+                string newname ="NatId_"+ manager.Id;
+                string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dic);
+                string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dic);
                 manager.Attachment = path;
                 using (Stream fileStream = new FileStream(docpath, FileMode.Create))
                 {
@@ -664,7 +674,7 @@ namespace LLB.Controllers
             {
                 string picb = System.IO.Path.GetFileName(fileb.FileName);
                 string dicb = System.IO.Path.GetExtension(fileb.FileName);
-                string newname = manager.ApplicationId;
+                string newname = "Fingerprints_" + manager.Id;
                 string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
                 string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
                 manager.Fingerprints = path;
@@ -683,7 +693,7 @@ namespace LLB.Controllers
             {
                 string picb = System.IO.Path.GetFileName(form55.FileName);
                 string dicb = System.IO.Path.GetExtension(form55.FileName);
-                string newname = manager.ApplicationId;
+                string newname = "Form55_" + manager.Id;
                 string path = System.IO.Path.Combine($"ManagerFingerprints", newname + dicb);
                 string docpath = System.IO.Path.Combine($"wwwroot/ManagerFingerprints", newname + dicb);
                 manager.Form55 = path;
@@ -698,14 +708,7 @@ namespace LLB.Controllers
             }
 
 
-            manager.Id = Guid.NewGuid().ToString();
-
-            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
-            string id = userId.Id;
-            manager.UserId = id;
-            manager.Status = "UnSubmitted";
-            manager.DateAdded = DateTime.Now;
-            manager.DateUpdated = DateTime.Now;
+          
             _db.Add(manager);
             _db.SaveChanges();
 
@@ -726,6 +729,7 @@ namespace LLB.Controllers
         public async Task<IActionResult> AttachmentsAsync(string Id)
         {
             var attachments = _db.AttachmentInfo.Where(b => b.ApplicationId == Id).ToList();
+            var getinfo = _db.ApplicationInfo.Where(w => w.Id == Id).FirstOrDefault();
 
             if (attachments.Count() <= 0)
             {
@@ -742,13 +746,36 @@ namespace LLB.Controllers
                         "Government Gazette",
 
                         "Lease/Deeed documents",
-
+                        "Affidavit",
 
 
                 };
 
+                    //if company
+                    if(getinfo.ApplicantType == "Company")
+                    {
 
+                        string[] companydocs =
+                        {
+                            "CR6",
+                            "CR14",
+                            "Company Resolution",
+                        };
+                        documents = documents.Concat(companydocs).ToArray();
+                    }
 
+                    if (getinfo.ApplicantType == "Organisation")
+                    {
+
+                        string[] companydocs =
+                        {
+                           "CR6",
+                            "CR14",
+                            "Constitution",
+                        };
+                        documents = documents.Concat(companydocs).ToArray();
+                    }
+                   
                     foreach (var document in documents)
                     {
                         AttachmentInfo documentInfo = new AttachmentInfo();
@@ -783,6 +810,7 @@ namespace LLB.Controllers
 //"Manager Applicant Fingerprints",
 "Letter From the Minister",
  "Health Report",
+ "Affidavit",
 
                 };
 
@@ -822,6 +850,21 @@ namespace LLB.Controllers
         }
 
 
+        [HttpGet(("RemoveAttachments"))]
+        public async Task<IActionResult> RemoveAttachments(string Id)
+        {
+            var attachment = _db.AttachmentInfo.Where(a => a.Id == Id).FirstOrDefault();
+            attachment.DocumentLocation = "";
+            attachment.DateUpdated = DateTime.Now;
+            _db.Update(attachment);
+            _db.SaveChanges();
+
+
+            return RedirectToAction("Attachments", "License" , new {Id= attachment.ApplicationId });
+        }
+
+
+        
         [HttpPost("Attachments")]
         public async Task<IActionResult> AttachmentsAsync(AttachmentInfo attachment, IFormFile file)
         {

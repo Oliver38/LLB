@@ -175,7 +175,7 @@ else
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">DOB</label>
-                        <input type="text" name="licenseName" value="@ViewBag.User.DOB.Date" class="form-control" id="inputName5">
+                        <input type="text" name="licenseName" value="@ViewBag.User.DOB" class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Gender</label>
@@ -219,7 +219,7 @@ else
                             }
                             else if (@ViewBag.ApplicationInfo.ApplicantType == "Organisation")
                             {
-                                <option selected value="Organisation"> Company Unregistered</option>
+                                <option selected value="Organisation">Organisation</option>
                             }
                             <option value="Individual"> Individual</option>
                             <option value="Company"> Company</option>
@@ -275,7 +275,7 @@ else
                     else
                     {
                         <div class="col-md-6">
-                            <label for="inputName5" class="form-label"><a target="_blank" href="~/@ViewBag.ApplicationInfo.FormFF">Police Clearance</a></label>
+                            <label for="inputName5" class="form-label"><a target="_blank" href="~/@ViewBag.ApplicationInfo.FormFF">Form 55</a></label>
                             @*<input type="file" name="pclearance" required value="" class="form-control" id="inputName5">*@
                             <button class="btn btn-danger btn-sm float-end" type="button"
                                     onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/License/AppinfoFormFF?Id=@ViewBag.ApplicationInfo.Id'; }">

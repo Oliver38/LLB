@@ -13,7 +13,7 @@ namespace LLB.Models
         public string? UserEmail { get; set; }
         public string? UserPhoneNumber { get; set; }
         public string? NatID { get; set; }
-        public DateTime DOB { get; set; }
+        public string DOB { get; set; }
         public string? Nationality { get; set; }
         public string? CountryOfResidence { get; set; }
         public DateTime DateOfApplication { get; set; }

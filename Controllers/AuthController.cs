@@ -104,7 +104,8 @@ namespace LLB.Controllers
                             // Nationality = model.Nationality,
 
                             DateOfApplication = DateTime.Now,
-                            DOB = model.DOB.Date,
+                            
+                            DOB = model.DOB.ToString("yyyy-MM-dd"),
                             CountryOfResidence = model.CountryOfResidence,
                             Gender = model.Gender,
                             Province = model.Province

@@ -83,7 +83,14 @@
                 <tr>
                     <td>@attachment.DocumentTitle </td>
                     <td><a target="_blank" href="~/@attachment.DocumentLocation">View Here</a></td>
-                    <td><a href="#" class="btn btn-danger">Remove</a></td>
+                    @*<td><a href="/License/RemoveAttachments?Id=@attachment.Id" class="btn btn-danger">Remove</a></td>*@
+                    <td>
+                        <a href="/License/RemoveAttachments?Id=@attachment.Id"
+                           class="btn btn-danger"
+                           onclick="return confirm('Are you sure you want to remove this attachment?');">
+                            Remove
+                        </a>
+                    </td>
                 </tr>
 
                         }
