@@ -371,9 +371,12 @@ namespace LLB.Controllers
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+        
+            paynow.ResultUrl = "https://llb.pfms.gov.zw/License/Submit?gateway=paynow";
+            paynow.ReturnUrl = "https://llb.pfms.gov.zw/License/Finalising?Id=" + Id + "&gateway=paynow";
+            //paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
+            //paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
 
-            paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
 
@@ -546,7 +549,7 @@ namespace LLB.Controllers
 
             //district code
             var districtinfo = _db.DistrictCodes.Where(c => c.District == outlet.City).FirstOrDefault();
-
+ 
             DateTime now = DateTime.Now;
 
             // Extract last two digits of the year
@@ -578,6 +581,58 @@ namespace LLB.Controllers
             _db.Update(task);
             _db.SaveChanges();
         
+            return RedirectToAction("Dashboard", "Approval");
+        }
+
+
+
+
+
+        [HttpGet("Rejected")]
+        public async Task<IActionResult> Rejected(string Id, string taskid)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            //LLB Numberl;l
+            var outlet = _db.OutletInfo.Where(n => n.ApplicationId == Id).FirstOrDefault();
+            outlet.Status = "inactive";
+            outlet.DateUpdated = DateTime.Now;
+            _db.Update(outlet);
+            _db.SaveChanges();
+
+            //district code
+            var districtinfo = _db.DistrictCodes.Where(c => c.District == outlet.City).FirstOrDefault();
+
+            DateTime now = DateTime.Now;
+
+            // Extract last two digits of the year
+            string lastTwoDigits = now.ToString("yy");
+
+            var licensecode = _db.LicenseTypes.Where(a => a.Id == application.LicenseTypeID).FirstOrDefault();
+
+            string llbnumber = districtinfo.DistrictCode.ToString() + lastTwoDigits + application.RefNum + licensecode.LicenseCode;
+
+            application.LLBNum = llbnumber;
+            application.Status = "rejected";
+            application.ExaminationStatus = "Rejected";
+            application.ApprovedDate = DateTime.Now;
+            application.ExpiryDate = application.ApprovedDate.AddYears(1);
+            _db.Update(application);
+            _db.SaveChanges();
+
+            var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
+            foreach (var manager in managers)
+            {
+                manager.Status = "inactive";
+                manager.EffectiveDate = DateTime.Now;
+                _db.Update(manager);
+                _db.SaveChanges();
+            }
+
+            var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
+            task.Status = "completed";
+            _db.Update(task);
+            _db.SaveChanges();
+
             return RedirectToAction("Dashboard", "Approval");
         }
     }

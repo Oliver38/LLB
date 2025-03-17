@@ -135,6 +135,11 @@
                                         {
                                             <span class="text-success">@application.Status</span>
                                         }
+                                        else if (application.Status == "rejected")
+                                        {
+                                            <span class="text-danger">@application.Status</span>
+
+                                        }
                                     </td>
 
                                     <td>
@@ -155,6 +160,13 @@
                                         @if (application.Status == "approved")
                                         {
                                             <a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>
+                                        }
+                                        @if (application.Status == "rejected")
+                                        {
+                                            @*<a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>*@
+
+                                            <span class="text-danger">@application.Status</span>
+
                                         }
                                     </td>
 
