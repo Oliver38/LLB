@@ -275,7 +275,7 @@ namespace LLB.Controllers
             }
 
             //string rqcontent = $"<img  src='~/QRcodes/{applications.Id}.png'>";
-            string rqcontent = $" <figure><img style='height:150px;width:150px; ' src='C:\\My\\QRCodes\\{searchref}.png'></figure>";
+            string rqcontent = $" <figure><img style='height:140px;width:140px; ' src='C:\\My\\QRCodes\\{searchref}.png'></figure>";
             HtmlStamper qrcode = new HtmlStamper()
             {
 
@@ -284,7 +284,7 @@ namespace LLB.Controllers
                 VerticalAlignment = VerticalAlignment.Middle,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 HorizontalOffset = new Length(55),
-                VerticalOffset = new Length(38),
+                VerticalOffset = new Length(37),
             };
 
 
