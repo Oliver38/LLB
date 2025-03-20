@@ -128,9 +128,13 @@ namespace LLB.Controllers
         public IActionResult DownloadPayment(string downloadId, double fee, string applicationId)
         {
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+        
+            paynow.ResultUrl = "https://llb.pfms.gov.zw/Downloads/GetDuplicate?searchref=" + applicationId;
+            paynow.ReturnUrl = "https://llb.pfms.gov.zw/Downloads/GetDuplicate?searchref=" + applicationId;
+           // paynow.ResultUrl = "https://localhost:41018/Downloads/GetDuplicate?searchref=" + applicationId;
+           // paynow.ReturnUrl = "https://localhost:41018/Downloads/GetDuplicate?searchref=" + applicationId;
 
-            paynow.ResultUrl = "https://localhost:41018/Downloads/GetDuplicate?searchref=" + applicationId;
-            paynow.ReturnUrl = "https://localhost:41018/Downloads/GetDuplicate?searchref=" + applicationId;
+
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
 
