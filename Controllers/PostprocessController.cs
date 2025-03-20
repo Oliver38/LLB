@@ -102,18 +102,14 @@ namespace LLB.Controllers
             // return View();
             return RedirectToAction("AddFee", "Postprocess");
         }
-
+        //for submission of renewal
         [HttpGet("Continue")]
         public async Task<IActionResult> Continue(string Id)
         {
-            var renewal = _db.Renewals.Where(a => a.Id == Id).FirstOrDefault();
-            //renewal.Status = "renewal inspection"; to change after getting inpection requirements.
-            renewal.Status = "renewed";
-            renewal.DateUpdated = DateTime.Now;
-            _db.Update(renewal);
-            _db.SaveChanges();
-            var appinfo = _db.ApplicationInfo.Where(a => a.Id == renewal.ApplicationId).FirstOrDefault();
-            if(appinfo.ExpiryDate > DateTime.Now)
+            
+
+            //renewal algorithm to work after inspection
+            /* if(appinfo.ExpiryDate > DateTime.Now)
             {
                 appinfo.ExpiryDate = DateTime.Now.AddYears(1);
 
@@ -122,7 +118,7 @@ namespace LLB.Controllers
             {
                 appinfo.ExpiryDate = appinfo.ExpiryDate.AddYears(1);
             }
-
+            */
             //var verifierId = await TaskAllocator()
             Tasks tasks = new Tasks();
             tasks.Id = Guid.NewGuid().ToString();
@@ -143,6 +139,16 @@ namespace LLB.Controllers
             tasks.DateUpdated = DateTime.Now;
             _db.Add(tasks);
             _db.SaveChanges();
+
+
+            var renewal = _db.Renewals.Where(a => a.Id == Id).FirstOrDefault();
+            //renewal.Status = "renewal inspection"; to change after getting inpection requirements.
+            renewal.Status = "submitted";
+            renewal.Verifier = verifierWithLeastTasks;
+            renewal.DateUpdated = DateTime.Now;
+            _db.Update(renewal);
+            _db.SaveChanges();
+            var appinfo = _db.ApplicationInfo.Where(a => a.Id == renewal.ApplicationId).FirstOrDefault();
 
             return RedirectToAction("Dashboard", "Home");
 
@@ -222,7 +228,7 @@ namespace LLB.Controllers
                 _db.SaveChanges();
                 payment = paymentTrans;
             }
-            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id  ).OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "applied").OrderByDescending(s => s.DateApplied).FirstOrDefault();
             //submitted check status
             ViewBag.Payment = payment;
             ViewBag.Process = process;
@@ -291,7 +297,7 @@ namespace LLB.Controllers
                 _db.Add(renewal);
                 _db.SaveChanges();
 
-                return RedirectToAction("Renewal", "Postprocess", new { id = renewal.ApplicationId });
+                return RedirectToAction("Renewal", "Postprocess", new { id = renewal.ApplicationId, process= "RNW" });
             }
             else
             {
@@ -352,7 +358,7 @@ namespace LLB.Controllers
                 _db.Update(updaterenewal);
                     _db.SaveChanges();
 
-                    return RedirectToAction("Renewal", "Postprocess", new { id = updaterenewal.ApplicationId });
+                    return RedirectToAction("Renewal", "Postprocess", new { id = updaterenewal.ApplicationId , process= "RNW"});
 
 
                    // return RedirectToAction("", "");
@@ -360,9 +366,28 @@ namespace LLB.Controllers
         }
 
 
+        [HttpGet("DeleteHealthCert")]
+        public IActionResult DeleteHealthCert(string Id, string process)
+        {
+            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == Id && x.Status == "applied").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            renewaldata.HealthCert = "";
+            _db.Update(renewaldata);
+            _db.SaveChanges();
+            return RedirectToAction("Renewal", "Postprocess", new { Id = Id , process ="RNW"});
+        }
 
-        
-               [HttpGet("Inspection")]
+        [HttpGet("DeleteCertifiedLisc")]
+        public IActionResult DeleteCertifiedLisc(string Id, string process)
+        {
+            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == Id && x.Status == "applied").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            renewaldata.CertifiedLicense = "";
+            _db.Update(renewaldata);
+            _db.SaveChanges();
+            return RedirectToAction("Renewal", "Postprocess", new { Id = Id, process = "RNW" });
+        }
+
+
+        [HttpGet("Inspection")]
         public IActionResult Inspection(string id, string process)
         {
 

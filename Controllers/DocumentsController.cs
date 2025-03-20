@@ -49,7 +49,7 @@ namespace LLB.Controllers
         }
 
 
-        [Route("C")]
+        [Route("LLBLicense")]
         public async Task<IActionResult> TestsAsync(string searchref)
         {
 

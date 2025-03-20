@@ -21,6 +21,7 @@ namespace LLB.Models.ViewModel
         public string? LicenseType { get; set; }
         public string? LicenseRegion { get; set; }
         public string? TaskId { get; set; }
+        public string? Comments { get; set; }
         public DateTime InspectionDate { get; set; }
         public DateTime DateApplied { get; set; }
         public DateTime DateUpdate { get; set; }

@@ -16,6 +16,7 @@ namespace LLB.Models
         public string? UserId { get; set; }
         public string? ApplicationId { get; set; }
         public string? InspectorId { get; set; }
+        public string? renewalId { get; set; }
         public DateTime InspectionDate { get; set; }
         public DateTime DateApplied { get; set; }
         public DateTime DateUpdate { get; set; }
@@ -32,6 +33,8 @@ namespace LLB.Models
         public string? StaffUniformsAndAccommodation { get; set; }
         public string? EquipmentAndAppointments { get; set; }
         public string? HygieneStandards { get; set; }
+        public string? Comments { get; set; }
+        public string? Overall { get; set; }
 
 
 

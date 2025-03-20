@@ -814,10 +814,11 @@ namespace LLB.Controllers
                 renewalinspectiontask.LicenseType = licensetype.LicenseName;
                 renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
                 renewalinspectiontask.TaskId = reninsptasks.Id;
+            renewalinspectiontask.Comments = inspecy.Comments;
 
 
             //  renewalinspectiontasks.Add(renewalinspectiontask);
-
+            
 
             //   }
             ViewBag.Inspection = renewalinspectiontask;
@@ -849,8 +850,54 @@ namespace LLB.Controllers
             inspec.StaffUniformsAndAccommodation = inspection.StaffUniformsAndAccommodation;
             inspec.EquipmentAndAppointments = inspection.EquipmentAndAppointments; 
             inspec.HygieneStandards = inspection.HygieneStandards;
+            inspec.Comments = inspection.Comments;
+            inspec.Overall = inspection.Overall;
             _db.Update(inspec);
             _db.SaveChanges();
+            if (inspec.Service == "Renewal Inspection")
+            {
+                var renewal = _db.Renewals.Where(z => z.ApplicationId == inspec.ApplicationId && z.Status == "verified").FirstOrDefault();
+
+                if (inspec.Overall == "true")
+                {
+                    renewal.Status = "renewed";
+                    renewal.Inspector = userId;
+                    renewal.DateUpdated = DateTime.Now;
+                    _db.Update(renewal);
+                    _db.SaveChanges();
+
+                    //updating renewal date time
+                    var updaterenewal = _db.ApplicationInfo.Where(c => c.Id == inspec.ApplicationId).FirstOrDefault();
+                    // updaterenewal.ExpiryDate=
+
+                    if (updaterenewal.ExpiryDate > DateTime.Now)
+                    {
+                        updaterenewal.ExpiryDate = DateTime.Now.AddYears(1);
+                        updaterenewal.DateUpdated = DateTime.Now;
+                        _db.Update(updaterenewal);
+                        _db.SaveChanges();
+
+                    }
+                    else
+                    {
+                        updaterenewal.ExpiryDate = updaterenewal.ExpiryDate.AddYears(1);
+                        updaterenewal.DateUpdated = DateTime.Now;
+                        _db.Update(updaterenewal);
+                        _db.SaveChanges();
+                    }
+
+                }
+                else
+                {
+                    renewal.Status = "failed";
+                    renewal.Inspector = userId;
+                    renewal.DateUpdated = DateTime.Now;
+                    _db.Update(renewal);
+                    _db.SaveChanges();
+
+
+                }
+            }
 
             var task = _db.Tasks.Where(a => a.Id == TaskId).FirstOrDefault();
             task.Status = "completed";
@@ -882,6 +929,7 @@ namespace LLB.Controllers
             renewalinspectiontask.LicenseType = licensetype.LicenseName;
             renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
             renewalinspectiontask.TaskId = inspec.Id;
+            renewalinspectiontask.Comments = inspecy.Comments;
 
 
             //  renewalinspectiontasks.Add(renewalinspectiontask);
@@ -900,10 +948,21 @@ namespace LLB.Controllers
         {
             //Add Inspection
 
+
             var appinfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+
+            var renewalapp = _db.Renewals.Where(a => a.ApplicationId == appinfo.Id && a.Status == "submitted").FirstOrDefault();
+            renewalapp.Status = "verified";
+            renewalapp.DateUpdated = DateTime.Now;
+            _db.Update(renewalapp);
+            _db.SaveChanges();
+
+            //
+
 
             Inspection inspection = new Inspection();
             inspection.Id  = Guid.NewGuid().ToString();
+            inspection.renewalId = renewalapp.Id;
             inspection.ApplicationId = Id;
             inspection.Service = "Renewal Inspection";
             inspection.Status = "Awaiting Action";
@@ -929,9 +988,9 @@ namespace LLB.Controllers
             //auto allocation to replace
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db, userManager);
+            var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
             tasksc.Service = "renewal inspection";
-            tasksc.VerifierId = recommenderWithLeastTasks;
+            tasksc.VerifierId = verifierWithLeastTasks;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";
             tasksc.DateAdded = DateTime.Now;

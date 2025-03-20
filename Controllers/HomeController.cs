@@ -220,7 +220,7 @@ namespace LLB.Controllers
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             //var Id = await userManager.GetUserId(User.Identity.Name);
             string id = userId.Id;
-            var renewals = _db.Renewals.Where(q => q.UserId == id).ToList();
+            var renewals = _db.Renewals.Where(q => q.UserId == id && q.Status == "renewed").ToList();
 
             var applications = _db.ApplicationInfo.Where(a => a.UserID == id && a.Status != "approved").ToList();
             var approvedapplications = _db.ApplicationInfo.Where(a => a.UserID == id && a.Status == "approved").ToList();

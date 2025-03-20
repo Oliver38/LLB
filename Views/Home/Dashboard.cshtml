@@ -159,7 +159,8 @@
                                         }
                                         @if (application.Status == "approved")
                                         {
-                                            <a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>
+                                            @*<a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>*@
+                                            <a href="/Downloads/CheckDownload?LLBNUM=@application.LLBNum" target="_blank" class="btn btn-primary">Download License</a>
                                         }
                                         @if (application.Status == "rejected")
                                         {
@@ -297,7 +298,9 @@
                                         }
                                         @if (application.Status == "approved")
                                         {
-                                            <a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>
+                                            @*<a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>*@
+                                            <a href="/Downloads/CheckDownload?LLBNUM=@application.LLBNum&DocumentType=License" target="_blank" class="btn btn-primary">Download License</a>
+
                                         }
                                     </td>
 
@@ -532,7 +535,7 @@
                                     <option value="APM">Approval of a person as a Manager 100.00</option>
                                     @*<option value="GDP">Government Department Permit 100.00</option>*@
                                     <option value="INP">Inspection 150.00</option>
-                                    <option value="DPL">Duplication 60.00</option>
+                                    @*<option value="DPL">Duplication 60.00</option>*@
                                     <option value="TRM">Temporal removal 200.00</option>
                                     <option value="TTR">Temporal Transfer 200.00</option>
                                     <option value="EXH">Extended hours (Occasional) liquor licence 300.00</option>

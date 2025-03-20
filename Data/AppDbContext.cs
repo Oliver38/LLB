@@ -43,6 +43,7 @@ namespace LLB.Data
         public DbSet<Council> Council { get; set; }
         public DbSet<District> District { get; set; }
         public DbSet<Inspection> Inspection { get; set; }
+        public DbSet<Downloads> Downloads { get; set; }
 
 
 

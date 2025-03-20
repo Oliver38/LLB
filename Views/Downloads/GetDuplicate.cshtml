@@ -1,0 +1,120 @@
+﻿@{
+    Layout = "_LayoutMain";
+
+
+
+}
+
+
+<div class="row">
+    <div class="card">
+
+
+        <div class="card-header">
+            <div class="text-center">
+                <h5 class="card-title text-success">@TempData["result"]</h5>
+            </div>
+            <h5 class="card-title">Duplicating The Liquor License</h5>
+
+        </div>
+
+        @*renewalinspectiontask.TradingName = outletinfoq.TradingName;
+            renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
+            renewalinspectiontask.ApplicationId = applId;
+            renewalinspectiontask.DateApplied = inspecy.DateApplied;
+            renewalinspectiontask.Id = inspecy.Id;
+            renewalinspectiontask.Status = inspecy.Status;
+            renewalinspectiontask.Service = inspecy.Service;
+            renewalinspectiontask.LicenseType = licensetype.LicenseName;
+            renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
+            renewalinspectiontask.TaskId = reninsptasks.Id;
+
+
+            //  renewalinspectiontasks.Add(renewalinspectiontask);
+
+
+            //   }
+            ViewBag.Inspection = renewalinspectiontask;*@
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <tbody class="table-light">
+
+                        <tr>
+                            <th>Outlet Name</th>
+                            <td colspan="2">
+                                @ViewBag.OutletInfo.TradingName
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>LLB Number</th>
+                            <td colspan="2">
+                                @ViewBag.AppInfo.LLBNum
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Status</th>
+                            <td colspan="2">
+                                Registtered
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Province</th>
+                            <td colspan="2">@ViewBag.OutletInfo.Province</td>
+                        </tr>
+
+                        <tr>
+                            <th>Council</th>
+                            <td colspan="2">@ViewBag.OutletInfo.Council</td>
+                        </tr>
+                        <tr>
+                            <th>Payment Status</th>
+                            <td colspan="2">@ViewBag.Download.PaymentStatus</td>
+                        </tr>
+
+                        <tr>
+                            <th>Download Status</th>
+                            <td colspan="2">@ViewBag.Download.Status</td>
+                        </tr>
+
+                        <tr>
+                            <th>Duplicate Fee</th>
+                            <td colspan="2">@ViewBag.Fee.Fee</td>
+                        </tr>
+                        @if (@ViewBag.Download.Status == "Open")
+                        {
+                            <tr>
+                                <th>Download Status</th>
+                                <td colspan="2">
+                                    <a href="/Downloads/CheckDownload?LLBNUM=@ViewBag.AppInfo.LLBNum&DocumentType=License" target="_blank" class="btn btn-primary">Download License</a>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <th>Make Duplicate Payment</th>
+                                <td colspan="2">
+                                    <a href="/Downloads/DownloadPayment?downloadId=@ViewBag.Download.Id&fee=@ViewBag.Fee.Fee&applicationId=@ViewBag.AppInfo.Id"  class="btn btn-primary">Male Payment For Duplicate</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+
+
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+
+

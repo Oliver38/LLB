@@ -65,6 +65,7 @@
     <None Remove="Views\Province\" />
     <None Remove="Views\Council\" />
     <None Remove="Views\District\" />
+    <None Remove="Views\Downloads\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
@@ -91,6 +92,7 @@
     <Folder Include="Views\Council\" />
     <Folder Include="Views\District\" />
     <Folder Include="wwwroot\Renewals\" />
+    <Folder Include="Views\Downloads\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

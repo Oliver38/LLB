@@ -745,7 +745,7 @@ namespace LLB.Controllers
                         "Proof of publication in the Government Gazette",
                         "Government Gazette",
 
-                        "Lease/Deeed documents",
+                        "Lease/Deed documents",
                         "Affidavit",
 
 
@@ -803,7 +803,7 @@ namespace LLB.Controllers
 
 //"Affidavit by transferee",
 "Permit from the minister",
-"Lease/Deeed documents",
+"Lease/Deed documents",
 "Proof of publication in the Government Gazette",
 "Government Gazette",
 "A3 Plan approved by local Environmental Health",
@@ -813,7 +813,30 @@ namespace LLB.Controllers
  "Affidavit",
 
                 };
+                    //if company
+                    if (getinfo.ApplicantType == "Company")
+                    {
 
+                        string[] companydocs =
+                        {
+                            "CR6",
+                            "CR14",
+                            "Company Resolution",
+                        };
+                        documents = documents.Concat(companydocs).ToArray();
+                    }
+
+                    if (getinfo.ApplicantType == "Organisation")
+                    {
+
+                        string[] companydocs =
+                        {
+                           "CR6",
+                            "CR14",
+                            "Constitution",
+                        };
+                        documents = documents.Concat(companydocs).ToArray();
+                    }
 
 
                     foreach (var document in documents)
