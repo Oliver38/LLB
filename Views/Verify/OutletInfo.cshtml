@@ -120,7 +120,19 @@ else
                         <input readonly type="hidden" name="Id" value="@ViewBag.OutletInfo.Id" class="form-control" id="inputName5">
                     </div>
 
+                    <div class="col-md-12">
+                        <div id="map" style="height: 400px; border-radius: 10px;"></div>
+                    </div>
 
+                    <div class="col-md-6">
+                        <label class="form-label">Latitude</label>
+                        <input readonly type="text" id="latitude" value="@ViewBag.OutletInfo.Latitude" name="latitude" class="form-control" placeholder="Latitude">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Longitude</label>
+                        <input readonly type="text" id="longitude" value="@ViewBag.OutletInfo.Longitude" name="longitude" class="form-control" placeholder="Longitude">
+                    </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
                         <select type="text" name="LicenseTypeID" value="@ViewBag.Application.LicenseTypeID" class="form-control" id="inputName5">
@@ -234,7 +246,7 @@ else
                                             }
                                         </th>
 
-                                       
+
 
                                     </tr>
 
@@ -242,49 +254,49 @@ else
                             </tbody>
                         </table>
 
-                    
-                   
 
-                }
-</div>
 
-</div>
-<div class="card-body" id="_step1">
-    <div class="card-header">
-        <div class="text-center">
-            <h5 class="card-title text-success">@TempData["result"]</h5>
+
+                    }
+                </div>
+
+            </div>
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+                    <div class="text-center">
+                        <h5 class="card-title text-success">@TempData["result"]</h5>
+                    </div>
+                    <h5 class="card-title">Verify Outlet Information</h5>
+                </div>
+
+
+                <form action="/Verify/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
+                    <div class="row">
+                        <input type="hidden" name="applicationId" value="@ViewBag.Application.Id" />
+                        <input type="hidden" name="stage" value="Verify Outlet" />
+                        <input type="hidden" name="taskId" value="@ViewBag.Task.Id" />
+                        <textarea class="form-control" name="query"></textarea>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+
+                </form>
+            </div>
         </div>
-        <h5 class="card-title">Verify Outlet Information</h5>
+        <div class="card-footer">
+            <div class="text-center">
+                <a href="/Verify/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
+                <a href="/Verify/ManagersInfo?Id=@ViewBag.Application.Id" class="btn btn-primary">Next</a>
+
+            </div>
+        </div>
+
+
+
     </div>
-
-
-    <form action="/Verify/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
-        <div class="row">
-            <input type="hidden" name="applicationId" value="@ViewBag.Application.Id" />
-            <input type="hidden" name="stage" value="Verify Outlet" />
-            <input type="hidden" name="taskId" value="@ViewBag.Task.Id" />
-            <textarea class="form-control" name="query"></textarea>
-        </div>
-
-        <div class="text-center">
-            <button type="submit" class="btn btn-primary">Submit</button>
-            <button type="reset" class="btn btn-secondary">Reset</button>
-        </div>
-
-    </form>
-</div>
-</div>
-<div class="card-footer">
-    <div class="text-center">
-        <a href="/Verify/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
-        <a href="/Verify/ManagersInfo?Id=@ViewBag.Application.Id" class="btn btn-primary">Next</a>
-
-    </div>
-</div>
-
-
-
-</div>
 }
 
 
@@ -325,3 +337,50 @@ else
         </div>
     </div>
 </div><!-- End Basic Modal-->
+
+<script>
+        function initMap() {
+            // Get location data from Razor ViewBag
+            var locationName = "@(ViewBag.OutletInfo?.TradingName ?? "Unknown Location")";
+            var latitude = @Html.Raw(ViewBag.OutletInfo?.Latitude ?? "0");
+            var longitude = @Html.Raw(ViewBag.OutletInfo?.Longitude ?? "0");
+
+            // Ensure valid latitude and longitude
+            if (latitude == 0 || longitude == 0) {
+                console.error("Invalid coordinates. Check ViewBag values.");
+                alert("Invalid location data. Please check your inputs.");
+                return;
+            }
+
+            // Map options
+            var mapOptions = {
+                center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
+                zoom: 13
+            };
+
+            // Create a new map
+            var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+
+            // Create a marker
+            var marker = new google.maps.Marker({
+                position: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
+                map: map,
+                title: locationName
+            });
+
+            // Add info window (popup)
+            var infoWindow = new google.maps.InfoWindow({
+                content: "<b>" + locationName + "</b><br>Latitude: " + latitude + "<br>Longitude: " + longitude
+            });
+
+            // Open popup when marker is clicked
+            marker.addListener("click", function() {
+                infoWindow.open(map, marker);
+            });
+        }
+</script>
+
+<!-- Google Maps API (Make sure to replace the API key with your actual key) -->
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkhvac8epAiBxzy6c1XnXepLGXYklRa68&callback=initMap">
+</script>

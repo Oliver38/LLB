@@ -4,7 +4,19 @@
 
 }
 
- 
+<style>
+    html, body, .col-md-12 {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 10px;
+    }
+</style>
 @if (ViewBag.OutletInfo == null)
 {
     <div class="row">
@@ -112,7 +124,7 @@
 
                         }
                     </table>
-                   
+
                 }
                 <div class="card-footer">
                     <div class="text-center">
@@ -149,11 +161,23 @@ else
 
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Trading Name</label>
-                        <input type="text" name="tradingName" value="@ViewBag.OutletInfo.TradingName" class="form-control" id="inputName5">
+                        <input type="text" name="tradingName" value="@ViewBag.OutletInfo.TradingName" class="form-control" id="tradingname">
                         <input type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
                         <input type="hidden" name="Id" value="@ViewBag.OutletInfo.Id" class="form-control" id="inputName5">
                     </div>
+                    <div class="col-md-12">
+                        <div id="map" style="height: 400px; border-radius: 10px;"></div>
+                    </div>
 
+                    <div class="col-md-6">
+                        <label class="form-label">Latitude</label>
+                        <input type="text" id="latitude" value="@ViewBag.OutletInfo.Latitude" name="latitude" class="form-control" placeholder="Latitude">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Longitude</label>
+                        <input type="text" id="longitude" value="@ViewBag.OutletInfo.Longitude" name="longitude" class="form-control" placeholder="Longitude">
+                    </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
                         <select type="text" required name="LicenseTypeID" value="" class="form-control" id="inputName5">
@@ -221,7 +245,7 @@ else
                 {
 
 
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>*@
                 }
                 else
                 {
@@ -269,7 +293,7 @@ else
                                         }
                                     </th>
 
-                                    
+
 
                                 </tr>
 
@@ -330,3 +354,50 @@ else
         </div>
     </div>
 </div><!-- End Basic Modal-->
+
+<script>
+        function initMap() {
+            // Get location data from Razor ViewBag
+            var locationName = "@(ViewBag.OutletInfo?.TradingName ?? "Unknown Location")";
+            var latitude = @Html.Raw(ViewBag.OutletInfo?.Latitude ?? "0");
+            var longitude = @Html.Raw(ViewBag.OutletInfo?.Longitude ?? "0");
+
+            // Ensure valid latitude and longitude
+            if (latitude == 0 || longitude == 0) {
+                console.error("Invalid coordinates. Check ViewBag values.");
+                alert("Invalid location data. Please check your inputs.");
+                return;
+            }
+
+            // Map options
+            var mapOptions = {
+                center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
+                zoom: 13
+            };
+
+            // Create a new map
+            var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+
+            // Create a marker
+            var marker = new google.maps.Marker({
+                position: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
+                map: map,
+                title: locationName
+            });
+
+            // Add info window (popup)
+            var infoWindow = new google.maps.InfoWindow({
+                content: "<b>" + locationName + "</b><br>Latitude: " + latitude + "<br>Longitude: " + longitude
+            });
+
+            // Open popup when marker is clicked
+            marker.addListener("click", function() {
+                infoWindow.open(map, marker);
+            });
+        }
+</script>
+
+<!-- Google Maps API (Make sure to replace the API key with your actual key) -->
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkhvac8epAiBxzy6c1XnXepLGXYklRa68&callback=initMap">
+</script>

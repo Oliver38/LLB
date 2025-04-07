@@ -18,6 +18,8 @@ namespace LLB.Models
         public string? DirectorNames { get; set; }
         public string? Status { get; set; }
         public string? ApplicationType { get; set; }
+        public string? Latitude{ get; set; }
+        public string? Longitude { get; set; }
         //public string BusinessName { get; set; }
         public string? LicenseTypeID { get; set; }
         public string? Council { get; set; }

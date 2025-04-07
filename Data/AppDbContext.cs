@@ -44,6 +44,7 @@ namespace LLB.Data
         public DbSet<District> District { get; set; }
         public DbSet<Inspection> Inspection { get; set; }
         public DbSet<Downloads> Downloads { get; set; }
+        public DbSet<ExtendedHours> ExtendedHours { get; set; }
 
 
 

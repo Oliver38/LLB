@@ -21,6 +21,19 @@
                         <input type="text" name="tradingName" value="" class="form-control" id="inputName5">
                         <input type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
                     </div>
+                    <div class="col-md-12">
+                        <div id="map" style="height: 400px; border-radius: 10px;"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Latitude</label>
+                        <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Longitude</label>
+                        <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude">
+                    </div>
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
@@ -72,9 +85,9 @@
 
 
                     @*<div class="col-md-6">
-                                <label for="inputName5" class="form-label">Town Council</labe            l>
-                    <select type="text" name="council" value="" class="form-control" id="co          uncilSelect"id="councilSelect" />
-            </div>*@
+                                            <label for="inputName5" class="form-label">Town Council</labe            l>
+                                <select type="text" name="council" value="" class="form-control" id="co          uncilSelect"id="councilSelect" />
+                        </div>*@
                     <div class="col-md-6">
                         <label for="councilSelect" class="form-label">Council</label>
                         <select id="councilSelect" required onchange="getRegion()" value="" name="council" class="form-control"></select>
@@ -87,16 +100,16 @@
 
 
                 @if (ViewBag.DirectorsCount <= 0)
-                    {
-                        if (@ViewBag.Application.ApplicantType == "Individual") { }
-                        else
-                        {
-
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                        }
-                    }
+                {
+                    if (@ViewBag.Application.ApplicantType == "Individual") { }
                     else
                     {
+
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    }
+                }
+                else
+                {
 
 
                     <table class="table table-responsiveß table-hover table-striped">
@@ -118,7 +131,8 @@
                         }
                     </table>
                     if (@ViewBag.Application.ApplicantType == "Individual") { }
-                    else{
+                    else
+                    {
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
 
                     }
@@ -197,6 +211,19 @@ else
                         <input type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
                         <input type="hidden" name="Id" value="@ViewBag.OutletInfo.Id" class="form-control" id="inputName5">
                     </div>
+                    <div class="col-md-12">
+                        <div id="map" style="height: 400px; border-radius: 10px;"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Latitude</label>
+                        <input type="text" id="latitude" value="@ViewBag.OutletInfo.Latitude" name="latitude" class="form-control" placeholder="Latitude">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Longitude</label>
+                        <input type="text" id="longitude" value="@ViewBag.OutletInfo.Longitude" name="longitude" class="form-control" placeholder="Longitude">
+                    </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
                         <select type="text" required required name="LicenseTypeID" value="" class="form-control" id="inputName5">
@@ -264,8 +291,8 @@ else
                         <input type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
                     </div-->
                     @*<div class="col-md-6">
-                            <label for="inputName5" class="form-label">Province</label>
-                            <input type="text" id="provinceSelect" name="province" value="@ViewBag.OutletInfo.Province" class="form-control">
+                        <label for="inputName5" class="form-label">Province</label>
+                        <input type="text" id="provinceSelect" name="province" value="@ViewBag.OutletInfo.Province" class="form-control">
 
 
                         </div>*@
@@ -285,7 +312,7 @@ else
 
                     </div>
 
-                    
+
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">District</label>
                         <div id="citychange">
@@ -329,16 +356,16 @@ else
 
 
                 @if (ViewBag.DirectorsCount <= 0)
-                    {
-                        if (@ViewBag.Application.ApplicantType == "Individual") { }
-                        else
-                        {
-
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                        }
-                    }
+                {
+                    if (@ViewBag.Application.ApplicantType == "Individual") { }
                     else
                     {
+
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
+                    }
+                }
+                else
+                {
 
 
                     <table class="table table-responsive table-hover table-striped">
@@ -354,33 +381,33 @@ else
                         </thead>
                         <tbody>
                             @foreach (var director in ViewBag.Directors)
-                                {
+                            {
                                 <tr>
                                     <th scope="row">@director.Name</th>
                                     <th scope="row">@director.Surname</th>
                                     <th scope="row">@director.Address</th>
                                     <th scope="row">
                                         @if (director.NatId == "" || director.NatId == null)
-                                            {<a>No Attachment</a>}
-                                            else
-                                            {<a target="_blank" href="~/@director.NatId"> National Id</a>}
+                                        {<a>No Attachment</a>}
+                                        else
+                                        {<a target="_blank" href="~/@director.NatId"> National Id</a>}
                                     </th>
                                     <th scope="row">
                                         @if (director.FingerPrints == "" || director.FingerPrints == null)
-                                            {<a>No Attachment</a>}
-                                            else
-                                            {<a target="_blank" href="~/@director.FingerPrints"> Fingerprints</a>
-                                            }
+                                        {<a>No Attachment</a>}
+                                        else
+                                        {<a target="_blank" href="~/@director.FingerPrints"> Fingerprints</a>
+                                        }
                                     </th>
                                     <th scope="row">
                                         @if (director.Form55 == "" || director.Form55 == null)
-                                            {
+                                        {
                                             <a>No Attachment</a>
-                                            }
-                                            else
-                                            {
+                                        }
+                                        else
+                                        {
                                             <a target="_blank" href="~/@director.Form55"> Form 55</a>
-                                            }
+                                        }
                                     </th>
 
                                     <th scope="row">
@@ -392,15 +419,15 @@ else
 
                                 </tr>
 
-                                }
+                            }
                         </tbody>
                     </table>
-                        if (@ViewBag.Application.ApplicantType == "Individual") { }
-                        else
-                        {
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                        }
+                    if (@ViewBag.Application.ApplicantType == "Individual") { }
+                    else
+                    {
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
                     }
+                }
                 <div class="card-footer">
                     <div class="text-center">
                         <a href="/License/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
@@ -428,7 +455,7 @@ else
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label">Name</label>
                             <input type="hidden" name="applicationId" class="form-control" value="@ViewBag.Application.Id" id="Id">
-                            <input type="text"required name="name" class="form-control" id="name">
+                            <input type="text" required name="name" class="form-control" id="name">
                         </div>
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label">Surname</label>
@@ -613,3 +640,122 @@ else
         });
 
     }</script>
+
+
+<!-- Google Maps JavaScript -->
+<script>var map;
+    var marker;
+    var geocoder;
+
+    function initMap() {
+        var defaultLocation = { lat: -17.8292, lng: 31.0522 }; // Harare, Zimbabwe
+
+        // Initialize Google Map
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: defaultLocation,
+            zoom: 12
+        });
+
+        geocoder = new google.maps.Geocoder(); // Initialize Geocoder
+
+        // Add Click Event to Capture Coordinates
+        map.addListener("click", function (event) {
+            var lat = event.latLng.lat();
+            var lng = event.latLng.lng();
+
+            // Set values in input fields
+            document.getElementById("latitude").value = lat;
+            document.getElementById("longitude").value = lng;
+
+            // Remove previous marker (if any)
+            if (marker) {
+                marker.setMap(null);
+            }
+
+            // Place new marker on the selected location
+            marker = new google.maps.Marker({
+                position: event.latLng,
+                map: map
+            });
+
+            // Reverse Geocode to get address
+            getAddress(lat, lng);
+        });
+
+        // Load saved locations from database
+        loadSavedLocations();
+    }
+
+    // Function to get Address using Reverse Geocoding
+    function getAddress(lat, lng) {
+        var latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+
+        geocoder.geocode({ location: latlng }, function (results, status) {
+            if (status === "OK") {
+                if (results[0]) {
+                    document.getElementById("locationName").value = results[0].formatted_address;
+                } else {
+                    document.getElementById("locationName").value = "Unknown Location";
+                }
+            } else {
+                document.getElementById("locationName").value = "Unknown Location";
+                console.error("Geocoder failed due to: " + status);
+            }
+        });
+    }
+
+    // Save Coordinates to Database
+    function saveCoordinates() {
+        var locationName = document.getElementById("locationName").value;
+        var lat = document.getElementById("latitude").value;
+        var lng = document.getElementById("longitude").value;
+
+        if (!lat || !lng) {
+            alert("Please select a location on the map.");
+            return;
+        }
+
+        fetch("/Location/SaveCoordinates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                LocationName: locationName,
+                Latitude: parseFloat(lat),
+                Longitude: parseFloat(lng)
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                loadSavedLocations(); // Reload saved locations
+
+                // Clear the input fields after saving
+                document.getElementById("locationName").value = "";
+                document.getElementById("latitude").value = "";
+                document.getElementById("longitude").value = "";
+            })
+            .catch(error => console.error("Error:", error));
+    }
+
+    // Load Saved Locations
+    function loadSavedLocations() {
+        fetch("/Location/GetSavedCoordinates")
+            .then(response => response.json())
+            .then(locations => {
+                locations.forEach(location => {
+                    new google.maps.Marker({
+                        position: { lat: location.latitude, lng: location.longitude },
+                        map: map
+                    });
+                });
+            })
+            .catch(error => console.error("Error loading saved locations:", error));
+    }
+
+    // Make initMap globally accessible
+    window.initMap = initMap;</script>
+
+<!-- Load Google Maps API (remove geocode from libraries) -->
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeS52LU1myA-bb_AzRqn0lazpMTxbPK4c&callback=initMap&libraries=places">
+</script>

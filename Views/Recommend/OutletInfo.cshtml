@@ -4,7 +4,7 @@
 
 }
 
- 
+
 @if (ViewBag.OutletInfo == null)
 {
     <div class="row">
@@ -102,8 +102,8 @@
                                     <th scope="row">@director.Address</th>
                                     <th scope="row">
                                         @* <button type="button" class="btn btn-primary">View</button>
-                            <button type="button" class="btn btn-default">Edit</button>
-                            <button type="button" class="btn btn-danger">Delete </button>
+                                            <button type="button" class="btn btn-default">Edit</button>
+                                            <button type="button" class="btn btn-danger">Delete </button>
                                         *@
                                     </th>
 
@@ -131,190 +131,204 @@
 else
 {
 
-<div class="row">
-    <div class="card">
-        <div class="card-body" id="_step1">
+    <div class="row">
+        <div class="card">
+            <div class="card-body" id="_step1">
 
-            <div class="card-header">
-                <div class="text-center">
-                    <h5 class="card-title text-success">@TempData["result"]</h5>
-                </div>
-                <h5 class="card-title">Outlet Information</h5>
-            </div>
-
-
-            <!-- Multi Columns Form -->
-            <form action="/License/OutletInfo" method="post" enctytpe="multipart/form-data" class="row g-3">
-
-
-                <div class="col-md-12">
-                    <label for="inputName5" class="form-label">Trading Name</label>
-                    <input readonly type="text" name="tradingName" value="@ViewBag.OutletInfo.TradingName" class="form-control" id="inputName5">
-                    <input readonly type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
-                    <input readonly type="hidden" name="Id" value="@ViewBag.OutletInfo.Id" class="form-control" id="inputName5">
-                </div>
-                <div class="col-md-6">
-                    <label for="inputName5" class="form-label">Licence Type</label>
-                    <select type="text" name="LicenseTypeID" value="@ViewBag.Application.LicenseTypeID" class="form-control" id="inputName5">
-                        @foreach (var licensetype in ViewBag.License)
-                        {
-                            @if (@ViewBag.Application.LicenseTypeID == @licensetype.Id)
-                            {
-                                <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
-                            }
-                            else
-                            {
-                                <option value="@licensetype.Id">@licensetype.LicenseName </option>
-
-                            }
-                        }
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label for="inputName5" class="form-label">Region of Operation</label>
-                    <select type="text" name="ApplicationType" value="@ViewBag.Application.ApplicationType" class="form-control" id="inputName5">
-                        @foreach (var region in ViewBag.Regions)
-                        {
-                            @if (@ViewBag.Application.ApplicationType == region.Id)
-                            {
-                                <option selected value="@region.Id">@region.RegionName </option>
-                            }
-                            else
-                            {
-                                <option value="@region.Id">@region.RegionName </option>
-                            }
-                        }
-                        }
-                    </select>
-                </div>
-                <div class="col-12">
-                    <div class="form-floating">
-                        <textarea class="form-control" name="Address" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.OutletInfo.Address</textarea>
-                        <label for="floatingTextarea">Oulet Address</label>
+                <div class="card-header">
+                    <div class="text-center">
+                        <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <label for="inputName5" class="form-label">Province</label>
-                    <input readonly type="text" name="province" value="@ViewBag.OutletInfo.Province" class="form-control" id="inputName5">
-                </div>
-
-                <div class="col-md-6">
-                    <label for="inputName5" class="form-label">City</label>
-                    <input readonly type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
-                </div>
-
-                <div class="col-md-6">
-                    <label for="inputName5" class="form-label">Council</label>
-                    <input readonly type="text" name="city" value="@ViewBag.OutletInfo.Council" class="form-control" id="inputName5">
+                    <h5 class="card-title">Outlet Information</h5>
                 </div>
 
 
+                <!-- Multi Columns Form -->
+                <form action="/License/OutletInfo" method="post" enctytpe="multipart/form-data" class="row g-3">
 
 
-            </form><!-- End Multi Columns Form -->
+                    <div class="col-md-12">
+                        <label for="inputName5" class="form-label">Trading Name</label>
+                        <input readonly type="text" name="tradingName" value="@ViewBag.OutletInfo.TradingName" class="form-control" id="inputName5">
+                        <input readonly type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
+                        <input readonly type="hidden" name="Id" value="@ViewBag.OutletInfo.Id" class="form-control" id="inputName5">
+                    </div>
 
-            <br />
-            <div class="row g-3">
-                @if (ViewBag.DirectorsCount <= 0)
-                {
+                    <div class="col-md-12">
+                        <div id="map" style="height: 400px; border-radius: 10px;"></div>
+                    </div>
 
+                    <div class="col-md-6">
+                        <label class="form-label">Latitude</label>
+                        <input readonly type="text" id="latitude" value="@ViewBag.OutletInfo.Latitude" name="latitude" class="form-control" placeholder="Latitude">
+                    </div>
 
-                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>*@
-                }
-                else
-                {
-
-
-                    <table class="table table-responsive table-hover table-striped">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Surname</th>
-                                <th>Address</th>
-                                <th>National Id</th>
-                                <th>finger Prints</th>
-                                <th>Form 55</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var director in ViewBag.Directors)
+                    <div class="col-md-6">
+                        <label class="form-label">Longitude</label>
+                        <input readonly type="text" id="longitude" value="@ViewBag.OutletInfo.Longitude" name="longitude" class="form-control" placeholder="Longitude">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Licence Type</label>
+                        <select type="text" name="LicenseTypeID" value="@ViewBag.Application.LicenseTypeID" class="form-control" id="inputName5">
+                            @foreach (var licensetype in ViewBag.License)
                             {
-                                <tr>
-                                    <th scope="row">@director.Name</th>
-                                    <th scope="row">@director.Surname</th>
-                                    <th scope="row">@director.Address</th>
-                                    <th scope="row">
-                                        @if (director.NatId == "" || director.NatId == null)
-                                        {<a>No Attachment</a>}
-                                        else
-                                        {<a target="_blank" href="~/@director.NatId"> National Id</a>}
-                                    </th>
-                                    <th scope="row">
-                                        @if (director.FingerPrints == "" || director.FingerPrints == null)
-                                        {<a>No Attachment</a>}
-                                        else
-                                        {<a target="_blank" href="~/@director.FingerPrints"> Fingerprints</a>
-                                        }
-                                    </th>
-                                    <th scope="row">
-                                        @if (director.Form55 == "" || director.Form55 == null)
-                                        {
-                                            <a>No Attachment</a>
-                                        }
-                                        else
-                                        {
-                                            <a target="_blank" href="~/@director.Form55"> Form 55</a>
-                                        }
-                                    </th>
+                                @if (@ViewBag.Application.LicenseTypeID == @licensetype.Id)
+                                {
+                                    <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
+                                }
+                                else
+                                {
+                                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
 
-
-
-                                </tr>
-
+                                }
                             }
-                        </tbody>
-                    </table>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Region of Operation</label>
+                        <select type="text" name="ApplicationType" value="@ViewBag.Application.ApplicationType" class="form-control" id="inputName5">
+                            @foreach (var region in ViewBag.Regions)
+                            {
+                                @if (@ViewBag.Application.ApplicationType == region.Id)
+                                {
+                                    <option selected value="@region.Id">@region.RegionName </option>
+                                }
+                                else
+                                {
+                                    <option value="@region.Id">@region.RegionName </option>
+                                }
+                            }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <textarea class="form-control" name="Address" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.OutletInfo.Address</textarea>
+                            <label for="floatingTextarea">Oulet Address</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Province</label>
+                        <input readonly type="text" name="province" value="@ViewBag.OutletInfo.Province" class="form-control" id="inputName5">
+                    </div>
 
-                }
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">City</label>
+                        <input readonly type="text" name="city" value="@ViewBag.OutletInfo.City" class="form-control" id="inputName5">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="inputName5" class="form-label">Council</label>
+                        <input readonly type="text" name="city" value="@ViewBag.OutletInfo.Council" class="form-control" id="inputName5">
+                    </div>
+
+
+
+
+                </form><!-- End Multi Columns Form -->
+
+                <br />
+                <div class="row g-3">
+                    @if (ViewBag.DirectorsCount <= 0)
+                    {
+
+
+                        @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>*@
+                    }
+                    else
+                    {
+
+
+                        <table class="table table-responsive table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Surname</th>
+                                    <th>Address</th>
+                                    <th>National Id</th>
+                                    <th>finger Prints</th>
+                                    <th>Form 55</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var director in ViewBag.Directors)
+                                {
+                                    <tr>
+                                        <th scope="row">@director.Name</th>
+                                        <th scope="row">@director.Surname</th>
+                                        <th scope="row">@director.Address</th>
+                                        <th scope="row">
+                                            @if (director.NatId == "" || director.NatId == null)
+                                            {<a>No Attachment</a>}
+                                            else
+                                            {<a target="_blank" href="~/@director.NatId"> National Id</a>}
+                                        </th>
+                                        <th scope="row">
+                                            @if (director.FingerPrints == "" || director.FingerPrints == null)
+                                            {<a>No Attachment</a>}
+                                            else
+                                            {<a target="_blank" href="~/@director.FingerPrints"> Fingerprints</a>
+                                            }
+                                        </th>
+                                        <th scope="row">
+                                            @if (director.Form55 == "" || director.Form55 == null)
+                                            {
+                                                <a>No Attachment</a>
+                                            }
+                                            else
+                                            {
+                                                <a target="_blank" href="~/@director.Form55"> Form 55</a>
+                                            }
+                                        </th>
+
+
+
+                                    </tr>
+
+                                }
+                            </tbody>
+                        </table>
+
+                    }
+                </div>
+
             </div>
-
-        </div>
-        <div class="card-body" id="_step1">
-            <div class="card-header">
-                <div class="text-center">
-                    <h5 class="card-title text-success">@TempData["result"]</h5>
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+                    <div class="text-center">
+                        <h5 class="card-title text-success">@TempData["result"]</h5>
+                    </div>
+                    <h5 class="card-title">Verify Outlet Information</h5>
                 </div>
-                <h5 class="card-title">Verify Outlet Information</h5>
+
+
+                <form action="/Recommend/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
+                    <div class="row">
+                        <input type="hidden" name="applicationId" value="@ViewBag.Application.Id" />
+                        <input type="hidden" name="stage" value="Recommend Outlet" />
+
+                        <textarea class="form-control" name="query"></textarea>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+
+                </form>
             </div>
-
-
-            <form action="/Recommend/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
-                <div class="row">
-                    <input type="hidden" name="applicationId" value="@ViewBag.Application.Id" />
-                    <input type="hidden" name="stage" value="Recommend Outlet" />
-
-                    <textarea class="form-control" name="query"></textarea>
-                </div>
-
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                    <button type="reset" class="btn btn-secondary">Reset</button>
-                </div>
-
-            </form>
         </div>
-    </div>
-    <div class="card-footer">
-        <div class="text-center">
-            <a href="/Recommend/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
-            <a href="/Recommend/ManagersInfo?Id=@ViewBag.Application.Id" class="btn btn-primary">Next</a>
+        <div class="card-footer">
+            <div class="text-center">
+                <a href="/Recommend/Apply?Id=@ViewBag.Application.Id" class="btn btn-warning">Prev</a>
+                <a href="/Recommend/ManagersInfo?Id=@ViewBag.Application.Id" class="btn btn-primary">Next</a>
 
+            </div>
         </div>
+
+
+
     </div>
-
-
-
-</div>
 }
 
 
@@ -355,3 +369,51 @@ else
         </div>
     </div>
 </div><!-- End Basic Modal-->
+
+
+<script>
+        function initMap() {
+            // Get location data from Razor ViewBag
+            var locationName = "@(ViewBag.OutletInfo?.TradingName ?? "Unknown Location")";
+            var latitude = @Html.Raw(ViewBag.OutletInfo?.Latitude ?? "0");
+            var longitude = @Html.Raw(ViewBag.OutletInfo?.Longitude ?? "0");
+
+            // Ensure valid latitude and longitude
+            if (latitude == 0 || longitude == 0) {
+                console.error("Invalid coordinates. Check ViewBag values.");
+                alert("Invalid location data. Please check your inputs.");
+                return;
+            }
+
+            // Map options
+            var mapOptions = {
+                center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
+                zoom: 13
+            };
+
+            // Create a new map
+            var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+
+            // Create a marker
+            var marker = new google.maps.Marker({
+                position: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
+                map: map,
+                title: locationName
+            });
+
+            // Add info window (popup)
+            var infoWindow = new google.maps.InfoWindow({
+                content: "<b>" + locationName + "</b><br>Latitude: " + latitude + "<br>Longitude: " + longitude
+            });
+
+            // Open popup when marker is clicked
+            marker.addListener("click", function() {
+                infoWindow.open(map, marker);
+            });
+        }
+</script>
+
+<!-- Google Maps API (Make sure to replace the API key with your actual key) -->
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDkhvac8epAiBxzy6c1XnXepLGXYklRa68&callback=initMap">
+</script>

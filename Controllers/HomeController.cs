@@ -91,7 +91,7 @@ namespace LLB.Controllers
             }
             else if (process == "EXH")
             {
-                return RedirectToAction("Extendhours", "Postprocess", new { param1 = id, param2 = id });
+                return RedirectToAction("Extendedhours", "Postprocess", new { id = id, process = process });
 
             }
             else if (process == "TRL")
