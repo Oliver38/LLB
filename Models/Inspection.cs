@@ -17,6 +17,7 @@ namespace LLB.Models
         public string? ApplicationId { get; set; }
         public string? InspectorId { get; set; }
         public string? renewalId { get; set; }
+        public DateTime? InspectionSchedule { get; set; }
         public DateTime InspectionDate { get; set; }
         public DateTime DateApplied { get; set; }
         public DateTime DateUpdate { get; set; }

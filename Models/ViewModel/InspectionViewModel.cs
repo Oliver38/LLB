@@ -23,6 +23,7 @@ namespace LLB.Models.ViewModel
         public string? TaskId { get; set; }
         public string? Comments { get; set; }
         public DateTime InspectionDate { get; set; }
+        public DateTime? InspectionSchedule { get; set; }
         public DateTime DateApplied { get; set; }
         public DateTime DateUpdate { get; set; }
 

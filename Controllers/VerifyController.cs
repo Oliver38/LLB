@@ -105,6 +105,7 @@ namespace LLB.Controllers
                 renewalinspectiontask.LicenseType = licensetype.LicenseName;
                 renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
                 renewalinspectiontask.TaskId = insptask.Id;
+               
 
               
                 renewalinspectiontasks.Add(renewalinspectiontask);
@@ -142,6 +143,35 @@ namespace LLB.Controllers
 
 
             }
+            //verification inspection
+                 List<InspectionViewModel> verificationinspection = new List<InspectionViewModel>();
+            var verinsptasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "Verification Inspection" && f.Status == "assigned").ToList();
+            foreach (var verinsptask in verinsptasks)
+            {
+                var applId = verinsptask.ApplicationId;
+                var appinfoq = _db.ApplicationInfo.Where(i => i.Id == applId).FirstOrDefault();
+                var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
+                var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
+                var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
+                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+                InspectionViewModel inspectiontask = new InspectionViewModel();
+
+                inspectiontask.TradingName = outletinfoq.TradingName;
+                inspectiontask.LLBNumber = appinfoq.LLBNum;
+                inspectiontask.ApplicationId = applId;
+                inspectiontask.DateApplied = inspecy.DateApplied;
+                inspectiontask.Id = inspecy.Id;
+                inspectiontask.Status = inspecy.Status;
+                inspectiontask.Service = inspecy.Service;
+                inspectiontask.LicenseType = licensetype.LicenseName;
+                inspectiontask.LicenseRegion = licenseregion.RegionName;
+                inspectiontask.TaskId = verinsptask.Id;
+                inspectiontask.InspectionSchedule = inspecy.InspectionSchedule;
+
+                verificationinspection.Add(inspectiontask);
+
+
+            }
 
             //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
             var outletinfo = _db.OutletInfo.ToList();
@@ -159,13 +189,26 @@ namespace LLB.Controllers
             ViewBag.RenewaInsTask = renewalinspectiontasks;
            // ViewBag.RenewalIns = renewaltasks;
             ViewBag.InsTask = inspectiontasks;
+            ViewBag.VerificationInsTask = verificationinspection;
             //crete view on dashboard
             ;
             return View();
         }
 
+        
+             [HttpPost(("InspectionDate"))]
+        public async Task<IActionResult> InspectionDate(string Id,DateTime InspectionDate)
+        {
+            var inspection = _db.Inspection.Where(a => a.Id == Id).FirstOrDefault();
+            inspection.InspectionSchedule = InspectionDate;
+            _db.Update(inspection);
+            _db.SaveChanges();
 
-        [HttpGet(("Apply"))]
+
+            return RedirectToAction("Dashboard", "Home");
+        }
+
+            [HttpGet(("Apply"))]
         public async Task<IActionResult> ApplyAsync(string Id, string error)
         {
             //using Microsoft.AspNetCore.Identity;
@@ -649,9 +692,11 @@ namespace LLB.Controllers
             [HttpGet("Approve")]
         public async Task<IActionResult> ApproveAsync(string Id, string taskid)
         {
+           
             var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
             application.Status = "verified";
-            application.ExaminationStatus= "recommendation";
+            application.ExaminationStatus= "Verification Inspection";
+           // application.ExaminationStatus= "recommendation";
             _db.Update(application);
             _db.SaveChanges();
 
@@ -660,6 +705,7 @@ namespace LLB.Controllers
             task.VerificationDate = DateTime.Now;
             _db.Update(task);
             _db.SaveChanges();
+
             Tasks tasks = new Tasks();
             tasks.Id = Guid.NewGuid().ToString();
             tasks.ApplicationId = application.Id;
@@ -685,21 +731,40 @@ namespace LLB.Controllers
                 _db.SaveChanges();
             }
 
-          
+            Inspection newinspection = new Inspection();
+           
+           
+            var userId = userManager.GetUserId(User);
+
+            newinspection.Id = Guid.NewGuid().ToString();
+            newinspection.Service = "Verification Inspection"; ;
+
+            newinspection.Status = "submitted";
+            newinspection.UserId = userId;
+            newinspection.ApplicationId = application.Id; 
+            newinspection.DateApplied = DateTime.Now;
+            newinspection.DateUpdate = DateTime.Now;
+            _db.Add(newinspection);
+            _db.SaveChanges();
+
+
 
             //var verifierId = await TaskAllocator()
             Tasks tasksc = new Tasks();
             tasksc.Id = Guid.NewGuid().ToString();
             tasksc.ApplicationId = application.Id;
+            //adding task reference
 
             //tasks.AssignerId
 
             //auto allocation to replace
+           // var userId = userManager.GetUserId(User);
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
-            tasksc.Service = "new application";
-            tasksc.RecommenderId = recommenderWithLeastTasks;
+            //var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
+
+            tasksc.Service = "Verification Inspection";
+            tasksc.VerifierId = userId;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";
             tasksc.DateAdded = DateTime.Now;
@@ -897,9 +962,31 @@ namespace LLB.Controllers
 
 
                 }
+            }else if (inspec.Service == "Verification Inspection")
+            { //getting rocomende and completing task
+
+                Tasks tasksc = new Tasks();
+                tasksc.Id = Guid.NewGuid().ToString();
+                tasksc.ApplicationId = inspec.ApplicationId;
+                //adding task reference
+
+                //tasks.AssignerId
+
+                var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
+
+                tasksc.Service = "new application";
+                tasksc.RecommenderId = recommenderWithLeastTasks;
+                tasksc.AssignerId = "system";
+                tasksc.Status = "assigned";
+                tasksc.DateAdded = DateTime.Now;
+                tasksc.DateUpdated = DateTime.Now;
+                _db.Add(tasksc);
+                _db.SaveChanges();
+
             }
 
             var task = _db.Tasks.Where(a => a.Id == TaskId).FirstOrDefault();
+            task.VerificationDate = DateTime.Now;
             task.Status = "completed";
             _db.Update(task);
             _db.SaveChanges();
