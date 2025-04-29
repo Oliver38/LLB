@@ -48,7 +48,7 @@ namespace LLB.Controllers
         {
             var regions = _db.LicenseRegions.OrderBy(a => a.RegionName).ToList();
             var provices = _db.Province.OrderBy(a => a.Name).ToList();
-            var Councils = _db.Council.ToList().OrderBy(a => a.Name);
+            var Councils = _db.Council.ToList().OrderBy(a => a.Province);
             ViewBag.Regions = regions;
             ViewBag.Provinces = provices;
             ViewBag.Councils = Councils;
