@@ -101,7 +101,7 @@ namespace LLB.Controllers
             }
             else if (process == "ECF")
             {
-                return RedirectToAction("Extracounter", "Postprocess", new { param1 = id, param2 = id });
+                return RedirectToAction("Extracounter", "Postprocess", new { id = id, process = process });
 
             }
             else { }

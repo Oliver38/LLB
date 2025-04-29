@@ -734,13 +734,12 @@ namespace LLB.Controllers
             Inspection newinspection = new Inspection();
            
            
-            var userId = userManager.GetUserId(User);
 
             newinspection.Id = Guid.NewGuid().ToString();
             newinspection.Service = "Verification Inspection"; ;
 
             newinspection.Status = "submitted";
-            newinspection.UserId = userId;
+            newinspection.UserId = application.UserID;
             newinspection.ApplicationId = application.Id; 
             newinspection.DateApplied = DateTime.Now;
             newinspection.DateUpdate = DateTime.Now;
@@ -764,6 +763,8 @@ namespace LLB.Controllers
             //var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
 
             tasksc.Service = "Verification Inspection";
+            var userId = userManager.GetUserId(User);
+
             tasksc.VerifierId = userId;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";

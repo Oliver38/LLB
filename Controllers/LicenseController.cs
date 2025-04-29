@@ -50,7 +50,36 @@ namespace LLB.Controllers
         }
 
 
-        [HttpGet(("Apply"))]
+        [AllowAnonymous]
+        [HttpGet(("Hex"))]
+        public async Task<IActionResult> Hex(string Id)
+        {
+
+            //string hex = "FE99A6"; // take last 4 bytes
+            //byte[] bytes = Enumerable.Range(0, hex.Length / 2)
+            //                         .Select(i => Convert.ToByte(hex.Substring(i * 2, 2), 16))
+            //                         .ToArray();
+            //Array.Reverse(bytes); // little-endian
+            //string reversedHex = BitConverter.ToString(bytes).Replace("-", "");
+            //uint tagId = Convert.ToUInt32(reversedHex, 16);  // use uint to avoid overflow
+            //string padded = tagId.ToString("D10");
+            //Console.WriteLine(padded);  // should give 0008715929
+           // 4E8C
+            string hex = "0F007FFA068C"; // last 3 bytes
+            string newhex = hex.Substring(4, 6);
+        
+
+            int tagId = (int)Convert.ToInt32(newhex, 16);
+            // string padded = tagId.ToString("D10");
+            //int padded = tagId - 118334;
+           // Console.WriteLine(padded);
+            ViewBag.Padded = tagId;
+            ViewBag.Hex = hex;
+            //Console.WriteLine(padded);  // should give 0008715929
+            return View();
+        }
+
+            [HttpGet(("Apply"))]
         public async Task<IActionResult> ApplyAsync(string Id)
         {
 
@@ -1117,10 +1146,10 @@ namespace LLB.Controllers
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-            paynow.ResultUrl = "https://llb.pfms.gov.zw/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "https://llb.pfms.gov.zw/License/Finalising?Id=" + Id+"&gateway=paynow";
-            //paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
-            //paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
+            //paynow.ResultUrl = "https://llb.pfms.gov.zw/License/Submit?gateway=paynow";
+            //paynow.ReturnUrl = "https://llb.pfms.gov.zw/License/Finalising?Id=" + Id+"&gateway=paynow";
+            paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
+            paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
 
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
