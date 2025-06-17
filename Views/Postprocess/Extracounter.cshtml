@@ -23,16 +23,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var fee in ViewBag.Fees)
-                    {
+                    @*@foreach (var fee in ViewBag.Fee)
+                    {*@
                         <tr>
-                            <td>@fee.Code</td>
-                            <td>@fee.ProcessName</td>
-                            <td>@fee.Fee</td>
-                            <td>@fee.Status</td>
-                            <td><button class="btn btn-primary" onclick="UpdateFee('@fee.Id','@fee.ProcessName', '@fee.Description', '@fee.Fee', '@fee.Code' )">Edit</button></td>
-                        </tr>
-                    }
+                            <td>@ViewBag.Fee</td>
+                            @*<td>@ViewBag.Fee.ProcessName</td>
+                            <td>@ViewBag.Fee.Fee</td>
+                            <td>@ViewBag.Fee.Status</td>
+                            <td><button class="btn btn-primary" onclick="UpdateFee('@ViewBag.Fee.Id','@ViewBag.Fee.ProcessName', '@ViewBag.Fee.Description', '@ViewBag.Fee.Fee', '@ViewBag.Fee.Code' )">Edit</button></td>
+                        </tr>*@
+                    @*}*@
                 </tbody>
             </table>
         </div>

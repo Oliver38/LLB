@@ -830,18 +830,19 @@ namespace LLB.Controllers
                     string[] documents = {
                         "Vetted fingerprints",
 
-//"Affidavit by transferee",
-"Permit from the minister",
-"Lease/Deed documents",
-"Proof of publication in the Government Gazette",
-"Government Gazette",
-"A3 Plan approved by local Environmental Health",
-//"Manager Applicant Fingerprints",
-"Letter From the Minister",
- "Health Report",
- "Affidavit",
+                        //"Affidavit by transferee",
+                        "Permit from the minister",
+                        "Lease/Deed documents",
+                        "Proof of publication in the Government Gazette",
+                        "Government Gazette",
+                        "A3 Plan approved by local Environmental Health",
+                        //"Manager Applicant Fingerprints",
+                        "Letter From the Minister",
+                         "Health Report",
+                         "Affidavit",
 
                 };
+
                     //if company
                     if (getinfo.ApplicantType == "Company")
                     {
@@ -854,6 +855,7 @@ namespace LLB.Controllers
                         };
                         documents = documents.Concat(companydocs).ToArray();
                     }
+
 
                     if (getinfo.ApplicantType == "Organisation")
                     {
@@ -1146,10 +1148,10 @@ namespace LLB.Controllers
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-            //paynow.ResultUrl = "https://llb.pfms.gov.zw/License/Submit?gateway=paynow";
-            //paynow.ReturnUrl = "https://llb.pfms.gov.zw/License/Finalising?Id=" + Id+"&gateway=paynow";
-            paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
+            paynow.ResultUrl = "https://llb.pfms.gov.zw/License/Submit?gateway=paynow";
+            paynow.ReturnUrl = "https://llb.pfms.gov.zw/License/Finalising?Id=" + Id+"&gateway=paynow";
+           // paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
+            //paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
 
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
