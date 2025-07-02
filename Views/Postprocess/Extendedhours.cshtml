@@ -89,14 +89,14 @@
 
                         @if (ViewBag.Inspectiondata != null)
                         {
-                            <form action="/Postprocess/PostInspection" enctype="multipart/form-data" method="post">
+                            <form action="/Postprocess/PostExtendedHours" enctype="multipart/form-data" method="post">
 
                             <tr>
                                 <th>Inspection Submission </th>
                                 <td><span class="text-success"> Ready for submission</span></td>
 
                             </tr>
-                            <input type="hidden" name="Id" value="@ViewBag.Inspectiondata.Id" />
+                            <input type="hidden" name="ExtId" value="@ViewBag.Inspectiondata.Id" />
                             <tr>
                                 <th>Date For Extended Hours</th>
                                 <td><input type="date" name="ExtendedHoursDate" class="form-control" /></td>

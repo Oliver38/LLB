@@ -1,0 +1,69 @@
+﻿@{
+    Layout = "_LayoutMain";
+    var model = ViewBag.Application; // or strongly typed: @model YourNamespace.LiquorOutlet
+}
+
+<div class="pagetitle">
+    <h1>View Application Details</h1>
+</div><!-- End Page Title -->
+
+<section class="section">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Liquor Outlet Info</h5>
+                    @*<a href="/Extendedhours/AllApplications" class="btn btn-secondary btn-sm">Back to List</a>*@
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tbody>
+                                
+                                <tr>
+                                    <th>Status</th>
+                                    <td>@ViewBag.Application.Status</td>
+                                </tr>
+                                <tr>
+                                    <th>Reference</th>
+                                    <td>@ViewBag.Application.Reference</td>
+                                </tr>
+                               
+                                <tr>
+                                    <th>Paid Fee</th>
+                                    <td>@ViewBag.Application.PaidFee?.ToString("N2")</td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Status</th>
+                                    <td>@ViewBag.Application.PaymentStatus</td>
+                                </tr>
+                                <tr>
+                                    <th>Reason For Extension</th>
+                                    <td>@ViewBag.Application.ReasonForExtention</td>
+                                </tr>
+                                <tr>
+                                    <th>Hours Of Extension</th>
+                                    <td>5 @ViewBag.Application.HoursOfExtension</td>
+                                </tr>
+                                <tr>
+                                    <th>Extended Hours Date</th>
+                                    <td>@ViewBag.Application.ExtendedHoursDate.ToString("yyyy-MM-dd")</td>
+                                </tr>
+                              
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end gap-2">
+                        <a href="#" class="btn btn-warning">Send Query</a>
+                        <a href="/Extendedhours/Reject?Id=@ViewBag.Application.Id" class="btn btn-danger">Reject</a>
+                        <a href="/Extendedhours/Approve?Id=@ViewBag.Application.Id" class="btn btn-success">Approve</a>
+                    </div>
+                </div>
+            </div><!-- End Card -->
+
+        </div>
+    </div>
+</section>

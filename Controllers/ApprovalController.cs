@@ -50,6 +50,8 @@ namespace LLB.Controllers
                 appinfo.Add(getinfo);
             }
 
+
+
             //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
             var outletinfo = _db.OutletInfo.ToList();
             var license = _db.LicenseTypes.ToList();

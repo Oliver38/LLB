@@ -66,6 +66,7 @@
     <None Remove="Views\Council\" />
     <None Remove="Views\District\" />
     <None Remove="Views\Downloads\" />
+    <None Remove="Views\Extendedhours\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
@@ -93,6 +94,7 @@
     <Folder Include="Views\District\" />
     <Folder Include="wwwroot\Renewals\" />
     <Folder Include="Views\Downloads\" />
+    <Folder Include="Views\Extendedhours\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

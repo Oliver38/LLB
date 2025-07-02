@@ -16,6 +16,7 @@ using System.Runtime.Intrinsics.Arm;
 using System.Linq;
 using LLB.Helpers;
 using LLB.Migrations;
+using LLB.Helpers;
 
 namespace LLB.Controllers
 {
@@ -229,7 +230,7 @@ namespace LLB.Controllers
                 _db.SaveChanges();
                 payment = paymentTrans;
             }
-            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "applied").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "submitted").OrderByDescending(s => s.DateApplied).FirstOrDefault();
             //submitted check status
             ViewBag.Payment = payment;
             ViewBag.Process = process;
@@ -523,7 +524,7 @@ namespace LLB.Controllers
         [HttpGet("ExtendedHours")]
         public IActionResult ExtendedHours(string id, string process)
         {
-
+            //set tempdata here
 
             var appinfo = _db.ApplicationInfo.Where(b => b.Id == id).FirstOrDefault();
             var mainlicense = _db.LicenseTypes.Where(z => z.Id == appinfo.LicenseTypeID).FirstOrDefault();
@@ -531,7 +532,7 @@ namespace LLB.Controllers
             var InspectionFees = _db.PostFormationFees.Where(a => a.ProcessName == "Extended Hours").FirstOrDefault();
             var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == id && c.Status == "active").FirstOrDefault();
 
-            var extendedhoursdata = _db.ExtendedHours.Where(x => x.ApplicationId == id && x.Status == "applied").OrderByDescending(s => s.DateAdded).FirstOrDefault();
+            var extendedhoursdata = _db.ExtendedHours.Where(x => x.ApplicationId == id && x.Status == "Applied").OrderByDescending(s => s.DateAdded).FirstOrDefault();
 
             var today = DateTime.Now;
             // var penalty = DateTime.Now.Month - appinfo.ExpiryDate.Month ;
@@ -554,10 +555,11 @@ namespace LLB.Controllers
             {
 
             }
-            else { 
-            
-            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == extendedhoursdata.Id && s.Service == "extended hours").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-            if (paymentTrans == null)
+            else {
+
+                //var paymentTrans = _db.Payments.Where(s => s.ApplicationId == extendedhoursdata.Id && s.Service == "extended hours").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == extendedhoursdata.Id && s.Service == "extended hours").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+                if (paymentTrans == null)
             {
 
             }
@@ -599,6 +601,36 @@ namespace LLB.Controllers
             return View();
         }
 
+        [HttpPost("PostExtendedHours")]
+        public async Task<IActionResult> PostExtendedHoursAsync(string ExtId, DateTime ExtendedHoursDate, string ReasonForExtention)
+        {
+
+            // updating extended hours
+            var extapplication = _db.ExtendedHours.Where(a => a.Id == ExtId).FirstOrDefault();
+            extapplication.Status = "Submitted";
+            extapplication.ExtendedHoursDate = ExtendedHoursDate;
+            extapplication.ReasonForExtention = ReasonForExtention;
+            _db.Update(extapplication);
+            _db.SaveChanges();
+
+
+            Tasks tasks = new Tasks();
+            tasks.Id = Guid.NewGuid().ToString();
+            tasks.ApplicationId = ExtId;
+            var secretaryrWithLeastTasks = await _taskAllocationHelper.GetSecretary(_db, userManager);
+            //   tasks.VerifierId = selectedUser.Id;
+            tasks.Service = "Extended Hours";
+            tasks.ApproverId = secretaryrWithLeastTasks;
+            tasks.AssignerId = "system";
+            tasks.Status = "assigned";
+            tasks.DateAdded = DateTime.Now;
+            tasks.DateUpdated = DateTime.Now;
+            _db.Add(tasks);
+            _db.SaveChanges();
+
+            return RedirectToAction("Dashboard", "Home");
+        }
+
 
         [HttpGet("ExtendedHoursPayment")]
         public async Task<IActionResult> ExtendedHoursPaymentAsync(string id, double amount,string service, string process)
@@ -610,7 +642,7 @@ namespace LLB.Controllers
 
             extendedHours.Id = Guid.NewGuid().ToString();
             extendedHours.UserId = userId;
-            extendedHours.Status = "applied";
+            extendedHours.Status = "Applied";
             //ReferenceHelper.GenerateReferenceNumber(_db);
             var refnum  = ReferenceHelper.GenerateReferenceNumber(_db);
             extendedHours.Reference = refnum;
@@ -634,10 +666,10 @@ namespace LLB.Controllers
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-            // paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + id + "&process=" + process;
-            //  paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + id + "&process=" + process;
-            paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + id + "&process=" + process;
-            paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + id + "&process=" + process;
+             paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + id + "&process=" + process;
+             `paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + id + "&process=" + process;
+            //paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + id + "&process=" + process;
+            //paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + id + "&process=" + process;
 
             // Create a new payment 
             var payment = paynow.CreatePayment("12345");

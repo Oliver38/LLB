@@ -1,0 +1,79 @@
+﻿@{
+    Layout = "_LayoutMain";
+   // var applications = ViewBag.Applications as List<dynamic>; // or your actual model type
+}
+
+<div class="pagetitle">
+    <h1>Liquor Extended Hours Applications</h1>
+</div><!-- End Page Title -->
+
+<section class="section">
+    <div class="row">
+        <div class="col-lg-12">
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Applications List</h5>
+                    <a href="#" class="btn btn-primary btn-sm">+ Add New</a>
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+
+
+                                    <th>Status</th>
+                                    <th>Reference</th>
+
+                                    <th>PaidFee</th>
+                                    <th>Payment Status</th>
+                                    <th>Reason For Extension</th>
+                                    <th>Hours Of Extension</th>
+                                    <th>Extended Hours Date</th>
+                                    <th>Action</th>
+
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (ViewBag.Applications != null && ViewBag.Applications.Count > 0)
+                                {
+                                    int index = 1;
+                                    foreach (var item in ViewBag.Applications)
+                                    {
+                                        <tr>
+                                            <td>@index</td>
+
+
+                                            <td>@item.Status</td>
+                                            <td>@item.Reference</td>
+
+                                            <td>@item.PaidFee?.ToString("N2")</td>
+                                            <td>@item.PaymentStatus</td>
+                                            <td>@item.ReasonForExtention</td>
+                                            <td>@item.HoursOfExtension</td>
+                                            <td>@item.ExtendedHoursDate.ToString("yyyy-MM-dd")</td>
+                                            <td><a href="/Extendedhours/ViewApplications?Id=@item.Id" class="btn btn-primary">Examine</a></td>
+
+                                        </tr>
+                                        index++;
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="13" class="text-center">No applications found.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div><!-- End Card -->
+
+        </div>
+    </div>
+</section>
+
