@@ -96,7 +96,7 @@ namespace LLB.Controllers
             }
             else if (process == "TRL")
             {
-                return RedirectToAction("Temporalretail", "Postprocess", new { param1 = id, param2 = id });
+                return RedirectToAction("TemporalRetails", "Postprocess", new { id = id, process= process });
 
             }
             else if (process == "ECF")
