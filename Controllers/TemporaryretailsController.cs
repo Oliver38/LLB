@@ -184,8 +184,8 @@ namespace LLB.Controllers
         }
 
 
-        [HttpGet("MyApprovedEH")]
-        public async Task<IActionResult> MyApprovedEH()
+        [HttpGet("MyApprovedTR")]
+        public async Task<IActionResult> MyApprovedTR()
         {
 
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);

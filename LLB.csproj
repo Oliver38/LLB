@@ -67,6 +67,8 @@
     <None Remove="Views\District\" />
     <None Remove="Views\Downloads\" />
     <None Remove="Views\Extendedhours\" />
+    <None Remove="Views\TemporaryRetails\" />
+    <None Remove="Views\Extracounter\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
@@ -95,6 +97,8 @@
     <Folder Include="wwwroot\Renewals\" />
     <Folder Include="Views\Downloads\" />
     <Folder Include="Views\Extendedhours\" />
+    <Folder Include="Views\TemporaryRetails\" />
+    <Folder Include="Views\Extracounter\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

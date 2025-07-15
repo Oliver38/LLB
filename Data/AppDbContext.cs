@@ -46,7 +46,9 @@ namespace LLB.Data
         public DbSet<Downloads> Downloads { get; set; }
         public DbSet<ExtendedHours> ExtendedHours { get; set; }
         public DbSet<TemporaryRetails> TemporaryRetails { get; set; }
-         
+        public DbSet<ExtraCounter> ExtraCounter { get; set; }
+        
+
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

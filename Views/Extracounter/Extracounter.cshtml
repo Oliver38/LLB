@@ -6,7 +6,7 @@
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title mb-0">Extra Counter Application For @ViewBag.Outletinfo.TradingName</div>
+        <div class="card-title mb-0">Extended Hours Application For @ViewBag.Outletinfo.TradingName</div>
         @*<button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>*@
     </div>
 
@@ -79,7 +79,7 @@
                     @if (ViewBag.Payment == null)
                     {
                         @*<span style="color:red"> Not Paid</span>*@
-                    <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Extra Counter</button></td>
+                    <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Extended Hours</button></td>
 
                 }
                 else
@@ -98,11 +98,11 @@
                             </tr>
                             <input type="hidden" name="ExtId" value="@ViewBag.Inspectiondata.Id" />
                             <tr>
-                                <th>Date For Extra Counter</th>
+                                <th>Date For Extended Hours</th>
                                 <td><input type="date" name="ExtendedHoursDate" class="form-control" /></td>
                             </tr>
                             <tr>
-                                <th>Reason For Extra Counter</th>
+                                <th>Reason For Extended Hours</th>
                                 <td><textarea type="text" name="ReasonForExtention" class="form-control"></textarea></td>
                             </tr>
                             <tr>

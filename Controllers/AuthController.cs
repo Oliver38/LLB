@@ -396,17 +396,15 @@ namespace LLB.Controllers
 
         [AllowAnonymous]
         [HttpGet("CheckId")]
-        public async Task<IActionResult> CheckId(string natid)
+        public  IActionResult CheckId(string natid)
         {
-            var users = userManager.Users;
+            var exists =  userManager.Users.Any(u => u.NatID == natid);
 
-            foreach (var userslist in users)
+            if (exists)
             {
-                if (userslist.NatID == natid)
-                {
-                    return Json(new { success = "err", msg = "National ID already exists with another user" });
-                }
+                return Json(new { success = "err", msg = "National ID already exists with another user" });
             }
+
             if (natid == null)
             {
                 return Json(new { success = "err", msg = "Invalid national ID." });
@@ -461,7 +459,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                       // //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -479,7 +477,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        ////TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -498,7 +496,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -516,7 +514,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -534,7 +532,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -552,7 +550,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -570,7 +568,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -589,7 +587,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -607,7 +605,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -625,7 +623,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -643,7 +641,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -662,7 +660,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -680,7 +678,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -698,7 +696,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -716,7 +714,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -734,7 +732,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -752,7 +750,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -770,7 +768,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -788,7 +786,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -806,7 +804,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -824,7 +822,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -842,7 +840,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -860,7 +858,7 @@ namespace LLB.Controllers
                     else
                     {
                         TempData["flash"] = "1";
-                        TempData["error"] = "Invalid National  ID";
+                        //TempData["error"] = "Invalid National  ID";
                         return Json(new { success = "err", msg = "Invalid national ID." });
                     }
                 }
@@ -874,7 +872,7 @@ namespace LLB.Controllers
             else
             {
                 TempData["flash"] = "1";
-                TempData["error"] = "Invalid National  ID";
+                //TempData["error"] = "Invalid National  ID";
                 return Json(new { success = "err", msg = "Invalid national ID." });
 
             }

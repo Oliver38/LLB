@@ -6,7 +6,7 @@
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title mb-0">Extra Counter Application For @ViewBag.Outletinfo.TradingName</div>
+        <div class="card-title mb-0">Temporary Retails License Application For @ViewBag.Outletinfo.TradingName</div>
         @*<button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>*@
     </div>
 
@@ -79,7 +79,7 @@
                     @if (ViewBag.Payment == null)
                     {
                         @*<span style="color:red"> Not Paid</span>*@
-                    <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Extra Counter</button></td>
+                    <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Temporary Retails License </button></td>
 
                 }
                 else
@@ -89,7 +89,7 @@
 
                         @if (ViewBag.Inspectiondata != null)
                         {
-                            <form action="/Postprocess/PostExtendedHours" enctype="multipart/form-data" method="post">
+                            <form action="/Postprocess/PostTemporaryRetails" enctype="multipart/form-data" method="post">
 
                             <tr>
                                 <th>Inspection Submission </th>
@@ -98,11 +98,11 @@
                             </tr>
                             <input type="hidden" name="ExtId" value="@ViewBag.Inspectiondata.Id" />
                             <tr>
-                                <th>Date For Extra Counter</th>
-                                <td><input type="date" name="ExtendedHoursDate" class="form-control" /></td>
+                                <th>Date For Temporary Retails License </th>
+                                <td><input type="date" name="TemporaryRetailsDate" class="form-control" /></td>
                             </tr>
                             <tr>
-                                <th>Reason For Extra Counter</th>
+                                <th>Reason For Temporary Retails License </th>
                                 <td><textarea type="text" name="ReasonForExtention" class="form-control"></textarea></td>
                             </tr>
                             <tr>
@@ -122,7 +122,7 @@
                                         public string? PaymentStatus { get; set; }
                                         public string? ReasonForExtention { get; set; }
                                         public string? HoursOfExtension { get; set; }
-                                        public string? ExtendedHoursDate { get; set; }
+                                        public string? TemporaryRetailsDate { get; set; }
 
                                         public DateTime DateAdded { get; set; }
                                         public DateTime DateUpdated { get; set; }*@
@@ -258,12 +258,12 @@
                                             <td>
                                                 @if (ViewBag.Payment == null)
                                                 {
-                                                    <a class="btn btn-primary" href="/Extracounter/ExtendedHoursPayment?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=extendedhours&process=@ViewBag.Process">
+                                                    <a class="btn btn-primary" href="/Postprocess/TemporaryRetailsPayment?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=TemporaryRetails&process=@ViewBag.Process">
                                                         Make Payment
                                                     </a>
                                                 }
                                                 else
-                                                { <a class="btn btn-primary" href="/Extracounter/ExtendedHoursPayment?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=extendedhours&process=@ViewBag.Process">
+                                                { <a class="btn btn-primary" href="/Postprocess/TemporaryRetailsPayment?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=TemporaryRetails&process=@ViewBag.Process">
                                                         Make Payment
                                                     </a>
                                                 }

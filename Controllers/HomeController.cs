@@ -96,12 +96,12 @@ namespace LLB.Controllers
             }
             else if (process == "TRL")
             {
-                return RedirectToAction("TemporalRetails", "Postprocess", new { id = id, process= process });
+                return RedirectToAction("TemporaryRetails", "Postprocess", new { id = id, process= process });
 
             }
             else if (process == "ECF")
             {
-                return RedirectToAction("Extracounter", "Postprocess", new { id = id, process = process });
+                return RedirectToAction("Extracounter", "Extracounter", new { id = id, process = process });
 
             }
             else { }
