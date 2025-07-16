@@ -614,6 +614,7 @@ namespace LLB.Controllers
             tasksc.DateUpdated = DateTime.Now;
             _db.Add(tasksc);
             _db.SaveChanges();
+
             return RedirectToAction("Dashboard", "Recommend");
         }
 
