@@ -293,8 +293,8 @@ namespace LLB.Controllers
                 //examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
 
             }
-           
 
+            newtask.Service = task.Service;
             newtask.AssignerId= id;
             newtask.Status = "assigned";
             newtask.DateAdded = DateTime.Now;
@@ -574,7 +574,7 @@ namespace LLB.Controllers
                     //examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
 
                 }
-
+                newtask.Service = task.Service;
                 newtask.AssignerId = id;
                 newtask.Status = "assigned";
                 newtask.DateAdded = DateTime.Now;
