@@ -18,8 +18,8 @@
 
                     <div class="col-md-12">
                         <label for="inputName5" class="form-label">Trading Name</label>
-                        <input type="text" name="tradingName" value="" class="form-control" id="inputName5">
-                        <input type="hidden" name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
+                        <input type="text" required name="tradingName" value="" class="form-control" id="inputName5">
+                        <input type="hidden" required name="ApplicationId" value="@ViewBag.Application.Id" class="form-control" id="inputName5">
                     </div>
                     <div class="col-md-12">
                         <div id="map" style="height: 400px; border-radius: 10px;"></div>
@@ -27,7 +27,7 @@
 
                     <div class="col-md-6">
                         <label class="form-label">Latitude</label>
-                        <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude">
+                        <input type="text" id="latitude"  name="latitude" class="form-control" placeholder="Latitude">
                     </div>
 
                     <div class="col-md-6">
@@ -38,6 +38,8 @@
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
                         <select type="text" required name="LicenseTypeID" value="" class="form-control" id="inputName5">
+                            <option value=""> --Select License-- </option>
+
                             @foreach (var licensetype in ViewBag.License)
                             {
                                 @if (licensetype.LicenseName == "Managers Fees") { }
@@ -70,6 +72,8 @@
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Province</label>
                         <select type="text" required id="provinceSelect" onchange="GetDistCounc()" name="province" value="" class="form-control">
+                            <option value="">--Select Province-- </option>
+
                             @foreach (var provinces in ViewBag.Provinces)
                             {
                                 <option value="@provinces.Name">@provinces.Name</option>
@@ -306,7 +310,15 @@ else
                         <select type="text" required id="provinceSelect" name="province" onchange="GetDistCounc()" value="" class="form-control">
                             @foreach (var provinces in ViewBag.Provinces)
                             {
-                                <option value="@provinces.Name">@provinces.Name</option>
+                                if (provinces.Name == @ViewBag.OutletInfo.Province)
+                                {
+                                    <option selected value="@provinces.Name">@provinces.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@provinces.Name">@provinces.Name</option>
+
+                                }
                             }
                         </select>
 

@@ -67,7 +67,7 @@
                                 <td>@attachment.DocumentTitle </td>
 
                                 <td>
-                                    <input type="file" name="file" class="form-control" />
+                                    <input required type="file" name="file" class="form-control" />
                                     <input type="hidden" name="id" value="@attachment.Id" />
                                     <input type="hidden" name="applicationId" value="@attachment.ApplicationId" />
                                 </td>
@@ -110,6 +110,8 @@
 
             <div class="card-footer">
                 <div class="text-center">
+
+
                     @if (ViewBag.Attachments == null)
                     {
                         <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
