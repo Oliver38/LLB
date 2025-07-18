@@ -115,34 +115,34 @@ namespace LLB.Controllers
 
 
 
-            List<InspectionViewModel>inspectiontasks = new List<InspectionViewModel>();
-            var insptasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "inspection" && f.Status == "assigned").ToList();
-            foreach (var insptask in insptasks)
-            {
-                var applId = insptask.ApplicationId;
-                var appinfoq = _db.ApplicationInfo.Where(i => i.Id == applId).FirstOrDefault();
-                var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
-                var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
-                var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
-                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
-                InspectionViewModel inspectiontask = new InspectionViewModel();
+            //List<InspectionViewModel>inspectiontasks = new List<InspectionViewModel>();
+            //var insptasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "inspection" && f.Status == "assigned").ToList();
+            //foreach (var insptask in insptasks)
+            //{
+            //    var applId = insptask.ApplicationId;
+            //    var appinfoq = _db.ApplicationInfo.Where(i => i.Id == applId).FirstOrDefault();
+            //    var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
+            //    var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
+            //    var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
+            //    var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+            //    InspectionViewModel inspectiontask = new InspectionViewModel();
 
-                inspectiontask.TradingName = outletinfoq.TradingName;
-                inspectiontask.LLBNumber = appinfoq.LLBNum;
-                inspectiontask.ApplicationId = applId;
-                inspectiontask.DateApplied = inspecy.DateApplied;
-                inspectiontask.Id = inspecy.Id;
-                inspectiontask.Status = inspecy.Status;
-                inspectiontask.Service = inspecy.Service;
-                inspectiontask.LicenseType = licensetype.LicenseName;
-                inspectiontask.LicenseRegion = licenseregion.RegionName;
-                inspectiontask.TaskId = insptask.Id;
-
-
-                inspectiontasks.Add(inspectiontask);
+            //    inspectiontask.TradingName = outletinfoq.TradingName;
+            //    inspectiontask.LLBNumber = appinfoq.LLBNum;
+            //    inspectiontask.ApplicationId = applId;
+            //    inspectiontask.DateApplied = inspecy.DateApplied;
+            //    inspectiontask.Id = inspecy.Id;
+            //    inspectiontask.Status = inspecy.Status;
+            //    inspectiontask.Service = inspecy.Service;
+            //    inspectiontask.LicenseType = licensetype.LicenseName;
+            //    inspectiontask.LicenseRegion = licenseregion.RegionName;
+            //    inspectiontask.TaskId = insptask.Id;
 
 
-            }
+            //    inspectiontasks.Add(inspectiontask);
+
+
+            //}
             //verification inspection
                  List<InspectionViewModel> verificationinspection = new List<InspectionViewModel>();
             var verinsptasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "Verification Inspection" && f.Status == "assigned").ToList();
@@ -188,7 +188,7 @@ namespace LLB.Controllers
             ViewBag.RenewalIns = renewaltasks;
             ViewBag.RenewaInsTask = renewalinspectiontasks;
            // ViewBag.RenewalIns = renewaltasks;
-            ViewBag.InsTask = inspectiontasks;
+          //  ViewBag.InsTask = inspectiontasks;
             ViewBag.VerificationInsTask = verificationinspection;
             //crete view on dashboard
             ;
@@ -983,6 +983,12 @@ namespace LLB.Controllers
                 tasksc.DateUpdated = DateTime.Now;
                 _db.Add(tasksc);
                 _db.SaveChanges();
+
+                var appinfogg = _db.ApplicationInfo.Where(a => a.Id == inspec.ApplicationId).FirstOrDefault();
+                appinfogg.ExaminationStatus = "recommendation";
+                _db.Update(appinfogg);
+                _db.SaveChanges();
+                // recommendation
 
             }
 

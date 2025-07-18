@@ -305,12 +305,12 @@
 
 
     <div class="row">
-        <div class="card">
+        @*<div class="card">
 
             <div class="card-body" id="_step1">
                 <div class="card-header">
 
-                    <h5 class="card-title"> Inspection Applications</h5>
+                    <h5 class="card-title"> Inspection Applications</h5>-->
                     @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
                     *@
                 </div>
@@ -318,7 +318,7 @@
 
 
 
-                <div class="row">
+               @* <div class="row">
 
                     <table class="table table-responsiveß table-hover table-striped">
 
@@ -335,7 +335,7 @@
                                     renewalinspectiontask.LicenseType = licensetype.LicenseName;
                                     renewalinspectiontask.LicenseRegion = licenseregion.RegionName;*@
 
-                                <th>Trading Name </th>
+                                @*<th>Trading Name </th>
                                 <th>LLB Number </th>
                                 <th>Application Date </th>
                                 <th>Status </th>
@@ -359,7 +359,7 @@
                                     <td>@inspecta.Service</td>
                                     <td>@inspecta.LicenseType</td>
                                     <td>@inspecta.LicenseRegion</td>
-                                    @*<td>@inspect.Status</td>*@
+                                    <td>@inspect.Status</td>
                                     <td><a class="btn btn-primary" href="/Verify/Inspect?Id=@inspecta.Id&taskId=@inspecta.TaskId"> View Inspection</a></td>
 
 
@@ -375,7 +375,7 @@
 
 
             </div>
-        </div>
+        </div>*@
 
 
 
