@@ -130,7 +130,7 @@ namespace LLB.Controllers
                 var applicationcc = _db.ApplicationInfo.Where(a => a.Id == ApplicationId).FirstOrDefault();
                 var newReferenceNumber = ReferenceHelper.GenerateReferenceNumber(_db);
 
-                applicationcc.RefNum = newReferenceNumber;
+                //applicationcc.RefNum = newReferenceNumber;
                 applicationcc.Status = "submitted";
                 applicationcc.ExaminationStatus = "verification";
                 _db.Update(applicationcc);

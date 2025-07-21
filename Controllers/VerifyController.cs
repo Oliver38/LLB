@@ -47,7 +47,8 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(f => f.VerifierId == id  && f.Service == "new application" ).Where(x => x.Status == "assigned" || x.Status == "reassigned").ToList();
+            //var tasks = _db.Tasks.Where(f => f.VerifierId == id  && f.Service == "new application" ).Where(x => x.Status == "assigned" || x.Status == "reassigned").ToList();
+            var tasks = _db.Tasks.Where(f => f.VerifierId == id  && f.Service == "new application" ).Where(x => x.Status == "assigned" ).ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
