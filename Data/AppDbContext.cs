@@ -47,7 +47,8 @@ namespace LLB.Data
         public DbSet<ExtendedHours> ExtendedHours { get; set; }
         public DbSet<TemporaryRetails> TemporaryRetails { get; set; }
         public DbSet<ExtraCounter> ExtraCounter { get; set; }
-        
+        public DbSet<ChangeManaager> ChangeManaager{ get; set; }
+
 
 
 
