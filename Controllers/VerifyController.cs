@@ -174,6 +174,38 @@ namespace LLB.Controllers
 
             }
 
+
+            //verification inspection
+            List<InspectionViewModel> directinspections = new List<InspectionViewModel>();
+            var directinspection = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "Inspection" && f.Status == "assigned").ToList();
+            foreach (var directinspectiontask in directinspection)
+            {
+                var applIdd = directinspectiontask.ApplicationId;
+                var appinfoqd = _db.ApplicationInfo.Where(i => i.Id == applIdd).FirstOrDefault();
+                var outletinfoqd = _db.OutletInfo.Where(i => i.ApplicationId == applIdd).FirstOrDefault();
+                var licensetyped = _db.LicenseTypes.Where(a => a.Id == appinfoqd.LicenseTypeID).FirstOrDefault();
+                var licenseregiond = _db.LicenseRegions.Where(a => a.Id == appinfoqd.ApplicationType).FirstOrDefault();
+                var inspecyd = _db.Inspection.Where(s => s.ApplicationId == applIdd).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+                InspectionViewModel inspectiontask = new InspectionViewModel();
+
+                inspectiontask.TradingName = outletinfoqd.TradingName;
+                inspectiontask.LLBNumber = appinfoqd.LLBNum;
+                inspectiontask.ApplicationId = applIdd;
+                inspectiontask.DateApplied = inspecyd.DateApplied;
+                inspectiontask.Id = inspecyd.Id;
+                inspectiontask.Status = inspecyd.Status;
+                inspectiontask.Service = inspecyd.Service;
+                inspectiontask.LicenseType = licensetyped.LicenseName;
+                inspectiontask.LicenseRegion = licenseregiond.RegionName;
+                inspectiontask.TaskId = directinspectiontask.Id;
+                inspectiontask.InspectionSchedule = inspecyd.InspectionSchedule;
+
+                directinspections.Add(inspectiontask);
+
+
+            }
+
+
             //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
             var outletinfo = _db.OutletInfo.ToList();
             var license = _db.LicenseTypes.ToList();
@@ -191,6 +223,7 @@ namespace LLB.Controllers
            // ViewBag.RenewalIns = renewaltasks;
           //  ViewBag.InsTask = inspectiontasks;
             ViewBag.VerificationInsTask = verificationinspection;
+            ViewBag.DirectInsTask = directinspections;
             //crete view on dashboard
             ;
             return View();

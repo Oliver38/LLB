@@ -36,6 +36,9 @@ namespace LLB.Models
         public string? HygieneStandards { get; set; }
         public string? Comments { get; set; }
         public string? Overall { get; set; }
+        public string? PaymentStatus { get; set; }
+        public DateTime PaymentDate { get; set; }
+
 
 
 

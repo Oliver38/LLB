@@ -69,6 +69,7 @@
     <None Remove="Views\Extendedhours\" />
     <None Remove="Views\TemporaryRetails\" />
     <None Remove="Views\Extracounter\" />
+    <None Remove="Views\Managers\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Settings\" />
@@ -99,6 +100,7 @@
     <Folder Include="Views\Extendedhours\" />
     <Folder Include="Views\TemporaryRetails\" />
     <Folder Include="Views\Extracounter\" />
+    <Folder Include="Views\Managers\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="Views\Settings\LicenseType.cshtml" />

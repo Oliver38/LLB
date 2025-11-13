@@ -104,7 +104,7 @@ namespace LLB.Controllers
         }
         //for submission of renewal
         [HttpGet("Continue")]
-        public async Task<IActionResult> Continue(string Id)
+        public async Task<IActionResult> Continue(string Id, string renid)
         {
             
 
@@ -155,8 +155,9 @@ namespace LLB.Controllers
         }
 
             [HttpGet("Renewal")]
-        public IActionResult Renewal(string id, string process)
+        public IActionResult Renewal(string id, string process, string renid)
         {
+            var checksub = _db.Renewals.Where(a => a.ApplicationId == id && a.Status == "submitted").FirstOrDefault();
             //  var serv = _db.PostFormationFees.Where(a => a.Code == process).FirstOrDefault();
 
             var appinfo = _db.ApplicationInfo.Where(b => b.Id == id).FirstOrDefault();
@@ -205,31 +206,37 @@ namespace LLB.Controllers
             var PenaltyFees = _db.PostFormationFees.Where(n => n.Code == "PNL").FirstOrDefault();
             var penalty = time * PenaltyFees.Fee;
             var totalfee = penalty + getFee;
+            var renewaldata = _db.Renewals.Where(x => x.Id == renid && x.Status == "applied").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+
 
             Payments payment = null;
-            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "renewal").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == renid && s.Service == "renewal").OrderByDescending(x => x.DateAdded).FirstOrDefault();
             if (paymentTrans == null)
             {
 
             }
             else
             {
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                if (renewaldata != null)
+                {
+                    var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-                var status = paynow.PollTransaction(paymentTrans.PollUrl);
+                    var status = paynow.PollTransaction(paymentTrans.PollUrl);
 
-                var statusdata = status.GetData();
-                paymentTrans.PaynowRef = statusdata["paynowreference"];
-                paymentTrans.PaymentStatus = statusdata["status"];
-                paymentTrans.Status = statusdata["status"];
-                paymentTrans.DateUpdated = DateTime.Now;
+                    var statusdata = status.GetData();
+                    paymentTrans.PaynowRef = statusdata["paynowreference"];
+                    paymentTrans.PaymentStatus = statusdata["status"];
+                    paymentTrans.Status = statusdata["status"];
+                    paymentTrans.DateUpdated = DateTime.Now;
 
-                _db.Update(paymentTrans);
-                _db.SaveChanges();
-                payment = paymentTrans;
+                    _db.Update(paymentTrans);
+                    _db.SaveChanges();
+                    payment = paymentTrans;
+                }
+               
             }
-            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "submitted").OrderByDescending(s => s.DateApplied).FirstOrDefault();
             //submitted check status
+
             ViewBag.Payment = payment;
             ViewBag.Process = process;
             ViewBag.Fee = getFee;
@@ -240,6 +247,7 @@ namespace LLB.Controllers
             ViewBag.Appinfo = appinfo;
             ViewBag.ServeFee = getFee;
             ViewBag.Renewaldata = renewaldata;
+            ViewBag.Checksub = checksub;
             return View();
         }
 
@@ -297,7 +305,7 @@ namespace LLB.Controllers
                 _db.Add(renewal);
                 _db.SaveChanges();
 
-                return RedirectToAction("Renewal", "Postprocess", new { id = renewal.ApplicationId, process= "RNW" });
+                return RedirectToAction("Renewal", "Postprocess", new { id = renewal.ApplicationId, process= "RNW", renid = renewal.Id });
             }
             else
             {
@@ -366,6 +374,82 @@ namespace LLB.Controllers
         }
 
 
+
+        [HttpGet("PaynowRenewal")]
+        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount, string service, string process, string renid )
+        {
+            //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
+            //amount = 55.7;
+            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+
+           // paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + Id + "&process=" + process + "&renid=" + renid;
+           // paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + Id + "&process=" + process + "&renid=" + renid;
+             paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process + "&renid=" + renid;
+            paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process + "&renid=" + renid;
+
+            // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
+
+
+            // Create a new payment 
+            var payment = paynow.CreatePayment("12345");
+
+            //payment.AuthEmail = "chimukaoliver@gmail.com";
+            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var licenseType = _db.LicenseTypes.Where(s => s.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
+
+            // Add items to the payment
+            payment.Add(licenseType.LicenseName, (decimal)amount);
+
+            // Send payment to paynow
+            var response = paynow.Send(payment);
+
+            // Check if payment was sent without error
+            if (response.Success())
+            {
+                // Get the url to redirect the user to so they can make payment
+                Payments transaction = new Payments();
+                transaction.Id = Guid.NewGuid().ToString();
+
+                var userId = await userManager.FindByEmailAsync(User.Identity.Name);
+                string id = userId.Id;
+                transaction.UserId = id;
+                transaction.Amount = payment.Total;
+                transaction.ApplicationId = renid;
+                transaction.Service = service;
+                //   transaction.PaynowRef = payment.Reference;
+                transaction.PollUrl = response.PollUrl();
+                transaction.PopDoc = "";
+                transaction.Status = "not paid";
+                transaction.DateAdded = DateTime.Now;
+                transaction.DateUpdated = DateTime.Now;
+
+                var pollUrl = response.PollUrl();
+                var status = paynow.PollTransaction(pollUrl);
+
+                var statusdata = status.GetData();
+                transaction.PaynowRef = statusdata["paynowreference"];
+                transaction.PaymentStatus = statusdata["status"];
+
+                _db.Add(transaction);
+                _db.SaveChanges();
+                // [1]	{ [paynowreference, 17967752]}
+                //transaction.PaymentStatus = payment.st
+
+
+                var link = response.RedirectLink();
+
+
+                // Get the poll url of the transaction
+
+                // var instructions = response.
+                return Redirect(link);
+            }
+
+
+            return View();
+        }
+
+
         [HttpGet("DeleteHealthCert")]
         public IActionResult DeleteHealthCert(string Id, string process)
         {
@@ -417,27 +501,52 @@ namespace LLB.Controllers
             var totalfee = getFee;
 
             Payments payment = null;
-            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "inspection").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-            if (paymentTrans == null)
-            {
+            //payments loop sorted by inspection table status trick
+            var previousinpections = _db.Inspection.Where(x => x.ApplicationId == id && x.Status == "submitted").ToList();
 
-            }
-            else
-            {
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            //List<Inspection> inspectionsin = new List<Inspection>();
 
-                var status = paynow.PollTransaction(paymentTrans.PollUrl);
+            //foreach(var previousinpectionslist in previousinpections)
+            //{
+            //    if(previousinpectionslist.Status == "submitted")
+            //    {
+            //        inspectionsin.Add(previousinpectionslist);
+            //    }
 
-                var statusdata = status.GetData();
-                paymentTrans.PaynowRef = statusdata["paynowreference"];
-                paymentTrans.PaymentStatus = statusdata["status"];
-                paymentTrans.Status = statusdata["status"];
-                paymentTrans.DateUpdated = DateTime.Now;
+            //}
+            //get them into a list
+           
+                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "inspection").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+                if (paymentTrans == null)
+                {
 
-                _db.Update(paymentTrans);
-                _db.SaveChanges();
-                payment = paymentTrans;
-            }
+                }
+                else
+                {
+
+
+                if (previousinpections.Count <= 1)
+                {
+               
+                    var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+
+                    var status = paynow.PollTransaction(paymentTrans.PollUrl);
+
+                    var statusdata = status.GetData();
+                    paymentTrans.PaynowRef = statusdata["paynowreference"];
+                    paymentTrans.PaymentStatus = statusdata["status"];
+                    paymentTrans.Status = statusdata["status"];
+                    paymentTrans.DateUpdated = DateTime.Now;
+
+                    _db.Update(paymentTrans);
+                    _db.SaveChanges();
+                    payment = paymentTrans;
+                }
+                else
+                {
+                }
+                }
+            
             var inspectiondata = _db.Inspection.Where(x => x.ApplicationId == id  &&  x.Status == "submitted").OrderByDescending(s => s.DateApplied).FirstOrDefault();
             //check status
            // var inspectiondatastate = 
@@ -950,9 +1059,65 @@ namespace LLB.Controllers
 
 
 
+        [HttpGet("ManagerChange")]
+        public async Task<IActionResult> ManagerChange(string id, double amount, string service, string process)
+        {
+            var cmapplication = _db.ChangeManaager.Where(a => a.ApplicationId == id).OrderByDescending(a => a.DateApplied).FirstOrDefault();
+            if(cmapplication == null || cmapplication.Status == null || cmapplication.Status == "complete")
+            {
+
+            }
+            else
+            {
+                TempData["Message"] = "Another application in progress";
+                return View();
+            }
+
+            var appinfo = _db.ApplicationInfo.Where(b => b.Id == id).FirstOrDefault();
+            var mainlicense = _db.LicenseTypes.Where(z => z.Id == appinfo.LicenseTypeID).FirstOrDefault();
+            var licenseRegion = _db.LicenseRegions.Where(d => d.Id == appinfo.ApplicationType).FirstOrDefault();
+            var RenewalFees = _db.RenewalTypes.Where(a => a.LicenseCode == mainlicense.LicenseCode).FirstOrDefault();
+            var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == id && c.Status == "active").FirstOrDefault();
+
+            // var Fees = _db.PostFormationFees.Where(n => n.Code == process).FirstOrDefault();
+            var PenaltyFees = _db.PostFormationFees.Where(n => n.Code == "PNL").FirstOrDefault();
+            //var cmapplication = _db.ChangeManaager.Where(a => a.ApplicationId == id).FirstOrDefault();
+
+            var managers = _db.ManagersParticulars.Where(s => s.ApplicationId == id).ToList();
+
+
+            Payments payment = null;
+            if (cmapplication != null)
+            {
+                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == cmapplication.Id && s.Service == "changemanager").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+
+
+                if (paymentTrans == null)
+                {
+
+                }
+                else
+                {
+
+
+                }
+            }
+            //submitted check status
+
+            ViewBag.Payment = payment;
+            ViewBag.Process = process;
+          
+            ViewBag.Outletinfo = outletinfo;
+            ViewBag.Appinfo = appinfo;
+           
+            ViewBag.Outletinfo = outletinfo;
+            ViewBag.Appinfo = appinfo;
+            ViewBag.Managers = managers;
+
+            return View();
+        }
 
 
 
-
-    }
+        }
 }

@@ -434,9 +434,9 @@
                                         <td>@inspecta.LicenseType</td>
                                         <td>@inspecta.LicenseRegion</td>
                                         @*<td>@inspect.Status</td>*@
-                                    <td>
-                                        <button class="btn btn-primary"  onclick='SetDate("@inspecta.Id", "@Html.Raw(inspecta.TradingName)")' type="button">Set Date</button>
-                                    </td>
+                                        <td>
+                                            <button class="btn btn-primary" onclick='SetDate("@inspecta.Id", "@Html.Raw(inspecta.TradingName)")' type="button">Set Date</button>
+                                        </td>
                                         <td><a class="btn btn-primary" href="/Verify/Inspect?Id=@inspecta.Id&taskId=@inspecta.TaskId"> View Inspection</a></td>
 
 
@@ -449,6 +449,66 @@
 
                         </table>
                     </div>
+
+
+
+
+
+                    <div class="row">
+
+                        <table class="table table-responsiveß table-hover table-striped">
+
+
+                            <thead>
+                                <tr>
+
+
+                                    <th>Trading Name </th>
+                                    <th>Inspection Date </th>
+                                    <th>Application Date </th>
+                                    <th>Status </th>
+                                    <th>Service </th>
+                                    <th>License </th>
+                                    <th>For </th>
+
+                                    <th>Action </th>
+                                </tr>
+
+                            </thead>
+                            <tbody>
+                                @foreach (var inspecta in ViewBag.DirectInsTask)
+                                {
+
+                                    <tr>
+                                        <td>@inspecta.TradingName</td>
+                                        <td>
+                                            @(inspecta.InspectionSchedule == DateTime.MinValue
+    ? "N/A"
+    : inspecta.InspectionSchedule?.ToString("yyyy-MM-dd"))
+                                        </td>
+
+                                        <td>@inspecta.DateApplied</td>
+                                        <td>@inspecta.Status </td>
+                                        <td>@inspecta.Service</td>
+                                        <td>@inspecta.LicenseType</td>
+                                        <td>@inspecta.LicenseRegion</td>
+                                        @*<td>@inspect.Status</td>*@
+                                        <td>
+                                            <button class="btn btn-primary" onclick='SetDate("@inspecta.Id", "@Html.Raw(inspecta.TradingName)")' type="button">Set Date</button>
+                                        </td>
+                                        <td><a class="btn btn-primary" href="/Verify/Inspect?Id=@inspecta.Id&taskId=@inspecta.TaskId"> View Inspection</a></td>
+
+
+                                    </tr>
+
+                                }
+                            </tbody>
+
+
+
+                        </table>
+                    </div>
+
 
 
                 </div>

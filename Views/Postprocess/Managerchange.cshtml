@@ -5,6 +5,13 @@
 
 
 <div class="card">
+
+    @if (TempData["Message"] != null)
+    {
+        <span class="badge bg-warning text-dark">
+            @TempData["Message"]
+        </span>
+    }<!-- else might come here -->
     <div class="card-header d-flex justify-content-between align-items-center">
         <div class="card-title mb-0">Inspection For @ViewBag.Outletinfo.TradingName</div>
         @*<button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>*@

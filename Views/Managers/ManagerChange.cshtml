@@ -1,0 +1,542 @@
+﻿@{
+    Layout = "_LayoutMain";
+
+}
+
+
+
+<div class="card">
+
+    @if (TempData["Message"] != null)
+    {
+        <span class="badge bg-warning text-dark">
+            @TempData["Message"]
+        </span>
+    }<!-- else might come here -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-title mb-0">Information For @ViewBag.Outletinfo.TradingName</div>
+        @*<button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>*@
+    </div>
+
+    <div class="card-body">
+    
+
+        <section class="section dashboard">
+            <div class="row">
+
+                <!-- Left Column: Change Manager Info -->
+                <div class="col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-person-badge"></i> Change Manager Information</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (@ViewBag.ChangeManager != null)
+                            {
+                            <table class="table table-bordered table-sm align-middle">
+                                <tbody>
+                                    <tr>
+                                        <th>Outlet Name</th>
+                                        <td>@ViewBag.Outletinfo.TradingName</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Expiry Date</th>
+                                        <td>@ViewBag.Appinfo.ExpiryDate</td>
+                                    </tr>
+                                    <tr>
+                                        <th>License Type</th>
+                                        <td>@ViewBag.License.LicenseName</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status</th>
+                                        <td><span class="badge bg-info">@ViewBag.ChangeManager.Status</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>New Managers Count</th>
+                                        <td>@ViewBag.ChangeManager.NewManagersCount</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Paid Fee</th>
+                                        <td>@ViewBag.ChangeManager.PaidFee</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Payment Status</th>
+                                        <td>
+                                            @if (@ViewBag.ChangeManager.PaymentStatus?.ToLower() == "paid")
+                                            {
+                                            <span class="badge bg-success">Paid</span>
+                                            }
+                                            else
+                                            {
+                                            <span class="badge bg-warning text-dark">Unpaid</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            }
+                            else
+                            {
+                            <div class="alert alert-warning">
+                                No Change Manager data found.
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Application Summary -->
+                <div class="col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="bi bi-info-circle"></i> Application Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (@ViewBag.ChangeManager != null)
+                            {
+                            <table class="table table-bordered table-sm align-middle">
+                                <tbody>
+                                    <tr>
+                                        <th>Date Applied</th>
+                                        <td>@ViewBag.ChangeManager.DateApplied</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Last Updated</th>
+                                        <td>@ViewBag.ChangeManager.DateUpdated</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Initiated By (User)</th>
+                                        <td>@ViewBag.ChangeManager.UserId</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Application Reference</th>
+                                        <td>@ViewBag.ChangeManager.ApplicationId</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status</th>
+                                        <td>
+                                            @if (@ViewBag.ChangeManager.Status == "Initiated")
+                                            {
+                                            <span class="badge bg-primary">@ViewBag.ChangeManager.Status</span>
+                                            }
+                                            else if (@ViewBag.ChangeManager.Status == "Approved")
+                                            {
+                                            <span class="badge bg-success">@ViewBag.ChangeManager.Status</span>
+                                            }
+                                            else
+                                            {
+                                            <span class="badge bg-secondary">@ViewBag.ChangeManager.Status</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            }
+                            else
+                            {
+                            <div class="alert alert-warning">
+                                No summary data available.
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+
+<!-- manager lists-->
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Managers</h5>
+        
+        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDirector"> <i class="bi bi-plus-circle"></i>Add Manager </button>
+
+    </div>
+
+    <div class="card-body">
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="managerTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="old-list-tab" data-bs-toggle="tab" data-bs-target="#old-list" type="button" role="tab">
+                    <i class="bi bi-archive"></i> Managers List
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="changes-tab" data-bs-toggle="tab" data-bs-target="#changes" type="button" role="tab">
+                    <i class="bi bi-pencil-square"></i> Changes
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="managerTabsContent">
+
+            <!-- OLD LIST TAB -->
+            <div class="tab-pane fade show active" id="old-list" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle datatable ">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Surname</th>
+                                <th>National ID</th>
+                                <th>Address</th>
+                                <th>Status</th>
+                                <th>Effective Date</th>
+                                <th>Dismissal Date</th>
+                                <th>Attachment</th>
+                                <th>Fingerprints</th>
+                                <th>Form 55</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+
+                                int i = 1;
+                                foreach (var app in ViewBag.Managers)
+                                {
+                                    if (app.Status == "active")
+                                    {
+                                        <tr>
+                                            <td>@i</td>
+                                            <td>@app.Name</td>
+                                            <td>@app.Surname</td>
+                                            <td>@app.NationalId</td>
+                                            <td>@app.Address</td>
+                                            <td>
+                                                <span class="badge bg-@(app.Status == " active" ? "success" : "secondary" )">
+                                                    @app.Status
+                                                </span>
+                                            </td>
+                                            <td>@Convert.ToDateTime(app.EffectiveDate).ToString("yyyy-MM-dd")</td>
+                                            <td>@Convert.ToDateTime(app.DissmisalDate).ToString("yyyy-MM-dd")</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(app.Attachment))
+                                                {
+                                                    <a href="@Url.Content(" ~ /" + app.Attachment)" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                        <i class="bi bi-paperclip"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(app.Fingerprints))
+                                                {
+                                                    <a href="@Url.Content(" ~ /" + app.Fingerprints)" target="_blank" class="btn btn-sm btn-outline-info">
+                                                        <i class="bi bi-fingerprint"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(app.Form55))
+                                                {
+                                                    <a href="@Url.Content(" ~ /" + app.Form55)" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-file-earmark-text"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                    <a href="@Url.Action(" Edit", "Managers", new { id = app.Id })" class="btn btn-sm btn-warning">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form asp-action="Delete" asp-controller="Managers" asp-route-id="@app.Id" method="post" onsubmit="return confirm('Are you sure?');">
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        i++;
+                                    }
+                                    else
+                                    {
+                                        <tr><td colspan="12" class="text-center text-muted">No records found.</td></tr>
+                                    }
+                                }
+
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CHANGES TAB -->
+            <div class="tab-pane fade" id="changes" role="tabpanel">
+                <div class="table-responsive">
+
+                    <table class="table table-hover table-striped align-middle datatable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Surname</th>
+                                <th>National ID</th>
+                                <th>Address</th>
+                                <th>Status</th>
+                                <th>Effective Date</th>
+                                <th>Dismissal Date</th>
+                                <th>Attachment</th>
+                                <th>Fingerprints</th>
+                                <th>Form 55</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+
+                                int j = 1;
+                                foreach (var app in ViewBag.Managers)
+                                {
+                                    if (app.Status == "Pending")
+                                    {
+                                        <tr>
+                                            <td>@i</td>
+                                            <td>@app.Name</td>
+                                            <td>@app.Surname</td>
+                                            <td>@app.NationalId</td>
+                                            <td>@app.Address</td>
+                                            <td>
+                                                <span class="badge bg-@(app.Status == " Pending" ? "warning" : "info" )">
+                                                    @app.Status
+                                                </span>
+                                            </td>
+                                            <td>@Convert.ToDateTime(app.EffectiveDate).ToString("yyyy-MM-dd")</td>
+                                            <td>@Convert.ToDateTime(app.DissmisalDate).ToString("yyyy-MM-dd")</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(app.Attachment))
+                                                {
+                                                    <a href="@Url.Content(" ~ /" + app.Attachment)" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                        <i class="bi bi-paperclip"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(app.Fingerprints))
+                                                {
+                                                    <a href="@Url.Content(" ~ /" + app.Fingerprints)" target="_blank" class="btn btn-sm btn-outline-info">
+                                                        <i class="bi bi-fingerprint"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(app.Form55))
+                                                {
+                                                    <a href="@Url.Content(" ~ /" + app.Form55)" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-file-earmark-text"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                    <a href="@Url.Action(" Review", "Managers", new { id = app.Id })" class="btn btn-sm btn-success">
+                                                        <i class="bi bi-check-circle"></i>
+                                                    </a>
+                                                    <a href="@Url.Action(" Reject", "Managers", new { id = app.Id })" class="btn btn-sm btn-danger">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        j++;
+                                    }
+
+                                    else
+                                    {
+                                        <tr><td colspan="12" class="text-center text-muted">No pending changes found.</td></tr>
+                                    }
+                                }
+
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Optional DataTable JS initialization -->
+<script>document.addEventListener("DOMContentLoaded", function () {
+        if (window.simpleDatatables) {
+            new simpleDatatables.DataTable(".datatable");
+        }
+    });</script>
+
+
+
+<!-- Basic Modal -->
+
+<div class="modal fade" id="PaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Post Fomation For </h5> &nbsp;<b><h5 class="modal-title" id="feetitle"></h5></b>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/Postprocess/AddFee" enctype="multipart/form-data" method="post">
+
+                    <div class="col-md-12">
+                        @*<label for="inputName5" class="form-label">Select Post Formation Process</label>
+                        <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
+
+
+
+                        <form action="/Postprocess/UpdateFee" enctype="multipart/form-data" method="post">
+
+
+                            <table class="table table-bordered table-hover">
+                                <tbody class="table-light">
+
+                                    <tr>
+                                        <th>Outlet Name</th>
+                                        <td>
+                                            @ViewBag.Outletinfo.TradingName
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>License ExpiryDate</th>
+                                        <td>
+                                            @ViewBag.Appinfo.ExpiryDate
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fee</th>
+                                        <td>
+                                            @ViewBag.Fee
+                                        </td>
+                                    </tr>
+
+
+
+
+                                    <tr>
+                                        <th>Total Fee</th>
+                                        <td>@ViewBag.TotalFee</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Payment Status</th>
+                                        <td>
+                                            @if (ViewBag.Payment == null)
+                                            {<span style="color:red"> Not Paid</span>}
+                                            else
+                                            { <span style="color:green"> @ViewBag.Payment.Status</span>}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">
+
+                                            <p><b>NB:</b> After making this payment,the system will recognise that you have made a payment. You are required to return and submit your inspection </p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <td>
+                                            @if (ViewBag.Payment == null)
+                                            {
+                                            <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process">
+                                                Make Payment
+                                            </a>
+                                            }
+                                            else
+                                            { <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process">
+                                                Make Payment
+                                            </a>
+                                            }
+                                        </td>
+                                    </tr>
+                                </tbody>
+
+                            </table>
+                        </form>
+
+
+                    </div>
+
+
+
+                    @*<div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+
+
+                    </div>*@
+                </form>
+            </div>
+        </div>
+    </div>
+</div><!-- End Basic Modal-->
+<!-- Basic Modal -->
+
+
+
+<script>function Payment() {
+        // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
+
+        $('#PaymentModal').modal('show');
+
+    }</script>
+
+
+
+
+<div class="modal fade" id="addDirector" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adding Manager Details </h5> <h5 class="modal-title" id="feetitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/License/ManagersInfo" enctype="multipart/form-data" method="post">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Name</label>
+                            <input type="hidden" name="applicationId" class="form-control" value="@ViewBag.ChangeManager.ApplicationId" id="Id">
+                            <input type="text" name="name" class="form-control" id="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Surname</label>
+                            <input type="text" name="surname" class="form-control" id="surname" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">National Id</label>
+                            <input type="text" name="nationalId" class="form-control" id="TownFee" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">Address</label>
+                            <textarea type="text" name="address" class="form-control" id="RDCFee" required></textarea>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">National Id Copy</label>
+                            <input type="file" name="file" class="form-control" id="file" required>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">Fingerprints Copy</label>
+                            <input type="file" name="fileb" class="form-control" id="fileb" required>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label for="inputName5" class="form-label">Form 55</label>
+                            <input type="file" name="form55" class="form-control" id="fileb" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div><!-- End Basic Modal-->

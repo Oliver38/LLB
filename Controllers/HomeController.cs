@@ -61,7 +61,7 @@ namespace LLB.Controllers
 
             }else if (process == "APM")
             {
-                return RedirectToAction("Managerchange", "Postprocess", new { param1 = id, param2 = id });
+                return RedirectToAction("Managerchange", "Managers", new { id = id, process = process });
 
             }
             else if (process == "GDP")
