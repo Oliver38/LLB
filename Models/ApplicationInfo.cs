@@ -55,6 +55,7 @@ namespace LLB.Models
         public DateTime RenewalDate { get; set; }
 
         public string? rejectionUnflagComment { get; set; }
+        public string? CompanyNumber { get; set; }
 
     }
 }

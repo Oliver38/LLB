@@ -18,7 +18,9 @@ string dbconnection = @"Server=localhost,1433;Database=llb;;User Id=sa;Password=
 builder.Services.AddDbContextPool<AppDbContext>(options => options.UseSqlServer(dbconnection));
 builder.Services.AddScoped<TaskAllocationHelper>();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
-         
+
+builder.Services.AddHttpClient();
+
 builder.Services.AddMvc(options =>
 {
     var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
@@ -31,7 +33,7 @@ builder.Services.AddDNTCaptcha(options =>
     options.WithEncryptionKey("MzAyMjc1QDMxMzgyZTMxMmUzMG51ZitKTHRHc2Z4aFY0U3NGelJGRk5jYWxnZzN0QXRJYjZaclZ0dktmdFE9");
 }
        );
-IronPdf.License.LicenseKey = "IRONSUITE.R147045H.CUZ.AC.ZW.10237-C94D85E7B5-ANYA4ZDSS25BCA-C3N6E7CTWO3C-OYIUAJP76LLB-7NRZBTHXWH2B-2KGP5HXK56MP-TKQFTZIQWN5M-NGTOAB-THU7DCMMLRWPEA-DEPLOYMENT.TRIAL-56W6O7.TRIAL.EXPIRES.09.MAY.2025";
+IronPdf.License.LicenseKey = "IRONSUITE.SINOAGRIFAM.GMAIL.COM.9026-6239581857-BDIB5FRTBP6JBA-53SBZ3XGQGTL-HAKT552MCCHZ-L2STJR6ULPP5-HZJTWRJLHUVU-M5P6IAY5B2DT-ECXIEW-TXVHV3K437KQEA-DEPLOYMENT.TRIAL-76W6KL.TRIAL.EXPIRES.13.DEC.2025";
 //IronPdf.License.LicenseKey = "IRONSUITE.OCHIMUKA.TTCSGLOBAL.COM.23477-13EACBA4B3-C4SBO-DNXFDTCCZ5HR-ECICSHFMCEW2-3IEBKW4RNC6C-XDJQF7U3GW2E-EIYS2IZ6E5RH-WVORH5SKJ73E-VR5PDE-TIUAQYASQUCNEA-DEPLOYMENT.TRIAL-INU7AW.TRIAL.EXPIRES.31.AUG.2024";
 
 //IronPdf.License.LicenseKey = "IRONPDF-ZIVDERO-MY-TRIAL-LICENSE-KEY-EXPIRES.15.MAR.2022";

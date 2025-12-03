@@ -24,6 +24,10 @@ using System.Drawing;
 using System.IO;
 using static Google.Protobuf.Compiler.CodeGeneratorResponse.Types;
 using NuGet.Packaging.Core;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
 
 namespace LLB.Controllers
@@ -32,6 +36,11 @@ namespace LLB.Controllers
     [Route("License")]
     public class LicenseController : Controller
     {
+        private readonly HttpClient _client;
+        private string _token = string.Empty;
+
+        private const string LoginUrl = "https://cipz.pfms.gov.zw:9090/api/Account/login";
+        // private const string ReportUrl = "https://cipz.pfms.gov.zw:9090/api/v1/reports/getCompanyInfos?companyNum=64407A02102025";
 
 
         private readonly UserManager<ApplicationUser> userManager;
@@ -40,13 +49,14 @@ namespace LLB.Controllers
         private readonly IDNTCaptchaValidatorService _validatorService;
         private readonly TaskAllocationHelper _taskAllocationHelper;
 
-        public LicenseController(TaskAllocationHelper taskAllocationHelper, AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
+        public LicenseController(HttpClient client,TaskAllocationHelper taskAllocationHelper, AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService)
         {
             _db = db;
             this.userManager = userManager;
             this.signInManager = signInManager;
             _validatorService = validatorService;
             _taskAllocationHelper = taskAllocationHelper;
+            _client = client;
         }
 
 
@@ -772,16 +782,16 @@ namespace LLB.Controllers
                         "Health Report",
                         "A3 Plan approved by local Environmental Health",
                         "Proof of publication in the Government Gazette",
-                        "Government Gazette",
+                        "Advert",
 
                         "Lease/Deed documents",
-                        "Affidavit",
+                        "Tie Affidavit",
 
 
                 };
 
                     //if company
-                    if(getinfo.ApplicantType == "Company")
+                    if(getinfo.ApplicantType == "Company" )
                     {
 
                         string[] companydocs =
@@ -793,7 +803,7 @@ namespace LLB.Controllers
                         documents = documents.Concat(companydocs).ToArray();
                     }
 
-                    if (getinfo.ApplicantType == "Organisation")
+                    if (getinfo.ApplicantType == "Organisation" || getinfo.ApplicantType == "Club" || getinfo.ApplicantType == "Partnership")
                     {
 
                         string[] companydocs =
@@ -834,12 +844,12 @@ namespace LLB.Controllers
                         "Permit from the minister",
                         "Lease/Deed documents",
                         "Proof of publication in the Government Gazette",
-                        "Government Gazette",
+                        "Advert",
                         "A3 Plan approved by local Environmental Health",
                         //"Manager Applicant Fingerprints",
                         "Letter From the Minister",
                          "Health Report",
-                         "Affidavit",
+                         "Tie Affidavit",
 
                 };
 
@@ -857,7 +867,7 @@ namespace LLB.Controllers
                     }
 
 
-                    if (getinfo.ApplicantType == "Organisation")
+                    if (getinfo.ApplicantType == "Organisation" || getinfo.ApplicantType == "Club" || getinfo.ApplicantType == "Partnership")
                     {
 
                         string[] companydocs =
@@ -1462,7 +1472,179 @@ namespace LLB.Controllers
             return Json(new { councildata = councildata });
             //return View();
         }
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+/// New companies API request
+///////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
+///
+
+
+
+  
+
+
+       
+
+        // 🔐 Function to login and get the token
+        private async Task<bool> LoginAsync()
+        {
+            var loginData = new
+            {
+                UserName = "llb2025",
+                Password = "llb2025"
+            };
+
+            var response = await _client.PostAsync(
+                LoginUrl,
+                new StringContent(JsonSerializer.Serialize(loginData), Encoding.UTF8, "application/json")
+            );
+
+            if (!response.IsSuccessStatusCode)
+                return false;
+
+            var result = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<LoginResponse>(result);
+
+            _token = data?.token;  // <-- Ensure this matches actual login response key
+            return !string.IsNullOrWhiteSpace(_token);
+        }
+
+        // 🔁 Automatically refresh token if expired
+        private async Task<HttpResponseMessage> SendAuthenticatedRequest(Func<Task<HttpResponseMessage>> sendFunc)
+        {
+            if (string.IsNullOrEmpty(_token))
+            {
+                bool loggedIn = await LoginAsync();
+                if (!loggedIn)
+                    throw new Exception("Login failed!");
+            }
+
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+
+            var response = await sendFunc();
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                // Token expired → Login again and retry the request
+                bool relogged = await LoginAsync();
+                if (!relogged)
+                    throw new Exception("Re-login failed!");
+
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+                response = await sendFunc();
+            }
+
+            return response;
+        }
+
+        // 📌 Call Protected API
+        public async Task<string> GetCompanyInfo(string companyNumber)
+        {
+                string url = $"https://cipz.pfms.gov.zw:9090/api/v1/reports/getCompanyInfos?companyNum={companyNumber}";
+
+                var response = await SendAuthenticatedRequest(() =>
+                _client.GetAsync(url)
+            );
+
+            return await response.Content.ReadAsStringAsync();
+        }
+
+
+
+        [HttpGet("details")]
+        public async Task<IActionResult> Details(string companyNumber)
+        {
+            var rawJson = await GetCompanyInfo(companyNumber);
+
+            var doc = JsonDocument.Parse(rawJson);
+            var root = doc.RootElement;
+
+            var companyInfo = root.GetProperty("companyinfo").GetProperty("value");
+            var directors = root.GetProperty("directors").GetProperty("value");
+            var shareholders = root.GetProperty("shareholders").GetProperty("value");
+            var secretary = root.GetProperty("seccretary").GetProperty("value");
+
+            var cleanResult = new
+            {
+                companyInfo = new
+                {
+                    id = companyInfo.GetProperty("id").GetString(),
+                    name = companyInfo.GetProperty("name").GetString(),
+                    companyNumber = companyInfo.GetProperty("companyNumber").GetString(),
+                    type = companyInfo.GetProperty("type").GetString(),
+                    physicalAddress = companyInfo.GetProperty("physicalAddress").GetString(),
+                    postalAddress = companyInfo.GetProperty("postalAddress").GetString(),
+                    city = companyInfo.GetProperty("city").GetString(),
+                    telNumber = companyInfo.GetProperty("telNumber").GetString(),
+                    mobileNumber = companyInfo.GetProperty("mobileNumber").GetString(),
+                    email = companyInfo.GetProperty("email").GetString()
+                },
+                directors = directors.EnumerateArray().Select(d => new
+                {
+                    names = d.GetProperty("names").GetString(),
+                    surname = d.GetProperty("surname").GetString(),
+                    id_no = d.GetProperty("id_no").GetString(),
+                    address = d.GetProperty("address").GetString(),
+                    email = d.GetProperty("email").GetString()
+                }),
+                shareholders = shareholders.EnumerateArray().Select(s => new
+                {
+                    names = s.GetProperty("names").GetString(),
+                    surname = s.GetProperty("surname").GetString(),
+                    id_no = s.GetProperty("id_no").GetString(),
+                    address = s.GetProperty("address").GetString(),
+                    email = s.GetProperty("email").GetString(),
+                    ordinaryshares = s.TryGetProperty("ordinaryshares", out var o) ? o.GetInt32() : 0
+                }),
+                secretary = new
+                {
+                    names = secretary.GetProperty("names").GetString(),
+                    surname = secretary.GetProperty("surname").GetString(),
+                    id_no = secretary.GetProperty("id_no").GetString(),
+                    address = secretary.GetProperty("address").GetString(),
+                    email = secretary.GetProperty("email").GetString()
+                }
+            };
+
+            return Json(cleanResult);
+        }
+
+
+        [HttpGet("ManDetails")]
+        public async Task<IActionResult> ManDetails(string nationalid)
+        {
+            var result = _db.ManagersParticulars.Where(a => a.NationalId == nationalid).FirstOrDefault();
+            ViewBag.CompanyInfo = result;
+            return Json(new
+            {
+                success = true,
+                data = result
+            });
+        }
     }
+
+
+
+
+
+
+    // Response Model (Example: adjust to real API)
+    public class LoginResponse
+    {
+        public string token { get; set; }
+    
+    
+
+}
+
+
+
+ 
 
 }
 

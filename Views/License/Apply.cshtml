@@ -57,16 +57,19 @@
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Applicant Type</label>
-                        <select type="text" name="applicantType" required value="" class="form-control" id="inputName5">
+                        <select  onchange="getType()" name="applicantType" required value="" class="form-control" id="applicantType">
 
                             <option value="Individual"> Individual</option>
+                            <option value="Club"> Club</option>
                             <option value="Company"> Company</option>
+                            <option value="Partnership"> Partnership</option>
                             <option value="Organisation"> Organisation</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licensee Name</label> (<i>will appear on license as licensee</i>)
-                        <input type="text" name="businessName" required value="" class="form-control" id="inputName5">
+                        <input type="text" name="businessName" required value="" class="form-control" id="businessName">
+                        <input type="hidden" name="companyNumber" required value="" class="form-control" id="companyNumber">
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">ID/Passport Copy</label>
@@ -83,26 +86,26 @@
                     </div>
 
                     @*<div class="col-md-6">
-            <label for="inputName5" class="form-label">Licence Type</label>
-            <select type="text" name="LicenseTypeID" value="" class="form-control" id="inputName5">
-                @foreach (var licensetype in ViewBag.License)
-                {
-                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
-                }
-            </select>
-        </div>
-        <div class="col-md-6">
-            <label for="inputName5" class="form-label">Location of Premises</label>
-            <select type="text" name="ApplicationType" value="" class="form-control" id="inputName5">
-                @foreach (var region in ViewBag.Regions)
-                {
-                    <option value="@region.Id">@region.RegionName </option>
-                }
-            </select>
-        </div>*@
+                            <label for="inputName5" class="form-label">Licence Type</label>
+                            <select type="text" name="LicenseTypeID" value="" class="form-control" id="inputName5">
+                                @foreach (var licensetype in ViewBag.License)
+                                {
+                                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Location of Premises</label>
+                            <select type="text" name="ApplicationType" value="" class="form-control" id="inputName5">
+                                @foreach (var region in ViewBag.Regions)
+                                {
+                                    <option value="@region.Id">@region.RegionName </option>
+                                }
+                            </select>
+                        </div>*@
                     <div class="col-12">
                         <div class="form-floating">
-                            <textarea class="form-control" required name="OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;"></textarea>
+                            <textarea class="form-control" required name="OperationAddress" placeholder="Address" id="OperationAddress" style="height: 100px;"></textarea>
                             <label for="floatingTextarea">Applicant personal physical address</label>
                         </div>
                     </div>
@@ -161,7 +164,7 @@ else
                     <div class="text-center">
                         <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>
-                  
+
                 </div>
                 <!-- Multi Columns Form -->
                 <form action="/License/Apply" method="post" enctype="multipart/form-data" class="row g-3">
@@ -212,6 +215,10 @@ else
                             {
                                 <option selected value="Individual"> Individual</option>
                             }
+                            else if (@ViewBag.ApplicationInfo.ApplicantType == "Club")
+                            {
+                                <option selected value="Club"> Company</option>
+                            }
 
                             else if (@ViewBag.ApplicationInfo.ApplicantType == "Company")
                             {
@@ -221,9 +228,16 @@ else
                             {
                                 <option selected value="Organisation">Organisation</option>
                             }
+                            else if (@ViewBag.ApplicationInfo.ApplicantType == "Partnership")
+                            {
+                                <option selected value="" Partnership">"Partnership</option>
+                            }
+
                             <option value="Individual"> Individual</option>
+                            <option value="Club"> Club</option>
                             <option value="Company"> Company</option>
                             <option value="Organisation"> Organisation</option>
+                            <option value="Partnership"> Partnership</option>
                         </select>
 
                     </div>
@@ -239,9 +253,9 @@ else
 
 
                     @*<div class="col-md-6">
-            <label for="inputName5" class="form-label">Licensee Name</label>
-            <input type="text" name="businessName" required value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="inputName5">
-        </div>*@
+                            <label for="inputName5" class="form-label">Licensee Name</label>
+                            <input type="text" name="businessName" required value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="inputName5">
+                        </div>*@
 
                     @if (@ViewBag.ApplicationInfo.IdCopy == "" || @ViewBag.ApplicationInfo.IdCopy == null)
                     {
@@ -306,39 +320,39 @@ else
                         </div>
                     }
                     @*<div class="col-md-6">
-            <label for="inputName5" class="form-label">Licence Type</label>
-            <select type="text" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID" class="form-control" id="inputName5">
-                @foreach (var licensetype in ViewBag.License)
-                {
-                    @if (@ViewBag.ApplicationInfo.LicenseTypeID == @licensetype.Id)
-                    {
-                        <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
-                    }
-                    else
-                    {
-                        <option value="@licensetype.Id">@licensetype.LicenseName </option>
+                            <label for="inputName5" class="form-label">Licence Type</label>
+                            <select type="text" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID" class="form-control" id="inputName5">
+                                @foreach (var licensetype in ViewBag.License)
+                                {
+                                    @if (@ViewBag.ApplicationInfo.LicenseTypeID == @licensetype.Id)
+                                    {
+                                        <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@licensetype.Id">@licensetype.LicenseName </option>
 
-                    }
-                }
-            </select>
-        </div>
-        <div class="col-md-6">
-            <label for="inputName5" class="form-label">Region of Operation</label>
-            <select type="text" name="ApplicationType" value="@ViewBag.ApplicationInfo.ApplicationType" class="form-control" id="inputName5">
-                @foreach (var region in ViewBag.Regions)
-                {
-                    @if (@ViewBag.ApplicationInfo.ApplicationType == region.Id)
-                    {
-                        <option selected value="@region.Id">@region.RegionName </option>
-                    }
-                    else
-                    {
-                        <option value="@region.Id">@region.RegionName </option>
-                    }
-                }
-                }
-            </select>
-        </div>*@
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputName5" class="form-label">Region of Operation</label>
+                            <select type="text" name="ApplicationType" value="@ViewBag.ApplicationInfo.ApplicationType" class="form-control" id="inputName5">
+                                @foreach (var region in ViewBag.Regions)
+                                {
+                                    @if (@ViewBag.ApplicationInfo.ApplicationType == region.Id)
+                                    {
+                                        <option selected value="@region.Id">@region.RegionName </option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@region.Id">@region.RegionName </option>
+                                    }
+                                }
+                                }
+                            </select>
+                        </div>*@
                     <div class="col-12">
                         <div class="form-floating">
                             <textarea class="form-control" name="OperationAddress" value="@ViewBag.ApplicationInfo.OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.ApplicationInfo.OperationAddress</textarea>
@@ -367,3 +381,126 @@ else
 
 
 }
+
+
+<!-- Modal -->
+<div class="modal fade" id="companyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Company Verification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label>Enter Company Number</label>
+                <input type="text" id="companyNumberInput" name="companyNumberInput" class="form-control" placeholder="Company Number">
+                <button id="btnCheckCompany" onclick="getCompany()" class="btn btn-primary mt-3">Check</button>
+
+                <div id="companyDetailsResult"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function getType() {
+
+        var zveregion = $("#applicantType").val();
+        if (zveregion === "Company") {
+           // alert(zveregion);
+            $('#companyModal').modal('show');
+        }
+     
+
+    }
+
+
+    function getCompany() {
+        var companynum = $("#companyNumberInput").val();
+       // alert(companynum);
+
+        $.ajax({
+            type: 'GET',
+            url: '/License/Details',
+            contentType: "application/json; charset=utf-8",
+
+            datatype: 'text',
+            data: { companyNumber: companynum },
+            success: function (data) {
+                console.log(data);
+                //council
+                // alert(data.councildata.councilRegion);
+             //   $("#ApplicationTypeName").val(data.councildata.councilRegion);
+              //  $("#ApplicationType").val(data.councildata.councilRegionId);
+               
+                    const info = data.companyInfo;
+                    const directors = data.directors;
+
+                    // Build company info HTML
+                    let html = `
+                    <h5>Company Information</h5>
+                    <div cllass="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <tr><th>Name</th><td>${info.name}</td></tr>
+                        <tr><th>Company No.</th><td>${info.companyNumber}</td></tr>
+                        <tr><th>Type</th><td>${info.type}</td></tr>
+                        <tr><th>City</th><td>${info.city}</td></tr>
+                        <tr><th>Email</th><td>${info.email}</td></tr>
+                        <tr><th>Address</th><td>${info.physicalAddress}</td></tr>
+                    </table>
+
+                    <h6 class="mt-3">Directors</h6>
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Names</th>
+                                <th>Surname</th>
+                                <th>ID No</th>
+                                <th>Email</th>
+                                <th>Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                    directors.forEach(dir => {
+                        html += `
+                        <tr>
+                            <td>${dir.names}</td>
+                            <td>${dir.surname}</td>
+                            <td>${dir.id_no}</td>
+                            <td>${dir.email}</td>
+                            <td>${dir.address}</td>
+                        </tr>
+                    `;
+                    });
+
+                    html += `
+                        </tbody>
+                    </table>
+                    </div>
+                `;
+
+                    $("#companyDetailsResult").html(html);
+
+                    // Fill Business name and make readonly
+                $("#businessName").val(info.name).prop("readonly", true);
+                $("#OperationAddress").val(info.postalAddress).prop("readonly", true);
+                
+                $("#companyNumber").val(info.companyNumber);
+               
+
+            },
+            error: function (data) {
+                $("#companyDetailsResult").html(
+                    `<div class="alert alert-danger">Error checking company</div>`
+                );
+            }
+
+        });
+        
+    }
+
+   
+</script>

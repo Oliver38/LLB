@@ -3,67 +3,69 @@
 }
 
 
-    <div class="row">
-        <div class="card">
-            <div class="card-body" id="_step1">
+<div class="row">
+    <div class="card">
+        <div class="card-body" id="_step1">
 
-                <div class="card-header">
+            <div class="card-header">
 
-                    @if (ViewBag.Queries.Count > 0)
-                    {
-                        <!-- Default Accordion -->
-                        <div class="accordion" id="accordionExample">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="headingOne">
-                                    <button class="accordion-button text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                        <b>Click to View Queries</b>(resolve and resubmit where necessary)
-                                    </button>
-                                </h2>
-                                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        <!-- List group With badges -->
-                                        <ul class="list-group">
-                                            @foreach (var queries in ViewBag.Queries)
-                                            {
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    @queries.Query
-                                                    <span class="badge bg-danger rounded-pill"> @queries.Status</span>
-                                                    <span class="badge bg-primary rounded-pill"><a class="text-white" href="/License/ResolveQuery?Id=@queries.Id&stage=apply&applicationId=@ViewBag.ApplicationInfo.Id">Click to Resolve Query</a></span>
+                @if (ViewBag.Queries.Count > 0)
+                {
+                    <!-- Default Accordion -->
+                    <div class="accordion" id="accordionExample">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    <b>Click to View Queries</b>(resolve and resubmit where necessary)
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                <div class="accordion-body">
+                                    <!-- List group With badges -->
+                                    <ul class="list-group">
+                                        @foreach (var queries in ViewBag.Queries)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                @queries.Query
+                                                <span class="badge bg-danger rounded-pill"> @queries.Status</span>
+                                                <span class="badge bg-primary rounded-pill"><a class="text-white" href="/License/ResolveQuery?Id=@queries.Id&stage=apply&applicationId=@ViewBag.ApplicationInfo.Id">Click to Resolve Query</a></span>
 
-                                                </li>
-                                            }
+                                            </li>
+                                        }
 
-                                        </ul><!-- End List With badges -->
-                                    </div>
+                                    </ul><!-- End List With badges -->
                                 </div>
                             </div>
+                        </div>
 
 
-                        </div><!-- End Default Accordion Example -->
-                    }
-                    <div class="text-center">
-                        <h5 class="card-title text-success">@TempData["result"]</h5>
-                    </div>
-                    <h5 class="card-title">Manager's Particulars'</h5>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Manager </button>
-
+                    </div><!-- End Default Accordion Example -->
+                }
+                <div class="text-center">
+                    <h5 class="card-title text-success">@TempData["result"]</h5>
                 </div>
-             
+                <h5 class="card-title">Manager's Particulars'</h5>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Manager </button>
+                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#getUserModal">
+                    Get Manager Info
+                </button>
+            </div>
 
-                <table class="table table-responsiveß table-hover table-striped">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Surname</th>
-                            <th>National Id</th>
-                            <th>National Id </th>
-                            <th>Fingerpints </th>
-                            <th>Form 55</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var manager in ViewBag.ManagersInfo)
-                        {
+
+            <table class="table table-responsiveß table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Surname</th>
+                        <th>National Id</th>
+                        <th>National Id </th>
+                        <th>Fingerpints </th>
+                        <th>Form 55</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var manager in ViewBag.ManagersInfo)
+                    {
                         <tr>
                             <td>@manager.Name</td>
                             <td>@manager.Surname</td>
@@ -73,44 +75,44 @@
                                 {<a>No Attachment</a> }
                                 else
                                 {<a target="_blank" href="~/@manager.Attachment"> National Id </a>}
-                        </td>
-                        <td>
-                            @if (manager.Fingerprints == "" || manager.Fingerprints == null)
-                            {<a>No Attachment</a>}
-                            else
-                            {<a target="_blank" href="~/@manager.Fingerprints"> Fingerprints</a>}
-                        </td>
+                            </td>
+                            <td>
+                                @if (manager.Fingerprints == "" || manager.Fingerprints == null)
+                                {<a>No Attachment</a>}
+                                else
+                                {<a target="_blank" href="~/@manager.Fingerprints"> Fingerprints</a>}
+                            </td>
 
-                        <td>
-                            @if (manager.Form55 == "" || manager.Form55 == null)
-                            {<a>No Attachment</a>}
-                            else
-                            {<a target="_blank" href="~/@manager.Form55"> Form 55</a>}
-                        </td>
+                            <td>
+                                @if (manager.Form55 == "" || manager.Form55 == null)
+                                {<a>No Attachment</a>}
+                                else
+                                {<a target="_blank" href="~/@manager.Form55"> Form 55</a>}
+                            </td>
                         </tr>
-                        }
-                    </tbody>
-                </table>
+                    }
+                </tbody>
+            </table>
 
 
-                <div class="card-footer">
-                    <div class="text-center">
-                        @if (ViewBag.ManagersInfo == null)
-                        {
-                            <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                        }
-                        else
-                        {
-                            <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                            <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+            <div class="card-footer">
+                <div class="text-center">
+                    @if (ViewBag.ManagersInfo == null)
+                    {
+                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                    }
+                    else
+                    {
+                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
 
-                        }
-                    </div>
+                    }
                 </div>
             </div>
         </div>
-
     </div>
+
+</div>
 
 
 
@@ -168,3 +170,73 @@
         </div>
     </div>
 </div><!-- End Basic Modal-->
+<!-- Get User Modal -->
+<div class="modal fade" id="getUserModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <!-- Small modal -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Search User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label for="userSearchInput" class="form-label">Enter User ID or Email</label>
+                <input type="text" name="manid" id="manid" class="form-control" placeholder="e.g. 245 or user@example.com">
+
+                <button id="btnGetUser" class="btn btn-primary mt-3" onclick="getUser()">
+                    Manager Information
+                </button>
+
+                <div id="userResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+
+    function getUser() {
+        var nationalid = $("#manid").val();
+        //alert(nationalid);
+
+        $.ajax({
+            type: 'GET',
+            url: '/License/ManDetails',
+            contentType: "application/json; charset=utf-8",
+
+            datatype: 'text',
+            data: { nationalid: nationalid },
+            success: function (data) {
+                console.log(data);
+
+                document.getElementById("userResult").innerHTML = `
+    <div class="card p-3 shadow-sm">
+        <h5 class="mb-3">Verify Details</h5>
+        <p><strong>Name:</strong> ${data.name}</p>
+        <p><strong>Surname:</strong> ${data.surname}</p>
+        <p><strong>Address:</strong> ${data.address}</p>
+
+        <button class="btn btn-success" onclick="confirmAction('${data.id}')">
+            Confirm
+        </button>
+    </div>
+`;
+
+
+                if (data === null) {
+                    $("#userResult").html(
+                        `<div class="alert alert-danger">Details Not found</div>`
+                    );
+                }
+
+            },
+            error: function (data) {
+                $("#userResult").html(
+                    `<div class="alert alert-danger">Details Not found</div>`
+                );
+            }
+
+        });
+
+    }
+</script>
