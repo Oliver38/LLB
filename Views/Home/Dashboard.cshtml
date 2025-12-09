@@ -192,7 +192,7 @@
                         <th>LLB Number</th>
                         <th>Trading Name </th>
                         <th>Operating Address </th>
-                        <th>Application Date </th>
+                        <th>Expiry Date </th>
                         <th>License </th>
                         <th>For </th>
                         <th>Status </th>
@@ -224,7 +224,7 @@
                                         }
                                     </td>
 
-                                    <td>@application.ApplicationDate</td>
+                                    <td>@application.ExpiryDate.ToString("dd/MM/yyyy")</td>
 
                                     <td>
                                         @foreach (var licence in ViewBag.License)

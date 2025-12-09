@@ -206,19 +206,26 @@ namespace LLB.Controllers
             var PenaltyFees = _db.PostFormationFees.Where(n => n.Code == "PNL").FirstOrDefault();
             var penalty = time * PenaltyFees.Fee;
             var totalfee = penalty + getFee;
-            var renewaldata = _db.Renewals.Where(x => x.Id == renid && x.Status == "applied").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "submitted").OrderByDescending(s => s.DateApplied).FirstOrDefault();
 
 
             Payments payment = null;
-            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == renid && s.Service == "renewal").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+
+            var previousinpections = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "submitted").ToList();
+
+
+            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "renewal").OrderByDescending(x => x.DateAdded).FirstOrDefault();
             if (paymentTrans == null)
             {
 
             }
             else
             {
-                if (renewaldata != null)
+
+
+                if (previousinpections.Count <= 1)
                 {
+
                     var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
                     var status = paynow.PollTransaction(paymentTrans.PollUrl);
@@ -233,8 +240,13 @@ namespace LLB.Controllers
                     _db.SaveChanges();
                     payment = paymentTrans;
                 }
-               
+                else
+                {
+                }
             }
+
+            var inspectiondata = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "submitted").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+
             //submitted check status
 
             ViewBag.Payment = payment;
@@ -260,7 +272,7 @@ namespace LLB.Controllers
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             string id = userId.Id;
             renewal.UserId = id;
-                renewal.Status = "applied";
+                renewal.Status = "submitted";
            
 
             //spublic DateTime DateCreated
@@ -414,7 +426,7 @@ namespace LLB.Controllers
                 string id = userId.Id;
                 transaction.UserId = id;
                 transaction.Amount = payment.Total;
-                transaction.ApplicationId = renid;
+                transaction.ApplicationId = Id;
                 transaction.Service = service;
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
