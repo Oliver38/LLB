@@ -12,6 +12,7 @@
         public string LicenseType { get; set; }
         public string Assigner { get; set; }
         public string ReAssigner { get; set; }
+        public string ApplicationName { get; set; }
         
         public DateTime DateCreated { get; set; }
         public DateTime DateUpdated { get; set; }

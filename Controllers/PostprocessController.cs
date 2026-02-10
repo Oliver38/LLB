@@ -669,36 +669,43 @@ namespace LLB.Controllers
             double getFee = InspectionFees.Fee;
 
             var totalfee = getFee;
+
             Payments payment = null;
-            if (extendedhoursdata == null)
-            {
 
-            }
-            else {
+            var previousinpections = _db.ExtendedHours.Where(x => x.ApplicationId == id && x.Status == "Applied").ToList();
 
-                //var paymentTrans = _db.Payments.Where(s => s.ApplicationId == extendedhoursdata.Id && s.Service == "extended hours").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == extendedhoursdata.Id && s.Service == "extended hours").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-                if (paymentTrans == null)
+
+            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "extended hours").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+            if (paymentTrans == null)
             {
 
             }
             else
             {
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-                var status = paynow.PollTransaction(paymentTrans.PollUrl);
 
-                var statusdata = status.GetData();
-                paymentTrans.PaynowRef = statusdata["paynowreference"];
-                paymentTrans.PaymentStatus = statusdata["status"];
-                paymentTrans.Status = statusdata["status"];
-                paymentTrans.DateUpdated = DateTime.Now;
+                if (previousinpections.Count <= 1)
+                {
 
-                _db.Update(paymentTrans);
-                _db.SaveChanges();
-                payment = paymentTrans;
+                    var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+
+                    var status = paynow.PollTransaction(paymentTrans.PollUrl);
+
+                    var statusdata = status.GetData();
+                    paymentTrans.PaynowRef = statusdata["paynowreference"];
+                    paymentTrans.PaymentStatus = statusdata["status"];
+                    paymentTrans.Status = statusdata["status"];
+                    paymentTrans.DateUpdated = DateTime.Now;
+
+                    _db.Update(paymentTrans);
+                    _db.SaveChanges();
+                    payment = paymentTrans;
+                }
+                else
+                {
+                }
             }
-            }
+
             //check status
             // var inspectiondatastate = 
             //submitted check status
@@ -719,6 +726,7 @@ namespace LLB.Controllers
 
             return View();
         }
+
 
         [HttpPost("PostExtendedHours")]
         public async Task<IActionResult> PostExtendedHoursAsync(string ExtId, DateTime ExtendedHoursDate, string ReasonForExtention)
@@ -785,10 +793,10 @@ namespace LLB.Controllers
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-             paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + id + "&process=" + process;
-             paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + id + "&process=" + process;
-            //paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + id + "&process=" + process;
-            //paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + id + "&process=" + process;
+            // paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + id + "&process=" + process;
+            // paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + id + "&process=" + process;
+            paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + id + "&process=" + process;
+            paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + id + "&process=" + process;
 
             // Create a new payment 
             var payment = paynow.CreatePayment("12345");
@@ -813,7 +821,7 @@ namespace LLB.Controllers
                 //string id = userId.Id;
                 transaction.UserId = userId;
                 transaction.Amount = payment.Total;
-                transaction.ApplicationId = extendedHours.Id;
+                transaction.ApplicationId = id;
                 transaction.Service = "extended hours";
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
@@ -886,22 +894,24 @@ namespace LLB.Controllers
             double getFee = InspectionFees.Fee;
 
             var totalfee = getFee;
+
             Payments payment = null;
-            if (TemporaryRetailsdata == null)
+
+            var previousinpections = _db.TemporaryRetails.Where(x => x.ApplicationId == id && x.Status == "Applied").ToList();
+
+
+            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "Temporary Retails").OrderByDescending(x => x.DateAdded).FirstOrDefault();
+            if (paymentTrans == null)
             {
 
             }
             else
             {
 
-                //var paymentTrans = _db.Payments.Where(s => s.ApplicationId == TemporaryRetailsdata.Id && s.Service == "extended hours").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == TemporaryRetailsdata.Id && s.Service == "Temporary Retails").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-                if (paymentTrans == null)
+
+                if (previousinpections.Count <= 1)
                 {
 
-                }
-                else
-                {
                     var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
                     var status = paynow.PollTransaction(paymentTrans.PollUrl);
@@ -915,6 +925,9 @@ namespace LLB.Controllers
                     _db.Update(paymentTrans);
                     _db.SaveChanges();
                     payment = paymentTrans;
+                }
+                else
+                {
                 }
             }
             //check status
@@ -1031,7 +1044,7 @@ namespace LLB.Controllers
                 //string id = userId.Id;
                 transaction.UserId = userId;
                 transaction.Amount = payment.Total;
-                transaction.ApplicationId = TemporaryRetails.Id;
+                transaction.ApplicationId = id;
                 transaction.Service = "Temporary Retails";
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();

@@ -100,7 +100,7 @@ namespace LLB.Controllers
                     details.ExaminerName = examinerfullname;
                     details.RefNumber = application.RefNum;
                     details.Id = taskass.Id;
-
+                    details.ApplicationName = taskass.Service;
                     //getting Bar name
                     var outletdetails = _db.OutletInfo.Where(s => s.ApplicationId == taskass.ApplicationId).FirstOrDefault();
                     details.BarName = outletdetails.TradingName;
