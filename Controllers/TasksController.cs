@@ -114,17 +114,17 @@ namespace LLB.Controllers
 
                     //var inspector = await userManager.GetUsersInRoleAsync("inspector");
                     List<ApplicationUser> examiners = new List<ApplicationUser>();
-                    if (application.ExaminationStatus == "verification")
+                    if (taskass.ExaminationStatus == "verification")
                     {
                         examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
 
                     }
-                    else if (application.ExaminationStatus == "recommendation")
+                    else if (taskass.ExaminationStatus == "recommendation")
                     {
                         examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
 
                     }
-                    else if (application.Status == "approval")
+                    else if (taskass.ExaminationStatus == "approval")
                     {
                         examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
                     }
@@ -205,17 +205,17 @@ namespace LLB.Controllers
 
             //var inspector = await userManager.GetUsersInRoleAsync("inspector");
             List<ApplicationUser> examiners = new List<ApplicationUser>();
-            if(application.ExaminationStatus == "verification")
+            if(task.ExaminationStatus == "verification")
             {
                 examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
 
             }
-            else if (application.ExaminationStatus == "recommendation")
+            else if (task.ExaminationStatus == "recommendation")
             {
                 examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
 
             }
-            else if (application.ExaminationStatus == "approval")
+            else if (task.ExaminationStatus == "approval")
             {
                 examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
 
@@ -270,24 +270,25 @@ namespace LLB.Controllers
 
             newtask.Id = Guid.NewGuid().ToString();
             newtask.ApplicationId = task.ApplicationId;
+            newtask.ExaminationStatus = task.ExaminationStatus;
             //tasks.AssignerId
 
             //auto allocation to replace
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            if (stage == "verification")
+            if (task.ExaminationStatus == "verification")
             {
                // examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
                 newtask.VerifierId = reassignedto;
 
             }
-            else if (stage == "recommendation")
+            else if (task.ExaminationStatus == "recommendation")
             {
                 newtask.RecommenderId = reassignedto;
                // examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
 
             }
-            else if (stage == "approval")
+            else if (task.ExaminationStatus == "approval")
             {
                 newtask.ApproverId = reassignedto;
                 //examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
@@ -370,17 +371,17 @@ namespace LLB.Controllers
 
                     //var inspector = await userManager.GetUsersInRoleAsync("inspector");
                     List<ApplicationUser> examiners = new List<ApplicationUser>();
-                    if (application.ExaminationStatus == "verification")
+                    if (taskass.ExaminationStatus == "verification")
                     {
                         examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
 
                     }
-                    else if (application.ExaminationStatus == "recommendation")
+                    else if (taskass.ExaminationStatus == "recommendation")
                     {
                         examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
 
                     }
-                    else if (application.Status == "approval")
+                    else if (taskass.ExaminationStatus == "approval")
                     {
                         examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
                     }
@@ -484,17 +485,17 @@ namespace LLB.Controllers
 
                     //var inspector = await userManager.GetUsersInRoleAsync("inspector");
                     List<ApplicationUser> examiners = new List<ApplicationUser>();
-                    if (application.ExaminationStatus == "verification")
+                    if (taskass.ExaminationStatus == "verification")
                     {
                         examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
 
                     }
-                    else if (application.ExaminationStatus == "recommendation")
+                    else if (taskass.ExaminationStatus == "recommendation")
                     {
                         examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
 
                     }
-                    else if (application.Status == "approval")
+                    else if (taskass.ExaminationStatus == "approval")
                     {
                         examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
                     }
@@ -554,7 +555,7 @@ namespace LLB.Controllers
                 newtask.Id = Guid.NewGuid().ToString();
                 newtask.ApplicationId = task.ApplicationId;
                 //tasks.AssignerId
-
+                newtask.ExaminationStatus = task.ExaminationStatus;
                 //auto allocation to replace
                 // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
                 // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");

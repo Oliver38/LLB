@@ -1,135 +1,207 @@
-﻿
+@model LLB.Models.ViewModel.SecretaryDashboardViewModel
 
 @{
     Layout = "_LayoutMain";
+
+    string GetStatusClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "submitted" => "bg-primary-subtle text-primary",
+            "recommended" => "bg-info-subtle text-info-emphasis",
+            "verified" => "bg-success-subtle text-success",
+            "applied" => "bg-warning-subtle text-warning-emphasis",
+            "assigned" => "bg-secondary-subtle text-secondary",
+            "has query" => "bg-warning-subtle text-warning-emphasis",
+            "approved" => "bg-success-subtle text-success",
+            "rejected" => "bg-danger-subtle text-danger",
+            _ => "bg-light text-dark"
+        };
+    }
+
+    string GetServiceClass(string service)
+    {
+        return service switch
+        {
+            "Extended Hours" => "bg-info-subtle text-info-emphasis",
+            "Temporary Retails" => "bg-warning-subtle text-warning-emphasis",
+            _ => "bg-secondary-subtle text-secondary"
+        };
+    }
 }
 
-
-<div b-36j9gympe5 class="row">
-
-
-
-    <div class="row">
-        <div class="card">
-
-            <div class="card-body" id="_step1">
-                <div class="card-header">
-
-                    <h5 class="card-title">Applications For Verifications</h5>
-                    @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                    *@
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card info-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Available Applications</h5>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="mb-1">@Model.Applications.Count</h3>
+                        <p class="text-muted mb-0">Assigned new applications waiting for secretary review.</p>
+                    </div>
+                    <div class="icon rounded-circle d-flex align-items-center justify-content-center bg-primary-subtle text-primary" style="width:56px;height:56px;">
+                        <i class="bi bi-folder2-open fs-4"></i>
+                    </div>
                 </div>
-
-
-
-
-                <div class="row">
-
-                    <table class="table table-responsiveß table-hover table-striped">
-
-
-                        <thead>
-                        <th>Trading Name </th>
-                        <th>Operating Address </th>
-                        <th>Application Date </th>
-                        <th>License </th>
-                        <th>For </th>
-                        <th>Status </th>
-                        </thead>
-                        <tbody>
-                            @foreach (var application in ViewBag.Applications)
-                            {
-
-                                <tr>
-                                    <td>
-                                        @foreach (var outlet in ViewBag.OutletInfo)
-                                        {
-                                            if (outlet.ApplicationId == application.Id)
-                                            {
-                                                @outlet.TradingName
-                                            }
-                                        }
-                                    </td>
-                                    <td>
-                                        @foreach (var outlet in ViewBag.OutletInfo)
-                                        {
-                                            if (outlet.ApplicationId == application.Id)
-                                            {
-                                                @outlet.Address
-                                            }
-                                        }
-                                    </td>
-
-                                    <td>@application.ApplicationDate</td>
-
-                                    <td>
-                                        @foreach (var licence in ViewBag.License)
-                                        {
-                                            if (licence.Id == application.LicenseTypeID)
-                                            {
-                                                @licence.LicenseName
-                                            }
-                                        }
-
-                                    </td>
-
-
-                                    <td>
-                                        @foreach (var region in ViewBag.Regions)
-                                        {
-                                            if (region.Id == application.ApplicationType)
-                                            {
-                                                @region.RegionName
-                                            }
-                                        }
-
-                                    </td>
-
-                                    <td>
-                                        @if (application.Status == "Has Query")
-                                        {
-                                            <span class="text-warning">@application.Status</span>
-                                        }
-                                        else if (application.Status == "submitted")
-                                        { <span class="text-success">@application.Status</span>}
-                                    else if (application.Status == "verified")
-                                    { <span class="text-success">@application.Status</span>}
-                                else if (application.Status == "recommended")
-                                { <span class="text-success">@application.Status</span>}
-                                        
-                                    </td>
-
-                                    <td>
-                                        @if (application.Status == "verified")
-                                        {
-                                            <a href="/Recommend/Apply?Id=@application.Id" class="btn btn-primary">View</a>
-                                        }
-                                        else
-                                        {<a href="/Approval/Apply?Id=@application.Id" class="btn btn-primary">View</a>}
-                                    </td>
-
-
-                                </tr>
-
-                            }
-                        </tbody>
-
-
-
-                    </table>
-                </div>
-
-
-
-
-
-
             </div>
         </div>
-
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card info-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Available Post Formations</h5>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="mb-1">@Model.PostFormations.Count</h3>
+                        <p class="text-muted mb-0">Assigned Extended Hours and Temporary Retails awaiting action.</p>
+                    </div>
+                    <div class="icon rounded-circle d-flex align-items-center justify-content-center bg-success-subtle text-success" style="width:56px;height:56px;">
+                        <i class="bi bi-briefcase fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card info-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Open Workload</h5>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="mb-1">@(Model.Applications.Count + Model.PostFormations.Count)</h3>
+                        <p class="text-muted mb-0">Everything currently assigned to the secretary queue.</p>
+                    </div>
+                    <div class="icon rounded-circle d-flex align-items-center justify-content-center bg-warning-subtle text-warning-emphasis" style="width:56px;height:56px;">
+                        <i class="bi bi-kanban fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+            <div>
+                <h5 class="card-title mb-1">Available Applications</h5>
+                <p class="text-muted mb-0">Assigned new applications ready for approval-stage review.</p>
+            </div>
+            <a class="btn btn-outline-primary" href="/Approval/Reports">
+                <i class="bi bi-bar-chart-line me-2"></i>Open Reports
+            </a>
+        </div>
 
+        @if (!Model.Applications.Any())
+        {
+            <div class="alert alert-light border mb-0">
+                No new applications are currently assigned to the secretary queue.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Trading Name</th>
+                            <th>Operating Address</th>
+                            <th>Application Date</th>
+                            <th>License</th>
+                            <th>Region</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var application in Model.Applications)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@application.TradingName</td>
+                                <td>@application.OperatingAddress</td>
+                                <td>@application.ApplicationDate.ToString("dd MMM yyyy")</td>
+                                <td>@application.LicenseName</td>
+                                <td>@application.RegionName</td>
+                                <td>
+                                    <span class="badge rounded-pill @GetStatusClass(application.Status)">
+                                        @application.Status
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-primary" href="@application.ReviewUrl">Open</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
 
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+            <div>
+                <h5 class="card-title mb-1">Available Post Formations</h5>
+                <p class="text-muted mb-0">Assigned post-formation applications for secretary review and approval.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="badge rounded-pill bg-info-subtle text-info-emphasis">Extended Hours</span>
+                <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">Temporary Retails</span>
+            </div>
+        </div>
 
+        @if (!Model.PostFormations.Any())
+        {
+            <div class="alert alert-light border mb-0">
+                No post-formation applications are currently assigned to the secretary queue.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Trading Name</th>
+                            <th>Operating Address</th>
+                            <th>Submitted</th>
+                            <th>License</th>
+                            <th>Region</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var postFormation in Model.PostFormations)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="badge rounded-pill @GetServiceClass(postFormation.Service)">
+                                        @postFormation.Service
+                                    </span>
+                                </td>
+                                <td class="fw-semibold">@postFormation.TradingName</td>
+                                <td>@postFormation.OperatingAddress</td>
+                                <td>@postFormation.SubmittedDate.ToString("dd MMM yyyy")</td>
+                                <td>@postFormation.LicenseName</td>
+                                <td>@postFormation.RegionName</td>
+                                <td>
+                                    <span class="badge rounded-pill @GetStatusClass(postFormation.Status)">
+                                        @postFormation.Status
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-primary" href="@postFormation.ReviewUrl">Open</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

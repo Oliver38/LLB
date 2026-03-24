@@ -20,6 +20,7 @@ namespace LLB.Models
         public DateTime? ApprovedDate { get; set; }
         public string? Status { get; set; }
         public string? Service { get; set; }
+        public string? ExaminationStatus { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }
 

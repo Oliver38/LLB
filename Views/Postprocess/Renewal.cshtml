@@ -2,144 +2,105 @@
     Layout = "_LayoutMain";
 }
 
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
 
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
 
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title mb-0">Renewal For @ViewBag.Outletinfo.TradingName</div>
-        @*<button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>*@
-        @if (ViewBag.Checksub == null)
-        { }
-        else
-        {
-            <span class="badge bg-warning text-dark" aria-label="status">
-                <span class="visually-hidden">Status: </span>Another application in progress
-            </span>
-        }
-    </div>
-  
-    <div class="card-body">
+@if (ViewBag.Checksub == null)
+{
 
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-title mb-0">Renewal For @ViewBag.Outletinfo.TradingName</div>
+            @*<button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>*@
+            @*@if (ViewBag.Checksub == null)
+                { }
+                else
+                {
+                    <span class="badge bg-warning text-dark" aria-label="status">
+                        <span class="visually-hidden">Status: </span>Another application in progress
+                    </span>
+                }*@
+        </div>
 
-        <div class="table-responsive">
+        <div class="card-body">
 
-            <table class="table table-bordered table-hover">
-                <tbody class="table-light">
+            <div class="table-responsive">
 
-                    <tr>
-                        <th>Outlet Name</th>
-                        <td>
-                            @ViewBag.Outletinfo.TradingName
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>License ExpiryDate</th>
-                        <td>
-                            @ViewBag.Appinfo.ExpiryDate
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Fee</th>
-                        <td>
-                            @ViewBag.Fee
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th>Penalty</th>
-                        <td>@ViewBag.Penalty</td>
-                    </tr>
-
-                    <tr>
-                        <th>Delay Period</th>
-                        <td>@ViewBag.Months</td>
-                    </tr>
-                    <tr>
-                        <th>Total Fee</th>
-                        <td>@ViewBag.TotalFee</td>
-                    </tr>
-                    <tr>
-                        <th>Payment Status</th>
-                        <td>
-                            @if (ViewBag.Payment == null)
-                            {<span style="color:red"> Not Paid</span>}
-                            else
-                            { <span style="color:green"> @ViewBag.Payment.Status</span>}
-                        </td>
-                    </tr>
-
-
-                    @*[Key]
-                        // Liquor Outlet Info
-                        public string? Id { get; set; }
-                        public string? ApplicationId { get; set; }
-                        public string? UserId { get; set; }
-                        public string? PreviousExpiry { get; set; }
-                        public string? FeePaid { get; set; }
-                        public string? PenaltyPaid { get; set; }
-                        public string? PaymentStatus { get; set; }
-                        public string? LLBNumber { get; set; }
-
-                        public string? Service { get; set; }
-                        public DateTime DateApplied { get; set; }
-                        public DateTime DateUpdated { get; set; }*@
-
-
-
-
-                    @if (ViewBag.Renewaldata == null)
-                    {
-
-                        <form action="/Postprocess/PostRenenwals" enctype="multipart/form-data" method="post">
+                <table class="table table-bordered table-hover">
+                    <tbody class="table-light">
 
                         <tr>
-                            <th>Upload previous Council Certified Liquor License</th>
-                            <td><input type="file" name="prevcert" class="form-control" /></td>
-
+                            <th>Outlet Name</th>
+                            <td>
+                                @ViewBag.Outletinfo.TradingName
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>License ExpiryDate</th>
+                            <td>
+                                @ViewBag.Appinfo.ExpiryDate
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Fee</th>
+                            <td>
+                                @ViewBag.Fee
+                            </td>
                         </tr>
 
                         <tr>
-                            <th>Upload Health Certificate for previous Liquor License </th>
-                            <td><input type="file" name="healthcert" class="form-control" /></td>
+                            <th>Penalty</th>
+                            <td>@ViewBag.Penalty</td>
+                        </tr>
 
+                        <tr>
+                            <th>Delay Period</th>
+                            <td>@ViewBag.Months</td>
                         </tr>
                         <tr>
-                            <th>
-                                <input type="hidden" name="service" value="Renewal" />
-                                <input type="hidden" name="lLBNumber" value="@ViewBag.Appinfo.LLBNum" />
-                                <input type="hidden" name="PaymentStatus" value="Paid" />
-                                <input type="hidden" name="penaltyPaid" value="@ViewBag.Penalty" />
-                                <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
-                                <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
-                                <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />
-                                @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
-
-
-                            </th>
-
-                            @if (ViewBag.Checksub == null)
-                                {
-                            <td><button class="btn btn-primary" type="submit"> Submit For Renewal</button></td>
-                                }
+                            <th>Total Fee</th>
+                            <td>@ViewBag.TotalFee</td>
+                        </tr>
+                        <tr>
+                            <th>Payment Status</th>
+                            <td>
+                                @if (ViewBag.Payment == null)
+                                {<span style="color:red"> Not Paid</span>}
+                                else
+                                { <span style="color:green"> @ViewBag.Payment.Status</span>}
+                            </td>
                         </tr>
 
 
-                        </form>
+                        @*[Key]
+                            // Liquor Outlet Info
+                            public string? Id { get; set; }
+                            public string? ApplicationId { get; set; }
+                            public string? UserId { get; set; }
+                            public string? PreviousExpiry { get; set; }
+                            public string? FeePaid { get; set; }
+                            public string? PenaltyPaid { get; set; }
+                            public string? PaymentStatus { get; set; }
+                            public string? LLBNumber { get; set; }
+
+                            public string? Service { get; set; }
+                            public DateTime DateApplied { get; set; }
+                            public DateTime DateUpdated { get; set; }*@
 
 
 
-                    }
-                    else
-                    {
-                        <form action="/Postprocess/PostRenenwals" enctype="multipart/form-data" method="post">
 
+                        @if (ViewBag.Renewaldata == null)
+                        {
 
-
-
-
-
-                            @if (ViewBag.Renewaldata.CertifiedLicense == "")
-                            {
+                            <form action="/Postprocess/PostRenenwals" enctype="multipart/form-data" method="post">
 
                             <tr>
                                 <th>Upload previous Council Certified Liquor License</th>
@@ -147,128 +108,202 @@
 
                             </tr>
 
+                            <tr>
+                                <th>Upload Health Certificate for previous Liquor License </th>
+                                <td><input type="file" name="healthcert" class="form-control" /></td>
+
+                            </tr>
+                            <tr>
+                                <th>
+                                    <input type="hidden" name="service" value="Renewal" />
+                                    <input type="hidden" name="lLBNumber" value="@ViewBag.Appinfo.LLBNum" />
+                                    <input type="hidden" name="PaymentStatus" value="Not Paid" />
+                                    <input type="hidden" name="penaltyPaid" value="@ViewBag.Penalty" />
+                                    <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
+                                    <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
+                                    <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />
+                                    @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
+
+
+                                </th>
+
+                                @if (ViewBag.Checksub == null)
+                                {
+                                    <td><button class="btn btn-primary" type="submit"> Submit For Renewal</button></td>
+                                }
+                            </tr>
+
+
+                            </form>
+
+
+
                         }
                         else
                         {
-
-                            <tr>
-
-                                <th>Upload previous Council Certified Liquor License</th>
-                                <td>
-                                    <a target="_blank" href="~/@ViewBag.Renewaldata.CertifiedLicense"> Previous Certified License</a>
-
-                                    <button class="btn btn-danger btn-sm float-end" type="button"
-                                            onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/PostProcess/DeleteCertifiedLisc?Id=@ViewBag.Renewaldata.ApplicationId'; }">
-                                        <i class="fas fa-trash-alt"></i> Delete
-                                    </button>
-                                </td>
-
-                            </tr>
-                        }
+                            <form action="/Postprocess/PostRenenwals" enctype="multipart/form-data" method="post">
 
 
-                            @if (ViewBag.Renewaldata.HealthCert == "")
-                            {
+
+
+
+
+                                @if (ViewBag.Renewaldata.CertifiedLicense == "")
+                                {
 
                                 <tr>
-                                    <th>Upload Health Certificate for previous Liquor License </th>
-                                    <td><input type="file" name="healthcert" class="form-control" /></td>
+                                    <th>Upload previous Council Certified Liquor License</th>
+                                    <td><input type="file" name="prevcert" class="form-control" /></td>
 
                                 </tr>
+
                             }
                             else
                             {
 
                                 <tr>
 
-                                    <th>Upload Health Certificate for previous Liquor License </th>
+                                    <th>Upload previous Council Certified Liquor License</th>
                                     <td>
-                                        <a target="_blank" href="~/@ViewBag.Renewaldata.HealthCert"> Health Certificate</a>
+                                        <a target="_blank" href="~/@ViewBag.Renewaldata.CertifiedLicense"> Previous Certified License</a>
+
                                         <button class="btn btn-danger btn-sm float-end" type="button"
-                                                onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/PostProcess/DeleteHealthCert?Id=@ViewBag.Renewaldata.ApplicationId'; }">
+                                                onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/PostProcess/DeleteCertifiedLisc?Id=@ViewBag.Renewaldata.ApplicationId'; }">
                                             <i class="fas fa-trash-alt"></i> Delete
                                         </button>
-
                                     </td>
 
-
                                 </tr>
                             }
 
-                            @if (ViewBag.Renewaldata.HealthCert == "" || ViewBag.Renewaldata.CertifiedLicense == "")
-                            {
-                                <tr>
-                                    <th>
-                                        <input type="hidden" name="Id" value="@ViewBag.Renewaldata.Id" />
-                                        <input type="hidden" name="service" value="Renewal" />
-                                        <input type="hidden" name="lLBNumber" value="@ViewBag.Appinfo.LLBNum" />
-                                        <input type="hidden" name="PaymentStatus" value="Paid" />
-                                        <input type="hidden" name="penaltyPaid" value="@ViewBag.Penalty" />
-                                        <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
-                                        <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
-                                        <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />
-                                        @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
+
+                                @if (ViewBag.Renewaldata.HealthCert == "")
+                                {
+
+                                    <tr>
+                                        <th>Upload Health Certificate for previous Liquor License </th>
+                                        <td><input type="file" name="healthcert" class="form-control" /></td>
+
+                                    </tr>
+                                }
+                                else
+                                {
+
+                                    <tr>
+
+                                        <th>Upload Health Certificate for previous Liquor License </th>
+                                        <td>
+                                            <a target="_blank" href="~/@ViewBag.Renewaldata.HealthCert"> Health Certificate</a>
+                                            <button class="btn btn-danger btn-sm float-end" type="button"
+                                                    onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/PostProcess/DeleteHealthCert?Id=@ViewBag.Renewaldata.ApplicationId'; }">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
+
+                                        </td>
 
 
-                                    </th>
+                                    </tr>
+                                }
+
+                                @if (ViewBag.Renewaldata.HealthCert == "" || ViewBag.Renewaldata.CertifiedLicense == "")
+                                {
+                                    <tr>
+                                        <th>
+                                            <input type="hidden" name="Id" value="@ViewBag.Renewaldata.Id" />
+                                            <input type="hidden" name="service" value="Renewal" />
+                                            <input type="hidden" name="lLBNumber" value="@ViewBag.Appinfo.LLBNum" />
+                                            <input type="hidden" name="PaymentStatus" value="Not Paid" />
+                                            <input type="hidden" name="penaltyPaid" value="@ViewBag.Penalty" />
+                                            <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
+                                            <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
+                                            <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />
+                                            @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
 
 
-                                    <td><button class="btn btn-primary" type="submit"> Submit For Renewal</button></td>
-                                </tr>
+                                        </th>
 
-                            }
-                            else
-                            {
-                                <tr>
 
-                                    @if (ViewBag.Payment == null)
-                                    {
-                                        @*<span style="color:red"> Not Paid</span>*@
-                                        <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Renewal</button></td>
+                                        <td><button class="btn btn-primary" type="submit"> Submit For Renewal</button></td>
+                                    </tr>
 
-                                    }
-                                    else
-                                    {
-                                        @if (ViewBag.Payment.Status == "Paid")
+                                }
+                                else
+                                {
+                                    <tr>
+
+                                        @if (ViewBag.Payment == null)
                                         {
-
-
-                                            <td>
-                                                your renewal application is submmited , Click Continue to as you await for verification and inspection.Click
-                                            </td>
-                                            <td>
-                                                <button type="button" class="btn btn-primary" onclick="window.location.href='/Postprocess/Continue?Id=@ViewBag.Renewaldata.Id'">
-                                                    Continue
-                                                </button>
-                                            </td>
-                                            @*<td><button type="button" href="/Postprocess/Complete?Id=@ViewBag.Renewaldata.Id" class="btn btn-primary"> Continue</button></td>*@
-                                        }
-                                        else
-                                        {
+                                            @*<span style="color:red"> Not Paid</span>*@
                                             <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Renewal</button></td>
 
                                         }
-                                    }
+                                        else
+                                        {
+                                            @if (ViewBag.Payment.Status == "Paid")
+                                            {
+
+
+                                                <td>
+                                                    your renewal application is submmited , Click Continue to as you await for verification and inspection.Click
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-primary" onclick="window.location.href='/Postprocess/Continue?Id=@ViewBag.Renewaldata.Id'">
+                                                        Continue
+                                                    </button>
+                                                </td>
+                                                @*<td><button type="button" href="/Postprocess/Complete?Id=@ViewBag.Renewaldata.Id" class="btn btn-primary"> Continue</button></td>*@
+                                            }
+                                            else
+                                            {
+                                                <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Renewal</button></td>
+
+                                            }
+                                        }
 
 
 
-                                </tr>
+                                    </tr>
 
 
 
+                                }
+
+                                </form>
                             }
 
-                            </form>
-                        }
 
+                    </tbody>
 
-                </tbody>
-
-            </table>
-        </div>`
+                </table>
+            </div>
+        </div>
     </div>
-</div>
+}
+else
+{
+    <div class="card border-warning shadow-sm">
+        <div class="card-body text-center p-5">
 
+            <div style="font-size:70px;color:#ffc107;">
+                ⚠
+            </div>
+
+            <h3 class="text-warning mb-3">
+                Another Application Is Already In Progress
+            </h3>
+
+            <p class="text-muted mb-4">
+                You already have an active application in the system.
+                Please return to your dashboard to continue or monitor its progress.
+            </p>
+
+            <a href="/Home/Dashboard" class="btn btn-primary btn-lg">
+                Go To Dashboard
+            </a>
+
+        </div>
+    </div>
+}
 
 
 
@@ -286,7 +321,7 @@
 
                     <div class="col-md-12">
                         @*<label for="inputName5" class="form-label">Select Post Formation Process</label>
-        <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
+                            <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
 
 
 
@@ -347,17 +382,19 @@
                                         <th></th>
                                         <td>
                                             @if (ViewBag.Renewaldata != null)
-                                                {
+                                            {
                                                 @if (ViewBag.Payment == null)
-                                                    {
+                                                {
                                                     <a class="btn btn-primary" href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id">
-                                                Make Payment</a>
-                                                    }
-                                                    else
-                                                    { <a class="btn btn-primary" href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id">
-                                                Make Payment</a>
-                                                    }
+                                                        Make Payment
+                                                    </a>
                                                 }
+                                                else
+                                                { <a class="btn btn-primary" href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id">
+                                                        Continue Payment
+                                                    </a>
+                                                }
+                                            }
                                         </td>
                                     </tr>
                                 </tbody>
@@ -371,11 +408,11 @@
 
 
                     @*<div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Submit</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Submit</button>
 
 
-                    </div>*@
+                        </div>*@
                 </form>
             </div>
         </div>
@@ -385,11 +422,9 @@
 
 
 
-<script>
-    function Payment() {
+<script>function Payment() {
         // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
 
-    $('#PaymentModal').modal('show');
+        $('#PaymentModal').modal('show');
 
-    }
-</script>
+    }</script>

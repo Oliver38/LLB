@@ -106,23 +106,42 @@ namespace LLB.Controllers
         [HttpGet("Continue")]
         public async Task<IActionResult> Continue(string Id, string renid)
         {
-            
-
-            //renewal algorithm to work after inspection
-            /* if(appinfo.ExpiryDate > DateTime.Now)
+            var renewal = _db.Renewals.Where(i => i.Id == Id).FirstOrDefault();
+            if (renewal == null)
             {
-                appinfo.ExpiryDate = DateTime.Now.AddYears(1);
+                TempData["error"] = "Renewal record could not be found.";
+                return RedirectToAction("Dashboard", "Home");
+            }
 
-            }
-            else
+            if (string.IsNullOrWhiteSpace(renewal.CertifiedLicense) || string.IsNullOrWhiteSpace(renewal.HealthCert))
             {
-                appinfo.ExpiryDate = appinfo.ExpiryDate.AddYears(1);
+                TempData["error"] = "Upload the required renewal documents before submitting.";
+                return RedirectToAction("Renewal", "Postprocess", new { id = renewal.ApplicationId, process = "RNW", renid = renewal.Id });
             }
-            */
+
+            var payment = GetLatestRenewalPaymentForDraft(renewal);
+
+            var paymentCompleted = payment != null
+                && HasPaymentStatus(payment, "Paid");
+
+            if (!paymentCompleted)
+            {
+                TempData["error"] = "Complete payment before submitting the renewal.";
+                return RedirectToAction("Renewal", "Postprocess", new { id = renewal.ApplicationId, process = "RNW", renid = renewal.Id });
+            }
+
+            if (string.Equals(renewal.Status, "submitted", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(renewal.Status, "verified", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(renewal.Status, "renewed", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["success"] = "This renewal has already been submitted.";
+                return RedirectToAction("Dashboard", "Home");
+            }
+
             //var verifierId = await TaskAllocator()
             Tasks tasks = new Tasks();
             tasks.Id = Guid.NewGuid().ToString();
-            tasks.ApplicationId = Id;
+            tasks.ApplicationId = renewal.ApplicationId;
             //tasks.AssignerId
 
             //auto allocation to replace
@@ -131,6 +150,7 @@ namespace LLB.Controllers
 
             var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
             //   tasks.VerifierId = selectedUser.Id;
+            tasks.ExaminationStatus = "verification";
             tasks.Service = "renewal";
             tasks.VerifierId = verifierWithLeastTasks;
             tasks.AssignerId = "system";
@@ -141,14 +161,13 @@ namespace LLB.Controllers
             _db.SaveChanges();
 
 
-            var renewal = _db.Renewals.Where(a => a.Id == Id).FirstOrDefault();
             //renewal.Status = "renewal inspection"; to change after getting inpection requirements.
             renewal.Status = "submitted";
+            renewal.PaymentStatus = payment.PaymentStatus ?? payment.Status;
             renewal.Verifier = verifierWithLeastTasks;
             renewal.DateUpdated = DateTime.Now;
             _db.Update(renewal);
             _db.SaveChanges();
-            var appinfo = _db.ApplicationInfo.Where(a => a.Id == renewal.ApplicationId).FirstOrDefault();
 
             return RedirectToAction("Dashboard", "Home");
 
@@ -206,7 +225,7 @@ namespace LLB.Controllers
             var PenaltyFees = _db.PostFormationFees.Where(n => n.Code == "PNL").FirstOrDefault();
             var penalty = time * PenaltyFees.Fee;
             var totalfee = penalty + getFee;
-            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "submitted").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            var renewaldata = GetInProgressRenewalDraft(id);
 
 
             Payments payment = null;
@@ -214,22 +233,13 @@ namespace LLB.Controllers
             var previousinpections = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "submitted").ToList();
 
 
-            var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "renewal").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-            if (paymentTrans == null)
+            var paymentTrans = renewaldata == null ? null : GetLatestRenewalPaymentForDraft(renewaldata);
+            if (paymentTrans != null)
             {
-
-            }
-            else
-            {
-
-
-                if (previousinpections.Count <= 1)
+                if (!string.IsNullOrWhiteSpace(paymentTrans.PollUrl))
                 {
-
                     var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
-
                     var status = paynow.PollTransaction(paymentTrans.PollUrl);
-
                     var statusdata = status.GetData();
                     paymentTrans.PaynowRef = statusdata["paynowreference"];
                     paymentTrans.PaymentStatus = statusdata["status"];
@@ -238,11 +248,9 @@ namespace LLB.Controllers
 
                     _db.Update(paymentTrans);
                     _db.SaveChanges();
-                    payment = paymentTrans;
                 }
-                else
-                {
-                }
+
+                payment = paymentTrans;
             }
 
             var inspectiondata = _db.Renewals.Where(x => x.ApplicationId == id && x.Status == "submitted").OrderByDescending(s => s.DateApplied).FirstOrDefault();
@@ -266,13 +274,24 @@ namespace LLB.Controllers
         [HttpPost("PostRenenwals")]
         public async Task<IActionResult> PostRenDocsAsync(Renewals renewal, IFormFile prevcert, IFormFile healthcert)
         {
-            if(renewal.Id == null) { 
+            if(renewal.Id == null) {
+            var existingDraft = GetInProgressRenewalDraft(renewal.ApplicationId);
+            if (existingDraft != null)
+            {
+                TempData["error"] = "A renewal transaction is already open. Complete payment on the current draft before starting another one.";
+                return RedirectToAction("Renewal", "Postprocess", new { id = existingDraft.ApplicationId, process = "RNW", renid = existingDraft.Id });
+            }
+
             renewal.Id = Guid.NewGuid().ToString();
+                 
 
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             string id = userId.Id;
             renewal.UserId = id;
-                renewal.Status = "submitted";
+            renewal.Status = "inprogress";
+            renewal.PaymentStatus = "Not Paid";
+            renewal.DateApplied = DateTime.Now;
+            renewal.DateUpdated = DateTime.Now;
            
 
             //spublic DateTime DateCreated
@@ -322,6 +341,11 @@ namespace LLB.Controllers
             else
             {
                 var updaterenewal = _db.Renewals.Where(a => a.Id == renewal.Id).FirstOrDefault();
+                if (updaterenewal == null)
+                {
+                    TempData["error"] = "Renewal record could not be found.";
+                    return RedirectToAction("Dashboard", "Home");
+                }
                 //renewal.Id = Guid.NewGuid().ToString();
 
                 //  var userId = await userManager.FindByEmailAsync(User.Identity.Name);
@@ -375,6 +399,7 @@ namespace LLB.Controllers
                     }
                 }
 
+                updaterenewal.DateUpdated = DateTime.Now;
                 _db.Update(updaterenewal);
                     _db.SaveChanges();
 
@@ -390,14 +415,52 @@ namespace LLB.Controllers
         [HttpGet("PaynowRenewal")]
         public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount, string service, string process, string renid )
         {
+            var renewalDraft = _db.Renewals
+                .Where(renewal => renewal.Id == renid && renewal.ApplicationId == Id)
+                .FirstOrDefault();
+
+            if (renewalDraft == null)
+            {
+                TempData["error"] = "Renewal transaction could not be found.";
+                return RedirectToAction("Renewal", "Postprocess", new { id = Id, process = "RNW", renid });
+            }
+
+            if (!string.Equals(renewalDraft.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["error"] = "This renewal transaction is no longer open for payment.";
+                return RedirectToAction("Renewal", "Postprocess", new { id = Id, process = "RNW", renid });
+            }
+
+            var existingTransaction = GetLatestRenewalPaymentForDraft(renewalDraft);
+
+            if (existingTransaction != null && HasPaymentStatus(existingTransaction, "Paid"))
+            {
+                TempData["success"] = "This renewal transaction has already been paid for.";
+                return RedirectToAction("Renewal", "Postprocess", new { id = Id, process = "RNW", renid });
+            }
+
+            if (existingTransaction != null && IsActivePaymentTransaction(existingTransaction))
+            {
+                TempData["error"] = "Complete the current renewal payment before starting another one.";
+
+                if (!string.IsNullOrWhiteSpace(existingTransaction.SystemRef))
+                {
+                    return Redirect(existingTransaction.SystemRef);
+                }
+
+                return RedirectToAction("Renewal", "Postprocess", new { id = Id, process = "RNW", renid });
+            }
+
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
 
-           // paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + Id + "&process=" + process + "&renid=" + renid;
-           // paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + Id + "&process=" + process + "&renid=" + renid;
-             paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process + "&renid=" + renid;
-            paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process + "&renid=" + renid;
+            var callbackUrl = Url.Action("Renewal", "Postprocess", new { id = Id, process, renid }, Request.Scheme);
+            if (!string.IsNullOrWhiteSpace(callbackUrl))
+            {
+                paynow.ResultUrl = callbackUrl;
+                paynow.ReturnUrl = callbackUrl;
+            }
 
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
@@ -431,6 +494,7 @@ namespace LLB.Controllers
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
                 transaction.PopDoc = "";
+                transaction.SystemRef = response.RedirectLink();
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
                 transaction.DateUpdated = DateTime.Now;
@@ -448,7 +512,7 @@ namespace LLB.Controllers
                 //transaction.PaymentStatus = payment.st
 
 
-                var link = response.RedirectLink();
+                var link = transaction.SystemRef;
 
 
                 // Get the poll url of the transaction
@@ -461,12 +525,67 @@ namespace LLB.Controllers
             return View();
         }
 
+        private static bool IsActivePaymentTransaction(Payments payment)
+        {
+            return !HasPaymentStatus(payment, "Paid")
+                && !HasPaymentStatus(payment, "Cancelled")
+                && !HasPaymentStatus(payment, "Rejected")
+                && !HasPaymentStatus(payment, "Expired");
+        }
+
+        private Renewals GetInProgressRenewalDraft(string applicationId)
+        {
+            return _db.Renewals
+                .Where(renewal => renewal.ApplicationId == applicationId && renewal.Status == "inprogress")
+                .OrderByDescending(renewal => renewal.DateApplied)
+                .FirstOrDefault();
+        }
+
+        private Payments GetLatestRenewalPaymentForDraft(Renewals renewal)
+        {
+            var paymentCutoff = GetRenewalPaymentCutoff(renewal);
+
+            return _db.Payments
+                .Where(payment => payment.ApplicationId == renewal.ApplicationId
+                    && payment.Service == "renewal"
+                    && payment.DateAdded >= paymentCutoff)
+                .OrderByDescending(payment => payment.DateAdded)
+                .FirstOrDefault();
+        }
+
+        private static DateTime GetRenewalPaymentCutoff(Renewals renewal)
+        {
+            if (renewal.DateApplied > DateTime.MinValue)
+            {
+                return renewal.DateApplied;
+            }
+
+            if (renewal.DateUpdated > DateTime.MinValue)
+            {
+                return renewal.DateUpdated;
+            }
+
+            return DateTime.MinValue;
+        }
+
+        private static bool HasPaymentStatus(Payments payment, string expectedStatus)
+        {
+            return string.Equals(payment.Status, expectedStatus, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(payment.PaymentStatus, expectedStatus, StringComparison.OrdinalIgnoreCase);
+        }
+
 
         [HttpGet("DeleteHealthCert")]
         public IActionResult DeleteHealthCert(string Id, string process)
         {
-            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == Id && x.Status == "applied").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == Id && x.Status == "inprogress").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            if (renewaldata == null)
+            {
+                TempData["error"] = "No editable renewal draft was found.";
+                return RedirectToAction("Renewal", "Postprocess", new { Id = Id, process = "RNW" });
+            }
             renewaldata.HealthCert = "";
+            renewaldata.DateUpdated = DateTime.Now;
             _db.Update(renewaldata);
             _db.SaveChanges();
             return RedirectToAction("Renewal", "Postprocess", new { Id = Id , process ="RNW"});
@@ -475,8 +594,14 @@ namespace LLB.Controllers
         [HttpGet("DeleteCertifiedLisc")]
         public IActionResult DeleteCertifiedLisc(string Id, string process)
         {
-            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == Id && x.Status == "applied").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            var renewaldata = _db.Renewals.Where(x => x.ApplicationId == Id && x.Status == "inprogress").OrderByDescending(s => s.DateApplied).FirstOrDefault();
+            if (renewaldata == null)
+            {
+                TempData["error"] = "No editable renewal draft was found.";
+                return RedirectToAction("Renewal", "Postprocess", new { Id = Id, process = "RNW" });
+            }
             renewaldata.CertifiedLicense = "";
+            renewaldata.DateUpdated = DateTime.Now;
             _db.Update(renewaldata);
             _db.SaveChanges();
             return RedirectToAction("Renewal", "Postprocess", new { Id = Id, process = "RNW" });
@@ -527,6 +652,7 @@ namespace LLB.Controllers
 
             //}
             //get them into a list
+            
            
                 var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "inspection").OrderByDescending(x => x.DateAdded).FirstOrDefault();
                 if (paymentTrans == null)
@@ -621,6 +747,7 @@ namespace LLB.Controllers
 
             var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
             //   tasks.VerifierId = selectedUser.Id;
+            tasks.ExaminationStatus = "verification";
             tasks.Service = "inspection";
             tasks.VerifierId = verifierWithLeastTasks;
             tasks.AssignerId = "system";

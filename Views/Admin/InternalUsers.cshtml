@@ -1,95 +1,210 @@
-﻿@{
+﻿@model LLB.Models.ViewModel.AdminUserDirectoryViewModel
+
+@{
     Layout = "_LayoutMain";
+
+    Func<bool, bool, string> statusClass = (isActive, isLockedOut) =>
+    {
+        if (!isActive) return "llb-status-danger";
+        if (isLockedOut) return "llb-status-warning";
+        return "llb-status-success";
+    };
+
+    Func<bool, bool, string> statusText = (isActive, isLockedOut) =>
+    {
+        if (!isActive) return "Inactive";
+        if (isLockedOut) return "Locked";
+        return "Active";
+    };
 }
 
-
-
-
-<div class="card">
-    <div class="card-body">
-        <h5 class="card-title">View Internal User</h5>
-        <div class="card-header">
-            <div class="row center">
-                <span class="text-success">@TempData["success"]</span>
-                <span class="text-danger">@TempData["error"]</span>
-            </div>
-            <div class="row">
-                <form class="row g-3" method="post" action="/Admin/InternalUsers">
-
-                    <div class="col-md-6">
-                       
-                        <select id="inputState" name="role" class="form-select">
-                            <option selected value="">Select Role</option>
-                            @foreach (var role in ViewBag.Roles)
-                            {
-                                <option value="@role.Name">@role.Name</option>
-
-                            }
-
-
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <input type="submit" class="btn btn-primary form-control" value="Search" />
-                    </div>
-                </form><!-- End Multi Columns Form -->
-
-            </div>
-
-
-                <div class="card-body">
-                    <h5 class="card-title">@ViewBag.Role<span>| Today</span></h5>
-
-                    <table class="table table-responsive table-borderless datatable">
-                        <thead>
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Name</th>
-                                <th scope="col">Surname</th>
-                                <th scope="col">User Status</th>
-
-                                <th scope="col">Leave Status</th>
-                                <th scope="col">Action</th>
-                                @*<th colspan="2">Action</th>*@
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (ViewBag.Users != null)
-                                {
-
-                            @foreach (var user in ViewBag.Users)
-                                {
-                                <tr>
-                                    <th scope="row"><a href="/Admin/ViewUser?Id=@user.Id">View</a></th>
-                                    <td>@user.Name</td>
-                                    <td>@user.LastName</td>
-                                    <td>@if (user.IsActive == true) { <span class="badge bg-success">Active</span> } else {<span class="badge bg-danger">Blocked</span> } </td>
-                                   
-                                    <td>@user.LeaveStatus</td>
-
-                                   
-                                    <td>
-                                        @if (user.IsActive == true)
-                                            {
-                                                    <a href="/Admin/Block?UserId=@user.Id&status=block&role=@ViewBag.Role" onclick="return confirm('Are you sure you want to block this person')"  class="btn btn-danger">Block</a>
-                                                    }
-                                                    else {
-                                                <a href="/Admin/Block?UserId=@user.Id&status=unblock&role=@ViewBag.Role" onclick="return confirm('Are you sure you want to UnBlock this person')" class="btn btn-success">UnBlock</a>
-                                                    }
-                                        </td>
-                                    <td><a href="/Admin/ResetPassword?userid=@user.Id&email=@user.Email"  onclick="return confirm('Are you sure you want to Reset "@user.Name @user.LastName" password')" class="btn btn-warning"> Reset Password</a></td>
-                                </tr>
-                                }
-                                }
-
-                        </tbody>
-                    </table>
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Visible Users</p>
+                    <h3>@Model.TotalUsers</h3>
                 </div>
+                <span class="llb-stat-icon"><i class="bi bi-people"></i></span>
             </div>
-      
-
+            <p>Users matching the current search and filter criteria.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Active</p>
+                    <h3>@Model.ActiveUsers</h3>
+                </div>
+                <span class="llb-stat-icon"><i class="bi bi-person-check"></i></span>
+            </div>
+            <p>Accounts that are active and available for portal access.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Inactive</p>
+                    <h3>@Model.InactiveUsers</h3>
+                </div>
+                <span class="llb-stat-icon"><i class="bi bi-person-x"></i></span>
+            </div>
+            <p>Accounts that have been deliberately deactivated by an administrator.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Locked</p>
+                    <h3>@Model.LockedUsers</h3>
+                </div>
+                <span class="llb-stat-icon"><i class="bi bi-shield-lock"></i></span>
+            </div>
+            <p>Accounts currently locked by security rules or administrative action.</p>
+        </div>
     </div>
 </div>
 
-       
+<div class="card llb-panel-card mb-4">
+    <div class="card-body d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-4">
+        <form method="get" action="/Admin/InternalUsers" class="row g-3 flex-grow-1">
+            <div class="col-xl-4">
+                <label class="form-label">Search</label>
+                <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Name, email, phone, role" />
+            </div>
+            <div class="col-sm-6 col-xl-2">
+                <label class="form-label">Scope</label>
+                <select name="scope" class="form-select">
+                    <option value="all" selected="@(string.Equals(Model.ScopeFilter, "all", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">All Users</option>
+                    <option value="Internal" selected="@(string.Equals(Model.ScopeFilter, "Internal", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Internal</option>
+                    <option value="Client" selected="@(string.Equals(Model.ScopeFilter, "Client", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Client</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-xl-2">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="all" selected="@(string.Equals(Model.StatusFilter, "all", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">All Statuses</option>
+                    <option value="active" selected="@(string.Equals(Model.StatusFilter, "active", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Active</option>
+                    <option value="inactive" selected="@(string.Equals(Model.StatusFilter, "inactive", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Inactive</option>
+                    <option value="locked" selected="@(string.Equals(Model.StatusFilter, "locked", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Locked</option>
+                    <option value="onleave" selected="@(string.Equals(Model.StatusFilter, "onleave", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">On Leave</option>
+                </select>
+            </div>
+            <div class="col-xl-2">
+                <label class="form-label">Role</label>
+                <select name="role" class="form-select">
+                    <option value="">All Roles</option>
+                    @foreach (var role in Model.AvailableRoles)
+                    {
+                        <option value="@role" selected="@(string.Equals(Model.RoleFilter, role, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@role</option>
+                    }
+                </select>
+            </div>
+            <div class="col-xl-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary w-100">Apply</button>
+            </div>
+        </form>
 
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/Admin/RegisterUser" class="btn btn-primary">
+                <i class="bi bi-person-plus me-2"></i>Create User
+            </a>
+            <a href="/Admin/InternalUsers" class="btn btn-outline-primary">Reset Filters</a>
+        </div>
+    </div>
+</div>
+
+<div class="card llb-table-card">
+    <div class="card-header">
+        <h5 class="card-title">User Directory</h5>
+    </div>
+    <div class="card-body">
+        @if (TempData["success"] != null)
+        {
+            <div class="alert alert-success border-0 rounded-4">@TempData["success"]</div>
+        }
+
+        @if (TempData["error"] != null)
+        {
+            <div class="alert alert-danger border-0 rounded-4">@TempData["error"]</div>
+        }
+
+        @if (TempData["generatedPassword"] != null)
+        {
+            <div class="alert alert-warning border-0 rounded-4">
+                Temporary password: <strong>@TempData["generatedPassword"]</strong>
+            </div>
+        }
+
+        @if (Model.Users.Count == 0)
+        {
+            <div class="llb-empty-state">
+                <i class="bi bi-search"></i>
+                <h5 class="fw-bold">No users matched the current filters</h5>
+                <p class="text-muted mb-0">Adjust the search criteria or create a new user.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Contact</th>
+                            <th>Primary Role</th>
+                            <th>Scope</th>
+                            <th>Status</th>
+                            <th>Leave</th>
+                            <th>Created</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@user.FullName</div>
+                                    <small class="text-muted">@string.Join(", ", user.Roles)</small>
+                                </td>
+                                <td>
+                                    <div>@user.Email</div>
+                                    <small class="text-muted">@user.PhoneNumber</small>
+                                </td>
+                                <td>@user.PrimaryRole</td>
+                                <td>@user.Scope</td>
+                                <td>
+                                    <span class="llb-status-pill @statusClass(user.IsActive, user.IsLockedOut)">
+                                        @statusText(user.IsActive, user.IsLockedOut)
+                                    </span>
+                                </td>
+                                <td>@user.LeaveStatus</td>
+                                <td>@(user.DateOfApplication?.ToString("dd MMM yyyy") ?? "-")</td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end flex-wrap gap-2">
+                                        <a href="/Admin/ViewUser?id=@user.Id" class="btn btn-sm btn-primary">Manage</a>
+                                        <a href="/Admin/ResetPassword?userid=@user.Id&role=@Model.RoleFilter&searchTerm=@Model.SearchTerm&status=@Model.StatusFilter&scope=@Model.ScopeFilter"
+                                           class="btn btn-sm btn-outline-primary"
+                                           onclick="return confirm('Reset the password for @user.FullName?')">
+                                            Reset Password
+                                        </a>
+                                        <a href="/Admin/Block?userId=@user.Id&status=@(user.IsActive ? "block" : "unblock")&role=@Model.RoleFilter&searchTerm=@Model.SearchTerm&statusFilter=@Model.StatusFilter&scope=@Model.ScopeFilter"
+                                           class="btn btn-sm @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                           onclick="return confirm('Update access status for @user.FullName?')">
+                                            @(user.IsActive ? "Deactivate" : "Activate")
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

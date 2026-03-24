@@ -605,7 +605,7 @@ namespace LLB.Controllers
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             var secretaryWithLeastTasks = await _taskAllocationHelper.GetSecretary(_db,userManager);
             //   tasks.VerifierId = selectedUser.Id;
-
+            tasksc.ExaminationStatus = "approval";
             tasksc.Service = "new application";
             tasksc.ApproverId = secretaryWithLeastTasks;
             tasksc.AssignerId = "system";

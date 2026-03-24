@@ -66,7 +66,7 @@ namespace LLB.Controllers
             {
                 RenewalViewModel getreninfo = new RenewalViewModel();
 
-                var renapps = _db.Renewals.Where(a => a.Id == rentask.ApplicationId).FirstOrDefault();
+                var renapps = _db.Renewals.Where(a => a.ApplicationId == rentask.ApplicationId).FirstOrDefault();
                 var renappinfo = _db.ApplicationInfo.Where(s => s.Id == renapps.ApplicationId).FirstOrDefault();
                 var reaoutletinfo = _db.OutletInfo.Where(q => q.ApplicationId == renapps.ApplicationId).FirstOrDefault();
                 var licensetype = _db.LicenseTypes.Where(w => w.Id == renappinfo.LicenseTypeID).FirstOrDefault();
@@ -798,7 +798,7 @@ namespace LLB.Controllers
 
             tasksc.Service = "Verification Inspection";
             var userId = userManager.GetUserId(User);
-
+            tasksc.ExaminationStatus = "verification";
             tasksc.VerifierId = userId;
             tasksc.AssignerId = "system";
             tasksc.Status = "assigned";
@@ -1008,7 +1008,7 @@ namespace LLB.Controllers
                 //tasks.AssignerId
 
                 var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
-
+                tasksc.ExaminationStatus = "recommendation";
                 tasksc.Service = "new application";
                 tasksc.RecommenderId = recommenderWithLeastTasks;
                 tasksc.AssignerId = "system";
@@ -1117,6 +1117,7 @@ namespace LLB.Controllers
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
             var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
+            tasksc.ExaminationStatus = "verification";
             tasksc.Service = "renewal inspection";
             tasksc.VerifierId = verifierWithLeastTasks;
             tasksc.AssignerId = "system";

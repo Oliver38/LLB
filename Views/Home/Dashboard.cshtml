@@ -1,571 +1,442 @@
-﻿
-
-@{
+﻿@{
     Layout = "_LayoutMain";
+    ViewData["Title"] = "Client Dashboard";
+    ViewData["Subtitle"] = "Track applications, approved licences, renewals, and inspections";
+
+    Func<string?, string> statusClass = status => status?.ToLowerInvariant() switch
+    {
+        "approved" => "llb-status-success",
+        "submitted" => "llb-status-info",
+        "payment verification" => "llb-status-info",
+        "verified" => "llb-status-success",
+        "inprogress" => "llb-status-warning",
+        "has query" => "llb-status-warning",
+        "rejected" => "llb-status-danger",
+        "inspected" => "llb-status-success",
+        _ => "llb-status-info"
+    };
 }
 
-
-
-
-
-<div class="card">
-    <div class="card-body">
-        @*<h5 class="card-title">Bordered Tabs</h5>*@
-        <div class="card-header">
-            <div class="row w-100 align-items-center">
-                <div class="col">
-                    <h5 class="card-title mb-0">My Applications</h5>
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">In Progress</p>
+                    <h3>@ViewBag.Applications.Count</h3>
                 </div>
-                <div class="col-auto">
-                    <a href="/License/Apply" class="btn btn-primary">
-                        Apply For License
-                    </a>
-                </div>
+                <span class="llb-stat-icon"><i class="bi bi-folder2-open"></i></span>
             </div>
+            <p>Applications that still need submission, payment, review, or query resolution.</p>
         </div>
-        <!-- Bordered Tabs -->
-        <ul class="nav nav-tabs nav-tabs-bordered" id="borderedTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#bordered-home" type="button" role="tab" aria-controls="home" aria-selected="true">In progress</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#bordered-profile" type="button" role="tab" aria-controls="profile" aria-selected="false">My Licenses</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#bordered-contact" type="button" role="tab" aria-controls="contact" aria-selected="false"> Post Formations</button>
-            </li>
-        </ul>
-        <div class="tab-content pt-2" id="borderedTabContent">
-            <div class="tab-pane fade show active" id="bordered-home" role="tabpanel" aria-labelledby="home-tab">
-
-                <div class="row">
-
-                    <table class="table table-responsive table-hover table-striped">
-
-
-                        <tr>
-                            <th>Reference</th>
-
-                            <th>Trading Name </th>
-                            <th>Operating Address </th>
-                            <th>Application Date </th>
-                            <th>License </th>
-                            <th>For </th>
-                            <th>Status </th>
-                            <th></th>
-                        </tr>
-                        <tbody class="table-responsive">
-                            @foreach (var application in ViewBag.Applications)
-                            {
-
-                                <tr>
-                                    <td>@application.RefNum   </td>
-
-                                    <td>
-                                        @foreach (var outlet in ViewBag.OutletInfo)
-                                        {
-                                            if (outlet.ApplicationId == application.Id)
-                                            {
-                                                @outlet.TradingName
-                                            }
-                                        }
-                                    </td>
-                                    <td>
-                                        @foreach (var outlet in ViewBag.OutletInfo)
-                                        {
-                                            if (outlet.ApplicationId == application.Id)
-                                            {
-                                                @outlet.Address
-                                            }
-                                        }
-                                    </td>
-
-                                    <td>@application.ApplicationDate</td>
-
-                                    <td>
-                                        @foreach (var licence in ViewBag.License)
-                                        {
-                                            if (licence.Id == application.LicenseTypeID)
-                                            {
-                                                @licence.LicenseName
-                                            }
-                                        }
-
-                                    </td>
-
-
-                                    <td>
-                                        @foreach (var region in ViewBag.Regions)
-                                        {
-                                            if (region.Id == application.ApplicationType)
-                                            {
-                                                @region.RegionName
-                                            }
-                                        }
-
-                                    </td>
-
-                                    <td>
-                                        @if (application.Status == "inprogress")
-                                        {
-                                            <span class="text-warning">@application.Status</span>
-                                        }  @if (application.Status == "payment verification")
-                                        {
-                                            <span class="text-success">
-                                                @application.Status
-                                            </span>
-                                        }
-                                        else if (application.Status == "submitted")
-                                        {
-                                            <span class="text-success">
-                                                @application.Status
-                                            </span>
-                                        }
-                                        else if (application.Status == "Has Query")
-                                        {
-                                            <span class="text-warning">
-                                                @application.Status
-                                            </span>
-                                        }
-                                        else if (application.Status == "approved" || application.Status == "verified")
-                                        {
-                                            <span class="text-success">@application.Status</span>
-                                        }
-                                        else if (application.Status == "rejected")
-                                        {
-                                            <span class="text-danger">@application.Status</span>
-
-                                        }
-                                    </td>
-
-                                    <td>
-                                        @if (application.Status == "inprogress")
-                                        {
-                                            <a href="/License/Apply?Id=@application.Id" class="btn btn-primary">Continue </a>
-                                        }   @if (application.Status == "payment verification")
-                                        {
-                                            <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
-                                        }
-                                        @if (application.Status == "submitted")
-                                        {
-                                            <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
-                                        }
-                                        @if (application.Status == "Has Query")
-                                        {<a href="~/License/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
-                                        }
-                                        @if (application.Status == "approved")
-                                        {
-                                            @*<a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>*@
-                                            <a href="/Downloads/CheckDownload?LLBNUM=@application.LLBNum" target="_blank" class="btn btn-primary">Download License</a>
-                                        }
-                                        @if (application.Status == "rejected")
-                                        {
-                                            @*<a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>*@
-
-                                            <span class="text-danger">@application.Status</span>
-
-                                        }
-                                    </td>
-
-
-
-                                </tr>
-
-                            }
-                        </tbody>
-
-
-
-                    </table>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Approved Licences</p>
+                    <h3>@ViewBag.ApprovedApplications.Count</h3>
                 </div>
-
+                <span class="llb-stat-icon"><i class="bi bi-patch-check"></i></span>
             </div>
-            <div class="tab-pane fade" id="bordered-profile" role="tabpanel" aria-labelledby="profile-tab">
-
-                <div class="row">
-
-                    <table class="table table-responsiveß table-hover table-striped">
-
-
-                        <thead>
-                        <th>Reference</th>
-                        <th>LLB Number</th>
-                        <th>Trading Name </th>
-                        <th>Operating Address </th>
-                        <th>Expiry Date </th>
-                        <th>License </th>
-                        <th>For </th>
-                        <th>Status </th>
-                        <th></th>
-                        </thead>
-                        <tbody class="table-responsive">
-                            @foreach (var application in ViewBag.ApprovedApplications)
-                            {
-
-                                <tr>
-                                    <td>@application.RefNum   </td>
-                                    <td>@application.LLBNum</td>
-                                    <td>
-                                        @foreach (var outlet in ViewBag.OutletInfo)
-                                        {
-                                            if (outlet.ApplicationId == application.Id)
-                                            {
-                                                @outlet.TradingName
-                                            }
-                                        }
-                                    </td>
-                                    <td>
-                                        @foreach (var outlet in ViewBag.OutletInfo)
-                                        {
-                                            if (outlet.ApplicationId == application.Id)
-                                            {
-                                                @outlet.Address
-                                            }
-                                        }
-                                    </td>
-
-                                    <td>@application.ExpiryDate.ToString("dd/MM/yyyy")</td>
-
-                                    <td>
-                                        @foreach (var licence in ViewBag.License)
-                                        {
-                                            if (licence.Id == application.LicenseTypeID)
-                                            {
-                                                @licence.LicenseName
-                                            }
-                                        }
-
-                                    </td>
-
-
-                                    <td>
-                                        @foreach (var region in ViewBag.Regions)
-                                        {
-                                            if (region.Id == application.ApplicationType)
-                                            {
-                                                @region.RegionName
-                                            }
-                                        }
-
-                                    </td>
-
-                                    <td>
-                                        @if (application.Status == "inprogress")
-                                        {
-                                            <span class="text-warning">@application.Status</span>
-                                        }  @if (application.Status == "payment verification")
-                                        {
-                                            <span class="text-success">
-                                                @application.Status
-                                            </span>
-                                        }
-                                        else if (application.Status == "submitted")
-                                        {
-                                            <span class="text-success">
-                                                @application.Status
-                                            </span>
-                                        }
-                                        else if (application.Status == "Has Query")
-                                        {
-                                            <span class="text-warning">
-                                                @application.Status
-                                            </span>
-                                        }
-                                        else if (application.Status == "approved")
-                                        {
-                                            <span class="text-success">@application.Status</span>
-                                        }
-                                    </td>
-
-                                    <td>
-                                        @if (application.Status == "inprogress")
-                                        {
-                                            <a href="/License/Apply?Id=@application.Id" class="btn btn-primary">Continue </a>
-                                        }   @if (application.Status == "payment verification")
-                                        {
-                                            <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
-                                        }
-                                        @if (application.Status == "submitted")
-                                        {
-                                            <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
-                                        }
-                                        @if (application.Status == "Has Query")
-                                        {<a href="~/License/Apply?Id=@application.Id" class="btn btn-primary">View Application</a>
-                                        }
-                                        @if (application.Status == "approved")
-                                        {
-                                            @*<a href="/Documents/C?searchref=@application.Id" target="_blank" class="btn btn-primary">Download License</a>*@
-                                            <a href="/Downloads/CheckDownload?LLBNUM=@application.LLBNum&DocumentType=License" target="_blank" class="btn btn-primary">Download License</a>
-
-                                        }
-                                    </td>
-
-                                    <td>
-                                        @*<a href="~/Home/PostFormation?Id=@application.Id" class="btn btn-primary">Post Formations</a>*@
-                                        @foreach (var outlet in ViewBag.OutletInfo)
-                                        {
-                                            if (outlet.ApplicationId == application.Id)
-                                            {
-
-                                                <button type="button" class="btn btn-primary" onclick="PostFormationModal('@application.Id',' @outlet.TradingName')" class="btn btn-primary">
-                                                    Post Formations
-                                                </button>
-                                            }
-                                        }
-
-                                    </td>
-
-                                </tr>
-
-                            }
-                        </tbody>
-
-
-
-                    </table>
+            <p>Licences already approved and available for download or follow-up services.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Renewals</p>
+                    <h3>@ViewBag.RenewalTasks.Count</h3>
                 </div>
-
-
+                <span class="llb-stat-icon"><i class="bi bi-arrow-repeat"></i></span>
             </div>
-            <div class="tab-pane fade" id="bordered-contact" role="tabpanel" aria-labelledby="contact-tab">
-
-
-                <div class="row">
-                    <div class="card">
-
-                        <div class="card-body" id="_step1">
-                            <div class="card-header">
-
-                                <h5 class="card-title">Renewal Applications</h5>
-                                @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                                *@
-                            </div>
-
-
-
-
-                            <div class="row">
-
-                                <table class="table table-responsiveß table-hover table-striped">
-
-
-                                    <thead>
-                                        <tr>
-                                            @*getreninfo.ApplicationId = renapps.ApplicationId;
-                                    getreninfo.Id = renapps.Id;
-                                    getreninfo.LLBNumber = renapps.LLBNumber;
-                                    getreninfo.PreviousExpiry = renapps.PreviousExpiry;
-                                    getreninfo.TradingName = reaoutletinfo.TradingName;
-                                    getreninfo.Licensetype = licensetype.LicenseName;
-                                    getreninfo.LicenseRegion = licenseReg.RegionName;*@
-
-                                            <th>Trading Name </th>
-                                            <th>LLB Number </th>
-                                            <th>Expiry Date </th>
-                                            <th>License </th>
-                                            <th>For </th>
-                                            <th>Status </th>
-                                            <th>Action </th>
-                                        </tr>
-
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var renewal in ViewBag.RenewalTasks)
-                                        {
-
-                                            <tr>
-                                                <td>@renewal.TradingName</td>
-                                                <td>@renewal.LLBNumber</td>
-                                                <td>@renewal.PreviousExpiry</td>
-                                                <td>@renewal.Licensetype </td>
-                                                <td>@renewal.LicenseRegion</td>
-                                                <td>@renewal.Status</td>
-                                                <td><a class="btn btn-primary" href="/Verify/Renewal?Id=@renewal.Id"> View Renewal</a></td>
-
-
-                                            </tr>
-
-                                        }
-                                    </tbody>
-
-
-
-                                </table>
-                            </div>
-
-
-
-
-
-
-                        </div>
-                    </div>
-
+            <p>Renewal processes linked to your existing licence records.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Inspections</p>
+                    <h3>@ViewBag.Inspections.Count</h3>
                 </div>
-
-
-
-
-                <!-- INSPECTION -->
-                <div class="row">
-                    <div class="card">
-
-                        <div class="card-body" id="_step1">
-                            <div class="card-header">
-
-                                <h5 class="card-title">Inspections</h5>
-                                @*<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDirector">Add Director </button>
-                                *@
-                            </div>
-
-
-
-
-                            <div class="row">
-
-                                <table class="table table-responsiveß table-hover table-striped">
-
-
-                                    <thead>
-                                        <tr>
-                                            @*renewalinspectiontask.TradingName = outletinfoq.TradingName;
-                                            renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
-                                            renewalinspectiontask.ApplicationId = applId;
-                                            renewalinspectiontask.DateApplied = inspecy.DateApplied;
-                                            renewalinspectiontask.Id = inspecy.Id;
-                                            renewalinspectiontask.Status = inspecy.Status;
-                                            renewalinspectiontask.Service = inspecy.Service;
-                                            renewalinspectiontask.LicenseType = licensetype.LicenseName;
-                                            renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
-                                            renewalinspectiontask.TaskId = insptask.Id;*@
-
-                                            <th>Trading Name </th>
-                                            <th>LLB Number </th>
-                                            <th>Inspection Date </th>
-                                            <th>License </th>
-                                            <th>For </th>
-                                            <th>Service </th>
-                                            <th>Status </th>
-                                            <th>Action </th>
-                                        </tr>
-
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var inspection in ViewBag.Inspections)
-                                        {
-
-                                            <tr>
-                                                <td>@inspection.TradingName</td>
-                                                <td>@inspection.LLBNumber</td>
-                                                <td>@inspection.InspectionDate</td>
-                                                <td>@inspection.LicenseType </td>
-                                                <td>@inspection.LicenseRegion</td>
-                                                <td>@inspection.Service</td>
-                                                <td>@inspection.Status</td>
-                                                <td><a class="btn btn-primary" href="/Viewing/inspection?Id=@inspection.Id"> View inspection</a></td>
-
-
-                                            </tr>
-
-                                        }
-                                    </tbody>
-
-
-
-                                </table>
-                            </div>
-
-
-
-
-
-
-                        </div>
-                    </div>
-
-                </div>
-
-
-
-
+                <span class="llb-stat-icon"><i class="bi bi-clipboard2-pulse"></i></span>
             </div>
-
-        </div><!-- End Bordered Tabs -->
-
+            <p>Inspection outcomes and post-inspection records linked to your applications.</p>
+        </div>
     </div>
 </div>
 
+<div class="card llb-panel-card mb-4">
+    <div class="card-body d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-4">
+        <div>
+            <div class="llb-section-kicker">Workspace</div>
+            <h2 class="h3 fw-bold mb-2">Manage everything from one dashboard</h2>
+            <p class="text-muted mb-0">
+                Continue drafts, review approved licences, and launch post-formation services without leaving this workspace.
+            </p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/License/Apply" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Apply For Licence
+            </a>
+            <a href="/Home/FAQ" class="btn btn-outline-primary">
+                <i class="bi bi-question-circle me-2"></i>View FAQ
+            </a>
+        </div>
+    </div>
+</div>
 
- 
+<div class="card llb-table-card">
+    <div class="card-body">
+        <ul class="nav nav-pills llb-tabs mb-4" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="in-progress-tab" data-bs-toggle="tab" data-bs-target="#in-progress-pane" type="button" role="tab">
+                    In Progress
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="licences-tab" data-bs-toggle="tab" data-bs-target="#licences-pane" type="button" role="tab">
+                    My Licences
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services-pane" type="button" role="tab">
+                    Post Formations
+                </button>
+            </li>
+        </ul>
 
-<!-- Basic Modal -->
-
-<div class="modal fade" id="PostFormationModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Post Fomation For </h5> &nbsp;<b><h5 class="modal-title" id="feetitle"></h5></b>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="in-progress-pane" role="tabpanel">
+                @if (ViewBag.Applications.Count == 0)
+                {
+                    <div class="llb-empty-state">
+                        <i class="bi bi-folder2-open"></i>
+                        <h5 class="fw-bold">No active applications</h5>
+                        <p class="text-muted mb-3">Start a new licence application when you are ready.</p>
+                        <a href="/License/Apply" class="btn btn-primary">Apply For Licence</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Trading Name</th>
+                                    <th>Licence</th>
+                                    <th>For</th>
+                                    <th>Applied</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var application in ViewBag.Applications)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@application.RefNum</td>
+                                        <td>
+                                            @foreach (var outlet in ViewBag.OutletInfo)
+                                            {
+                                                if (outlet.ApplicationId == application.Id)
+                                                {
+                                                    @outlet.TradingName
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @foreach (var licence in ViewBag.License)
+                                            {
+                                                if (licence.Id == application.LicenseTypeID)
+                                                {
+                                                    @licence.LicenseName
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            @foreach (var region in ViewBag.Regions)
+                                            {
+                                                if (region.Id == application.ApplicationType)
+                                                {
+                                                    @region.RegionName
+                                                }
+                                            }
+                                        </td>
+                                        <td>@application.ApplicationDate.ToString("dd MMM yyyy")</td>
+                                        <td>
+                                            <span class="llb-status-pill @statusClass(application.Status)">@application.Status</span>
+                                        </td>
+                                        <td class="text-end">
+                                            @if (application.Status == "inprogress" || application.Status == "Has Query")
+                                            {
+                                                <a href="/License/Apply?Id=@application.Id" class="btn btn-sm btn-primary">Continue</a>
+                                            }
+                                            else
+                                            {
+                                                <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-sm btn-outline-primary">View</a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
-            <form action="/Home/PostFormation" enctype="multipart/form-data" method="post">
-                <div class="modal-body">
-                    <div class="col-md-12">
-                        <label for="inputName5" class="form-label">Select Post Formation Process</label>
-                        <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">
 
+            <div class="tab-pane fade" id="licences-pane" role="tabpanel">
+                @if (ViewBag.ApprovedApplications.Count == 0)
+                {
+                    <div class="llb-empty-state">
+                        <i class="bi bi-patch-check"></i>
+                        <h5 class="fw-bold">No approved licences yet</h5>
+                        <p class="text-muted mb-0">Approved licences will appear here once processing is complete.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>LLB Number</th>
+                                    <th>Trading Name</th>
+                                    <th>Expiry Date</th>
+                                    <th>Licence</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var application in ViewBag.ApprovedApplications)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@application.RefNum</td>
+                                        <td>@application.LLBNum</td>
+                                        <td>
+                                            @foreach (var outlet in ViewBag.OutletInfo)
+                                            {
+                                                if (outlet.ApplicationId == application.Id)
+                                                {
+                                                    @outlet.TradingName
+                                                }
+                                            }
+                                        </td>
+                                        <td>@application.ExpiryDate.ToString("dd MMM yyyy")</td>
+                                        <td>
+                                            @foreach (var licence in ViewBag.License)
+                                            {
+                                                if (licence.Id == application.LicenseTypeID)
+                                                {
+                                                    @licence.LicenseName
+                                                }
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="llb-status-pill @statusClass(application.Status)">@application.Status</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex justify-content-end flex-wrap gap-2">
+                                                <a href="/Downloads/CheckDownload?LLBNUM=@application.LLBNum&DocumentType=License" target="_blank" class="btn btn-sm btn-primary">
+                                                    Download
+                                                </a>
+                                                @foreach (var outlet in ViewBag.OutletInfo)
+                                                {
+                                                    if (outlet.ApplicationId == application.Id)
+                                                    {
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-primary"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#PostFormationModal"
+                                                                data-application-id="@application.Id"
+                                                                data-trading-name="@outlet.TradingName">
+                                                            Post Formation
+                                                        </button>
+                                                    }
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
 
-
-                        @*<div class="col-md-12 d-flex align-items-center">
-                                <input type="radio" name="selectProcess" class="form-check-input me-2" id="MunicipaltyFee">
-                                <label for="MunicipaltyFee" class="form-label mb-0">Municipalty Fee</label>
-                            </div>*@
-
-
-
-                        <div class="row mb-3">
-
-
-                            <div class="col-md-12">
-                                <select class="form-select" size="8" colspan="10" name="process" multiple aria-label="multiple select example">
-                                    <option value="RNW">Renewal</option>
-                                    <option value="APM">Change/Approval of a person as a Manager</option>
-                                    @*<option value="GDP">Government Department Permit 100.00</option>*@
-                                    <option value="INP">Inspection </option>
-                                    @*<option value="DPL">Duplication 60.00</option>*@
-                                    <option value="TRM">Temporal removal </option>
-                                    <option value="TTR">Temporal Transfer </option>
-                                    <option value="EXH">Extended hours (Occasional) liquor licence</option>
-                                    <option value="TRL">Temporal Retail liquor license</option>
-                                    <option value="ECF">Extra Counter/Change Plan fee</option>
-                                    @*<option value="ECF">Extra Counter fee 300.00</option>*@
-                                    @*<option value="TRS">Transcripts a)150 b)130 c)130 d)150</option>*@
-                                </select>
-
+            <div class="tab-pane fade" id="services-pane" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="card llb-panel-card">
+                            <div class="card-header">
+                                <h5 class="card-title">Renewal Applications</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (ViewBag.RenewalTasks.Count == 0)
+                                {
+                                    <div class="llb-empty-state">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                        <h5 class="fw-bold">No renewal records</h5>
+                                        <p class="text-muted mb-0">Renewal requests linked to your licences will appear here.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>Trading Name</th>
+                                                    <th>LLB Number</th>
+                                                    <th>Expiry Date</th>
+                                                    <th>Licence</th>
+                                                    <th>For</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var renewal in ViewBag.RenewalTasks)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-semibold">@renewal.TradingName</td>
+                                                        <td>@renewal.LLBNumber</td>
+                                                        <td>@renewal.PreviousExpiry</td>
+                                                        <td>@renewal.Licensetype</td>
+                                                        <td>@renewal.LicenseRegion</td>
+                                                        <td>
+                                                            <span class="llb-status-pill @statusClass(renewal.Status)">@renewal.Status</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary" href="/Postprocess/Renewal?id=@renewal.ApplicationId&process=RNW&renid=@renewal.Id">View Renewal</a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
 
-
+                    <div class="col-12">
+                        <div class="card llb-panel-card">
+                            <div class="card-header">
+                                <h5 class="card-title">Inspections</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (ViewBag.Inspections.Count == 0)
+                                {
+                                    <div class="llb-empty-state">
+                                        <i class="bi bi-clipboard2-pulse"></i>
+                                        <h5 class="fw-bold">No inspection records</h5>
+                                        <p class="text-muted mb-0">Completed inspections associated with your applications will appear here.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>Trading Name</th>
+                                                    <th>LLB Number</th>
+                                                    <th>Inspection Date</th>
+                                                    <th>Licence</th>
+                                                    <th>For</th>
+                                                    <th>Service</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var inspection in ViewBag.Inspections)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-semibold">@inspection.TradingName</td>
+                                                        <td>@inspection.LLBNumber</td>
+                                                        <td>@inspection.InspectionDate.ToString("dd MMM yyyy")</td>
+                                                        <td>@inspection.LicenseType</td>
+                                                        <td>@inspection.LicenseRegion</td>
+                                                        <td>@inspection.Service</td>
+                                                        <td>
+                                                            <span class="llb-status-pill @statusClass(inspection.Status)">@inspection.Status</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary" href="/Viewing/inspection?Id=@inspection.Id">View Inspection</a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="PostFormationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title">Post Formation Service</h5>
+                    <p class="text-muted mb-0">Select the next service for <span class="fw-semibold text-dark" id="feetitle"></span>.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/Home/PostFormation" method="post">
+                <div class="modal-body pt-3">
+                    <input type="hidden" name="id" id="ApplicationId" />
+                    <label for="process" class="llb-form-section-label">Service</label>
+                    <select class="form-select llb-modal-select" name="process" id="process" required>
+                        <option value="">Choose a service</option>
+                        <option value="RNW">Renewal</option>
+                        <option value="APM">Change or approval of a manager</option>
+                        <option value="INP">Inspection</option>
+                        <option value="TRM">Temporary removal</option>
+                        <option value="TTR">Temporary transfer</option>
+                        <option value="EXH">Extended hours liquor licence</option>
+                        <option value="TRL">Temporary retail liquor licence</option>
+                        <option value="ECF">Extra counter or change plan fee</option>
+                    </select>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-primary">Proceed</button>
                 </div>
             </form>
         </div>
     </div>
-</div><!-- End Basic Modal-->
+</div>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const modalElement = document.getElementById("PostFormationModal");
+        if (!modalElement) {
+            return;
+        }
 
+        modalElement.addEventListener("show.bs.modal", function (event) {
+            const trigger = event.relatedTarget;
+            if (!trigger) {
+                return;
+            }
 
-
-
-<script>function PostFormationModal(Id, Name) {
-        // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
-
-        $('#ApplicationId').val(Id);
-        $('#feetitle').html(Name);
-
-        $('#PostFormationModal').modal('show');
-
-    }</script>
+            document.getElementById("ApplicationId").value = trigger.getAttribute("data-application-id") || "";
+            document.getElementById("feetitle").textContent = trigger.getAttribute("data-trading-name") || "";
+            document.getElementById("process").value = "";
+        });
+    });
+</script>

@@ -1,313 +1,106 @@
-﻿
+﻿@{
+    var pageTitle = ViewData["Title"]?.ToString();
+    if (string.IsNullOrWhiteSpace(pageTitle))
+    {
+        pageTitle = "Liquor Licensing Board";
+    }
+}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Liquor Licencing Board - LLB</title>
-    <meta name="description" content="">
-    <meta name="keywords" content="">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>@pageTitle - LLB</title>
+    <meta name="description" content="Digital services for liquor licence applications, renewals, inspections, and compliance." />
 
-    <!-- Favicons -->
-    <link href="assets/img/favicon.png" rel="icon">
-    <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="~/NiceAdmin/assets/img/favicon.png" rel="icon" />
+    <link href="~/NiceAdmin/assets/img/apple-touch-icon.png" rel="apple-touch-icon" />
 
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com" rel="preconnect">
-    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,500,600,700|Nunito:400,600,700,800|Poppins:400,500,600,700" rel="stylesheet" />
 
-    <!-- Vendor CSS Files -->
-    <link href="~/Gp/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="~/Gp/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-    <link href="~/Gp/assets/vendor/aos/aos.css" rel="stylesheet">
-    <link href="~/Gp/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
-    <link href="~/Gp/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
-
-    <!-- Main CSS File -->
-    <link href="~/Gp/assets/css/main.css" rel="stylesheet">
-
-    @*  <!-- Custom Styles -->
-    <style>
-        /* Green, Yellow, and Black Theme */
-        :root {
-            --primary-color: #008000; /* Green */
-            --secondary-color: #006400; /* Yellow */
-            --dark-color: #000000; /* Black */
-            --light-color: #FFFFFF; /* White */
-        }
-
-        .text-primary {
-            color: var(--primary-color) !important;
-        }
-
-        .text-secondary {
-            color: var(--secondary-color) !important;
-        }
-        
-
-
-
-        body {
-            color: var(--dark-color);
-        }
-
-        .dark-background {
-            background-color: var(--dark-color);
-            color: var(--light-color);
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-            .btn-primary:hover {
-                background-color: #006400; /* Darker Green */
-                border-color: #006400;
-            }
-
-        .btn-secondary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-            color: var(--dark-color);
-        }
-
-            .btn-secondary:hover {
-                background-color: #006400; /* Darker Yellow */
-                border-color: #006400;
-            }
-
-        .text-primary {
-            color: var(--primary-color) !important;
-        }
-
-        .text-secondary {
-            color: var(--secondary-color) !important;
-        }
-
-        .bg-primary {
-            background-color: var(--primary-color) !important;
-        }
-
-        .bg-secondary {
-            background-color: var(--secondary-color) !important;
-        }
-
-        .bg-dark {
-            background-color: var(--dark-color) !important;
-        }
-
-        .navbar-dark .navbar-nav .nav-link {
-            color: var(--light-color);
-        }
-
-            .navbar-dark .navbar-nav .nav-link:hover {
-                color: var(--secondary-color);
-            }
-
-        .footer {
-            background-color: var(--dark-color);
-            color: var(--light-color);
-        }
-
-            .footer a {
-                color: var(--secondary-color);
-            }
-
-                .footer a:hover {
-                    color: var(--primary-color);
-                }
-
-        .section-title h2 {
-            color: var(--primary-color);
-        }
-
-        .section-title p {
-            color: var(--dark-color);
-        }
-
-        .testimonials .testimonial-item {
-            background-color: var(--dark-color);
-            color: var(--light-color);
-        }
-
-            .testimonials .testimonial-item h3 {
-                color: var(--secondary-color);
-            }
-
-        .team .team-member {
-            background-color: var(--light-color);
-            border: 1px solid var(--primary-color);
-        }
-
-            .team .team-member h4 {
-                color: var(--primary-color);
-            }
-
-            .team .team-member span {
-                color: var(--dark-color);
-            }
-
-        .contact .info-item i {
-            color: var(--primary-color);
-        }
-
-        .contact .info-item h3 {
-            color: var(--primary-color);
-        }
-
-        .contact .php-email-form button[type="submit"] {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-            .contact .php-email-form button[type="submit"]:hover {
-                background-color: #006400;
-                border-color: #006400;
-            }
-    </style>*@
+    <link href="~/NiceAdmin/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/NiceAdmin/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/NiceAdmin/assets/css/style.css" rel="stylesheet" />
+    <link href="~/NiceAdmin/assets/css/llb-theme.css" rel="stylesheet" />
 </head>
+<body class="llb-public-shell">
+    <header class="llb-public-header sticky-top">
+        <div class="container-xl py-3">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+                <a href="/Home/LandingPage" class="d-flex align-items-center text-decoration-none llb-brand">
+                    <img src="~/front/img/IMG/Coat_of_arms_of_ZimbabweB.png" alt="LLB" class="llb-brand-logo" />
+                    <div>
+                        <div class="fw-bold text-dark">Liquor Licensing Board</div>
+                        <small class="text-muted">Digital licensing services</small>
+                    </div>
+                </a>
 
-<body class="index-page">
+                <nav class="llb-public-nav d-none d-lg-flex align-items-center gap-2">
+                    <a href="/Home/LandingPage#hero" class="text-decoration-none">Home</a>
+                    <a href="/Home/LandingPage#about" class="text-decoration-none">About</a>
+                    <a href="/Home/LandingPage#services" class="text-decoration-none">Services</a>
+                    <a href="/Home/LandingPage#contact" class="text-decoration-none">Contact</a>
+                    <a href="/Home/FAQ" class="text-decoration-none">FAQ</a>
+                </nav>
 
-    <header id="header" class="header d-flex align-items-center fixed-top" style="background-color:  #008000;">
-        <div class="container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
-
-            <a href="/Home/LandingPage#hero" class="logo d-flex align-items-center me-auto me-lg-0">
-
-                <img src="~/Gp/assets/img/features-bgtc.jpg" alt="LLB Logo" class="logo-img">
-
-                <h1 class="sitename">LLB</h1>
-                <span>.</span>
-            </a>
-
-            <nav id="navmenu" class="navmenu">
-                <ul>
-                    <li><a href="/Home/LandingPage#hero">Home<br></a></li>
-                    <li><a href="/Home/LandingPage#about">About</a></li>
-                    <li><a href="/Home/LandingPage#services">Services</a></li>
-                    @*  <li><a href="/Home/LandingPage#portfolio">Portfolio</a></li> *@
-                    <li><a href="/Home/LandingPage#team">Team</a></li>
-                    <li><a href="/Home/LandingPage#contact">Contact</a></li>
-                    <li><a href="/Home/FAQ">FAQ</a></li>
-                    <li><a href="/Auth/Register">Sign Up</a></li>
-
-
-                </ul>
-                <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-            </nav>
-
-            <a class="btn-getstarted" href="/Auth/Login">Log in</a>
-
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/Auth/Login" class="btn btn-outline-primary btn-sm">Sign In</a>
+                    <a href="/Auth/Register" class="btn btn-primary btn-sm">Create Account</a>
+                </div>
+            </div>
         </div>
     </header>
 
+    <main class="llb-public-main">
+        @RenderBody()
+    </main>
 
-
-    <br />
-@RenderBody()
-    <br />
-
-
-
-    <footer id="footer" class="footer dark-background">
-
-        <div class="footer-top">
-            <div class="container">
-                <div class="row gy-4">
-                    <div class="col-lg-4 col-md-6 footer-about">
-                        <a href="index.html" class="logo d-flex align-items-center">
-
-                            <img src="~/Gp/assets/img/features-bgtc.jpg" alt="LLB Logo" class="logo-img">
-
-                            <span class="sitename">LLB</span>
-                        </a>
-                        <div class="footer-contact pt-3">
-                            <p>Corner of Herbert Chitepo Avenue and</p>
-                            <p>Harare Street in Harare, Zimbabwe</p>
-                            <p class="mt-3"><strong>Phone:</strong> <span>(024)2792751</span></p>
-                            <p><strong>Email:</strong> <span>info@example.com</span></p>
-                        </div>
-                        <div class="social-links d-flex mt-4">
-                            <a href=""><i class="bi bi-twitter-x"></i></a>
-                            <a href=""><i class="bi bi-facebook"></i></a>
-                            <a href=""><i class="bi bi-instagram"></i></a>
-                            <a href=""><i class="bi bi-linkedin"></i></a>
-                        </div>
+    <footer class="llb-public-footer py-5 mt-5">
+        <div class="container-xl">
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <h5 class="fw-bold mb-3">Liquor Licensing Board</h5>
+                    <p class="text-muted mb-3">
+                        A single digital workspace for liquor licence applications, renewals, inspections, post-formation services, and document access.
+                    </p>
+                    <div class="d-flex flex-column gap-1 text-muted">
+                        <span><i class="bi bi-geo-alt me-2 text-primary"></i>Corner of Herbert Chitepo Avenue and Harare Street, Harare</span>
+                        <span><i class="bi bi-telephone me-2 text-primary"></i>(024) 2792751</span>
                     </div>
-
-                    <div class="col-lg-2 col-md-3 footer-links">
-                        <h4>Useful Links</h4>
-                        <ul>
-                            <li><i class="bi bi-chevron-right"></i> <a href="#"> Home</a></li>
-                            <li><i class="bi bi-chevron-right"></i> <a href="#"> About us</a></li>
-                            <li><i class="bi bi-chevron-right"></i> <a href="#"> Services</a></li>
-                            <li><i class="bi bi-chevron-right"></i> <a href="#"> Terms of service</a></li>
-                            <li><i class="bi bi-chevron-right"></i> <a href="#"> Privacy policy</a></li>
-                        </ul>
+                </div>
+                <div class="col-lg-3">
+                    <h6 class="fw-bold mb-3">Quick Links</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="/Home/LandingPage#services" class="text-decoration-none">Services</a>
+                        <a href="/Home/FAQ" class="text-decoration-none">Frequently Asked Questions</a>
+                        <a href="/Auth/Login" class="text-decoration-none">Sign In</a>
+                        <a href="/Auth/Register" class="text-decoration-none">Register</a>
                     </div>
-
-
-                    <div class="col-lg-4 col-md-12 footer-newsletter">
-                        <h4>Our Newsletter</h4>
-                        <p>Subscribe to our newsletter and receive the latest news about our products and services!</p>
-                        <form action="forms/newsletter.php" method="post" class="php-email-form">
-                            <div class="newsletter-form"><input type="email" name="email"><input type="submit" value="Subscribe"></div>
-                            <div class="loading">Loading</div>
-                            <div class="error-message"></div>
-                            <div class="sent-message">Your subscription request has been sent. Thank you!</div>
-                        </form>
+                </div>
+                <div class="col-lg-4" id="contact">
+                    <h6 class="fw-bold mb-3">Need Help?</h6>
+                    <p class="text-muted mb-3">
+                        Use the portal to register, submit applications, track progress, and manage post-approval services from one account.
+                    </p>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="/Auth/Register" class="btn btn-primary">Start Application</a>
+                        <a href="/Home/FAQ" class="btn btn-outline-primary">Read FAQ</a>
                     </div>
-
                 </div>
             </div>
-        </div>
-
-        <div class="copyright">
-            <div class="container text-center">
-                <p>© <span>Copyright</span> <strong class="px-1 sitename">LLB</strong> <span>All Rights Reserved</span></p>
-                <div class="credits">
-
-                    <!-- Licensing information: https://bootstrapmade.com/license/ -->
-                    <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
-                    <a>
-                        Designed by TTCS
-                    </a>
-                </div>
+            <hr class="my-4" />
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2 text-muted small">
+                <span>&copy; @DateTime.Now.Year Liquor Licensing Board. All rights reserved.</span>
+                <span>Designed for digital licensing workflows.</span>
             </div>
         </div>
-
     </footer>
 
-    <!-- Scroll Top -->
-    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
-    <!-- Preloader -->
-    <div id="preloader"></div>
-
-    <!-- Vendor JS Files -->
-    <script src="~/Gp/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="~/Gp/assets/vendor/php-email-form/validate.js"></script>
-    <script src="~/Gp/assets/vendor/aos/aos.js"></script>
-    <script src="~/Gp/assets/vendor/swiper/swiper-bundle.min.js"></script>
-    <script src="~/Gp/assets/vendor/glightbox/js/glightbox.min.js"></script>
-    <script src="~/Gp/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
-    <script src="~/Gp/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
-    <script src="~/Gp/assets/vendor/purecounter/purecounter_vanilla.js"></script>
-    <script type="text/javascript"   src="~/NiceAdmin/assets/js/jquery.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Main JS File -->
-
-    <script src="~/Gp/assets/js/main.js"></script>
+    <script src="~/NiceAdmin/assets/js/jquery.min.js"></script>
+    <script src="~/NiceAdmin/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/countrylist.js"></script>
     <script src="~/country-master/dist/crs.min.js"></script>
-
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
-
 </html>
-
-
-
-

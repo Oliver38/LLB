@@ -1359,6 +1359,7 @@ namespace LLB.Controllers
                 
                 var verifierWithLeastTasks = await _taskAllocationHelper.GetVerifier(_db, userManager);
                 //   tasks.VerifierId = selectedUser.Id;
+                tasks.ExaminationStatus = "verification";
                 tasks.Service = "new application";
                 tasks.VerifierId = verifierWithLeastTasks;
                 tasks.AssignerId = "system";

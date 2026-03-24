@@ -43,10 +43,10 @@ namespace LLB.Controllers
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
         
-            paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service+"?id="+Id+"&process="+process;
-            paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + Id + "&process=" + process;
-           // paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
-           // paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
+            //paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service+"?id="+Id+"&process="+process;
+           // paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + Id + "&process=" + process;
+            paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
+            paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
 
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 

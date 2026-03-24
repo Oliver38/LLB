@@ -1,181 +1,314 @@
-﻿@{
+﻿@model LLB.Models.ViewModel.AdminUserDetailViewModel
+
+@{
     Layout = "_LayoutMain";
+
+    var canUnlock = Model.IsLockedOut;
+    var canDeactivate = !string.Equals(User?.Identity?.Name, Model.Email, StringComparison.OrdinalIgnoreCase);
+    var statusClass = !Model.IsActive
+        ? "llb-status-danger"
+        : Model.IsLockedOut
+            ? "llb-status-warning"
+            : "llb-status-success";
+    var statusText = !Model.IsActive
+        ? "Inactive"
+        : Model.IsLockedOut
+            ? "Locked"
+            : "Active";
 }
 
-
-
-
-<div class="card">
-    <div class="card-body">
-        <h5 class="card-title">View Internal User</h5>
-        <div class="card-header">
-            <div class="row center">
-                <span class="text-success">@TempData["success"]</span>
-                <span class="text-danger">@TempData["error"]</span>
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Account Status</p>
+                    <h3>@statusText</h3>
+                </div>
+                <span class="llb-stat-icon"><i class="bi bi-person-badge"></i></span>
             </div>
-            <div class="row">
-                @*<form class="row g-3" method="post" action="/Admin/InternalUsers">
-
-                        <div class="col-md-6">
-
-                            <select id="inputState" name="role" class="form-select">
-                                <option selected value="">Select Role</option>
-                                @foreach (var role in ViewBag.Roles)
-                                {
-                                    <option value="@role.Name">@role.Name</option>
-
-                                }
-
-
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <input type="submit" class="btn btn-primary form-control" value="Search" />
-                        </div>
-                    </form><!-- End Multi Columns Form -->*@
-
-            </div>
-
-
-            <div class="card-body">
-                
-
-                <table class="table table-responsive table-borderless datatable">
-                    <thead>
-                        <tr>
-
-
-
-
-
-
-                            <th colspan="2">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="row"><a href="/Admin/ViewUser?Id=@ViewBag.UserDetails .Id">View</a></th>
-                        </tr>
-                        <tr>
-                            <th scope="col">Name</th>
-                            <td>@ViewBag.UserDetails.Name</td>
-                        </tr>
-                        <tr>
-                            <th scope="col">Surname</th>
-                            <td>@ViewBag.UserDetails.LastName</td>
-                        </tr>
-                        <tr>
-                            <th scope="col">User Status</th>
-                            <td>
-                                @if (ViewBag.UserDetails.IsActive == true)
-                                {<span class="badge bg-success">Active</span> }
-                                else
-                                {<span class="badge bg-danger">Blocked</span>}
-                            </td>
-
-
-                        </tr>
-
-                        <tr>
-                            <th scope="col">Leave Status</th>
-
-                            <td>@ViewBag.UserDetails.LeaveStatus</td>
-
-                        </tr>
-
-
-                        <tr>
-
-                            <th>Roles</th>
-                            <td>@foreach (var role in ViewBag.UserRole)
-                            {<p>@role </p>}</td>
-                        </tr>
-                        <tr>
-
-                            <td>
-                                <a href="/Accountant/Verify?ApplicationId=12345" class="btn btn-primary">Send On Leave</a>
-                            </td>
-                            <td>
-                                <a href="/Accountant/Verify?ApplicationId=12345" class="btn btn-primary">Reset Password</a>
-                            </td>
-                            <td>
-                                <button data-bs-toggle="modal" data-bs-target="#changeRole" class="btn btn-primary">Change Role</button>
-                            </td>
-
-
-                        </tr>
-
-
-
-                    </tbody>
-                </table>
-            </div>
+            <p>Current portal access state for this account.</p>
         </div>
-
-
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Roles</p>
+                    <h3>@Model.SelectedRoles.Count</h3>
+                </div>
+                <span class="llb-stat-icon"><i class="bi bi-shield-check"></i></span>
+            </div>
+            <p>Assigned roles that determine dashboards, menus, and workflow responsibilities.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Access Failed Count</p>
+                    <h3>@Model.AccessFailedCount</h3>
+                </div>
+                <span class="llb-stat-icon"><i class="bi bi-exclamation-triangle"></i></span>
+            </div>
+            <p>Failed login attempts currently recorded for the account.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card llb-stat-card">
+            <div class="llb-stat-head">
+                <div>
+                    <p class="mb-1">Leave Status</p>
+                    <h3>@Model.LeaveStatus</h3>
+                </div>
+                <span class="llb-stat-icon"><i class="bi bi-calendar-event"></i></span>
+            </div>
+            <p>Operational status for internal assignment and availability management.</p>
+        </div>
     </div>
 </div>
 
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success border-0 rounded-4">@TempData["success"]</div>
+}
 
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger border-0 rounded-4">@TempData["error"]</div>
+}
 
+@if (TempData["generatedPassword"] != null)
+{
+    <div class="alert alert-warning border-0 rounded-4">
+        Temporary password: <strong>@TempData["generatedPassword"]</strong>
+    </div>
+}
 
-
-
-<div class="modal fade" id="changeRole" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Change Role</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="row g-4">
+    <div class="col-xl-4">
+        <div class="card llb-panel-card h-100">
+            <div class="card-header">
+                <h5 class="card-title">Account Summary</h5>
             </div>
-            <div class="modal-body">
+            <div class="card-body">
+                <div class="mb-4">
+                    <div class="fw-semibold fs-5">@Model.Name @Model.LastName</div>
+                    <div class="text-muted">@Model.Email</div>
+                </div>
 
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="llb-status-pill @statusClass">@statusText</span>
+                    @foreach (var role in Model.SelectedRoles)
+                    {
+                        <span class="llb-chip">@role</span>
+                    }
+                </div>
 
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <tbody>
+                            <tr>
+                                <th>User Name</th>
+                                <td>@Model.UserName</td>
+                            </tr>
+                            <tr>
+                                <th>Email Confirmed</th>
+                                <td>@(Model.EmailConfirmed ? "Yes" : "No")</td>
+                            </tr>
+                            <tr>
+                                <th>Phone Confirmed</th>
+                                <td>@(Model.PhoneNumberConfirmed ? "Yes" : "No")</td>
+                            </tr>
+                            <tr>
+                                <th>Application Date</th>
+                                <td>@(Model.DateOfApplication?.ToString("dd MMM yyyy") ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th>Created By</th>
+                                <td>@(string.IsNullOrWhiteSpace(Model.ApplicationBy) ? "-" : Model.ApplicationBy)</td>
+                            </tr>
+                            <tr>
+                                <th>Lockout End</th>
+                                <td>@(Model.LockoutEnd?.ToString("dd MMM yyyy HH:mm") ?? "-")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-                <form class="row g-3" method="post" action="/Admin/ChangeRole">
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <form method="post" action="/Admin/UpdateActivation" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="activate" value="@(!Model.IsActive)" />
+                        <button type="submit" class="btn @(Model.IsActive ? "btn-outline-danger" : "btn-outline-success")" @(canDeactivate ? null : "disabled")>
+                            @(Model.IsActive ? "Deactivate User" : "Activate User")
+                        </button>
+                    </form>
 
-                <input type="hidden" name="id" value="@ViewBag.UserDetails.Id" />
-                    <div class="col-md-12">
-
-                        <select id="inputState" name="oldrole" class="form-select">
-                            <option selected value="">From Which Role</option>
-                            @foreach (var role in ViewBag.UserRole)
-                            {
-                                <option value="@role">@role</option>
-
-                            }
-
-
-                        </select>
-
-
-                    </div>
-                    <div class="col-md-12">
-
-                        <select id="inputState" name="newrole" class="form-select">
-                            <option selected value="">Select Role</option>
-                            @foreach (var arole in ViewBag.AllRoles)
-                            {
-                                <option value="@arole.Name">@arole.Name</option>
-
-                            }
-
-
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <input type="submit" class="btn btn-primary form-control" value="Change Role" />
-                    </div>
-                </form><!-- End Multi Columns Form -->
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
+                    @if (canUnlock)
+                    {
+                        <form method="post" action="/Admin/UnlockUser" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-outline-primary">Unlock Account</button>
+                        </form>
+                    }
+                </div>
             </div>
         </div>
     </div>
-</div><!-- End Basic Modal-->
+
+    <div class="col-xl-8">
+        <div class="card llb-panel-card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Profile Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="/Admin/UpdateUser" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">First Name</label>
+                        <input asp-for="Name" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Surname</label>
+                        <input asp-for="LastName" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email Address</label>
+                        <input asp-for="Email" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone Number</label>
+                        <input asp-for="PhoneNumber" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nationality</label>
+                        <select class="form-select" id="countrySelect" name="Nationality">
+                            @if (!string.IsNullOrWhiteSpace(Model.Nationality))
+                            {
+                                <option selected value="@Model.Nationality">@Model.Nationality</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">National ID / Passport</label>
+                        <input asp-for="NatID" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Date Of Birth</label>
+                        <input asp-for="DOB" type="date" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Gender</label>
+                        <select asp-for="Gender" class="form-select">
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Physical Address</label>
+                        <textarea asp-for="PhysicalAddress" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Country Of Residence</label>
+                        <select asp-for="CountryOfResidence" class="form-select crs-country" data-region-id="detail-province"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Province</label>
+                        <select asp-for="Province" class="form-select" id="detail-province"></select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Save Profile Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card llb-panel-card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Role Management</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="/Admin/UpdateRoles" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <div class="col-12">
+                        <div class="row g-2">
+                            @foreach (var role in Model.AvailableRoles)
+                            {
+                                <div class="col-md-6 col-xl-4">
+                                    <label class="border rounded-4 p-3 w-100 d-flex align-items-center gap-2">
+                                        <input class="form-check-input mt-0" type="checkbox" name="selectedRoles" value="@role"
+                                               @(Model.SelectedRoles.Any(selected => string.Equals(selected, role, StringComparison.OrdinalIgnoreCase)) ? "checked" : null) />
+                                        <span>@role</span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Update Roles</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card llb-panel-card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title">Leave Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="/Admin/UpdateLeaveStatus" class="row g-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <div class="col-12">
+                                <label class="form-label">Current Leave Status</label>
+                                <select name="leaveStatus" class="form-select">
+                                    @foreach (var status in Model.LeaveStatusOptions)
+                                    {
+                                        <option value="@status" selected="@(Model.LeaveStatus == status ? "selected" : null)">@status</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Update Leave Status</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card llb-panel-card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title">Password Reset</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">
+                            Leave the password field empty to generate a strong temporary password for the user.
+                        </p>
+                        <form method="post" action="/Admin/ResetPassword" class="row g-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@Model.Id" />
+                            <div class="col-12">
+                                <label class="form-label">Temporary Password</label>
+                                <input type="text" name="newPassword" class="form-control" placeholder="Optional custom temporary password" />
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-outline-primary">Reset Password</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

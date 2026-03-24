@@ -1,0 +1,316 @@
+@using System
+@model LLB.Models.ViewModel.SecretaryReportsViewModel
+
+@{
+    Layout = "_LayoutMain";
+}
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                    <div>
+                        <h5 class="card-title mb-1">Application Reports</h5>
+                        <p class="text-muted mb-0">Filter approval-stage applications by province, council, and region.</p>
+                    </div>
+                    <a class="btn btn-outline-primary" href="/Approval/ExportReportsCsv?province=@Model.ProvinceFilter&council=@Model.CouncilFilter&region=@Model.RegionFilter">
+                        <i class="bi bi-download me-2"></i>Export CSV
+                    </a>
+                </div>
+
+                <form method="get" action="/Approval/Reports" class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <label class="form-label">Province</label>
+                        <select name="province" class="form-select">
+                            <option value="">All provinces</option>
+                            @foreach (var province in Model.ProvinceOptions)
+                            {
+                                <option value="@province" selected="@(string.Equals(Model.ProvinceFilter, province, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@province</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Council</label>
+                        <select name="council" class="form-select">
+                            <option value="">All councils</option>
+                            @foreach (var council in Model.CouncilOptions)
+                            {
+                                <option value="@council" selected="@(string.Equals(Model.CouncilFilter, council, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@council</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Region</label>
+                        <select name="region" class="form-select">
+                            <option value="">All regions</option>
+                            @foreach (var region in Model.RegionOptions)
+                            {
+                                <option value="@region" selected="@(string.Equals(Model.RegionFilter, region, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@region</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-funnel me-2"></i>Apply Filters
+                        </button>
+                        <a class="btn btn-light border" href="/Approval/Reports">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card info-card sales-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Filtered Applications</h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-collection"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h6>@Model.FilteredApplications</h6>
+                        <span class="text-muted small pt-1">of @Model.TotalApplications total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card info-card revenue-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Provinces Covered</h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-map"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h6>@Model.DistinctProvinces</h6>
+                        <span class="text-muted small pt-1">matching provinces</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card info-card customers-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Councils Covered</h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h6>@Model.DistinctCouncils</h6>
+                        <span class="text-muted small pt-1">matching councils</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card info-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Regions Covered</h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h6>@Model.DistinctRegions</h6>
+                        <span class="text-muted small pt-1">matching regions</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">By Province</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Province</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ProvinceBreakdown.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="2" class="text-muted text-center py-3">No records found.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.ProvinceBreakdown)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td class="text-end fw-semibold">@item.Count</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">By Council</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Council</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.CouncilBreakdown.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="2" class="text-muted text-center py-3">No records found.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.CouncilBreakdown)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td class="text-end fw-semibold">@item.Count</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">By Region</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Region</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.RegionBreakdown.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="2" class="text-muted text-center py-3">No records found.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.RegionBreakdown)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td class="text-end fw-semibold">@item.Count</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Application Detail</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Trading Name</th>
+                                <th>Address</th>
+                                <th>Province</th>
+                                <th>Council</th>
+                                <th>Region</th>
+                                <th>License</th>
+                                <th>Applied</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Applications.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4">No applications matched the selected filters.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var application in Model.Applications)
+                                {
+                                    var badgeClass = "bg-secondary";
+
+                                    if (string.Equals(application.Status, "approved", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        badgeClass = "bg-success";
+                                    }
+                                    else if (string.Equals(application.Status, "recommended", StringComparison.OrdinalIgnoreCase) || string.Equals(application.Status, "verified", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        badgeClass = "bg-primary";
+                                    }
+                                    else if (string.Equals(application.Status, "submitted", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        badgeClass = "bg-info";
+                                    }
+                                    else if (string.Equals(application.Status, "has query", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        badgeClass = "bg-warning text-dark";
+                                    }
+                                    else if (string.Equals(application.Status, "rejected", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        badgeClass = "bg-danger";
+                                    }
+
+                                    <tr>
+                                        <td class="fw-semibold">@application.TradingName</td>
+                                        <td>@application.OperatingAddress</td>
+                                        <td>@application.Province</td>
+                                        <td>@application.Council</td>
+                                        <td>@application.Region</td>
+                                        <td>@application.LicenseName</td>
+                                        <td>@application.ApplicationDate.ToString("yyyy-MM-dd")</td>
+                                        <td><span class="badge @badgeClass">@application.Status</span></td>
+                                        <td class="text-end">
+                                            <a class="btn btn-sm btn-primary" href="/Approval/Apply?Id=@application.ApplicationId">View</a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

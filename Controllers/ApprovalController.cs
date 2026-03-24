@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
-using LLB.Models;
-using Microsoft.AspNetCore.Identity;
+﻿using DNTCaptcha.Core;
 using LLB.Data;
-using DNTCaptcha.Core;
+using LLB.Models;
+using LLB.Models.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Text;
 using Webdev.Payments;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LLB.Controllers
 {
@@ -33,37 +34,56 @@ namespace LLB.Controllers
         [HttpGet("Dashboard")]
         public async Task<IActionResult> DashboardAsync()
         {
-
-            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
-            string id = userId.Id;
-
-
-            List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(s => s.ApproverId == id && s.Status == "assigned" && s.Service == "new application").ToList();
-            foreach(var task in tasks)
+            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            if (user == null)
             {
-                ApplicationInfo getinfo = new ApplicationInfo();
-
-                var applications = _db.ApplicationInfo.Where(a => a.Id == task.ApplicationId).FirstOrDefault();
-
-                getinfo = applications;
-                appinfo.Add(getinfo);
+                return RedirectToAction("Login", "Auth");
             }
 
-
-
-            //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
-            var outletinfo = _db.OutletInfo.ToList();
-            var license = _db.LicenseTypes.ToList();
-            var regions = _db.LicenseRegions.ToList();
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var model = await BuildSecretaryDashboardViewModelAsync(user.Id);
 
             ViewBag.User = user;
-            ViewBag.OutletInfo = outletinfo;
-            ViewBag.Regions = regions;
-            ViewBag.License = license;
-            ViewBag.Applications = appinfo;
-            return View();
+            ViewData["Title"] = "Secretary Dashboard";
+            ViewData["Subtitle"] = "Review assigned approval-stage applications and post formations from one queue";
+            return View(model);
+        }
+
+        [Authorize(Roles = "secretary,admin,super user")]
+        [HttpGet("Reports")]
+        public async Task<IActionResult> Reports(string? province, string? council, string? region)
+        {
+            var model = await BuildSecretaryReportsViewModelAsync(province, council, region);
+
+            ViewData["Title"] = "Secretary Reports";
+            ViewData["Subtitle"] = "Filter approval-stage applications by province, council, and region";
+            return View(model);
+        }
+
+        [Authorize(Roles = "secretary,admin,super user")]
+        [HttpGet("ExportReportsCsv")]
+        public async Task<FileResult> ExportReportsCsv(string? province, string? council, string? region)
+        {
+            var model = await BuildSecretaryReportsViewModelAsync(province, council, region);
+
+            var csv = new StringBuilder();
+            csv.AppendLine("Trading Name,Operating Address,Province,Council,Region,License,Application Date,Status,Application Id");
+
+            foreach (var application in model.Applications)
+            {
+                csv.AppendLine(string.Join(",",
+                    EscapeCsv(application.TradingName),
+                    EscapeCsv(application.OperatingAddress),
+                    EscapeCsv(application.Province),
+                    EscapeCsv(application.Council),
+                    EscapeCsv(application.Region),
+                    EscapeCsv(application.LicenseName),
+                    EscapeCsv(application.ApplicationDate.ToString("yyyy-MM-dd")),
+                    EscapeCsv(application.Status),
+                    EscapeCsv(application.ApplicationId)));
+            }
+
+            var fileName = $"secretary-reports-{DateTime.Now:yyyyMMddHHmmss}.csv";
+            return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
         }
 
 
@@ -636,6 +656,366 @@ namespace LLB.Controllers
             _db.SaveChanges();
 
             return RedirectToAction("Dashboard", "Approval");
+        }
+
+        private async Task<SecretaryReportsViewModel> BuildSecretaryReportsViewModelAsync(
+            string? province,
+            string? council,
+            string? region)
+        {
+            var model = new SecretaryReportsViewModel
+            {
+                ProvinceFilter = province?.Trim(),
+                CouncilFilter = council?.Trim(),
+                RegionFilter = region?.Trim()
+            };
+
+            var userEmail = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                return model;
+            }
+
+            var currentUser = await userManager.FindByEmailAsync(userEmail);
+            if (currentUser == null)
+            {
+                return model;
+            }
+
+            var secretaryTasks = await _db.Tasks
+                .Where(task => task.ApproverId == currentUser.Id && task.Service == "new application")
+                .OrderByDescending(task => task.DateUpdated)
+                .ThenByDescending(task => task.DateAdded)
+                .ToListAsync();
+
+            var latestTaskByApplication = secretaryTasks
+                .Where(task => !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .GroupBy(task => task.ApplicationId!, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .ToDictionary(task => task.ApplicationId!, StringComparer.OrdinalIgnoreCase);
+
+            if (latestTaskByApplication.Count == 0)
+            {
+                return model;
+            }
+
+            var applicationIds = latestTaskByApplication.Keys.ToList();
+
+            var applications = await _db.ApplicationInfo
+                .Where(application => application.Id != null && applicationIds.Contains(application.Id))
+                .ToListAsync();
+
+            var outlets = await _db.OutletInfo
+                .Where(outlet => outlet.ApplicationId != null && applicationIds.Contains(outlet.ApplicationId))
+                .ToListAsync();
+
+            var licenseLookup = await _db.LicenseTypes
+                .Where(license => license.Id != null)
+                .ToDictionaryAsync(license => license.Id!, license => license.LicenseName ?? "N/A");
+
+            var regionLookup = await _db.LicenseRegions
+                .Where(regionEntry => regionEntry.Id != null)
+                .ToDictionaryAsync(regionEntry => regionEntry.Id!, regionEntry => regionEntry.RegionName ?? "Unspecified");
+
+            var outletLookup = outlets
+                .Where(outlet => !string.IsNullOrWhiteSpace(outlet.ApplicationId))
+                .GroupBy(outlet => outlet.ApplicationId!, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.OrderByDescending(outlet => outlet.DateUpdated).ThenByDescending(outlet => outlet.DateAdded).First())
+                .ToDictionary(outlet => outlet.ApplicationId!, StringComparer.OrdinalIgnoreCase);
+
+            var allRows = applications
+                .Where(application => !string.IsNullOrWhiteSpace(application.Id))
+                .Select(application =>
+                {
+                    outletLookup.TryGetValue(application.Id!, out var outlet);
+                    latestTaskByApplication.TryGetValue(application.Id!, out var task);
+
+                    return new SecretaryReportRowViewModel
+                    {
+                        ApplicationId = application.Id!,
+                        TradingName = NormalizeDimension(outlet?.TradingName, "N/A"),
+                        OperatingAddress = NormalizeDimension(outlet?.Address ?? application.OperationAddress, "N/A"),
+                        Province = NormalizeDimension(outlet?.Province),
+                        Council = NormalizeDimension(outlet?.Council),
+                        Region = application.ApplicationType != null && regionLookup.TryGetValue(application.ApplicationType, out var regionName)
+                            ? NormalizeDimension(regionName)
+                            : "Unspecified",
+                        LicenseName = application.LicenseTypeID != null && licenseLookup.TryGetValue(application.LicenseTypeID, out var licenseName)
+                            ? NormalizeDimension(licenseName, "N/A")
+                            : "N/A",
+                        Status = NormalizeDimension(application.Status ?? task?.Status, "Unknown"),
+                        ApplicationDate = application.ApplicationDate
+                    };
+                })
+                .OrderByDescending(application => application.ApplicationDate)
+                .ToList();
+
+            model.TotalApplications = allRows.Count;
+            model.ProvinceOptions = allRows
+                .Select(application => application.Province)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(value => value)
+                .ToList();
+            model.CouncilOptions = allRows
+                .Select(application => application.Council)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(value => value)
+                .ToList();
+            model.RegionOptions = allRows
+                .Select(application => application.Region)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(value => value)
+                .ToList();
+
+            var filteredRows = allRows
+                .Where(application => MatchesFilter(application.Province, model.ProvinceFilter))
+                .Where(application => MatchesFilter(application.Council, model.CouncilFilter))
+                .Where(application => MatchesFilter(application.Region, model.RegionFilter))
+                .ToList();
+
+            model.FilteredApplications = filteredRows.Count;
+            model.DistinctProvinces = filteredRows
+                .Select(application => application.Province)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+            model.DistinctCouncils = filteredRows
+                .Select(application => application.Council)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+            model.DistinctRegions = filteredRows
+                .Select(application => application.Region)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+            model.ProvinceBreakdown = BuildSummary(filteredRows.Select(application => application.Province));
+            model.CouncilBreakdown = BuildSummary(filteredRows.Select(application => application.Council));
+            model.RegionBreakdown = BuildSummary(filteredRows.Select(application => application.Region));
+            model.Applications = filteredRows;
+
+            return model;
+        }
+
+        private async Task<SecretaryDashboardViewModel> BuildSecretaryDashboardViewModelAsync(string approverId)
+        {
+            var postFormationServices = new[] { "Extended Hours", "Temporary Retails" };
+
+            var applicationTasks = await _db.Tasks
+                .Where(task => task.ApproverId == approverId
+                    && task.Status == "assigned"
+                    && task.Service == "new application")
+                .OrderByDescending(task => task.DateAdded)
+                .ToListAsync();
+
+            var postFormationTasks = await _db.Tasks
+                .Where(task => task.ApproverId == approverId
+                    && task.Status == "assigned"
+                    && task.Service != null
+                    && postFormationServices.Contains(task.Service))
+                .OrderByDescending(task => task.DateAdded)
+                .ToListAsync();
+
+            var extendedHoursIds = postFormationTasks
+                .Where(task => task.Service == "Extended Hours" && !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Distinct()
+                .ToList();
+
+            var temporaryRetailIds = postFormationTasks
+                .Where(task => task.Service == "Temporary Retails" && !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Distinct()
+                .ToList();
+
+            var extendedHoursRecords = await _db.ExtendedHours
+                .Where(record => record.Id != null && extendedHoursIds.Contains(record.Id))
+                .ToListAsync();
+
+            var temporaryRetailRecords = await _db.TemporaryRetails
+                .Where(record => record.Id != null && temporaryRetailIds.Contains(record.Id))
+                .ToListAsync();
+
+            var applicationIds = applicationTasks
+                .Where(task => !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Concat(extendedHoursRecords
+                    .Where(record => !string.IsNullOrWhiteSpace(record.ApplicationId))
+                    .Select(record => record.ApplicationId!))
+                .Concat(temporaryRetailRecords
+                    .Where(record => !string.IsNullOrWhiteSpace(record.ApplicationId))
+                    .Select(record => record.ApplicationId!))
+                .Distinct()
+                .ToList();
+
+            var applications = await _db.ApplicationInfo
+                .Where(application => application.Id != null && applicationIds.Contains(application.Id))
+                .ToListAsync();
+
+            var applicationLookup = applications.ToDictionary(application => application.Id!, application => application);
+
+            var outlets = await _db.OutletInfo
+                .Where(outlet => outlet.ApplicationId != null && applicationIds.Contains(outlet.ApplicationId))
+                .ToListAsync();
+
+            var outletLookup = outlets
+                .GroupBy(outlet => outlet.ApplicationId!)
+                .ToDictionary(group => group.Key, group => group.First());
+
+            var licenseIds = applications
+                .Where(application => !string.IsNullOrWhiteSpace(application.LicenseTypeID))
+                .Select(application => application.LicenseTypeID!)
+                .Distinct()
+                .ToList();
+
+            var regionIds = applications
+                .Where(application => !string.IsNullOrWhiteSpace(application.ApplicationType))
+                .Select(application => application.ApplicationType!)
+                .Distinct()
+                .ToList();
+
+            var licenseLookup = await _db.LicenseTypes
+                .Where(license => license.Id != null && licenseIds.Contains(license.Id))
+                .ToDictionaryAsync(license => license.Id!, license => license);
+
+            var regionLookup = await _db.LicenseRegions
+                .Where(regionItem => regionItem.Id != null && regionIds.Contains(regionItem.Id))
+                .ToDictionaryAsync(regionItem => regionItem.Id!, regionItem => regionItem);
+
+            var extendedHoursLookup = extendedHoursRecords
+                .ToDictionary(record => record.Id!, record => record);
+
+            var temporaryRetailLookup = temporaryRetailRecords
+                .ToDictionary(record => record.Id!, record => record);
+
+            var model = new SecretaryDashboardViewModel();
+
+            foreach (var task in applicationTasks)
+            {
+                if (string.IsNullOrWhiteSpace(task.ApplicationId)
+                    || !applicationLookup.TryGetValue(task.ApplicationId, out var application))
+                {
+                    continue;
+                }
+
+                outletLookup.TryGetValue(task.ApplicationId, out var outlet);
+
+                model.Applications.Add(new SecretaryDashboardApplicationItemViewModel
+                {
+                    ApplicationId = application.Id ?? string.Empty,
+                    TradingName = outlet?.TradingName ?? application.BusinessName ?? "N/A",
+                    OperatingAddress = outlet?.Address ?? application.OperationAddress ?? "N/A",
+                    ApplicationDate = application.ApplicationDate,
+                    LicenseName = application.LicenseTypeID != null && licenseLookup.TryGetValue(application.LicenseTypeID, out var licenseItem)
+                        ? licenseItem.LicenseName ?? "N/A"
+                        : "N/A",
+                    RegionName = application.ApplicationType != null && regionLookup.TryGetValue(application.ApplicationType, out var regionItem)
+                        ? regionItem.RegionName ?? "N/A"
+                        : "N/A",
+                    Status = application.Status ?? "Unknown",
+                    ReviewUrl = $"/Approval/Apply?Id={application.Id}"
+                });
+            }
+
+            foreach (var task in postFormationTasks)
+            {
+                if (string.IsNullOrWhiteSpace(task.ApplicationId))
+                {
+                    continue;
+                }
+
+                string rootApplicationId;
+                DateTime submittedDate;
+                string status;
+                string reviewUrl;
+
+                if (task.Service == "Extended Hours")
+                {
+                    if (!extendedHoursLookup.TryGetValue(task.ApplicationId, out var extendedHours)
+                        || string.IsNullOrWhiteSpace(extendedHours.ApplicationId))
+                    {
+                        continue;
+                    }
+
+                    rootApplicationId = extendedHours.ApplicationId;
+                    submittedDate = extendedHours.DateAdded;
+                    status = extendedHours.Status ?? task.Status ?? "Unknown";
+                    reviewUrl = $"/Extendedhours/ViewApplications?Id={extendedHours.Id}";
+                }
+                else if (task.Service == "Temporary Retails")
+                {
+                    if (!temporaryRetailLookup.TryGetValue(task.ApplicationId, out var temporaryRetail)
+                        || string.IsNullOrWhiteSpace(temporaryRetail.ApplicationId))
+                    {
+                        continue;
+                    }
+
+                    rootApplicationId = temporaryRetail.ApplicationId;
+                    submittedDate = temporaryRetail.DateAdded;
+                    status = temporaryRetail.Status ?? task.Status ?? "Unknown";
+                    reviewUrl = $"/TemporaryRetails/ViewApplications?Id={temporaryRetail.Id}";
+                }
+                else
+                {
+                    continue;
+                }
+
+                if (!applicationLookup.TryGetValue(rootApplicationId, out var application))
+                {
+                    continue;
+                }
+
+                outletLookup.TryGetValue(rootApplicationId, out var outlet);
+
+                model.PostFormations.Add(new SecretaryDashboardPostFormationItemViewModel
+                {
+                    RecordId = task.ApplicationId,
+                    ApplicationId = rootApplicationId,
+                    Service = task.Service ?? "Post Formation",
+                    TradingName = outlet?.TradingName ?? application.BusinessName ?? "N/A",
+                    OperatingAddress = outlet?.Address ?? application.OperationAddress ?? "N/A",
+                    SubmittedDate = submittedDate,
+                    LicenseName = application.LicenseTypeID != null && licenseLookup.TryGetValue(application.LicenseTypeID, out var licenseItem)
+                        ? licenseItem.LicenseName ?? "N/A"
+                        : "N/A",
+                    RegionName = application.ApplicationType != null && regionLookup.TryGetValue(application.ApplicationType, out var regionItem)
+                        ? regionItem.RegionName ?? "N/A"
+                        : "N/A",
+                    Status = status,
+                    ReviewUrl = reviewUrl
+                });
+            }
+
+            return model;
+        }
+
+        private static List<SecretaryReportSummaryItemViewModel> BuildSummary(IEnumerable<string> values)
+        {
+            return values
+                .Select(value => NormalizeDimension(value))
+                .GroupBy(value => value, StringComparer.OrdinalIgnoreCase)
+                .Select(group => new SecretaryReportSummaryItemViewModel
+                {
+                    Name = group.Key,
+                    Count = group.Count()
+                })
+                .OrderByDescending(item => item.Count)
+                .ThenBy(item => item.Name)
+                .ToList();
+        }
+
+        private static bool MatchesFilter(string value, string? filter)
+        {
+            return string.IsNullOrWhiteSpace(filter)
+                || string.Equals(value, filter.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeDimension(string? value, string fallback = "Unspecified")
+        {
+            return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+        }
+
+        private static string EscapeCsv(string? value)
+        {
+            var safeValue = value ?? string.Empty;
+            return $"\"{safeValue.Replace("\"", "\"\"")}\"";
         }
     }
 }
