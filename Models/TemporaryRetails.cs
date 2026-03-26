@@ -21,6 +21,7 @@ namespace LLB.Models
         public double? PaidFee { get; set; }
         public string? PaymentStatus { get; set; }
         public string? ReasonForExtention { get; set; }
+        public string? LocationAddress { get; set; }
         public string? HoursOfExtension { get; set; }
         public string? ApproverId { get; set; }
         public DateTime? DateOfApproval { get; set; }
@@ -50,10 +51,11 @@ namespace LLB.Models
         public double? PaidFee { get; set; }
         public string? PaymentStatus { get; set; }
         public string? ReasonForExtention { get; set; }
+        public string? LocationAddress { get; set; }
         public string? HoursOfExtension { get; set; }
         public string? ApproverId { get; set; }
         public DateTime? DateOfApproval { get; set; }
-        public DateTime ExtendedHoursDate { get; set; }
+        public DateTime TemporaryRetailsDate { get; set; }
 
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }

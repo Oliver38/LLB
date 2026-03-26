@@ -77,85 +77,92 @@ namespace LLB.Controllers
 
             foreach (var taskass in assignedtasks)
             {
-                var application = _db.ApplicationInfo.Where(s => s.Id == taskass.ApplicationId ).FirstOrDefault();
-                if (application == null) { }
+                var application = ResolveTaskApplication(taskass);
+                if (application == null)
+                {
+                    continue;
+                }
+
+                TaskDetails details = new TaskDetails();
+                ApplicationUser examiner = null;
+                if (taskass.VerifierId != null)
+                {
+                    examiner = await userManager.FindByIdAsync(taskass.VerifierId);
+                }
+                else if (taskass.RecommenderId != null)
+                {
+                    examiner = await userManager.FindByIdAsync(taskass.RecommenderId);
+                }
+                else if (taskass.ApproverId != null)
+                {
+                    examiner = await userManager.FindByIdAsync(taskass.ApproverId);
+                }
+
+                var examinerfullname = examiner == null
+                    ? "Unassigned"
+                    : $"{examiner.Name} {examiner.LastName}".Trim();
+                details.ExaminerName = examinerfullname;
+                details.RefNumber = ResolveTaskReference(taskass, application);
+                details.Id = taskass.Id;
+                details.ApplicationName = taskass.Service ?? "Task";
+
+                var rootApplicationId = ResolveTaskRootApplicationId(taskass);
+                var outletdetails = !string.IsNullOrWhiteSpace(rootApplicationId)
+                    ? _db.OutletInfo.Where(s => s.ApplicationId == rootApplicationId).FirstOrDefault()
+                    : null;
+
+                details.BarName = outletdetails?.TradingName ?? application.BusinessName ?? "N/A";
+                details.DateSubmitted = application.ApplicationDate;
+                details.TaskStatus = taskass.Status ?? "Unknown";
+                details.JobStatus = taskass.ExaminationStatus ?? application.ExaminationStatus ?? "N/A";
+                details.DateCreated = taskass.DateAdded;
+
+                var licenseType = _db.LicenseTypes.Where(w => w.Id == application.LicenseTypeID).FirstOrDefault();
+                details.LicenseType = licenseType?.LicenseName ?? "N/A";
+
+                //var inspector = await userManager.GetUsersInRoleAsync("inspector");
+                List<ApplicationUser> examiners = new List<ApplicationUser>();
+                if (taskass.ExaminationStatus == "verification")
+                {
+                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
+
+                }
+                else if (taskass.ExaminationStatus == "recommendation")
+                {
+                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
+
+                }
+                else if (taskass.ExaminationStatus == "approval")
+                {
+                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
+                }
+
+                if (taskass.AssignerId == "system")
+                {
+                    details.Assigner = "System";
+                }
+                else if (taskass.AssignerId == null || taskass.AssignerId == "")
+                {
+                    details.Assigner = "";
+                }
                 else
                 {
-                    TaskDetails details = new TaskDetails();
-                    ApplicationUser examiner = null;
-                    if (taskass.VerifierId != null)
-                    {
-                        examiner = await userManager.FindByIdAsync(taskass.VerifierId);
-                    }
-                    else if (taskass.RecommenderId != null)
-                    {
-                        examiner = await userManager.FindByIdAsync(taskass.RecommenderId);
-                    }
-                    else if (taskass.ApproverId != null)
-                    {
-                        examiner = await userManager.FindByIdAsync(taskass.ApproverId);
-                    }
-
-                    var examinerfullname = examiner.Name + " " + examiner.LastName;
-                    details.ExaminerName = examinerfullname;
-                    details.RefNumber = application.RefNum;
-                    details.Id = taskass.Id;
-                    details.ApplicationName = taskass.Service;
-                    //getting Bar name
-                    var outletdetails = _db.OutletInfo.Where(s => s.ApplicationId == taskass.ApplicationId).FirstOrDefault();
-                    details.BarName = outletdetails.TradingName;
-                    details.DateSubmitted = application.ApplicationDate;
-                    details.TaskStatus = taskass.Status;
-                    details.JobStatus = application.ExaminationStatus;
-                    details.DateCreated = taskass.DateAdded;
-                    // getting licnse type
-                    var licenseType = _db.LicenseTypes.Where(w => w.Id == application.LicenseTypeID).FirstOrDefault();
-                    details.LicenseType = licenseType.LicenseName;
-
-                    //var inspector = await userManager.GetUsersInRoleAsync("inspector");
-                    List<ApplicationUser> examiners = new List<ApplicationUser>();
-                    if (taskass.ExaminationStatus == "verification")
-                    {
-                        examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
-
-                    }
-                    else if (taskass.ExaminationStatus == "recommendation")
-                    {
-                        examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
-
-                    }
-                    else if (taskass.ExaminationStatus == "approval")
-                    {
-                        examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
-                    }
-
-                    if (taskass.AssignerId == "system")
-                    {
-                        details.Assigner = "System";
-                    }
-                    else if (taskass.AssignerId == null || taskass.AssignerId == "")
-                    {
-                        details.Assigner = "";
-                    }
-                    else
-                    {
-                        var person = await userManager.FindByIdAsync(taskass.AssignerId);
-                        details.Assigner = person.Name + " " + person.LastName;
-                    }
-
-
-                    if (taskass.ReAssignerId == null || taskass.ReAssignerId == "")
-                    {
-                        details.ReAssigner = "";
-                    }
-                    else
-                    {
-                        var person = await userManager.FindByIdAsync(taskass.ReAssignerId);
-                        details.ReAssigner = person.Name + " " + person.LastName;
-                    }
-
-                    Alldetails.Add(details);
+                    var person = await userManager.FindByIdAsync(taskass.AssignerId);
+                    details.Assigner = person.Name + " " + person.LastName;
                 }
+
+
+                if (taskass.ReAssignerId == null || taskass.ReAssignerId == "")
+                {
+                    details.ReAssigner = "";
+                }
+                else
+                {
+                    var person = await userManager.FindByIdAsync(taskass.ReAssignerId);
+                    details.ReAssigner = person.Name + " " + person.LastName;
+                }
+
+                Alldetails.Add(details);
             }
 
             ViewBag.UnAssigned = unassignedtasks;
@@ -170,7 +177,18 @@ namespace LLB.Controllers
         {
 
             var task = _db.Tasks.Where(a => a.Id == Id).FirstOrDefault();
-            var application = _db.ApplicationInfo.Where(s => s.Id == task.ApplicationId).FirstOrDefault();
+            if (task == null)
+            {
+                TempData["result"] = "Task could not be found.";
+                return RedirectToAction("AdminDashboard", "Tasks");
+            }
+
+            var application = ResolveTaskApplication(task);
+            if (application == null)
+            {
+                TempData["result"] = "The task's application record could not be found.";
+                return RedirectToAction("AdminDashboard", "Tasks");
+            }
 
             TaskDetails details = new TaskDetails();
             //get examiner details
@@ -186,21 +204,26 @@ namespace LLB.Controllers
             {
                 examiner = await userManager.FindByIdAsync(task.ApproverId);
             }
-            var examinerfullname = examiner.Name + " " + examiner.LastName;
+            var examinerfullname = examiner == null
+                ? "Unassigned"
+                : $"{examiner.Name} {examiner.LastName}".Trim();
             details.ExaminerName = examinerfullname;
-            details.RefNumber = application.RefNum;
+            details.RefNumber = ResolveTaskReference(task, application);
             details.Id = task.Id;
             //getting Bar name
-            var outletdetails = _db.OutletInfo.Where(s => s.ApplicationId == task.ApplicationId).FirstOrDefault();
-            details.BarName = outletdetails.TradingName;
+            var rootApplicationId = ResolveTaskRootApplicationId(task);
+            var outletdetails = !string.IsNullOrWhiteSpace(rootApplicationId)
+                ? _db.OutletInfo.Where(s => s.ApplicationId == rootApplicationId).FirstOrDefault()
+                : null;
+            details.BarName = outletdetails?.TradingName ?? application.BusinessName ?? "N/A";
             details.DateSubmitted = application.ApplicationDate;
-            details.TaskStatus = task.Status;
-            details.JobStatus = application.ExaminationStatus;
+            details.TaskStatus = task.Status ?? "Unknown";
+            details.JobStatus = task.ExaminationStatus ?? application.ExaminationStatus ?? "N/A";
 
 
             // getting licnse type
             var licenseType = _db.LicenseTypes.Where(w => w.Id == application.LicenseTypeID).FirstOrDefault();
-            details.LicenseType = licenseType.LicenseName;
+            details.LicenseType = licenseType?.LicenseName ?? "N/A";
             details.DateCreated = task.DateAdded;
 
             //var inspector = await userManager.GetUsersInRoleAsync("inspector");
@@ -218,6 +241,11 @@ namespace LLB.Controllers
             else if (task.ExaminationStatus == "approval")
             {
                 examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
+
+            }
+             else if (task.ExaminationStatus == "inspection")
+            {
+                examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("inspector");
 
             }
 
@@ -334,85 +362,95 @@ namespace LLB.Controllers
 
             foreach (var taskass in assignedtasks)
             {
-                var application = _db.ApplicationInfo.Where(s => s.Id == taskass.ApplicationId && s.ExaminationStatus == stage).FirstOrDefault();
-                if (application == null) { }
+                if (!string.IsNullOrWhiteSpace(stage)
+                    && !string.Equals(taskass.ExaminationStatus, stage, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var application = ResolveTaskApplication(taskass);
+                if (application == null)
+                {
+                    continue;
+                }
+
+                TaskDetails details = new TaskDetails();
+                ApplicationUser examiner = null;
+                if (taskass.VerifierId != null)
+                {
+                    examiner = await userManager.FindByIdAsync(taskass.VerifierId);
+                }
+                else if (taskass.RecommenderId != null)
+                {
+                    examiner = await userManager.FindByIdAsync(taskass.RecommenderId);
+                }
+                else if (taskass.ApproverId != null)
+                {
+                    examiner = await userManager.FindByIdAsync(taskass.ApproverId);
+                }
+
+                var examinerfullname = examiner == null
+                    ? "Unassigned"
+                    : $"{examiner.Name} {examiner.LastName}".Trim();
+                details.ExaminerName = examinerfullname;
+                details.RefNumber = ResolveTaskReference(taskass, application);
+                details.Id = taskass.Id;
+
+                var rootApplicationId = ResolveTaskRootApplicationId(taskass);
+                var outletdetails = !string.IsNullOrWhiteSpace(rootApplicationId)
+                    ? _db.OutletInfo.Where(s => s.ApplicationId == rootApplicationId).FirstOrDefault()
+                    : null;
+                details.BarName = outletdetails?.TradingName ?? application.BusinessName ?? "N/A";
+                details.DateSubmitted = application.ApplicationDate;
+                details.TaskStatus = taskass.Status ?? "Unknown";
+                details.JobStatus = taskass.ExaminationStatus ?? application.ExaminationStatus ?? "N/A";
+                details.DateCreated = taskass.DateAdded;
+                var licenseType = _db.LicenseTypes.Where(w => w.Id == application.LicenseTypeID).FirstOrDefault();
+                details.LicenseType = licenseType?.LicenseName ?? "N/A";
+
+                //var inspector = await userManager.GetUsersInRoleAsync("inspector");
+                List<ApplicationUser> examiners = new List<ApplicationUser>();
+                if (taskass.ExaminationStatus == "verification")
+                {
+                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
+
+                }
+                else if (taskass.ExaminationStatus == "recommendation")
+                {
+                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
+
+                }
+                else if (taskass.ExaminationStatus == "approval")
+                {
+                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
+                }
+
+                if (taskass.AssignerId == "system")
+                {
+                    details.Assigner = "System";
+                }
+                else if (taskass.AssignerId == null || taskass.AssignerId == "")
+                {
+                    details.Assigner = "";
+                }
                 else
                 {
-                    TaskDetails details = new TaskDetails();
-                    ApplicationUser examiner = null;
-                    if (taskass.VerifierId != null)
-                    {
-                        examiner = await userManager.FindByIdAsync(taskass.VerifierId);
-                    }
-                    else if (taskass.RecommenderId != null)
-                    {
-                        examiner = await userManager.FindByIdAsync(taskass.RecommenderId);
-                    }
-                    else if (taskass.ApproverId != null)
-                    {
-                        examiner = await userManager.FindByIdAsync(taskass.ApproverId);
-                    }
-
-                    var examinerfullname = examiner.Name + " " + examiner.LastName;
-                    details.ExaminerName = examinerfullname;
-                    details.RefNumber = application.RefNum;
-                    details.Id = taskass.Id;
-
-                    //getting Bar name
-                    var outletdetails = _db.OutletInfo.Where(s => s.ApplicationId == taskass.ApplicationId).FirstOrDefault();
-                    details.BarName = outletdetails.TradingName;
-                    details.DateSubmitted = application.ApplicationDate;
-                    details.TaskStatus = taskass.Status;
-                    details.JobStatus = application.ExaminationStatus;
-                    details.DateCreated = taskass.DateAdded;
-                    // getting licnse type
-                    var licenseType = _db.LicenseTypes.Where(w => w.Id == application.LicenseTypeID).FirstOrDefault();
-                    details.LicenseType = licenseType.LicenseName;
-
-                    //var inspector = await userManager.GetUsersInRoleAsync("inspector");
-                    List<ApplicationUser> examiners = new List<ApplicationUser>();
-                    if (taskass.ExaminationStatus == "verification")
-                    {
-                        examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
-
-                    }
-                    else if (taskass.ExaminationStatus == "recommendation")
-                    {
-                        examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
-
-                    }
-                    else if (taskass.ExaminationStatus == "approval")
-                    {
-                        examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
-                    }
-
-                    if (taskass.AssignerId == "system")
-                    {
-                        details.Assigner = "System";
-                    }
-                    else if (taskass.AssignerId == null || taskass.AssignerId == "")
-                    {
-                        details.Assigner = "";
-                    }
-                    else
-                    {
-                        var person = await userManager.FindByIdAsync(taskass.AssignerId);
-                        details.Assigner = person.Name + " " + person.LastName;
-                    }
-
-
-                    if (taskass.ReAssignerId == null || taskass.ReAssignerId == "")
-                    {
-                        details.ReAssigner = "";
-                    }
-                    else
-                    {
-                        var person = await userManager.FindByIdAsync(taskass.ReAssignerId);
-                        details.ReAssigner = person.Name + " " + person.LastName;
-                    }
-
-                    Alldetails.Add(details);
+                    var person = await userManager.FindByIdAsync(taskass.AssignerId);
+                    details.Assigner = person.Name + " " + person.LastName;
                 }
+
+
+                if (taskass.ReAssignerId == null || taskass.ReAssignerId == "")
+                {
+                    details.ReAssigner = "";
+                }
+                else
+                {
+                    var person = await userManager.FindByIdAsync(taskass.ReAssignerId);
+                    details.ReAssigner = person.Name + " " + person.LastName;
+                }
+
+                Alldetails.Add(details);
             }
             ViewBag.Stage = stage;
             ViewBag.Examiners = examinerslist;
@@ -448,85 +486,95 @@ namespace LLB.Controllers
            
             foreach (var taskass in assignedtasks)
             {
-                var application = _db.ApplicationInfo.Where(s => s.Id == taskass.ApplicationId && s.ExaminationStatus == stage).FirstOrDefault();
-                if (application == null) { }
+                if (!string.IsNullOrWhiteSpace(stage)
+                    && !string.Equals(taskass.ExaminationStatus, stage, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var application = ResolveTaskApplication(taskass);
+                if (application == null)
+                {
+                    continue;
+                }
+
+                TaskDetails details = new TaskDetails();
+                ApplicationUser examiner = null;
+                if (taskass.VerifierId != null)
+                {
+                    examiner = await userManager.FindByIdAsync(taskass.VerifierId);
+                }
+                else if (taskass.RecommenderId != null)
+                {
+                    examiner = await userManager.FindByIdAsync(taskass.RecommenderId);
+                }
+                else if (taskass.ApproverId != null)
+                {
+                    examiner = await userManager.FindByIdAsync(taskass.ApproverId);
+                }
+
+                var examinerfullname = examiner == null
+                    ? "Unassigned"
+                    : $"{examiner.Name} {examiner.LastName}".Trim();
+                details.ExaminerName = examinerfullname;
+                details.RefNumber = ResolveTaskReference(taskass, application);
+                details.Id = taskass.Id;
+
+                var rootApplicationId = ResolveTaskRootApplicationId(taskass);
+                var outletdetails = !string.IsNullOrWhiteSpace(rootApplicationId)
+                    ? _db.OutletInfo.Where(s => s.ApplicationId == rootApplicationId).FirstOrDefault()
+                    : null;
+                details.BarName = outletdetails?.TradingName ?? application.BusinessName ?? "N/A";
+                details.DateSubmitted = application.ApplicationDate;
+                details.TaskStatus = taskass.Status ?? "Unknown";
+                details.JobStatus = taskass.ExaminationStatus ?? application.ExaminationStatus ?? "N/A";
+                details.DateCreated = taskass.DateAdded;
+                var licenseType = _db.LicenseTypes.Where(w => w.Id == application.LicenseTypeID).FirstOrDefault();
+                details.LicenseType = licenseType?.LicenseName ?? "N/A";
+
+                //var inspector = await userManager.GetUsersInRoleAsync("inspector");
+                List<ApplicationUser> examiners = new List<ApplicationUser>();
+                if (taskass.ExaminationStatus == "verification")
+                {
+                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
+
+                }
+                else if (taskass.ExaminationStatus == "recommendation")
+                {
+                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
+
+                }
+                else if (taskass.ExaminationStatus == "approval")
+                {
+                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
+                }
+
+                if (taskass.AssignerId == "system")
+                {
+                    details.Assigner = "System";
+                }
+                else if (taskass.AssignerId == null || taskass.AssignerId == "")
+                {
+                    details.Assigner = "";
+                }
                 else
                 {
-                    TaskDetails details = new TaskDetails();
-                    ApplicationUser examiner = null;
-                    if (taskass.VerifierId != null)
-                    {
-                        examiner = await userManager.FindByIdAsync(taskass.VerifierId);
-                    }
-                    else if (taskass.RecommenderId != null)
-                    {
-                        examiner = await userManager.FindByIdAsync(taskass.RecommenderId);
-                    }
-                    else if (taskass.ApproverId != null)
-                    {
-                        examiner = await userManager.FindByIdAsync(taskass.ApproverId);
-                    }
-
-                    var examinerfullname = examiner.Name + " " + examiner.LastName;
-                    details.ExaminerName = examinerfullname;
-                    details.RefNumber = application.RefNum;
-                    details.Id = taskass.Id;
-
-                    //getting Bar name
-                    var outletdetails = _db.OutletInfo.Where(s => s.ApplicationId == taskass.ApplicationId).FirstOrDefault();
-                    details.BarName = outletdetails.TradingName;
-                    details.DateSubmitted = application.ApplicationDate;
-                    details.TaskStatus = taskass.Status;
-                    details.JobStatus = application.ExaminationStatus;
-                    details.DateCreated = taskass.DateAdded;
-                    // getting licnse type
-                    var licenseType = _db.LicenseTypes.Where(w => w.Id == application.LicenseTypeID).FirstOrDefault();
-                    details.LicenseType = licenseType.LicenseName;
-
-                    //var inspector = await userManager.GetUsersInRoleAsync("inspector");
-                    List<ApplicationUser> examiners = new List<ApplicationUser>();
-                    if (taskass.ExaminationStatus == "verification")
-                    {
-                        examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
-
-                    }
-                    else if (taskass.ExaminationStatus == "recommendation")
-                    {
-                        examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
-
-                    }
-                    else if (taskass.ExaminationStatus == "approval")
-                    {
-                        examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
-                    }
-
-                    if (taskass.AssignerId == "system")
-                    {
-                        details.Assigner = "System";
-                    }
-                    else if (taskass.AssignerId == null || taskass.AssignerId == "")
-                    {
-                        details.Assigner = "";
-                    }
-                    else
-                    {
-                        var person = await userManager.FindByIdAsync(taskass.AssignerId);
-                        details.Assigner = person.Name + " " + person.LastName;
-                    }
-
-
-                    if (taskass.ReAssignerId == null || taskass.ReAssignerId == "")
-                    {
-                        details.ReAssigner = "";
-                    }
-                    else
-                    {
-                        var person = await userManager.FindByIdAsync(taskass.ReAssignerId);
-                        details.ReAssigner = person.Name + " " + person.LastName;
-                    }
-
-                    Alldetails.Add(details);
+                    var person = await userManager.FindByIdAsync(taskass.AssignerId);
+                    details.Assigner = person.Name + " " + person.LastName;
                 }
+
+
+                if (taskass.ReAssignerId == null || taskass.ReAssignerId == "")
+                {
+                    details.ReAssigner = "";
+                }
+                else
+                {
+                    var person = await userManager.FindByIdAsync(taskass.ReAssignerId);
+                    details.ReAssigner = person.Name + " " + person.LastName;
+                }
+
+                Alldetails.Add(details);
             }
             ViewBag.Stage = stage;
             ViewBag.Examiners = examinerslist;
@@ -603,6 +651,127 @@ namespace LLB.Controllers
             //_db.Add(tasks);
             //_db.SaveChanges();
             return View();
+        }
+
+        private ApplicationInfo? ResolveTaskApplication(Tasks task)
+        {
+            var rootApplicationId = ResolveTaskRootApplicationId(task);
+            if (string.IsNullOrWhiteSpace(rootApplicationId))
+            {
+                return null;
+            }
+
+            return _db.ApplicationInfo.Where(s => s.Id == rootApplicationId).FirstOrDefault();
+        }
+
+        private string? ResolveTaskRootApplicationId(Tasks task)
+        {
+            if (task == null || string.IsNullOrWhiteSpace(task.ApplicationId))
+            {
+                return null;
+            }
+
+            var service = task.Service?.Trim().ToLowerInvariant();
+
+            return service switch
+            {
+                "extended hours" => _db.ExtendedHours.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault(),
+                "temporary retails" => _db.TemporaryRetails.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault(),
+                "extra counter" => _db.ExtraCounter.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault()
+                    ?? _db.ExtendedHours.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault(),
+                "changemanager" => _db.ChangeManaager.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault()
+                    ?? _db.ChangeManaager.Where(x => x.ApplicationId == task.ApplicationId).OrderByDescending(x => x.DateApplied).Select(x => x.ApplicationId).FirstOrDefault()
+                    ?? task.ApplicationId,
+                "change manager" => _db.ChangeManaager.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault()
+                    ?? _db.ChangeManaager.Where(x => x.ApplicationId == task.ApplicationId).OrderByDescending(x => x.DateApplied).Select(x => x.ApplicationId).FirstOrDefault()
+                    ?? task.ApplicationId,
+                "manager change" => _db.ChangeManaager.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault()
+                    ?? _db.ChangeManaager.Where(x => x.ApplicationId == task.ApplicationId).OrderByDescending(x => x.DateApplied).Select(x => x.ApplicationId).FirstOrDefault()
+                    ?? task.ApplicationId,
+                _ => task.ApplicationId
+            };
+        }
+
+        private string ResolveTaskReference(Tasks task, ApplicationInfo? application)
+        {
+            if (task == null)
+            {
+                return application?.RefNum ?? string.Empty;
+            }
+
+            var service = task.Service?.Trim().ToLowerInvariant();
+            string? reference = service switch
+            {
+                "renewal" => _db.Renewals
+                    .Where(x => x.ApplicationId == task.ApplicationId)
+                    .OrderByDescending(x => x.DateUpdated)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault(),
+                "renewal inspection" => _db.Inspection
+                    .Where(x => x.ApplicationId == task.ApplicationId && x.Service == "Renewal Inspection")
+                    .OrderByDescending(x => x.DateApplied)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault(),
+                "inspection" => _db.Inspection
+                    .Where(x => x.ApplicationId == task.ApplicationId && x.Service == "Inspection")
+                    .OrderByDescending(x => x.DateApplied)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault()
+                    ?? _db.Inspection
+                        .Where(x => x.ApplicationId == task.ApplicationId)
+                        .OrderByDescending(x => x.DateApplied)
+                        .Select(x => x.Reference)
+                        .FirstOrDefault(),
+                "extended hours" => _db.ExtendedHours
+                    .Where(x => x.Id == task.ApplicationId)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault(),
+                "temporary retails" => _db.TemporaryRetails
+                    .Where(x => x.Id == task.ApplicationId)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault(),
+                "extra counter" => _db.ExtraCounter
+                    .Where(x => x.Id == task.ApplicationId)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault()
+                    ?? _db.ExtendedHours
+                        .Where(x => x.Id == task.ApplicationId)
+                        .Select(x => x.Reference)
+                        .FirstOrDefault(),
+                "changemanager" => _db.ChangeManaager
+                    .Where(x => x.Id == task.ApplicationId)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault()
+                    ?? _db.ChangeManaager
+                        .Where(x => x.ApplicationId == task.ApplicationId)
+                        .OrderByDescending(x => x.DateApplied)
+                        .Select(x => x.Reference)
+                        .FirstOrDefault(),
+                "change manager" => _db.ChangeManaager
+                    .Where(x => x.Id == task.ApplicationId)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault()
+                    ?? _db.ChangeManaager
+                        .Where(x => x.ApplicationId == task.ApplicationId)
+                        .OrderByDescending(x => x.DateApplied)
+                        .Select(x => x.Reference)
+                        .FirstOrDefault(),
+                "manager change" => _db.ChangeManaager
+                    .Where(x => x.Id == task.ApplicationId)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault()
+                    ?? _db.ChangeManaager
+                        .Where(x => x.ApplicationId == task.ApplicationId)
+                        .OrderByDescending(x => x.DateApplied)
+                        .Select(x => x.Reference)
+                        .FirstOrDefault(),
+                "license duplicate" => application?.LLBNum,
+                _ => null
+            };
+
+            return string.IsNullOrWhiteSpace(reference)
+                ? application?.RefNum ?? string.Empty
+                : reference;
         }
 
 

@@ -111,5 +111,57 @@ namespace LLB.Helpers
 
             return new string(secretaryWithLeastTasks);
         }
+
+        public async Task<string> GetInspector(AppDbContext _db, UserManager<ApplicationUser> userManager)
+        {
+            var inspectors = await userManager.GetUsersInRoleAsync("inspector");
+            if (inspectors != null && inspectors.Count > 0)
+            {
+                var verifiers = await userManager.GetUsersInRoleAsync("verifier");
+                var verifierIds = verifiers
+                    .Select(verifier => verifier.Id)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var dualRoleInspectors = inspectors
+                    .Where(inspector => verifierIds.Contains(inspector.Id))
+                    .ToList();
+
+                if (dualRoleInspectors.Count > 0)
+                {
+                    inspectors = dualRoleInspectors;
+                }
+            }
+
+            if (inspectors == null || inspectors.Count == 0)
+            {
+                inspectors = await userManager.GetUsersInRoleAsync("verifier");
+            }
+
+            List<UserTasks> tasklist = new List<UserTasks>();
+            foreach (var inspector in inspectors)
+            {
+                UserTasks eachsuser = new UserTasks();
+                var counttasks = _db.Tasks.Where(a => a.VerifierId == inspector.Id && a.Status == "assigned").ToList();
+                var taskcount = counttasks.Count;
+                eachsuser.UserId = inspector.Id;
+                eachsuser.Tasks = taskcount;
+                tasklist.Add(eachsuser);
+            }
+
+            string inspectorWithLeastTasks = null;
+            int minTaskCount = int.MaxValue;
+            foreach (var entry in tasklist)
+            {
+                if (entry.Tasks < minTaskCount)
+                {
+                    minTaskCount = entry.Tasks;
+                    inspectorWithLeastTasks = entry.UserId;
+                }
+            }
+
+            return string.IsNullOrWhiteSpace(inspectorWithLeastTasks)
+                ? string.Empty
+                : new string(inspectorWithLeastTasks);
+        }
     }
 }

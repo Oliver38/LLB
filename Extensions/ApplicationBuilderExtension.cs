@@ -90,16 +90,8 @@ namespace LLB.Extensions
             {
                 using (var context = scope.ServiceProvider.GetRequiredService<AppDbContext>())
                 {
-                    try
-                    {
-                        context.Database.Migrate();
-                        // Do data seeding here
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log exception here
-                       // throw ex;
-                    }
+                    context.Database.Migrate();
+                    // Do data seeding here
                 }
             }
 

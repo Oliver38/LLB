@@ -52,6 +52,10 @@
                                         <td><span class="badge bg-info">@ViewBag.ChangeManager.Status</span></td>
                                     </tr>
                                     <tr>
+                                        <th>Post Formation Reference</th>
+                                        <td>@(ViewBag.ChangeManager.Reference ?? "N/A")</td>
+                                    </tr>
+                                    <tr>
                                         <th>New Managers Count</th>
                                         <td>@ViewBag.ChangeManager.NewManagersCount</td>
                                     </tr>
@@ -109,7 +113,7 @@
                                         <td>@ViewBag.ChangeManager.UserId</td>
                                     </tr>
                                     <tr>
-                                        <th>Application Reference</th>
+                                        <th>Root Application Id</th>
                                         <td>@ViewBag.ChangeManager.ApplicationId</td>
                                     </tr>
                                     <tr>

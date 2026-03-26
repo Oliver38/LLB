@@ -1,0 +1,81 @@
+﻿@using System.Linq
+@using LLB.Models.ViewModel
+
+@{
+    Layout = "_LayoutMain";
+    ViewData["Title"] = "Temporary Retail Listings";
+    var listings = ViewBag.TemporaryRetailListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+
+    Func<string?, string> statusClass = status => status?.ToLowerInvariant() switch
+    {
+        "approved" => "llb-status-success",
+        "submitted" => "llb-status-info",
+        "payment verification" => "llb-status-info",
+        "verified" => "llb-status-success",
+        "inprogress" => "llb-status-warning",
+        "has query" => "llb-status-warning",
+        "rejected" => "llb-status-danger",
+        "inspected" => "llb-status-success",
+        _ => "llb-status-info"
+    };
+}
+
+<div class="card llb-panel-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="card-title mb-1">Temporary Retail Listings</h5>
+            <p class="text-muted mb-0">Temporary retail submissions linked to your approved licences.</p>
+        </div>
+        <a class="btn btn-outline-primary" href="/Home/Dashboard?tab=services-pane">Back To Dashboard</a>
+    </div>
+    <div class="card-body">
+        @if (!listings.Any())
+        {
+            <div class="llb-empty-state">
+                <i class="bi bi-shop-window"></i>
+                <h5 class="fw-bold">No temporary retail records</h5>
+                <p class="text-muted mb-0">Temporary retail requests will appear here after you submit one from an approved licence.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Trading Name</th>
+                            <th>LLB Number</th>
+                            <th>Temporary Retail Date</th>
+                            <th>Submitted</th>
+                            <th>Licence</th>
+                            <th>For</th>
+                            <th>Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var listing in listings)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@listing.Reference</td>
+                                <td class="fw-semibold">@listing.TradingName</td>
+                                <td>@listing.LLBNumber</td>
+                                <td>@(listing.EventDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                <td>@(listing.SubmittedDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                <td>@listing.LicenseName</td>
+                                <td>@listing.RegionName</td>
+                                <td>
+                                    <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                </td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

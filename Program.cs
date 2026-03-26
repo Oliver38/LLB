@@ -81,6 +81,14 @@ builder.Services.Configure<PasswordHasherOptions>(options =>
            );
 var app = builder.Build();
 
+var commandLine = string.Join(" ", Environment.GetCommandLineArgs()).ToLowerInvariant();
+var isEfTooling = commandLine.Contains("dotnet-ef") || commandLine.Contains("ef.dll");
+
+if (!isEfTooling)
+{
+    app.InitialiseDatabase();
+    await app.InitialiseRoles();
+}
 
 
 // Configure the HTTP request pipeline.
@@ -103,15 +111,3 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=LandingPage}/{id?}");
 
 app.Run();
-
-
-
-await app.InitialiseRoles();
-//await app.InitialiseUsers();
-
-
-app.InitialiseDatabase();
-//ApplicationBuilderExtension.I
-await ApplicationBuilderExtension.InitialiseRoles(app);
-//await ApplicationBuilderExtension.InitialiseUsers(app);
-ApplicationBuilderExtension.InitialiseDatabase(app);

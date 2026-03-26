@@ -11,6 +11,7 @@ namespace LLB.Models
         public string? Id { get; set; }
         public string? ApplicationId { get; set; }
         public string? UserId { get; set; }
+        public string? Reference { get; set; }
         public DateTime? PreviousExpiry { get; set; }
         public string? FeePaid { get; set; }
         public string? PenaltyPaid { get; set; }

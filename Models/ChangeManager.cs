@@ -11,6 +11,7 @@ namespace LLB.Models
         [Key]
         
         public string? Id { get; set; }
+        public string? Reference { get; set; }
         public string? ApplicationId { get; set; }
         public string? Status { get; set; }
         public string? UserId { get; set; }

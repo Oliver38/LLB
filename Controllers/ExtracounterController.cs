@@ -161,8 +161,7 @@ namespace LLB.Controllers
             extendedHours.Id = Guid.NewGuid().ToString();
             extendedHours.UserId = userId;
             extendedHours.Status = "Applied";
-            //ReferenceHelper.GenerateReferenceNumber(_db);
-            var refnum = ReferenceHelper.GenerateReferenceNumber(_db);
+            var refnum = ReferenceHelper.GeneratePostFormationReferenceNumber(_db, "ECF");
             extendedHours.Reference = refnum;
 
             extendedHours.ApplicationId = id;

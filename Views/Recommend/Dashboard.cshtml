@@ -119,18 +119,52 @@
 
 
 
-                    </table>
-                </div>
+	                    </table>
+	                </div>
+	
+	
+	
+	
+	
+	
+	
+	                <div class="row">
+	                    <div class="card-header">
+	                        <h5 class="card-title">Renewal Applications</h5>
+	                    </div>
 
+	                    <table class="table table-responsiveß table-hover table-striped">
+	                        <thead>
+	                            <tr>
+	                                <th>Trading Name </th>
+	                                <th>LLB Number </th>
+	                                <th>Expiry Date </th>
+	                                <th>License </th>
+	                                <th>For </th>
+	                                <th>Status </th>
+	                                <th>Action </th>
+	                            </tr>
+	                        </thead>
+	                        <tbody>
+	                            @foreach (var renewal in ViewBag.Renewals)
+	                            {
+	                                <tr>
+	                                    <td>@renewal.TradingName</td>
+	                                    <td>@renewal.LLBNumber</td>
+	                                    <td>@renewal.PreviousExpiry</td>
+	                                    <td>@renewal.Licensetype</td>
+	                                    <td>@renewal.LicenseRegion</td>
+	                                    <td>@renewal.Status</td>
+	                                    <td><a class="btn btn-primary" href="/Recommend/Renewal?Id=@renewal.Id&taskId=@renewal.TaskId">View Renewal</a></td>
+	                                </tr>
+	                            }
+	                        </tbody>
+	                    </table>
+	                </div>
 
-
-
-
-
-
-                <div class="row">
-
-                    <table class="table table-responsiveß table-hover table-striped">
+	                <div class="row">
+	
+	                    <table class="table table-responsiveß table-hover table-striped">
 
                         
                         <thead>

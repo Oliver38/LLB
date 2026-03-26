@@ -13,6 +13,7 @@ using System.Net;
 using PasswordGenerator;
 using DNTCaptcha.Core;
 using LLB.Models.ViewModel;
+using LLB.Helpers;
 using Webdev.Payments;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Security.Cryptography.Xml;
@@ -53,8 +54,15 @@ namespace LLB.Controllers
             var existing = _db.ChangeManaager
                 .FirstOrDefault(c => c.ApplicationId == id);
             ChangeManaager managersapplication;
-            if (existing != null || existing.Status == "completed")
+            if (existing != null)
             {
+                if (string.IsNullOrWhiteSpace(existing.Reference))
+                {
+                    existing.Reference = ReferenceHelper.GeneratePostFormationReferenceNumber(_db, "MGR");
+                    _db.ChangeManaager.Update(existing);
+                    _db.SaveChanges();
+                }
+
                 managersapplication = existing;
             }
             else
@@ -62,6 +70,7 @@ namespace LLB.Controllers
                 var newChange = new ChangeManaager
                 {
                     Id = Guid.NewGuid().ToString(),
+                    Reference = ReferenceHelper.GeneratePostFormationReferenceNumber(_db, "MGR"),
                     UserId = userId,
                     ApplicationId = id,
                     Status = "Initiated",

@@ -48,6 +48,12 @@
                                 </td>
                             </tr>
                             <tr>
+                                <th>Inspection Reference</th>
+                                <td colspan="2">
+                                    @(ViewBag.Inspection.Reference ?? "N/A")
+                                </td>
+                            </tr>
+                            <tr>
                                 <th>LLB Number</th>
                                 <td colspan="2">
                                     @ViewBag.Inspection.LLBNumber
@@ -182,14 +188,14 @@
                             </tr>
 
                             <tr class="text-center">
-                                <td colspan="3">
-                                    @if (ViewBag.Inspection.Status == "Inspected")
-                                        {
-                                <a class="btn btn-primary" href="/Home/Dashboard"> Continue</a>
-                                        }
-                                        else
-                                        {
-                                <input type="submit" value="Submit" class="btn btn-primary" />
+	                                <td colspan="3">
+	                                    @if (ViewBag.Inspection.Status == "Inspected")
+	                                        {
+	                                <a class="btn btn-primary" href="/Verify/CompleteRenewalInspection?taskId=@ViewBag.TaskId"> Continue</a>
+	                                        }
+	                                        else
+	                                        {
+	                                <input type="submit" value="Submit" class="btn btn-primary" />
 
                                         }
 

@@ -1,0 +1,66 @@
+﻿@{
+    Layout = "_LayoutMain";
+}
+
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            @if (TempData["result"] != null)
+            {
+                <div class="alert alert-info mb-3">@TempData["result"]</div>
+            }
+            <h5 class="card-title mb-0">Examine Licence Duplicate Request</h5>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <tbody class="table-light">
+                        <tr>
+                            <th>Outlet Name</th>
+                            <td>@ViewBag.Duplicate.TradingName</td>
+                        </tr>
+                        <tr>
+                            <th>LLB Number</th>
+                            <td>@ViewBag.Duplicate.LLBNumber</td>
+                        </tr>
+                        <tr>
+                            <th>Requested On</th>
+                            <td>@ViewBag.Duplicate.RequestedOn</td>
+                        </tr>
+                        <tr>
+                            <th>Download Status</th>
+                            <td>@ViewBag.Duplicate.DownloadStatus</td>
+                        </tr>
+                        <tr>
+                            <th>Duplicate Status</th>
+                            <td>@ViewBag.Duplicate.DuplicateStatus</td>
+                        </tr>
+                        <tr>
+                            <th>Payment Status</th>
+                            <td>@(ViewBag.Duplicate.PaymentStatus ?? "Not Paid")</td>
+                        </tr>
+                        <tr>
+                            <th>Licence</th>
+                            <td>@ViewBag.Duplicate.LicenseType</td>
+                        </tr>
+                        <tr>
+                            <th>For</th>
+                            <td>@ViewBag.Duplicate.LicenseRegion</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="text-center">
+                                <a href="/Verify/RejectDuplicate?id=@ViewBag.Duplicate.ApplicationId&taskId=@ViewBag.Duplicate.TaskId" class="btn btn-danger" onclick="return confirm('Reject this duplicate request?');">
+                                    Reject Request
+                                </a>
+                                <a href="/Verify/ApproveDuplicate?id=@ViewBag.Duplicate.ApplicationId&taskId=@ViewBag.Duplicate.TaskId" class="btn btn-success" onclick="return confirm('Approve this duplicate request and reopen the licence download?');">
+                                    Approve And Open Download
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

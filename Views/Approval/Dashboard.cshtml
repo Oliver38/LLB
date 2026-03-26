@@ -10,6 +10,7 @@
             "submitted" => "bg-primary-subtle text-primary",
             "recommended" => "bg-info-subtle text-info-emphasis",
             "verified" => "bg-success-subtle text-success",
+            "renewed" => "bg-success-subtle text-success",
             "applied" => "bg-warning-subtle text-warning-emphasis",
             "assigned" => "bg-secondary-subtle text-secondary",
             "has query" => "bg-warning-subtle text-warning-emphasis",
@@ -23,15 +24,13 @@
     {
         return service switch
         {
-            "Extended Hours" => "bg-info-subtle text-info-emphasis",
-            "Temporary Retails" => "bg-warning-subtle text-warning-emphasis",
             _ => "bg-secondary-subtle text-secondary"
         };
     }
 }
 
 <div class="row g-4 mb-4">
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
         <div class="card info-card h-100">
             <div class="card-body">
                 <h5 class="card-title">Available Applications</h5>
@@ -47,14 +46,30 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card info-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Available Renewals</h5>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="mb-1">@Model.Renewals.Count</h3>
+                        <p class="text-muted mb-0">Recommended renewals waiting for secretary approval.</p>
+                    </div>
+                    <div class="icon rounded-circle d-flex align-items-center justify-content-center bg-info-subtle text-info-emphasis" style="width:56px;height:56px;">
+                        <i class="bi bi-arrow-repeat fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
         <div class="card info-card h-100">
             <div class="card-body">
                 <h5 class="card-title">Available Post Formations</h5>
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <h3 class="mb-1">@Model.PostFormations.Count</h3>
-                        <p class="text-muted mb-0">Assigned Extended Hours and Temporary Retails awaiting action.</p>
+                        <p class="text-muted mb-0">Assigned post-formation items awaiting secretary action.</p>
                     </div>
                     <div class="icon rounded-circle d-flex align-items-center justify-content-center bg-success-subtle text-success" style="width:56px;height:56px;">
                         <i class="bi bi-briefcase fs-4"></i>
@@ -63,13 +78,13 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
         <div class="card info-card h-100">
             <div class="card-body">
                 <h5 class="card-title">Open Workload</h5>
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <h3 class="mb-1">@(Model.Applications.Count + Model.PostFormations.Count)</h3>
+                        <h3 class="mb-1">@(Model.Applications.Count + Model.Renewals.Count + Model.PostFormations.Count)</h3>
                         <p class="text-muted mb-0">Everything currently assigned to the secretary queue.</p>
                     </div>
                     <div class="icon rounded-circle d-flex align-items-center justify-content-center bg-warning-subtle text-warning-emphasis" style="width:56px;height:56px;">
@@ -140,16 +155,70 @@
     </div>
 </div>
 
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+            <div>
+                <h5 class="card-title mb-1">Available Renewals</h5>
+                <p class="text-muted mb-0">Renewals already recommended and ready for secretary approval or rejection.</p>
+            </div>
+        </div>
+
+        @if (!Model.Renewals.Any())
+        {
+            <div class="alert alert-light border mb-0">
+                No renewal applications are currently assigned to the secretary queue.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Trading Name</th>
+                            <th>Operating Address</th>
+                            <th>Submitted</th>
+                            <th>Previous Expiry</th>
+                            <th>License</th>
+                            <th>Region</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var renewal in Model.Renewals)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@renewal.TradingName</td>
+                                <td>@renewal.OperatingAddress</td>
+                                <td>@renewal.SubmittedDate.ToString("dd MMM yyyy")</td>
+                                <td>@(renewal.PreviousExpiry?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                <td>@renewal.LicenseName</td>
+                                <td>@renewal.RegionName</td>
+                                <td>
+                                    <span class="badge rounded-pill @GetStatusClass(renewal.Status)">
+                                        @renewal.Status
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-primary" href="@renewal.ReviewUrl">Open</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
 <div class="card">
     <div class="card-body">
         <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
             <div>
                 <h5 class="card-title mb-1">Available Post Formations</h5>
                 <p class="text-muted mb-0">Assigned post-formation applications for secretary review and approval.</p>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <span class="badge rounded-pill bg-info-subtle text-info-emphasis">Extended Hours</span>
-                <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">Temporary Retails</span>
             </div>
         </div>
 

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using LLB.Models;
 using Microsoft.AspNetCore.Identity;
 using LLB.Data;
+using LLB.Helpers;
 using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
 using Webdev.Payments;
@@ -113,8 +114,14 @@ namespace LLB.Controllers
             applications.ApproverId = id;
             applications.DateOfApproval = DateTime.Now;
             applications.Status = "Approved";
+            applications.DateUpdated = DateTime.Now;
 
             getinfo = applications;
+            _db.Update(applications);
+            _db.SaveChanges();
+
+            var rootApplication = _db.ApplicationInfo.Where(a => a.Id == applications.ApplicationId).FirstOrDefault();
+            DownloadStatusHelper.OpenLicenseDownload(_db, rootApplication, rootApplication?.UserID);
 
             //complete task
             var task = _db.Tasks.Where(a => a.ApplicationId == Id && a.Service == "Temporary Retails").FirstOrDefault();

@@ -4,6 +4,11 @@
     Layout = "_LayoutMain";
 }
 
+@if (TempData["result"] != null)
+{
+    <div class="alert alert-info">@TempData["result"]</div>
+}
+
 
 <div b-36j9gympe5 class="row">
 
@@ -515,6 +520,146 @@
             </div>
 
 
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="card">
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+                    <h5 class="card-title">Extended Hours Applications</h5>
+                </div>
+
+                <div class="row">
+                    <table class="table table-responsiveß table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Trading Name</th>
+                                <th>Requested Date</th>
+                                <th>Application Date</th>
+                                <th>Payment Status</th>
+                                <th>Licence</th>
+                                <th>For</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var extendedHours in ViewBag.ExtendedHoursTasks)
+                            {
+                                <tr>
+                                    <td>@extendedHours.Reference</td>
+                                    <td>@extendedHours.TradingName</td>
+                                    <td>
+                                        @(extendedHours.ExtendedHoursDate == DateTime.MinValue
+                                            ? "N/A"
+                                            : extendedHours.ExtendedHoursDate.ToString("yyyy-MM-dd"))
+                                    </td>
+                                    <td>@extendedHours.RequestedOn</td>
+                                    <td>@extendedHours.PaymentStatus</td>
+                                    <td>@extendedHours.LicenseType</td>
+                                    <td>@extendedHours.LicenseRegion</td>
+                                    <td>
+                                        <a class="btn btn-primary" href="/Verify/ExtendedHours?id=@extendedHours.Id&taskId=@extendedHours.TaskId">Review Application</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="card">
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+                    <h5 class="card-title">Temporary Retail Applications</h5>
+                </div>
+
+                <div class="row">
+                    <table class="table table-responsiveß table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Trading Name</th>
+                                <th>Temporary Retail Date</th>
+                                <th>Application Date</th>
+                                <th>Payment Status</th>
+                                <th>Licence</th>
+                                <th>For</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var temporaryRetail in ViewBag.TemporaryRetailTasks)
+                            {
+                                <tr>
+                                    <td>@temporaryRetail.Reference</td>
+                                    <td>@temporaryRetail.TradingName</td>
+                                    <td>
+                                        @(temporaryRetail.TemporaryRetailDate == DateTime.MinValue
+                                            ? "N/A"
+                                            : temporaryRetail.TemporaryRetailDate.ToString("yyyy-MM-dd"))
+                                    </td>
+                                    <td>@temporaryRetail.RequestedOn</td>
+                                    <td>@temporaryRetail.PaymentStatus</td>
+                                    <td>@temporaryRetail.LicenseType</td>
+                                    <td>@temporaryRetail.LicenseRegion</td>
+                                    <td>
+                                        <a class="btn btn-primary" href="/Verify/TemporaryRetails?id=@temporaryRetail.Id&taskId=@temporaryRetail.TaskId">Review Application</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="card">
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+                    <h5 class="card-title">Licence Duplicate Requests</h5>
+                </div>
+
+                <div class="row">
+                    <table class="table table-responsiveß table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Trading Name</th>
+                                <th>LLB Number</th>
+                                <th>Requested On</th>
+                                <th>Duplicate Status</th>
+                                <th>Payment Status</th>
+                                <th>Licence</th>
+                                <th>For</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var duplicate in ViewBag.DuplicateTasks)
+                            {
+                                <tr>
+                                    <td>@duplicate.TradingName</td>
+                                    <td>@duplicate.LLBNumber</td>
+                                    <td>@duplicate.RequestedOn</td>
+                                    <td>@duplicate.DuplicateStatus</td>
+                                    <td>@duplicate.PaymentStatus</td>
+                                    <td>@duplicate.LicenseType</td>
+                                    <td>@duplicate.LicenseRegion</td>
+                                    <td>
+                                        <a class="btn btn-primary" href="/Verify/Duplicate?id=@duplicate.ApplicationId&taskId=@duplicate.TaskId">Review Request</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 

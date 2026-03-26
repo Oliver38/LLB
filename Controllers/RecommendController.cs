@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.Build.Framework;
 using Microsoft.EntityFrameworkCore;
 using LLB.Helpers;
+using LLB.Models.ViewModel;
 
 namespace LLB.Controllers
 {
@@ -49,20 +50,53 @@ namespace LLB.Controllers
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
-
+	
                 var applications = _db.ApplicationInfo.Where(a => a.Id == task.ApplicationId).FirstOrDefault();
-
+	
                 getinfo = applications;
                 appinfo.Add(getinfo);
             }
 
-            List<ApplicationInfo> completeappinfo = new List<ApplicationInfo>();
+            List<RenewalViewModel> renewaltasks = new List<RenewalViewModel>();
+            var renewalQueue = _db.Tasks.Where(f => f.RecommenderId == id && f.Status == "assigned" && f.Service == "renewal").ToList();
+            foreach (var renewalTask in renewalQueue)
+            {
+                var renapps = _db.Renewals
+                    .Where(a => a.ApplicationId == renewalTask.ApplicationId && a.Status == "verified")
+                    .OrderByDescending(a => a.DateUpdated)
+                    .FirstOrDefault();
 
-            var completetasks = _db.Tasks.Where(f => f.RecommenderId == id && f.Status == "completed").ToList();
+                if (renapps == null)
+                {
+                    continue;
+                }
+
+                var renappinfo = _db.ApplicationInfo.Where(s => s.Id == renapps.ApplicationId).FirstOrDefault();
+                var reaoutletinfo = _db.OutletInfo.Where(q => q.ApplicationId == renapps.ApplicationId).FirstOrDefault();
+                var licensetype = _db.LicenseTypes.Where(w => w.Id == renappinfo.LicenseTypeID).FirstOrDefault();
+                var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
+
+                RenewalViewModel getreninfo = new RenewalViewModel();
+                getreninfo.ApplicationId = renapps.ApplicationId;
+                getreninfo.Id = renapps.Id;
+                getreninfo.Reference = renapps.Reference;
+                getreninfo.LLBNumber = renapps.LLBNumber;
+                getreninfo.PreviousExpiry = renapps.PreviousExpiry;
+                getreninfo.TradingName = reaoutletinfo.TradingName;
+                getreninfo.Licensetype = licensetype.LicenseName;
+                getreninfo.LicenseRegion = licenseReg.RegionName;
+                getreninfo.Status = renapps.Status;
+                getreninfo.TaskId = renewalTask.Id;
+                renewaltasks.Add(getreninfo);
+            }
+
+            List<ApplicationInfo> completeappinfo = new List<ApplicationInfo>();
+	
+            var completetasks = _db.Tasks.Where(f => f.RecommenderId == id && f.Status == "completed" && f.Service == "new application").ToList();
             foreach (var completetask in completetasks)
             {
                 ApplicationInfo getcomplinfo = new ApplicationInfo();
-
+	
                 var applications = _db.ApplicationInfo.Where(a => a.Id == completetask.ApplicationId).FirstOrDefault();
 
                 getcomplinfo = applications;
@@ -80,6 +114,7 @@ namespace LLB.Controllers
             ViewBag.Regions = regions;
             ViewBag.License = license;
             ViewBag.Applications = appinfo;
+            ViewBag.Renewals = renewaltasks;
             ViewBag.Completed = completeappinfo;
             return View();
         }
@@ -98,6 +133,43 @@ namespace LLB.Controllers
             ViewBag.User = user;
             ViewBag.Regions = regions;
             ViewBag.License = licenses;
+            return View();
+        }
+
+        [HttpGet("Renewal")]
+        public IActionResult Renewal(string id, string taskId)
+        {
+            RenewalViewModel getreninfo = new RenewalViewModel();
+
+            var renapps = _db.Renewals.Where(a => a.Id == id).FirstOrDefault();
+            var renappinfo = _db.ApplicationInfo.Where(s => s.Id == renapps.ApplicationId).FirstOrDefault();
+            var reaoutletinfo = _db.OutletInfo.Where(q => q.ApplicationId == renapps.ApplicationId).FirstOrDefault();
+            var licensetype = _db.LicenseTypes.Where(w => w.Id == renappinfo.LicenseTypeID).FirstOrDefault();
+            var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
+            var inspection = _db.Inspection
+                .Where(a => a.ApplicationId == renapps.ApplicationId && a.Service == "Renewal Inspection")
+                .OrderByDescending(a => a.DateApplied)
+                .FirstOrDefault();
+
+            getreninfo.ApplicationId = renapps.ApplicationId;
+            getreninfo.Id = renapps.Id;
+            getreninfo.Reference = renapps.Reference;
+            getreninfo.LLBNumber = renapps.LLBNumber;
+            getreninfo.PreviousExpiry = renapps.PreviousExpiry;
+            getreninfo.TradingName = reaoutletinfo.TradingName;
+            getreninfo.Licensetype = licensetype.LicenseName;
+            getreninfo.PenaltyPaid = renapps.PenaltyPaid;
+            getreninfo.FeePaid = renapps.FeePaid;
+            getreninfo.LicenseRegion = licenseReg.RegionName;
+            getreninfo.Status = renapps.Status;
+            getreninfo.HealthCert = renapps.HealthCert;
+            getreninfo.CertifiedLicense = renapps.CertifiedLicense;
+            getreninfo.OutletName = reaoutletinfo.TradingName;
+
+            ViewBag.Renewals = getreninfo;
+            ViewBag.TaskId = taskId;
+            ViewBag.InspectionComments = inspection?.Comments;
+            ViewBag.InspectionOutcome = inspection?.Overall;
             return View();
         }
 
@@ -614,7 +686,70 @@ namespace LLB.Controllers
             tasksc.DateUpdated = DateTime.Now;
             _db.Add(tasksc);
             _db.SaveChanges();
+	
+            return RedirectToAction("Dashboard", "Recommend");
+        }
 
+        [HttpGet("ApproveRenewal")]
+        public async Task<IActionResult> ApproveRenewal(string Id, string taskid)
+        {
+            var renewal = _db.Renewals
+                .Where(a => a.ApplicationId == Id && a.Status == "verified")
+                .OrderByDescending(a => a.DateUpdated)
+                .FirstOrDefault();
+
+            if (renewal == null)
+            {
+                TempData["result"] = "Renewal record not found.";
+                return RedirectToAction("Dashboard", "Recommend");
+            }
+
+            renewal.Status = "recommended";
+            renewal.DateUpdated = DateTime.Now;
+            _db.Update(renewal);
+            _db.SaveChanges();
+
+            var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            if (application != null)
+            {
+                application.RenewalStatus = "approval";
+                application.DateUpdated = DateTime.Now;
+                _db.Update(application);
+                _db.SaveChanges();
+            }
+
+            var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
+            if (task != null)
+            {
+                task.Status = "completed";
+                task.RecommendationDate = DateTime.Now;
+                _db.Update(task);
+                _db.SaveChanges();
+            }
+
+            var existingSecretaryTask = _db.Tasks
+                .Where(f => f.ApplicationId == Id && f.Service == "renewal" && f.Status == "assigned")
+                .FirstOrDefault();
+
+            if (existingSecretaryTask == null)
+            {
+                var secretaryWithLeastTasks = await _taskAllocationHelper.GetSecretary(_db, userManager);
+
+                Tasks secretaryTask = new Tasks();
+                secretaryTask.Id = Guid.NewGuid().ToString();
+                secretaryTask.ApplicationId = Id;
+                secretaryTask.ExaminationStatus = "approval";
+                secretaryTask.Service = "renewal";
+                secretaryTask.ApproverId = secretaryWithLeastTasks;
+                secretaryTask.AssignerId = "system";
+                secretaryTask.Status = "assigned";
+                secretaryTask.DateAdded = DateTime.Now;
+                secretaryTask.DateUpdated = DateTime.Now;
+                _db.Add(secretaryTask);
+                _db.SaveChanges();
+            }
+
+            TempData["result"] = "Renewal recommended and sent to secretary.";
             return RedirectToAction("Dashboard", "Recommend");
         }
 

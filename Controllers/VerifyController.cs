@@ -73,6 +73,7 @@ namespace LLB.Controllers
                 var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
                 getreninfo.ApplicationId = renapps.ApplicationId;
                 getreninfo.Id = renapps.Id;
+                getreninfo.Reference = renapps.Reference;
                 getreninfo.LLBNumber = renapps.LLBNumber;
                 getreninfo.PreviousExpiry = renapps.PreviousExpiry;
                 getreninfo.TradingName = reaoutletinfo.TradingName;
@@ -101,6 +102,7 @@ namespace LLB.Controllers
                 renewalinspectiontask.ApplicationId = applId;
                 renewalinspectiontask.DateApplied = inspecy.DateApplied;
                 renewalinspectiontask.Id = inspecy.Id;
+                renewalinspectiontask.Reference = inspecy.Reference;
                 renewalinspectiontask.Status = inspecy.Status;
                 renewalinspectiontask.Service = inspecy.Service;
                 renewalinspectiontask.LicenseType = licensetype.LicenseName;
@@ -162,6 +164,7 @@ namespace LLB.Controllers
                 inspectiontask.ApplicationId = applId;
                 inspectiontask.DateApplied = inspecy.DateApplied;
                 inspectiontask.Id = inspecy.Id;
+                inspectiontask.Reference = inspecy.Reference;
                 inspectiontask.Status = inspecy.Status;
                 inspectiontask.Service = inspecy.Service;
                 inspectiontask.LicenseType = licensetype.LicenseName;
@@ -193,6 +196,7 @@ namespace LLB.Controllers
                 inspectiontask.ApplicationId = applIdd;
                 inspectiontask.DateApplied = inspecyd.DateApplied;
                 inspectiontask.Id = inspecyd.Id;
+                inspectiontask.Reference = inspecyd.Reference;
                 inspectiontask.Status = inspecyd.Status;
                 inspectiontask.Service = inspecyd.Service;
                 inspectiontask.LicenseType = licensetyped.LicenseName;
@@ -203,6 +207,146 @@ namespace LLB.Controllers
                 directinspections.Add(inspectiontask);
 
 
+            }
+
+            List<DuplicateDownloadViewModel> duplicateDownloads = new List<DuplicateDownloadViewModel>();
+            var duplicateReviewTasks = _db.Tasks
+                .Where(f => f.VerifierId == id
+                    && f.Service == DownloadStatusHelper.DuplicateTaskService
+                    && f.Status == "assigned")
+                .ToList();
+            foreach (var duplicateTask in duplicateReviewTasks)
+            {
+                var duplicateApplication = _db.ApplicationInfo.Where(a => a.Id == duplicateTask.ApplicationId).FirstOrDefault();
+                if (duplicateApplication == null)
+                {
+                    continue;
+                }
+
+                var duplicateOutlet = _db.OutletInfo.Where(i => i.ApplicationId == duplicateApplication.Id).FirstOrDefault();
+                var duplicateLicense = _db.LicenseTypes.Where(a => a.Id == duplicateApplication.LicenseTypeID).FirstOrDefault();
+                var duplicateRegion = _db.LicenseRegions.Where(a => a.Id == duplicateApplication.ApplicationType).FirstOrDefault();
+                var downloadRecord = DownloadStatusHelper.GetLicenseDownload(_db, duplicateApplication.LLBNum);
+                var latestPayment = downloadRecord == null
+                    ? null
+                    : _db.Payments
+                        .Where(p => p.ApplicationId == downloadRecord.Id
+                            && (p.Service == DownloadStatusHelper.DuplicatePaymentService
+                                || p.Service == DownloadStatusHelper.LegacyDuplicatePaymentService))
+                        .OrderByDescending(p => p.DateAdded)
+                        .FirstOrDefault();
+
+                DuplicateDownloadViewModel duplicateDownload = new DuplicateDownloadViewModel();
+                duplicateDownload.ApplicationId = duplicateApplication.Id;
+                duplicateDownload.TaskId = duplicateTask.Id;
+                duplicateDownload.LLBNumber = duplicateApplication.LLBNum;
+                duplicateDownload.TradingName = duplicateOutlet?.TradingName;
+                duplicateDownload.LicenseType = duplicateLicense?.LicenseName;
+                duplicateDownload.LicenseRegion = duplicateRegion?.RegionName;
+                duplicateDownload.DownloadStatus = downloadRecord?.Status;
+                duplicateDownload.DuplicateStatus = downloadRecord?.PaymentStatus;
+                duplicateDownload.PaymentStatus = latestPayment?.PaymentStatus;
+                duplicateDownload.RequestedOn = downloadRecord?.DateApplied;
+                duplicateDownloads.Add(duplicateDownload);
+            }
+
+            List<ExtendedHoursReviewViewModel> extendedHoursTasks = new List<ExtendedHoursReviewViewModel>();
+            var assignedExtendedHoursTasks = _db.Tasks
+                .Where(task => task.VerifierId == id
+                    && task.Service == "Extended Hours"
+                    && task.Status == "assigned")
+                .OrderByDescending(task => task.DateAdded)
+                .ToList();
+            foreach (var extendedHoursTask in assignedExtendedHoursTasks)
+            {
+                var extendedHours = _db.ExtendedHours.Where(application => application.Id == extendedHoursTask.ApplicationId).FirstOrDefault();
+                if (extendedHours == null || string.IsNullOrWhiteSpace(extendedHours.ApplicationId))
+                {
+                    continue;
+                }
+
+                var application = _db.ApplicationInfo.Where(info => info.Id == extendedHours.ApplicationId).FirstOrDefault();
+                if (application == null)
+                {
+                    continue;
+                }
+
+                var outlet = _db.OutletInfo.Where(info => info.ApplicationId == application.Id).FirstOrDefault();
+                var licenseType = _db.LicenseTypes.Where(licenseRecord => licenseRecord.Id == application.LicenseTypeID).FirstOrDefault();
+                var licenseRegion = _db.LicenseRegions.Where(region => region.Id == application.ApplicationType).FirstOrDefault();
+                var payment = _db.Payments
+                    .Where(record => record.ApplicationId == extendedHours.Id
+                        && record.Service == "extended hours")
+                    .OrderByDescending(record => record.DateAdded)
+                    .FirstOrDefault();
+
+                ExtendedHoursReviewViewModel extendedHoursTaskModel = new ExtendedHoursReviewViewModel();
+                extendedHoursTaskModel.Id = extendedHours.Id ?? string.Empty;
+                extendedHoursTaskModel.TaskId = extendedHoursTask.Id ?? string.Empty;
+                extendedHoursTaskModel.ApplicationId = application.Id ?? string.Empty;
+                extendedHoursTaskModel.Reference = extendedHours.Reference ?? string.Empty;
+                extendedHoursTaskModel.TradingName = outlet?.TradingName;
+                extendedHoursTaskModel.LLBNumber = application.LLBNum;
+                extendedHoursTaskModel.LicenseType = licenseType?.LicenseName;
+                extendedHoursTaskModel.LicenseRegion = licenseRegion?.RegionName;
+                extendedHoursTaskModel.Status = extendedHours.Status;
+                extendedHoursTaskModel.PaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? extendedHours.PaymentStatus;
+                extendedHoursTaskModel.PaynowReference = payment?.PaynowRef;
+                extendedHoursTaskModel.ReasonForExtention = extendedHours.ReasonForExtention;
+                extendedHoursTaskModel.PaidFee = extendedHours.PaidFee;
+                extendedHoursTaskModel.ExtendedHoursDate = extendedHours.ExtendedHoursDate;
+                extendedHoursTaskModel.RequestedOn = extendedHours.DateAdded;
+                extendedHoursTasks.Add(extendedHoursTaskModel);
+            }
+
+            List<TemporaryRetailReviewViewModel> temporaryRetailTasks = new List<TemporaryRetailReviewViewModel>();
+            var assignedTemporaryRetailTasks = _db.Tasks
+                .Where(task => task.VerifierId == id
+                    && task.Service == "Temporary Retails"
+                    && task.Status == "assigned")
+                .OrderByDescending(task => task.DateAdded)
+                .ToList();
+            foreach (var temporaryRetailTask in assignedTemporaryRetailTasks)
+            {
+                var temporaryRetail = _db.TemporaryRetails.Where(application => application.Id == temporaryRetailTask.ApplicationId).FirstOrDefault();
+                if (temporaryRetail == null || string.IsNullOrWhiteSpace(temporaryRetail.ApplicationId))
+                {
+                    continue;
+                }
+
+                var application = _db.ApplicationInfo.Where(info => info.Id == temporaryRetail.ApplicationId).FirstOrDefault();
+                if (application == null)
+                {
+                    continue;
+                }
+
+                var outlet = _db.OutletInfo.Where(info => info.ApplicationId == application.Id).FirstOrDefault();
+                var licenseType = _db.LicenseTypes.Where(licenseRecord => licenseRecord.Id == application.LicenseTypeID).FirstOrDefault();
+                var licenseRegion = _db.LicenseRegions.Where(region => region.Id == application.ApplicationType).FirstOrDefault();
+                var payment = _db.Payments
+                    .Where(record => record.ApplicationId == temporaryRetail.Id
+                        && (record.Service == "temporary retails" || record.Service == "Temporary Retails"))
+                    .OrderByDescending(record => record.DateAdded)
+                    .FirstOrDefault();
+
+                TemporaryRetailReviewViewModel temporaryRetailTaskModel = new TemporaryRetailReviewViewModel();
+                temporaryRetailTaskModel.Id = temporaryRetail.Id ?? string.Empty;
+                temporaryRetailTaskModel.TaskId = temporaryRetailTask.Id ?? string.Empty;
+                temporaryRetailTaskModel.ApplicationId = application.Id ?? string.Empty;
+                temporaryRetailTaskModel.Reference = temporaryRetail.Reference ?? string.Empty;
+                temporaryRetailTaskModel.TradingName = outlet?.TradingName;
+                temporaryRetailTaskModel.LLBNumber = application.LLBNum;
+                temporaryRetailTaskModel.LicenseType = licenseType?.LicenseName;
+                temporaryRetailTaskModel.LicenseRegion = licenseRegion?.RegionName;
+                temporaryRetailTaskModel.Status = temporaryRetail.Status;
+                temporaryRetailTaskModel.PaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? temporaryRetail.PaymentStatus;
+                temporaryRetailTaskModel.PaynowReference = payment?.PaynowRef;
+                temporaryRetailTaskModel.ReasonForExtention = temporaryRetail.ReasonForExtention;
+                temporaryRetailTaskModel.LocationAddress = temporaryRetail.LocationAddress;
+                temporaryRetailTaskModel.PaidFee = temporaryRetail.PaidFee;
+                temporaryRetailTaskModel.TemporaryRetailDate = temporaryRetail.TemporaryRetailsDate;
+                temporaryRetailTaskModel.RequestedOn = temporaryRetail.DateAdded;
+                temporaryRetailTasks.Add(temporaryRetailTaskModel);
             }
 
 
@@ -224,6 +368,9 @@ namespace LLB.Controllers
           //  ViewBag.InsTask = inspectiontasks;
             ViewBag.VerificationInsTask = verificationinspection;
             ViewBag.DirectInsTask = directinspections;
+            ViewBag.DuplicateTasks = duplicateDownloads;
+            ViewBag.ExtendedHoursTasks = extendedHoursTasks;
+            ViewBag.TemporaryRetailTasks = temporaryRetailTasks;
             //crete view on dashboard
             ;
             return View();
@@ -860,8 +1007,9 @@ namespace LLB.Controllers
                 var licensetype = _db.LicenseTypes.Where(w => w.Id == renappinfo.LicenseTypeID).FirstOrDefault();
                 var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
 
-            getreninfo.ApplicationId = renapps.ApplicationId;
+                getreninfo.ApplicationId = renapps.ApplicationId;
                 getreninfo.Id = renapps.Id;
+                getreninfo.Reference = renapps.Reference;
                 getreninfo.LLBNumber = renapps.LLBNumber;
                 getreninfo.PreviousExpiry = renapps.PreviousExpiry;
                 getreninfo.TradingName = reaoutletinfo.TradingName;
@@ -883,6 +1031,317 @@ namespace LLB.Controllers
 
             // var renewal
             return View();
+        }
+
+        [HttpGet("Duplicate")]
+        public IActionResult Duplicate(string id, string taskId)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
+            if (application == null)
+            {
+                TempData["result"] = "The duplicate request could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var outletInfo = _db.OutletInfo.Where(q => q.ApplicationId == application.Id).FirstOrDefault();
+            var licenseType = _db.LicenseTypes.Where(w => w.Id == application.LicenseTypeID).FirstOrDefault();
+            var licenseRegion = _db.LicenseRegions.Where(e => e.Id == application.ApplicationType).FirstOrDefault();
+            var download = DownloadStatusHelper.GetLicenseDownload(_db, application.LLBNum);
+            var payment = download == null
+                ? null
+                : _db.Payments
+                    .Where(p => p.ApplicationId == download.Id
+                        && (p.Service == DownloadStatusHelper.DuplicatePaymentService
+                            || p.Service == DownloadStatusHelper.LegacyDuplicatePaymentService))
+                    .OrderByDescending(p => p.DateAdded)
+                    .FirstOrDefault();
+
+            if (download == null)
+            {
+                TempData["result"] = "The duplicate request could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            DuplicateDownloadViewModel duplicate = new DuplicateDownloadViewModel();
+            duplicate.ApplicationId = application.Id;
+            duplicate.TaskId = taskId;
+            duplicate.LLBNumber = application.LLBNum;
+            duplicate.TradingName = outletInfo?.TradingName;
+            duplicate.LicenseType = licenseType?.LicenseName;
+            duplicate.LicenseRegion = licenseRegion?.RegionName;
+            duplicate.DownloadStatus = download.Status;
+            duplicate.DuplicateStatus = download.PaymentStatus;
+            duplicate.PaymentStatus = payment?.PaymentStatus;
+            duplicate.RequestedOn = download.DateApplied;
+
+            ViewBag.Duplicate = duplicate;
+            ViewBag.Payment = payment;
+            return View();
+        }
+
+        [HttpGet("ApproveDuplicate")]
+        public IActionResult ApproveDuplicate(string id, string taskId)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
+            if (application == null)
+            {
+                TempData["result"] = "The duplicate request could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var download = DownloadStatusHelper.OpenLicenseDownload(_db, application, application.UserID);
+            if (download == null)
+            {
+                TempData["result"] = "The duplicate request could not be approved.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var task = _db.Tasks.Where(a => a.Id == taskId).FirstOrDefault();
+            if (task != null)
+            {
+                task.VerificationDate = DateTime.Now;
+                task.DateUpdated = DateTime.Now;
+                task.Status = "completed";
+                _db.Update(task);
+                _db.SaveChanges();
+            }
+
+            TempData["result"] = "Duplicate request approved. The licence is open for download again.";
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet("RejectDuplicate")]
+        public IActionResult RejectDuplicate(string id, string taskId)
+        {
+            var application = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
+            if (application == null)
+            {
+                TempData["result"] = "The duplicate request could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var download = DownloadStatusHelper.GetOrCreateLicenseDownload(_db, application, application.UserID);
+            if (download != null)
+            {
+                download.Status = DownloadStatusHelper.DownloadClosedStatus;
+                download.PaymentStatus = DownloadStatusHelper.DuplicateRejectedStatus;
+                download.DateUpdated = DateTime.Now;
+                _db.Update(download);
+                _db.SaveChanges();
+            }
+
+            var task = _db.Tasks.Where(a => a.Id == taskId).FirstOrDefault();
+            if (task != null)
+            {
+                task.VerificationDate = DateTime.Now;
+                task.DateUpdated = DateTime.Now;
+                task.Status = "completed";
+                _db.Update(task);
+                _db.SaveChanges();
+            }
+
+            TempData["result"] = "Duplicate request rejected. A new payment is required before another request can be examined.";
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet("ExtendedHours")]
+        public IActionResult ExtendedHours(string id, string taskId)
+        {
+            var model = BuildExtendedHoursReviewModel(id, taskId);
+            if (model == null)
+            {
+                TempData["result"] = "The extended hours application could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            return View(model);
+        }
+
+        [HttpGet("ApproveExtendedHours")]
+        public IActionResult ApproveExtendedHours(string id, string taskId)
+        {
+            var extendedHours = _db.ExtendedHours.Where(application => application.Id == id).FirstOrDefault();
+            if (extendedHours == null || string.IsNullOrWhiteSpace(extendedHours.ApplicationId))
+            {
+                TempData["result"] = "The extended hours application could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var payment = _db.Payments
+                .Where(record => record.ApplicationId == extendedHours.Id
+                    && record.Service == "extended hours")
+                .OrderByDescending(record => record.DateAdded)
+                .FirstOrDefault();
+
+            var paymentIsPaid = payment != null
+                && (string.Equals(payment.Status, "Paid", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(payment.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase));
+
+            if (!paymentIsPaid)
+            {
+                TempData["result"] = "The extended hours application cannot be approved before payment is confirmed.";
+                return RedirectToAction("ExtendedHours", new { id, taskId });
+            }
+
+            var currentUserId = userManager.GetUserId(User);
+            extendedHours.ApproverId = currentUserId;
+            extendedHours.DateOfApproval = DateTime.Now;
+            extendedHours.Status = "Approved";
+            extendedHours.PaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? extendedHours.PaymentStatus;
+            extendedHours.DateUpdated = DateTime.Now;
+            _db.Update(extendedHours);
+
+            var task = _db.Tasks.Where(record => record.Id == taskId).FirstOrDefault();
+            if (task != null)
+            {
+                task.VerificationDate = DateTime.Now;
+                task.DateUpdated = DateTime.Now;
+                task.Status = "completed";
+                _db.Update(task);
+            }
+
+            var application = _db.ApplicationInfo.Where(record => record.Id == extendedHours.ApplicationId).FirstOrDefault();
+            if (application != null)
+            {
+                DownloadStatusHelper.OpenLicenseDownload(_db, application, application.UserID);
+            }
+
+            _db.SaveChanges();
+
+            TempData["result"] = "Extended hours application approved.";
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet("RejectExtendedHours")]
+        public IActionResult RejectExtendedHours(string id, string taskId)
+        {
+            var extendedHours = _db.ExtendedHours.Where(application => application.Id == id).FirstOrDefault();
+            if (extendedHours == null)
+            {
+                TempData["result"] = "The extended hours application could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var currentUserId = userManager.GetUserId(User);
+            extendedHours.ApproverId = currentUserId;
+            extendedHours.DateOfApproval = DateTime.Now;
+            extendedHours.Status = "Rejected";
+            extendedHours.DateUpdated = DateTime.Now;
+            _db.Update(extendedHours);
+
+            var task = _db.Tasks.Where(record => record.Id == taskId).FirstOrDefault();
+            if (task != null)
+            {
+                task.VerificationDate = DateTime.Now;
+                task.DateUpdated = DateTime.Now;
+                task.Status = "completed";
+                _db.Update(task);
+            }
+
+            _db.SaveChanges();
+
+            TempData["result"] = "Extended hours application rejected.";
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet("TemporaryRetails")]
+        public IActionResult TemporaryRetails(string id, string taskId)
+        {
+            var model = BuildTemporaryRetailReviewModel(id, taskId);
+            if (model == null)
+            {
+                TempData["result"] = "The temporary retail application could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            return View(model);
+        }
+
+        [HttpGet("ApproveTemporaryRetails")]
+        public IActionResult ApproveTemporaryRetails(string id, string taskId)
+        {
+            var temporaryRetail = _db.TemporaryRetails.Where(application => application.Id == id).FirstOrDefault();
+            if (temporaryRetail == null || string.IsNullOrWhiteSpace(temporaryRetail.ApplicationId))
+            {
+                TempData["result"] = "The temporary retail application could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var payment = _db.Payments
+                .Where(record => record.ApplicationId == temporaryRetail.Id
+                    && (record.Service == "temporary retails" || record.Service == "Temporary Retails"))
+                .OrderByDescending(record => record.DateAdded)
+                .FirstOrDefault();
+
+            var paymentIsPaid = payment != null
+                && (string.Equals(payment.Status, "Paid", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(payment.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase));
+
+            if (!paymentIsPaid)
+            {
+                TempData["result"] = "The temporary retail application cannot be approved before payment is confirmed.";
+                return RedirectToAction("TemporaryRetails", new { id, taskId });
+            }
+
+            var currentUserId = userManager.GetUserId(User);
+            temporaryRetail.ApproverId = currentUserId;
+            temporaryRetail.DateOfApproval = DateTime.Now;
+            temporaryRetail.Status = "Approved";
+            temporaryRetail.PaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? temporaryRetail.PaymentStatus;
+            temporaryRetail.DateUpdated = DateTime.Now;
+            _db.Update(temporaryRetail);
+
+            var task = _db.Tasks.Where(record => record.Id == taskId).FirstOrDefault();
+            if (task != null)
+            {
+                task.VerificationDate = DateTime.Now;
+                task.DateUpdated = DateTime.Now;
+                task.Status = "completed";
+                _db.Update(task);
+            }
+
+            var application = _db.ApplicationInfo.Where(record => record.Id == temporaryRetail.ApplicationId).FirstOrDefault();
+            if (application != null)
+            {
+                DownloadStatusHelper.OpenLicenseDownload(_db, application, application.UserID);
+            }
+
+            _db.SaveChanges();
+
+            TempData["result"] = "Temporary retail application approved.";
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet("RejectTemporaryRetails")]
+        public IActionResult RejectTemporaryRetails(string id, string taskId)
+        {
+            var temporaryRetail = _db.TemporaryRetails.Where(application => application.Id == id).FirstOrDefault();
+            if (temporaryRetail == null)
+            {
+                TempData["result"] = "The temporary retail application could not be found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var currentUserId = userManager.GetUserId(User);
+            temporaryRetail.ApproverId = currentUserId;
+            temporaryRetail.DateOfApproval = DateTime.Now;
+            temporaryRetail.Status = "Rejected";
+            temporaryRetail.DateUpdated = DateTime.Now;
+            _db.Update(temporaryRetail);
+
+            var task = _db.Tasks.Where(record => record.Id == taskId).FirstOrDefault();
+            if (task != null)
+            {
+                task.VerificationDate = DateTime.Now;
+                task.DateUpdated = DateTime.Now;
+                task.Status = "completed";
+                _db.Update(task);
+            }
+
+            _db.SaveChanges();
+
+            TempData["result"] = "Temporary retail application rejected.";
+            return RedirectToAction("Dashboard");
         }
 
         
@@ -909,6 +1368,7 @@ namespace LLB.Controllers
                 renewalinspectiontask.ApplicationId = applId;
                 renewalinspectiontask.DateApplied = inspecy.DateApplied;
                 renewalinspectiontask.Id = inspecy.Id;
+                renewalinspectiontask.Reference = inspecy.Reference;
                 renewalinspectiontask.Status = inspecy.Status;
                 renewalinspectiontask.Service = inspecy.Service;
                 renewalinspectiontask.LicenseType = licensetype.LicenseName;
@@ -960,27 +1420,39 @@ namespace LLB.Controllers
 
                 if (inspec.Overall == "true")
                 {
-                    renewal.Status = "renewed";
                     renewal.Inspector = userId;
                     renewal.DateUpdated = DateTime.Now;
                     _db.Update(renewal);
                     _db.SaveChanges();
 
-                    //updating renewal date time
-                    var updaterenewal = _db.ApplicationInfo.Where(c => c.Id == inspec.ApplicationId).FirstOrDefault();
-                    // updaterenewal.ExpiryDate=
+                    var existingRecommendationTask = _db.Tasks
+                        .Where(task => task.ApplicationId == inspec.ApplicationId
+                            && task.Service == "renewal"
+                            && task.Status == "assigned")
+                        .FirstOrDefault();
 
-                    if (updaterenewal.ExpiryDate > DateTime.Now)
+                    if (existingRecommendationTask == null)
                     {
-                        updaterenewal.ExpiryDate = DateTime.Now.AddYears(1);
-                        updaterenewal.DateUpdated = DateTime.Now;
-                        _db.Update(updaterenewal);
+                        var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db, userManager);
+
+                        Tasks recommendationTask = new Tasks();
+                        recommendationTask.Id = Guid.NewGuid().ToString();
+                        recommendationTask.ApplicationId = inspec.ApplicationId;
+                        recommendationTask.ExaminationStatus = "recommendation";
+                        recommendationTask.Service = "renewal";
+                        recommendationTask.RecommenderId = recommenderWithLeastTasks;
+                        recommendationTask.AssignerId = "system";
+                        recommendationTask.Status = "assigned";
+                        recommendationTask.DateAdded = DateTime.Now;
+                        recommendationTask.DateUpdated = DateTime.Now;
+                        _db.Add(recommendationTask);
                         _db.SaveChanges();
-
                     }
-                    else
+
+                    var updaterenewal = _db.ApplicationInfo.Where(c => c.Id == inspec.ApplicationId).FirstOrDefault();
+                    if (updaterenewal != null)
                     {
-                        updaterenewal.ExpiryDate = updaterenewal.ExpiryDate.AddYears(1);
+                        updaterenewal.RenewalStatus = "recommendation";
                         updaterenewal.DateUpdated = DateTime.Now;
                         _db.Update(updaterenewal);
                         _db.SaveChanges();
@@ -1024,6 +1496,14 @@ namespace LLB.Controllers
                 _db.SaveChanges();
                 // recommendation
 
+            }
+            else if (inspec.Service == "Inspection")
+            {
+                if (inspec.Overall == "true")
+                {
+                    var inspectedApplication = _db.ApplicationInfo.Where(a => a.Id == inspec.ApplicationId).FirstOrDefault();
+                    DownloadStatusHelper.OpenLicenseDownload(_db, inspectedApplication, inspectedApplication?.UserID);
+                }
             }
 
             var task = _db.Tasks.Where(a => a.Id == TaskId).FirstOrDefault();
@@ -1070,6 +1550,24 @@ namespace LLB.Controllers
             return View();
         }
 
+        [HttpGet("CompleteRenewalInspection")]
+        public IActionResult CompleteRenewalInspection(string taskId)
+        {
+            var task = _db.Tasks.Where(a => a.Id == taskId).FirstOrDefault();
+            if (task != null
+                && string.Equals(task.Service, "renewal inspection", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(task.Status, "completed", StringComparison.OrdinalIgnoreCase))
+            {
+                task.Status = "completed";
+                task.VerificationDate = DateTime.Now;
+                task.DateUpdated = DateTime.Now;
+                _db.Update(task);
+                _db.SaveChanges();
+            }
+
+            return RedirectToAction("Dashboard", "Home");
+        }
+
 
             [HttpGet("ApproveRenewal")]
         public async Task<IActionResult> ApproveRenewal(string Id, string taskId)
@@ -1090,6 +1588,7 @@ namespace LLB.Controllers
 
             Inspection inspection = new Inspection();
             inspection.Id  = Guid.NewGuid().ToString();
+            inspection.Reference = ReferenceHelper.GeneratePostFormationReferenceNumber(_db, "RNI");
             inspection.renewalId = renewalapp.Id;
             inspection.ApplicationId = Id;
             inspection.Service = "Renewal Inspection";
@@ -1128,6 +1627,93 @@ namespace LLB.Controllers
             _db.SaveChanges();
             //
             return RedirectToAction("Dashboard", "Home");
+        }
+
+        private ExtendedHoursReviewViewModel? BuildExtendedHoursReviewModel(string extendedHoursId, string taskId)
+        {
+            var extendedHours = _db.ExtendedHours.Where(application => application.Id == extendedHoursId).FirstOrDefault();
+            if (extendedHours == null || string.IsNullOrWhiteSpace(extendedHours.ApplicationId))
+            {
+                return null;
+            }
+
+            var application = _db.ApplicationInfo.Where(record => record.Id == extendedHours.ApplicationId).FirstOrDefault();
+            if (application == null)
+            {
+                return null;
+            }
+
+            var outlet = _db.OutletInfo.Where(record => record.ApplicationId == application.Id).FirstOrDefault();
+            var licenseType = _db.LicenseTypes.Where(record => record.Id == application.LicenseTypeID).FirstOrDefault();
+            var licenseRegion = _db.LicenseRegions.Where(record => record.Id == application.ApplicationType).FirstOrDefault();
+            var payment = _db.Payments
+                .Where(record => record.ApplicationId == extendedHours.Id
+                    && record.Service == "extended hours")
+                .OrderByDescending(record => record.DateAdded)
+                .FirstOrDefault();
+
+            return new ExtendedHoursReviewViewModel
+            {
+                Id = extendedHours.Id ?? string.Empty,
+                TaskId = taskId ?? string.Empty,
+                ApplicationId = application.Id ?? string.Empty,
+                Reference = extendedHours.Reference ?? string.Empty,
+                TradingName = outlet?.TradingName,
+                LLBNumber = application.LLBNum,
+                LicenseType = licenseType?.LicenseName,
+                LicenseRegion = licenseRegion?.RegionName,
+                Status = extendedHours.Status,
+                PaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? extendedHours.PaymentStatus,
+                PaynowReference = payment?.PaynowRef,
+                ReasonForExtention = extendedHours.ReasonForExtention,
+                PaidFee = extendedHours.PaidFee,
+                ExtendedHoursDate = extendedHours.ExtendedHoursDate,
+                RequestedOn = extendedHours.DateAdded
+            };
+        }
+
+        private TemporaryRetailReviewViewModel? BuildTemporaryRetailReviewModel(string temporaryRetailId, string taskId)
+        {
+            var temporaryRetail = _db.TemporaryRetails.Where(application => application.Id == temporaryRetailId).FirstOrDefault();
+            if (temporaryRetail == null || string.IsNullOrWhiteSpace(temporaryRetail.ApplicationId))
+            {
+                return null;
+            }
+
+            var application = _db.ApplicationInfo.Where(record => record.Id == temporaryRetail.ApplicationId).FirstOrDefault();
+            if (application == null)
+            {
+                return null;
+            }
+
+            var outlet = _db.OutletInfo.Where(record => record.ApplicationId == application.Id).FirstOrDefault();
+            var licenseType = _db.LicenseTypes.Where(record => record.Id == application.LicenseTypeID).FirstOrDefault();
+            var licenseRegion = _db.LicenseRegions.Where(record => record.Id == application.ApplicationType).FirstOrDefault();
+            var payment = _db.Payments
+                .Where(record => record.ApplicationId == temporaryRetail.Id
+                    && (record.Service == "temporary retails" || record.Service == "Temporary Retails"))
+                .OrderByDescending(record => record.DateAdded)
+                .FirstOrDefault();
+
+            return new TemporaryRetailReviewViewModel
+            {
+                Id = temporaryRetail.Id ?? string.Empty,
+                TaskId = taskId ?? string.Empty,
+                ApplicationId = application.Id ?? string.Empty,
+                Reference = temporaryRetail.Reference ?? string.Empty,
+                TradingName = outlet?.TradingName,
+                LLBNumber = application.LLBNum,
+                LicenseType = licenseType?.LicenseName,
+                LicenseRegion = licenseRegion?.RegionName,
+                Status = temporaryRetail.Status,
+                PaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? temporaryRetail.PaymentStatus,
+                PaynowReference = payment?.PaynowRef,
+                ReasonForExtention = temporaryRetail.ReasonForExtention,
+                LocationAddress = temporaryRetail.LocationAddress,
+                PaidFee = temporaryRetail.PaidFee,
+                TemporaryRetailDate = temporaryRetail.TemporaryRetailsDate,
+                RequestedOn = temporaryRetail.DateAdded
+            };
         }
 
         }

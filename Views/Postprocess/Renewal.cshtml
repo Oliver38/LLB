@@ -1,5 +1,7 @@
 ﻿@{
     Layout = "_LayoutMain";
+    bool isRenewalEligible = ViewBag.IsRenewalEligible is bool eligible ? eligible : true;
+    string? renewalEligibilityWarning = ViewBag.RenewalEligibilityWarning as string;
 }
 
 @if (TempData["error"] != null)
@@ -10,6 +12,11 @@
 @if (TempData["success"] != null)
 {
     <div class="alert alert-success">@TempData["success"]</div>
+}
+
+@if (!isRenewalEligible && !string.IsNullOrWhiteSpace(renewalEligibilityWarning))
+{
+    <div class="alert alert-warning">@renewalEligibilityWarning</div>
 }
 
 @if (ViewBag.Checksub == null)
@@ -42,6 +49,15 @@
                                 @ViewBag.Outletinfo.TradingName
                             </td>
                         </tr>
+                        @if (ViewBag.Renewaldata != null)
+                        {
+                            <tr>
+                                <th>Renewal Reference</th>
+                                <td>
+                                    @(ViewBag.Renewaldata.Reference ?? "N/A")
+                                </td>
+                            </tr>
+                        }
                         <tr>
                             <th>License ExpiryDate</th>
                             <td>
@@ -94,10 +110,17 @@
                             public DateTime DateApplied { get; set; }
                             public DateTime DateUpdated { get; set; }*@
 
-
-
-
-                        @if (ViewBag.Renewaldata == null)
+                        @if (!isRenewalEligible)
+                        {
+                            <tr>
+                                <td colspan="2">
+                                    <div class="alert alert-warning mb-0">
+                                        @renewalEligibilityWarning
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else if (ViewBag.Renewaldata == null)
                         {
 
                             <form action="/Postprocess/PostRenenwals" enctype="multipart/form-data" method="post">
@@ -307,124 +330,120 @@ else
 
 
 
-<!-- Basic Modal -->
+@if (isRenewalEligible)
+{
+    <div class="modal fade" id="PaymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Post Fomation For </h5> &nbsp;<b><h5 class="modal-title" id="feetitle"></h5></b>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/Postprocess/AddFee" enctype="multipart/form-data" method="post">
 
-<div class="modal fade" id="PaymentModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Post Fomation For </h5> &nbsp;<b><h5 class="modal-title" id="feetitle"></h5></b>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form action="/Postprocess/AddFee" enctype="multipart/form-data" method="post">
-
-                    <div class="col-md-12">
-                        @*<label for="inputName5" class="form-label">Select Post Formation Process</label>
-                            <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
-
-
-
-                        <form action="/Postprocess/UpdateFee" enctype="multipart/form-data" method="post">
+                        <div class="col-md-12">
+                            @*<label for="inputName5" class="form-label">Select Post Formation Process</label>
+                                <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
 
 
-                            <table class="table table-bordered table-hover">
-                                <tbody class="table-light">
 
-                                    <tr>
-                                        <th>Outlet Name</th>
-                                        <td>
-                                            @ViewBag.Outletinfo.TradingName
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>License ExpiryDate</th>
-                                        <td>
-                                            @ViewBag.Appinfo.ExpiryDate
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Fee</th>
-                                        <td>
-                                            @ViewBag.Fee
-                                        </td>
-                                    </tr>
+                            <form action="/Postprocess/UpdateFee" enctype="multipart/form-data" method="post">
 
-                                    <tr>
-                                        <th>Penalty</th>
-                                        <td>@ViewBag.Penalty</td>
-                                    </tr>
 
-                                    <tr>
-                                        <th>Delay Period</th>
-                                        <td>@ViewBag.Months</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Total Fee</th>
-                                        <td>@ViewBag.TotalFee</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Payment Status</th>
-                                        <td>
-                                            @if (ViewBag.Payment == null)
-                                            {<span style="color:red"> Not Paid</span>}
-                                            else
-                                            { <span style="color:green"> @ViewBag.Payment.Status</span>}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2">
+                                <table class="table table-bordered table-hover">
+                                    <tbody class="table-light">
 
-                                            <p><b>NB:</b> After making this payment,the system will recognise that you have made a payment. You are required to return and submit your renewal </p>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th></th>
-                                        <td>
-                                            @if (ViewBag.Renewaldata != null)
-                                            {
+                                        <tr>
+                                            <th>Outlet Name</th>
+                                            <td>
+                                                @ViewBag.Outletinfo.TradingName
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>License ExpiryDate</th>
+                                            <td>
+                                                @ViewBag.Appinfo.ExpiryDate
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Fee</th>
+                                            <td>
+                                                @ViewBag.Fee
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <th>Penalty</th>
+                                            <td>@ViewBag.Penalty</td>
+                                        </tr>
+
+                                        <tr>
+                                            <th>Delay Period</th>
+                                            <td>@ViewBag.Months</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total Fee</th>
+                                            <td>@ViewBag.TotalFee</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Payment Status</th>
+                                            <td>
                                                 @if (ViewBag.Payment == null)
-                                                {
-                                                    <a class="btn btn-primary" href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id">
-                                                        Make Payment
-                                                    </a>
-                                                }
+                                                {<span style="color:red"> Not Paid</span>}
                                                 else
-                                                { <a class="btn btn-primary" href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id">
-                                                        Continue Payment
-                                                    </a>
+                                                { <span style="color:green"> @ViewBag.Payment.Status</span>}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">
+
+                                                <p><b>NB:</b> After making this payment,the system will recognise that you have made a payment. You are required to return and submit your renewal </p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th></th>
+                                            <td>
+                                                @if (ViewBag.Renewaldata != null)
+                                                {
+                                                    @if (ViewBag.Payment == null)
+                                                    {
+                                                        <a class="btn btn-primary" href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id">
+                                                            Make Payment
+                                                        </a>
+                                                    }
+                                                    else
+                                                    { <a class="btn btn-primary" href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id">
+                                                            Continue Payment
+                                                        </a>
+                                                    }
                                                 }
-                                            }
-                                        </td>
-                                    </tr>
-                                </tbody>
+                                            </td>
+                                        </tr>
+                                    </tbody>
 
-                            </table>
-                        </form>
-
-
-                    </div>
+                                </table>
+                            </form>
 
 
-
-                    @*<div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
 
 
-                        </div>*@
-                </form>
+
+                        @*<div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Submit</button>
+
+
+                            </div>*@
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div><!-- End Basic Modal-->
-<!-- Basic Modal -->
 
+    <script>function Payment() {
+            $('#PaymentModal').modal('show');
 
-
-<script>function Payment() {
-        // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
-
-        $('#PaymentModal').modal('show');
-
-    }</script>
+        }</script>
+}

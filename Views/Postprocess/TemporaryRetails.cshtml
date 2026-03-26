@@ -1,302 +1,204 @@
-﻿@{
+@{
     Layout = "_LayoutMain";
+
+    var activeTemporaryRetail = ViewBag.ActiveTemporaryRetail;
+    var temporaryRetailRecord = ViewBag.TemporaryRetailRecord;
+    var payment = ViewBag.Payment;
+    bool canStartNewTemporaryRetail = ViewBag.CanStartNewTemporaryRetail is bool canStart && canStart;
+    bool canSubmitTemporaryRetail = ViewBag.CanSubmitTemporaryRetail is bool canSubmit && canSubmit;
+    bool isTemporaryRetailPaid = ViewBag.IsTemporaryRetailPaid is bool paid && paid;
+    string process = ViewBag.Process as string ?? "TRL";
+    string? temporaryRetailWarning = ViewBag.TemporaryRetailWarning as string;
+    string currentTemporaryRetailId = activeTemporaryRetail?.Id ?? string.Empty;
+    string applicationId = ViewBag.Appinfo?.Id ?? string.Empty;
+    string displayedStatus = temporaryRetailRecord?.Status ?? "Not started";
+    string displayedPaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? temporaryRetailRecord?.PaymentStatus ?? "Not Paid";
+    string displayedPaynowReference = payment?.PaynowRef ?? "N/A";
+    string displayedJustification = temporaryRetailRecord?.ReasonForExtention ?? "Not provided yet";
+    string displayedLocationAddress = temporaryRetailRecord?.LocationAddress ?? "Not provided yet";
+    string activeTemporaryRetailStatus = activeTemporaryRetail?.Status ?? string.Empty;
+    DateTime? displayedTemporaryRetailDate = null;
+
+    if (temporaryRetailRecord != null && temporaryRetailRecord.TemporaryRetailsDate != DateTime.MinValue)
+    {
+        displayedTemporaryRetailDate = temporaryRetailRecord.TemporaryRetailsDate;
+    }
 }
 
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
 
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
 
-<div class="card">
+@if (!string.IsNullOrWhiteSpace(temporaryRetailWarning))
+{
+    <div class="alert alert-info">@temporaryRetailWarning</div>
+}
+
+<div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title mb-0">Temporary Retails License Application For @ViewBag.Outletinfo.TradingName</div>
-        @*<button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>*@
+        <div class="card-title mb-0">Temporary Retail Licence Application For @ViewBag.Outletinfo?.TradingName</div>
+        @if (temporaryRetailRecord != null)
+        {
+            <span class="badge bg-light text-dark border">@temporaryRetailRecord.Reference</span>
+        }
     </div>
 
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover">
+            <table class="table table-bordered table-hover align-middle">
                 <tbody class="table-light">
-
                     <tr>
                         <th>Outlet Name</th>
-                        <td>
-                            @ViewBag.Outletinfo.TradingName
-                        </td>
+                        <td>@ViewBag.Outletinfo?.TradingName</td>
                     </tr>
                     <tr>
-                        <th>License </th>
-                        <td>
-                            @ViewBag.License.LicenseName
-                        </td>
+                        <th>Licence</th>
+                        <td>@ViewBag.License?.LicenseName</td>
                     </tr>
                     <tr>
-                        <th>Region </th>
-                        <td>
-                            @ViewBag.Region.RegionName
-                        </td>
+                        <th>Region</th>
+                        <td>@ViewBag.Region?.RegionName</td>
+                    </tr>
+                    <tr>
+                        <th>Temporary Retail Reference</th>
+                        <td>@(temporaryRetailRecord?.Reference ?? "Not generated yet")</td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>@displayedStatus</td>
                     </tr>
                     <tr>
                         <th>Fee</th>
-                        <td>
-                            @ViewBag.Fee
-                        </td>
-                    </tr>
-
-
-
-
-                    <tr>
-                        <th>Total Fee</th>
                         <td>@ViewBag.TotalFee</td>
                     </tr>
                     <tr>
-                        <th>Payment Status</th>
+                        <th>Temporary Retail Date</th>
                         <td>
-                            @if (ViewBag.Payment == null)
-                            {<span style="color:red"> Not Paid</span>}
+                            @if (displayedTemporaryRetailDate.HasValue)
+                            {
+                                @displayedTemporaryRetailDate.Value.ToString("yyyy-MM-dd")
+                            }
                             else
-                            { <span style="color:green"> @ViewBag.Payment.Status</span>}
+                            {
+                                <span>Not selected</span>
+                            }
                         </td>
                     </tr>
+                    <tr>
+                        <th>Address / Location</th>
+                        <td>@displayedLocationAddress</td>
+                    </tr>
+                    <tr>
+                        <th>Payment Status</th>
+                        <td>@displayedPaymentStatus</td>
+                    </tr>
+                    <tr>
+                        <th>Paynow Reference</th>
+                        <td>@displayedPaynowReference</td>
+                    </tr>
+                    <tr>
+                        <th>Justification</th>
+                        <td>@displayedJustification</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
+@if (canStartNewTemporaryRetail)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Application Details</h5>
+        </div>
+        <div class="card-body">
+            <form action="/Postprocess/SaveTemporaryRetails" method="post">
+                <input type="hidden" name="applicationId" value="@applicationId" />
 
-                    @*[Key]
-                        // Liquor Outlet Info
-                        public string? Id { get; set; }
-                        public string? ApplicationId { get; set; }
-                        public string? UserId { get; set; }
-                        public string? PreviousExpiry { get; set; }
-                        public string? FeePaid { get; set; }
-                        public string? PenaltyPaid { get; set; }
-                        public string? PaymentStatus { get; set; }
-                        public string? LLBNumber { get; set; }
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Temporary Retail Date</label>
+                        <input type="date" name="temporaryRetailsDate" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Address / Location</label>
+                        <input type="text" name="locationAddress" class="form-control" placeholder="Enter the address or location" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Justification</label>
+                        <textarea name="reasonForExtention" class="form-control" rows="5"></textarea>
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+                        <button class="btn btn-primary" type="submit">Initialize Application</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+else if (activeTemporaryRetail != null && string.Equals(activeTemporaryRetailStatus, "submitted", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="alert alert-warning">
+        This temporary retail application has already been submitted. The inspector will approve or reject it after examination.
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(currentTemporaryRetailId))
+{
+    <div class="alert alert-info">
+        This temporary retail application has been initialized. Payment is the next step, so the application fields are now read-only.
+    </div>
 
-                        public string? Service { get; set; }
-                        public DateTime DateApplied { get; set; }
-                        public DateTime DateUpdated { get; set; }*@
-
-
-
-
-                    @if (ViewBag.Payment == null)
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Submission Steps</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-column gap-3">
+                <div class="border rounded p-3">
+                    <div class="fw-semibold mb-1">Step 1: Application Initialized</div>
+                    <div class="text-muted">The temporary retail date, address or location, and justification have already been captured for this application.</div>
+                </div>
+                <div class="border rounded p-3">
+                    <div class="fw-semibold mb-1">Step 2: Make Payment</div>
+                    <div class="text-muted mb-3">Each new temporary retail application requires its own Paynow payment.</div>
+                    @if (!isTemporaryRetailPaid)
                     {
-                        @*<span style="color:red"> Not Paid</span>*@
-                    <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Temporary Retails License </button></td>
-
-                }
-                else
-                {
-                    @if (ViewBag.Payment.Status == "Paid")
-                    {
-
-                        @if (ViewBag.Inspectiondata != null)
-                        {
-                            <form action="/Postprocess/PostTemporaryRetails" enctype="multipart/form-data" method="post">
-
-                            <tr>
-                                <th>Inspection Submission </th>
-                                <td><span class="text-success"> Ready for submission</span></td>
-
-                            </tr>
-                            <input type="hidden" name="ExtId" value="@ViewBag.Inspectiondata.Id" />
-                            <tr>
-                                <th>Date For Temporary Retails License </th>
-                                <td><input type="date" name="TemporaryRetailsDate" class="form-control" /></td>
-                            </tr>
-                            <tr>
-                                <th>Reason For Temporary Retails License </th>
-                                <td><textarea type="text" name="ReasonForExtention" class="form-control"></textarea></td>
-                            </tr>
-                            <tr>
-
-
-
-                                <th>
-                                    @*public string? Id { get; set; }
-                                        public string? UserId { get; set; }
-                                        public string? Status  { get; set; }
-                                        public string? Reference { get; set; }
-
-                                        public string? ApplicationId { get; set; }
-
-
-                                        public string? PaidFee { get; set; }
-                                        public string? PaymentStatus { get; set; }
-                                        public string? ReasonForExtention { get; set; }
-                                        public string? HoursOfExtension { get; set; }
-                                        public string? TemporaryRetailsDate { get; set; }
-
-                                        public DateTime DateAdded { get; set; }
-                                        public DateTime DateUpdated { get; set; }*@
-
-                                    @*<input type="hidden" name="service" value="Inspection" />*@
-                                    <!--<input type="hidden" name="lLBNumber" value="@ViewBag.Appinfo.LLBNum" />
-                                    <input type="hidden" name="PaymentStatus" value="Paid" />
-                                    <input type="hidden" name="penaltyPaid" value="@ViewBag.Penalty" />
-                                    <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
-                                    <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
-                                    <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />-->
-                                    @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
-
-
-                                </th>
-
-
-                                <td><button class="btn btn-primary" type="submit"> Submit For Inspection</button></td>
-                            </tr>
-
-                            </form>
-
-
-
-                        }
-                        else
-                        {
-                            <tr>
-                                <td>
-                                    your inspection application has been submmited , Click Continue to set for awaiting and inspection.
-                                </td>
-                                <td>
-                                    <a class="btn btn-primary" href="/Home/Dashboard">
-                                        Continue
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-
-
-
-                        @*<td><button type="button" href="/Postprocess/Complete?Id=@ViewBag.Inspectiondata.Id" class="btn btn-primary"> Continue</button></td>*@
+                        <a class="btn btn-primary" href="/Postprocess/TemporaryRetailsPayment?id=@applicationId&temporaryRetailId=@currentTemporaryRetailId&amount=@ViewBag.TotalFee&service=temporaryretails&process=@process">
+                            Make Payment
+                        </a>
                     }
                     else
                     {
-                        <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Inspection</button></td>
-
+                        <span class="badge bg-success">Payment received</span>
                     }
-                }
-
-
-
-
-
-
-                    </tbody>
-
-                </table>
-            </div>`
-        </div>
-    </div>
-
-
-
-
-    <!-- Basic Modal -->
-
-    <div class="modal fade" id="PaymentModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Post Fomation For </h5> &nbsp;<b><h5 class="modal-title" id="feetitle"></h5></b>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <form action="/Postprocess/AddFee" enctype="multipart/form-data" method="post">
-
-                        <div class="col-md-12">
-                            @*<label for="inputName5" class="form-label">Select Post Formation Process</label>
-                                <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
-
-
-
-                            <form action="/Postprocess/UpdateFee" enctype="multipart/form-data" method="post">
-
-
-                                <table class="table table-bordered table-hover">
-                                    <tbody class="table-light">
-
-                                        <tr>
-                                            <th>Outlet Name</th>
-                                            <td>
-                                                @ViewBag.Outletinfo.TradingName
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>License ExpiryDate</th>
-                                            <td>
-                                                @ViewBag.Appinfo.ExpiryDate
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>Fee</th>
-                                            <td>
-                                                @ViewBag.Fee
-                                            </td>
-                                        </tr>
-
-
-
-
-                                        <tr>
-                                            <th>Total Fee</th>
-                                            <td>@ViewBag.TotalFee</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Payment Status</th>
-                                            <td>
-                                                @if (ViewBag.Payment == null)
-                                                {<span style="color:red"> Not Paid</span>}
-                                                else
-                                                { <span style="color:green"> @ViewBag.Payment.Status</span>}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="2">
-
-                                                <p><b>NB:</b> After making this payment,the system will recognise that you have made a payment. You are required to return and submit your inspection </p>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th></th>
-                                            <td>
-                                                @if (ViewBag.Payment == null)
-                                                {
-                                                    <a class="btn btn-primary" href="/Postprocess/TemporaryRetailsPayment?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=TemporaryRetails&process=@ViewBag.Process">
-                                                        Make Payment
-                                                    </a>
-                                                }
-                                                else
-                                                { <a class="btn btn-primary" href="/Postprocess/TemporaryRetailsPayment?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=TemporaryRetails&process=@ViewBag.Process">
-                                                        Make Payment
-                                                    </a>
-                                                }
-                                            </td>
-                                        </tr>
-                                    </tbody>
-
-                                </table>
-                            </form>
-
-
-                        </div>
-
-
-
-                        @*<div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary">Submit</button>
-
-
-                            </div>*@
-                    </form>
+                <div class="border rounded p-3">
+                    <div class="fw-semibold mb-1">Step 3: Continue To Submit</div>
+                    <div class="text-muted mb-3">After Paynow confirms payment, continue to send the application to the inspector.</div>
+                    @if (canSubmitTemporaryRetail)
+                    {
+                        <form action="/Postprocess/SubmitTemporaryRetails" method="post" class="d-inline">
+                            <input type="hidden" name="temporaryRetailId" value="@currentTemporaryRetailId" />
+                            <button class="btn btn-success" type="submit">Continue</button>
+                        </form>
+                    }
+                    else if (isTemporaryRetailPaid)
+                    {
+                        <span class="badge bg-secondary">Ready for submission</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-light text-dark border">Complete payment first</span>
+                    }
                 </div>
             </div>
         </div>
-    </div><!-- End Basic Modal-->
-    <!-- Basic Modal -->
-
-
-
-    <script>function Payment() {
-            // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
-
-            $('#PaymentModal').modal('show');
-
-        }</script>
+    </div>
+}

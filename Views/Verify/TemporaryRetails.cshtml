@@ -1,0 +1,92 @@
+@model LLB.Models.ViewModel.TemporaryRetailReviewViewModel
+
+@{
+    Layout = "_LayoutMain";
+}
+
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            @if (TempData["result"] != null)
+            {
+                <div class="alert alert-info mb-3">@TempData["result"]</div>
+            }
+            <h5 class="card-title mb-0">Examine Temporary Retail Application</h5>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <tbody class="table-light">
+                        <tr>
+                            <th>Reference</th>
+                            <td>@Model.Reference</td>
+                        </tr>
+                        <tr>
+                            <th>Outlet Name</th>
+                            <td>@Model.TradingName</td>
+                        </tr>
+                        <tr>
+                            <th>LLB Number</th>
+                            <td>@Model.LLBNumber</td>
+                        </tr>
+                        <tr>
+                            <th>Requested On</th>
+                            <td>@Model.RequestedOn</td>
+                        </tr>
+                        <tr>
+                            <th>Temporary Retail Date</th>
+                            <td>
+                                @(Model.TemporaryRetailDate == DateTime.MinValue
+                                    ? "N/A"
+                                    : Model.TemporaryRetailDate.ToString("yyyy-MM-dd"))
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Address / Location</th>
+                            <td>@Model.LocationAddress</td>
+                        </tr>
+                        <tr>
+                            <th>Justification</th>
+                            <td>@Model.ReasonForExtention</td>
+                        </tr>
+                        <tr>
+                            <th>Paid Fee</th>
+                            <td>@Model.PaidFee</td>
+                        </tr>
+                        <tr>
+                            <th>Payment Status</th>
+                            <td>@(Model.PaymentStatus ?? "Not Paid")</td>
+                        </tr>
+                        <tr>
+                            <th>Paynow Reference</th>
+                            <td>@(Model.PaynowReference ?? "N/A")</td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td>@Model.Status</td>
+                        </tr>
+                        <tr>
+                            <th>Licence</th>
+                            <td>@Model.LicenseType</td>
+                        </tr>
+                        <tr>
+                            <th>For</th>
+                            <td>@Model.LicenseRegion</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="text-center">
+                                <a href="/Verify/RejectTemporaryRetails?id=@Model.Id&taskId=@Model.TaskId" class="btn btn-danger" onclick="return confirm('Reject this temporary retail application?');">
+                                    Reject Application
+                                </a>
+                                <a href="/Verify/ApproveTemporaryRetails?id=@Model.Id&taskId=@Model.TaskId" class="btn btn-success" onclick="return confirm('Approve this temporary retail application?');">
+                                    Approve Application
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

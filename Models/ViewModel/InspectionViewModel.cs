@@ -10,6 +10,7 @@ namespace LLB.Models.ViewModel
         // Liquor Outlet Info
 
         public string? Id { get; set; }
+        public string? Reference { get; set; }
         public string? Service { get; set; }
         public string? TradingName { get; set; }
         public string? LLBNumber { get; set; }

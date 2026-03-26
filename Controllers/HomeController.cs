@@ -7,6 +7,7 @@ using LLB.Data;
 using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
 using LLB.Models.ViewModel;
+using LLB.Helpers;
 
 namespace LLB.Controllers
 {
@@ -57,6 +58,20 @@ namespace LLB.Controllers
         {
                      if(process==  "RNW")
             {
+                var renewalApplication = _db.ApplicationInfo.Where(a => a.Id == id).FirstOrDefault();
+                if (renewalApplication == null)
+                {
+                    TempData["error"] = "Application information could not be found.";
+                    return RedirectToAction("Dashboard");
+                }
+
+                var renewalEligibility = RenewalEligibilityHelper.Evaluate(renewalApplication.ExpiryDate, DateTime.Now);
+                if (!renewalEligibility.IsEligible)
+                {
+                    TempData["error"] = renewalEligibility.WarningMessage;
+                    return RedirectToAction("Dashboard");
+                }
+
                 return RedirectToAction("Renewal", "Postprocess", new { id = id, process = process });
 
             }else if (process == "APM")
@@ -133,6 +148,7 @@ namespace LLB.Controllers
                 var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
                 getreninfo.ApplicationId = renapps.ApplicationId;
                 getreninfo.Id = renapps.Id;
+                getreninfo.Reference = renapps.Reference;
                 getreninfo.LLBNumber = renapps.LLBNumber;
                 getreninfo.PreviousExpiry = renapps.PreviousExpiry;
                 getreninfo.TradingName = reaoutletinfo.TradingName;
@@ -186,50 +202,156 @@ namespace LLB.Controllers
         [HttpGet("Dashboard")]
       
 
-        public async Task<IActionResult> DashboardAsync()
+        public async Task<IActionResult> DashboardAsync(string? tab)
         {
+            var redirect = RedirectNonClientUser();
+            if (redirect != null)
+            {
+                return redirect;
+            }
 
+            var currentUserId = await GetCurrentClientUserIdAsync();
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            await LoadClientDashboardViewDataAsync(currentUserId, tab);
+            return View();
+        }
+
+        [HttpGet("RenewalListings")]
+        public async Task<IActionResult> RenewalListings()
+        {
+            return await RenderClientListingViewAsync("RenewalListings");
+        }
+
+        [HttpGet("InspectionListings")]
+        public async Task<IActionResult> InspectionListings()
+        {
+            return await RenderClientListingViewAsync("InspectionListings");
+        }
+
+        [HttpGet("ManagerChangeListings")]
+        public async Task<IActionResult> ManagerChangeListings()
+        {
+            return await RenderClientListingViewAsync("ManagerChangeListings");
+        }
+
+        [HttpGet("ExtendedHoursListings")]
+        public async Task<IActionResult> ExtendedHoursListings()
+        {
+            return await RenderClientListingViewAsync("ExtendedHoursListings");
+        }
+
+        [HttpGet("TemporaryRetailListings")]
+        public async Task<IActionResult> TemporaryRetailListings()
+        {
+            return await RenderClientListingViewAsync("TemporaryRetailListings");
+        }
+
+        [HttpGet("ExtraCounterListings")]
+        public async Task<IActionResult> ExtraCounterListings()
+        {
+            return await RenderClientListingViewAsync("ExtraCounterListings");
+        }
+
+        private void GetUserId()
+        {
+            throw new NotImplementedException();
+        }
+
+        private IActionResult? RedirectNonClientUser()
+        {
             if (User.IsInRole("admin"))
             {
                 return RedirectToAction("AdminDashboard", "Tasks");
             }
-           
-            else if (User.IsInRole("verifier"))
+
+            if (User.IsInRole("verifier"))
             {
                 return RedirectToAction("Dashboard", "Verify");
             }
 
-            else if (User.IsInRole("recommender"))
+            if (User.IsInRole("recommender"))
             {
                 return RedirectToAction("Dashboard", "Recommend");
             }
-            else if (User.IsInRole("secretary"))
+
+            if (User.IsInRole("secretary"))
             {
                 return RedirectToAction("Dashboard", "Approval");
             }
-            else if (User.IsInRole("inspector"))
+
+            if (User.IsInRole("inspector"))
             {
                 return RedirectToAction("Dashboard", "Examination");
             }
-            else if (User.IsInRole("accountant"))
+
+            if (User.IsInRole("accountant"))
             {
                 return RedirectToAction("Dashboard", "Accountant");
             }
 
-           
-            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
-            //var Id = await userManager.GetUserId(User.Identity.Name);
-            string id = userId.Id;
-           // var renewals = _db.Renewals.Where(q => q.UserId == id && (q.Status == "renewed" || q.Status == "submitted")).ToList();
-           //reals code is above a s we check the effects of what is below
-            var renewals = _db.Renewals.Where(q => q.UserId == id).ToList();
+            return null;
+        }
 
-            var applications = _db.ApplicationInfo.Where(a => a.UserID == id && a.Status != "approved").ToList();
-            var approvedapplications = _db.ApplicationInfo.Where(a => a.UserID == id && a.Status == "approved").ToList();
-            var outletinfo  = _db.OutletInfo.ToList();
+        private async Task<string?> GetCurrentClientUserIdAsync()
+        {
+            var currentUser = await userManager.FindByEmailAsync(User.Identity?.Name ?? string.Empty);
+            return currentUser?.Id;
+        }
+
+        private async Task<IActionResult> RenderClientListingViewAsync(string viewName)
+        {
+            var redirect = RedirectNonClientUser();
+            if (redirect != null)
+            {
+                return redirect;
+            }
+
+            var currentUserId = await GetCurrentClientUserIdAsync();
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            await LoadClientDashboardViewDataAsync(currentUserId, "services-pane");
+            return View(viewName);
+        }
+
+        private async Task LoadClientDashboardViewDataAsync(string userId, string? tab)
+        {
+            var renewals = _db.Renewals.Where(q => q.UserId == userId).ToList();
+            var allApplications = _db.ApplicationInfo.Where(a => a.UserID == userId).ToList();
+            var applications = allApplications.Where(a => a.Status != "approved").ToList();
+            var approvedapplications = allApplications.Where(a => a.Status == "approved").ToList();
+            var applicationIds = allApplications
+                .Where(a => !string.IsNullOrWhiteSpace(a.Id))
+                .Select(a => a.Id!)
+                .ToHashSet();
+            var outletinfo = _db.OutletInfo
+                .Where(a => a.ApplicationId != null && applicationIds.Contains(a.ApplicationId))
+                .ToList();
             var license = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
+            var user = await userManager.FindByIdAsync(userId);
+            var applicationLookup = allApplications
+                .Where(a => !string.IsNullOrWhiteSpace(a.Id))
+                .GroupBy(a => a.Id!)
+                .ToDictionary(group => group.Key, group => group.First());
+            var outletLookup = outletinfo
+                .Where(a => !string.IsNullOrWhiteSpace(a.ApplicationId))
+                .GroupBy(a => a.ApplicationId!)
+                .ToDictionary(group => group.Key, group => group.First());
+            var licenseLookup = license
+                .Where(a => !string.IsNullOrWhiteSpace(a.Id))
+                .GroupBy(a => a.Id!)
+                .ToDictionary(group => group.Key, group => group.First());
+            var regionLookup = regions
+                .Where(a => !string.IsNullOrWhiteSpace(a.Id))
+                .GroupBy(a => a.Id!)
+                .ToDictionary(group => group.Key, group => group.First());
 
             List<RenewalViewModel> renewaltasks = new List<RenewalViewModel>();
 
@@ -237,27 +359,40 @@ namespace LLB.Controllers
             {
                 RenewalViewModel getreninfo = new RenewalViewModel();
 
-               // var renapps = _db.Renewals.Where(a => a.Id == rentask.ApplicationId).FirstOrDefault();
-                var renappinfo = _db.ApplicationInfo.Where(s => s.Id == rentask.ApplicationId).FirstOrDefault();
-                var reaoutletinfo = _db.OutletInfo.Where(q => q.ApplicationId == rentask.ApplicationId).FirstOrDefault();
-                var licensetype = _db.LicenseTypes.Where(w => w.Id == renappinfo.LicenseTypeID).FirstOrDefault();
-                var licenseReg = _db.LicenseRegions.Where(e => e.Id == renappinfo.ApplicationType).FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(rentask.ApplicationId)
+                    || !applicationLookup.TryGetValue(rentask.ApplicationId, out var renappinfo))
+                {
+                    continue;
+                }
+
+                outletLookup.TryGetValue(rentask.ApplicationId, out var reaoutletinfo);
+                LicenseTypes? licensetype = null;
+                if (!string.IsNullOrWhiteSpace(renappinfo.LicenseTypeID))
+                {
+                    licenseLookup.TryGetValue(renappinfo.LicenseTypeID, out licensetype);
+                }
+
+                LicenseRegion? licenseReg = null;
+                if (!string.IsNullOrWhiteSpace(renappinfo.ApplicationType))
+                {
+                    regionLookup.TryGetValue(renappinfo.ApplicationType, out licenseReg);
+                }
+
                 getreninfo.ApplicationId = rentask.ApplicationId;
                 getreninfo.Id = rentask.Id;
+                getreninfo.Reference = rentask.Reference;
                 getreninfo.LLBNumber = rentask.LLBNumber;
                 getreninfo.PreviousExpiry = rentask.PreviousExpiry;
-                getreninfo.TradingName = reaoutletinfo.TradingName;
-                getreninfo.Licensetype = licensetype.LicenseName;
-                getreninfo.LicenseRegion = licenseReg.RegionName;
+                getreninfo.TradingName = reaoutletinfo?.TradingName ?? "N/A";
+                getreninfo.Licensetype = licensetype?.LicenseName ?? "N/A";
+                getreninfo.LicenseRegion = licenseReg?.RegionName ?? "N/A";
                 getreninfo.Status = rentask.Status;
 
                 renewaltasks.Add(getreninfo);
             }
 
-
-            var inspections = _db.Inspection.Where(z => z.UserId == id && z.Status == "Inspected").ToList();
+            var inspections = _db.Inspection.Where(z => z.UserId == userId && z.Status == "Inspected").ToList();
             List<InspectionViewModel> renewalinspectiontasks = new List<InspectionViewModel>();
-            // var reninsptasks = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "renewal inspection" && f.Status == "assigned").ToList();
             foreach (var insptask in inspections)
             {
                 var applId = insptask.ApplicationId;
@@ -273,6 +408,7 @@ namespace LLB.Controllers
                 renewalinspectiontask.ApplicationId = applId;
                 renewalinspectiontask.DateApplied = inspecy.DateApplied;
                 renewalinspectiontask.Id = inspecy.Id;
+                renewalinspectiontask.Reference = inspecy.Reference;
                 renewalinspectiontask.Status = inspecy.Status;
                 renewalinspectiontask.Service = inspecy.Service;
                 renewalinspectiontask.LicenseType = licensetype.LicenseName;
@@ -281,28 +417,223 @@ namespace LLB.Controllers
                 renewalinspectiontask.InspectionDate = insptask.InspectionDate;
 
                 renewalinspectiontasks.Add(renewalinspectiontask);
-
-
             }
 
+            var managerChangeListings = _db.ChangeManaager
+                .Where(a => a.UserId == userId)
+                .ToList()
+                .Select(a => BuildClientPostFormationListing(
+                    a.ApplicationId,
+                    a.Id,
+                    a.Reference,
+                    a.Status,
+                    ParseClientListingDate(a.DateUpdated) ?? ParseClientListingDate(a.DateApplied),
+                    null,
+                    $"/Managers/ManagerChange?id={a.ApplicationId}&process=APM",
+                    "View Manager Change",
+                    applicationLookup,
+                    outletLookup,
+                    licenseLookup,
+                    regionLookup))
+                .Where(a => a != null)
+                .Cast<ClientPostFormationListingViewModel>()
+                .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
+                .ToList();
 
+            var extendedHoursRecords = _db.ExtendedHours
+                .Where(a => a.UserId == userId)
+                .ToList();
+
+            var extendedHourListings = extendedHoursRecords
+                .Where(a => !IsExtraCounterReference(a.Reference))
+                .Select(a => BuildClientPostFormationListing(
+                    a.ApplicationId,
+                    a.Id,
+                    a.Reference,
+                    a.Status,
+                    a.DateUpdated,
+                    a.ExtendedHoursDate,
+                    $"/Postprocess/ExtendedHours?id={a.ApplicationId}&process=EXH",
+                    "Display Extended Hours License",
+                    applicationLookup,
+                    outletLookup,
+                    licenseLookup,
+                    regionLookup))
+                .Where(a => a != null)
+                .Cast<ClientPostFormationListingViewModel>()
+                .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
+                .ToList();
+
+            var temporaryRetailListings = _db.TemporaryRetails
+                .Where(a => a.UserId == userId)
+                .ToList()
+                .Select(a => BuildClientPostFormationListing(
+                    a.ApplicationId,
+                    a.Id,
+                    a.Reference,
+                    a.Status,
+                    a.DateUpdated,
+                    a.TemporaryRetailsDate,
+                    $"/Postprocess/TemporaryRetails?id={a.ApplicationId}&process=TRL",
+                    "View Temporary Retail",
+                    applicationLookup,
+                    outletLookup,
+                    licenseLookup,
+                    regionLookup))
+                .Where(a => a != null)
+                .Cast<ClientPostFormationListingViewModel>()
+                .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
+                .ToList();
+
+            var extraCounterListings = _db.ExtraCounter
+                .Where(a => a.UserId == userId)
+                .ToList()
+                .Select(a => BuildClientPostFormationListing(
+                    a.ApplicationId,
+                    a.Id,
+                    a.Reference,
+                    a.Status,
+                    a.DateUpdated,
+                    null,
+                    $"/Extracounter/Extracounter?id={a.ApplicationId}&process=ECF",
+                    "View Extra Counter",
+                    applicationLookup,
+                    outletLookup,
+                    licenseLookup,
+                    regionLookup))
+                .Where(a => a != null)
+                .Cast<ClientPostFormationListingViewModel>()
+                .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
+                .ToList();
+
+            var legacyExtraCounterListings = extendedHoursRecords
+                .Where(a => IsExtraCounterReference(a.Reference))
+                .Select(a => BuildClientPostFormationListing(
+                    a.ApplicationId,
+                    a.Id,
+                    a.Reference,
+                    a.Status,
+                    a.DateUpdated,
+                    null,
+                    $"/Extracounter/Extracounter?id={a.ApplicationId}&process=ECF",
+                    "View Extra Counter",
+                    applicationLookup,
+                    outletLookup,
+                    licenseLookup,
+                    regionLookup))
+                .Where(a => a != null)
+                .Cast<ClientPostFormationListingViewModel>()
+                .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
+                .ToList();
+
+            foreach (var legacyListing in legacyExtraCounterListings)
+            {
+                if (extraCounterListings.All(a => a.RecordId != legacyListing.RecordId))
+                {
+                    extraCounterListings.Add(legacyListing);
+                }
+            }
+
+            extraCounterListings = extraCounterListings
+                .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
+                .ToList();
 
             ViewBag.Inspections = renewalinspectiontasks;
-
+            ViewBag.ActiveDashboardTab = NormalizeDashboardTab(tab);
             ViewBag.RenewalTasks = renewaltasks;
+            ViewBag.ManagerChangeListings = managerChangeListings;
+            ViewBag.ExtendedHourListings = extendedHourListings;
+            ViewBag.TemporaryRetailListings = temporaryRetailListings;
+            ViewBag.ExtraCounterListings = extraCounterListings;
             ViewBag.Renewals = renewals;
             ViewBag.User = user;
             ViewBag.OutletInfo = outletinfo;
             ViewBag.Regions = regions;
-            ViewBag.License= license;
+            ViewBag.License = license;
             ViewBag.Applications = applications;
             ViewBag.ApprovedApplications = approvedapplications;
-            return View();
         }
 
-        private void GetUserId()
+        private static string NormalizeDashboardTab(string? tab)
         {
-            throw new NotImplementedException();
+            return tab?.Trim().ToLowerInvariant() switch
+            {
+                "licences-pane" => "licences-pane",
+                "services-pane" => "services-pane",
+                _ => "in-progress-pane"
+            };
+        }
+
+        private static DateTime? ParseClientListingDate(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            if (DateTime.TryParse(value, out var parsedValue))
+            {
+                return parsedValue;
+            }
+
+            return null;
+        }
+
+        private static bool IsExtraCounterReference(string? reference)
+        {
+            return !string.IsNullOrWhiteSpace(reference)
+                && reference.StartsWith("PF-ECF-", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static ClientPostFormationListingViewModel? BuildClientPostFormationListing(
+            string? applicationId,
+            string? recordId,
+            string? reference,
+            string? status,
+            DateTime? submittedDate,
+            DateTime? eventDate,
+            string actionUrl,
+            string actionLabel,
+            IReadOnlyDictionary<string, ApplicationInfo> applicationLookup,
+            IReadOnlyDictionary<string, OutletInfo> outletLookup,
+            IReadOnlyDictionary<string, LicenseTypes> licenseLookup,
+            IReadOnlyDictionary<string, LicenseRegion> regionLookup)
+        {
+            if (string.IsNullOrWhiteSpace(applicationId)
+                || !applicationLookup.TryGetValue(applicationId, out var application))
+            {
+                return null;
+            }
+
+            outletLookup.TryGetValue(applicationId, out var outlet);
+
+            LicenseTypes? licenseType = null;
+            if (!string.IsNullOrWhiteSpace(application.LicenseTypeID))
+            {
+                licenseLookup.TryGetValue(application.LicenseTypeID, out licenseType);
+            }
+
+            LicenseRegion? region = null;
+            if (!string.IsNullOrWhiteSpace(application.ApplicationType))
+            {
+                regionLookup.TryGetValue(application.ApplicationType, out region);
+            }
+
+            return new ClientPostFormationListingViewModel
+            {
+                RecordId = recordId ?? string.Empty,
+                Reference = reference ?? application.RefNum ?? string.Empty,
+                ApplicationId = applicationId,
+                TradingName = outlet?.TradingName ?? application.BusinessName ?? "N/A",
+                LLBNumber = application.LLBNum ?? "N/A",
+                LicenseName = licenseType?.LicenseName ?? "N/A",
+                RegionName = region?.RegionName ?? "N/A",
+                Status = status ?? "Unknown",
+                SubmittedDate = submittedDate,
+                EventDate = eventDate,
+                ActionUrl = actionUrl,
+                ActionLabel = actionLabel
+            };
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

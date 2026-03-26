@@ -9,6 +9,7 @@ namespace LLB.Models
     {
         [Key]
         public string? Id { get; set; }
+        public string? Reference { get; set; }
 
        public string? Service { get; set; }
         public string? Application { get; set; }

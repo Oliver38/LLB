@@ -1,0 +1,93 @@
+@{
+    Layout = "_LayoutMain";
+}
+
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            <div class="text-center">
+                <h5 class="card-title text-success">@TempData["result"]</h5>
+            </div>
+            <h5 class="card-title">Secretary Renewal Review</h5>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <tbody class="table-light">
+                        <tr>
+                            <th>Outlet Name</th>
+                            <td>@ViewBag.Renewals.OutletName</td>
+                        </tr>
+                        <tr>
+                            <th>Renewal Reference</th>
+                            <td>@(ViewBag.Renewals.Reference ?? "N/A")</td>
+                        </tr>
+                        <tr>
+                            <th>LLB Number</th>
+                            <td>@ViewBag.Renewals.LLBNumber</td>
+                        </tr>
+                        <tr>
+                            <th>License Expiry Date</th>
+                            <td>@ViewBag.Renewals.PreviousExpiry</td>
+                        </tr>
+                        <tr>
+                            <th>Fee</th>
+                            <td>@ViewBag.Renewals.FeePaid</td>
+                        </tr>
+                        <tr>
+                            <th>Penalty</th>
+                            <td>@ViewBag.Renewals.PenaltyPaid</td>
+                        </tr>
+                        <tr>
+                            <th>License Type</th>
+                            <td>@ViewBag.Renewals.Licensetype</td>
+                        </tr>
+                        <tr>
+                            <th>For</th>
+                            <td>@ViewBag.Renewals.LicenseRegion</td>
+                        </tr>
+                        <tr>
+                            <th>Health Certificate</th>
+                            <td>
+                                <a target="_blank" href="~/@ViewBag.Renewals.HealthCert">Health Certificate</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Previous Certified License</th>
+                            <td>
+                                <a target="_blank" href="~/@ViewBag.Renewals.CertifiedLicense">Previous Certified License</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Inspection Outcome</th>
+                            <td>@ViewBag.InspectionOutcome</td>
+                        </tr>
+                        <tr>
+                            <th>Inspection Comments</th>
+                            <td>@ViewBag.InspectionComments</td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td>@ViewBag.Renewals.Status</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="text-center">
+                                <a href="/Approval/RejectRenewal?Id=@ViewBag.Renewals.ApplicationId&taskid=@ViewBag.TaskId"
+                                   class="btn btn-danger"
+                                   onclick="return confirm('Are you sure you want to reject this renewal?');">
+                                    Reject Renewal
+                                </a>
+                                <a href="/Approval/ApproveRenewal?Id=@ViewBag.Renewals.ApplicationId&taskid=@ViewBag.TaskId"
+                                   class="btn btn-success"
+                                   onclick="return confirm('Are you sure you want to approve this renewal?');">
+                                    Approve Renewal
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

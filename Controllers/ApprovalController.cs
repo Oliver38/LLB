@@ -1,5 +1,6 @@
 ﻿using DNTCaptcha.Core;
 using LLB.Data;
+using LLB.Helpers;
 using LLB.Models;
 using LLB.Models.ViewModel;
 using Microsoft.AspNetCore.Authorization;
@@ -103,6 +104,53 @@ namespace LLB.Controllers
             ViewBag.User = user;
             ViewBag.Regions = regions;
             ViewBag.License = licenses;
+            return View();
+        }
+
+        [HttpGet("Renewal")]
+        public IActionResult Renewal(string Id, string taskid)
+        {
+            RenewalViewModel renewalView = new RenewalViewModel();
+
+            var renewal = _db.Renewals
+                .Where(a => a.ApplicationId == Id && a.Status == "recommended")
+                .OrderByDescending(a => a.DateUpdated)
+                .FirstOrDefault();
+
+            if (renewal == null)
+            {
+                TempData["result"] = "Renewal record could not be found.";
+                return RedirectToAction("Dashboard", "Approval");
+            }
+
+            var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var outlet = _db.OutletInfo.Where(q => q.ApplicationId == Id).FirstOrDefault();
+            var licenseType = _db.LicenseTypes.Where(w => w.Id == application.LicenseTypeID).FirstOrDefault();
+            var licenseRegion = _db.LicenseRegions.Where(e => e.Id == application.ApplicationType).FirstOrDefault();
+            var inspection = _db.Inspection
+                .Where(a => a.ApplicationId == Id && a.Service == "Renewal Inspection")
+                .OrderByDescending(a => a.DateApplied)
+                .FirstOrDefault();
+
+            renewalView.ApplicationId = renewal.ApplicationId;
+            renewalView.Id = renewal.Id;
+            renewalView.Reference = renewal.Reference;
+            renewalView.LLBNumber = renewal.LLBNumber;
+            renewalView.PreviousExpiry = renewal.PreviousExpiry;
+            renewalView.TradingName = outlet?.TradingName;
+            renewalView.Licensetype = licenseType?.LicenseName;
+            renewalView.PenaltyPaid = renewal.PenaltyPaid;
+            renewalView.FeePaid = renewal.FeePaid;
+            renewalView.LicenseRegion = licenseRegion?.RegionName;
+            renewalView.Status = renewal.Status;
+            renewalView.HealthCert = renewal.HealthCert;
+            renewalView.CertifiedLicense = renewal.CertifiedLicense;
+            renewalView.OutletName = outlet?.TradingName;
+
+            ViewBag.Renewals = renewalView;
+            ViewBag.TaskId = taskid;
+            ViewBag.InspectionComments = inspection?.Comments;
+            ViewBag.InspectionOutcome = inspection?.Overall;
             return View();
         }
 
@@ -588,6 +636,7 @@ namespace LLB.Controllers
             application.ExpiryDate = application.ApprovedDate.AddYears(1);
             _db.Update(application);
             _db.SaveChanges();
+            DownloadStatusHelper.OpenLicenseDownload(_db, application, application.UserID);
 
             var managers = _db.ManagersParticulars.Where(a => a.ApplicationId == Id).ToList();
             foreach(var manager in managers)
@@ -655,6 +704,98 @@ namespace LLB.Controllers
             _db.Update(task);
             _db.SaveChanges();
 
+            return RedirectToAction("Dashboard", "Approval");
+        }
+
+        [HttpGet("ApproveRenewal")]
+        public IActionResult ApproveRenewal(string Id, string taskid)
+        {
+            var renewal = _db.Renewals
+                .Where(a => a.ApplicationId == Id && a.Status == "recommended")
+                .OrderByDescending(a => a.DateUpdated)
+                .FirstOrDefault();
+
+            if (renewal == null)
+            {
+                TempData["result"] = "Renewal record could not be found.";
+                return RedirectToAction("Dashboard", "Approval");
+            }
+
+            renewal.Status = "renewed";
+            renewal.DateUpdated = DateTime.Now;
+            _db.Update(renewal);
+            _db.SaveChanges();
+
+            var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            if (application != null)
+            {
+                if (application.ExpiryDate > DateTime.Now)
+                {
+                    application.ExpiryDate = DateTime.Now.AddYears(1);
+                }
+                else
+                {
+                    application.ExpiryDate = application.ExpiryDate.AddYears(1);
+                }
+
+                application.RenewalStatus = "renewed";
+                application.DateUpdated = DateTime.Now;
+                _db.Update(application);
+                _db.SaveChanges();
+                DownloadStatusHelper.OpenLicenseDownload(_db, application, application.UserID);
+            }
+
+            var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
+            if (task != null)
+            {
+                task.Status = "completed";
+                task.ApprovedDate = DateTime.Now;
+                _db.Update(task);
+                _db.SaveChanges();
+            }
+
+            TempData["result"] = "Renewal approved successfully.";
+            return RedirectToAction("Dashboard", "Approval");
+        }
+
+        [HttpGet("RejectRenewal")]
+        public IActionResult RejectRenewal(string Id, string taskid)
+        {
+            var renewal = _db.Renewals
+                .Where(a => a.ApplicationId == Id && a.Status == "recommended")
+                .OrderByDescending(a => a.DateUpdated)
+                .FirstOrDefault();
+
+            if (renewal == null)
+            {
+                TempData["result"] = "Renewal record could not be found.";
+                return RedirectToAction("Dashboard", "Approval");
+            }
+
+            renewal.Status = "rejected";
+            renewal.DateUpdated = DateTime.Now;
+            _db.Update(renewal);
+            _db.SaveChanges();
+
+            var application = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            if (application != null)
+            {
+                application.RenewalStatus = "rejected";
+                application.DateUpdated = DateTime.Now;
+                _db.Update(application);
+                _db.SaveChanges();
+            }
+
+            var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
+            if (task != null)
+            {
+                task.Status = "completed";
+                task.ApprovedDate = DateTime.Now;
+                _db.Update(task);
+                _db.SaveChanges();
+            }
+
+            TempData["result"] = "Renewal rejected.";
             return RedirectToAction("Dashboard", "Approval");
         }
 
@@ -796,12 +937,19 @@ namespace LLB.Controllers
 
         private async Task<SecretaryDashboardViewModel> BuildSecretaryDashboardViewModelAsync(string approverId)
         {
-            var postFormationServices = new[] { "Extended Hours", "Temporary Retails" };
+            var postFormationServices = Array.Empty<string>();
 
             var applicationTasks = await _db.Tasks
                 .Where(task => task.ApproverId == approverId
                     && task.Status == "assigned"
                     && task.Service == "new application")
+                .OrderByDescending(task => task.DateAdded)
+                .ToListAsync();
+
+            var renewalTasks = await _db.Tasks
+                .Where(task => task.ApproverId == approverId
+                    && task.Status == "assigned"
+                    && task.Service == "renewal")
                 .OrderByDescending(task => task.DateAdded)
                 .ToListAsync();
 
@@ -833,9 +981,23 @@ namespace LLB.Controllers
                 .Where(record => record.Id != null && temporaryRetailIds.Contains(record.Id))
                 .ToListAsync();
 
+            var renewalApplicationIds = renewalTasks
+                .Where(task => !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Distinct()
+                .ToList();
+
+            var renewalRecords = await _db.Renewals
+                .Where(record => record.ApplicationId != null
+                    && renewalApplicationIds.Contains(record.ApplicationId)
+                    && record.Status == "recommended")
+                .OrderByDescending(record => record.DateUpdated)
+                .ToListAsync();
+
             var applicationIds = applicationTasks
                 .Where(task => !string.IsNullOrWhiteSpace(task.ApplicationId))
                 .Select(task => task.ApplicationId!)
+                .Concat(renewalApplicationIds)
                 .Concat(extendedHoursRecords
                     .Where(record => !string.IsNullOrWhiteSpace(record.ApplicationId))
                     .Select(record => record.ApplicationId!))
@@ -885,6 +1047,10 @@ namespace LLB.Controllers
             var temporaryRetailLookup = temporaryRetailRecords
                 .ToDictionary(record => record.Id!, record => record);
 
+            var renewalLookup = renewalRecords
+                .GroupBy(record => record.ApplicationId!)
+                .ToDictionary(group => group.Key, group => group.First());
+
             var model = new SecretaryDashboardViewModel();
 
             foreach (var task in applicationTasks)
@@ -911,6 +1077,37 @@ namespace LLB.Controllers
                         : "N/A",
                     Status = application.Status ?? "Unknown",
                     ReviewUrl = $"/Approval/Apply?Id={application.Id}"
+                });
+            }
+
+            foreach (var task in renewalTasks)
+            {
+                if (string.IsNullOrWhiteSpace(task.ApplicationId)
+                    || !renewalLookup.TryGetValue(task.ApplicationId, out var renewal)
+                    || !applicationLookup.TryGetValue(task.ApplicationId, out var application))
+                {
+                    continue;
+                }
+
+                outletLookup.TryGetValue(task.ApplicationId, out var outlet);
+
+                model.Renewals.Add(new SecretaryDashboardRenewalItemViewModel
+                {
+                    RenewalId = renewal.Id ?? string.Empty,
+                    Reference = renewal.Reference ?? string.Empty,
+                    ApplicationId = task.ApplicationId,
+                    TradingName = outlet?.TradingName ?? application.BusinessName ?? "N/A",
+                    OperatingAddress = outlet?.Address ?? application.OperationAddress ?? "N/A",
+                    SubmittedDate = renewal.DateUpdated,
+                    PreviousExpiry = renewal.PreviousExpiry,
+                    LicenseName = application.LicenseTypeID != null && licenseLookup.TryGetValue(application.LicenseTypeID, out var licenseItem)
+                        ? licenseItem.LicenseName ?? "N/A"
+                        : "N/A",
+                    RegionName = application.ApplicationType != null && regionLookup.TryGetValue(application.ApplicationType, out var regionItem)
+                        ? regionItem.RegionName ?? "N/A"
+                        : "N/A",
+                    Status = renewal.Status ?? "Unknown",
+                    ReviewUrl = $"/Approval/Renewal?Id={task.ApplicationId}&taskid={task.Id}"
                 });
             }
 
@@ -967,6 +1164,9 @@ namespace LLB.Controllers
                 model.PostFormations.Add(new SecretaryDashboardPostFormationItemViewModel
                 {
                     RecordId = task.ApplicationId,
+                    Reference = task.Service == "Extended Hours"
+                        ? extendedHoursLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty
+                        : temporaryRetailLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty,
                     ApplicationId = rootApplicationId,
                     Service = task.Service ?? "Post Formation",
                     TradingName = outlet?.TradingName ?? application.BusinessName ?? "N/A",

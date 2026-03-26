@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using LLB.Models;
+using LLB.Helpers;
 using Microsoft.AspNetCore.Identity;
 using LLB.Data;
 using DNTCaptcha.Core;
@@ -438,6 +439,7 @@ namespace LLB.Controllers
             application.Status = "approved";
             _db.Update(application);
             _db.SaveChanges();
+            DownloadStatusHelper.OpenLicenseDownload(_db, application, application.UserID);
             return RedirectToAction("Dashboard", "Examination");
         }
     }

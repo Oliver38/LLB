@@ -9,6 +9,7 @@ namespace LLB.Models.ViewModel
 
         // Liquor Outlet Info
         public string? Id { get; set; }
+        public string? Reference { get; set; }
         public string? ApplicationId { get; set; }
         public string? UserId { get; set; }
         public DateTime? PreviousExpiry { get; set; }

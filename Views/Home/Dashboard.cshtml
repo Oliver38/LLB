@@ -1,7 +1,18 @@
-﻿@{
+﻿@using System.Linq
+@using LLB.Models.ViewModel
+
+@{
     Layout = "_LayoutMain";
     ViewData["Title"] = "Client Dashboard";
-    ViewData["Subtitle"] = "Track applications, approved licences, renewals, and inspections";
+    ViewData["Subtitle"] = "Track applications, approved licences, and every post-formation listing from one workspace";
+
+    var activeTab = ViewBag.ActiveDashboardTab as string ?? "in-progress-pane";
+    var renewalListings = ViewBag.RenewalTasks as IEnumerable<RenewalViewModel> ?? Enumerable.Empty<RenewalViewModel>();
+    var inspectionListings = ViewBag.Inspections as IEnumerable<InspectionViewModel> ?? Enumerable.Empty<InspectionViewModel>();
+    var managerChangeListings = ViewBag.ManagerChangeListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+    var extendedHourListings = ViewBag.ExtendedHourListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+    var temporaryRetailListings = ViewBag.TemporaryRetailListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+    var extraCounterListings = ViewBag.ExtraCounterListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
 
     Func<string?, string> statusClass = status => status?.ToLowerInvariant() switch
     {
@@ -15,6 +26,19 @@
         "inspected" => "llb-status-success",
         _ => "llb-status-info"
     };
+
+    Func<string, string> tabButtonClass = tabId => activeTab == tabId ? "nav-link active" : "nav-link";
+    Func<string, string> tabPaneClass = tabId => activeTab == tabId ? "tab-pane fade show active" : "tab-pane fade";
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
 }
 
 <div class="row g-4 mb-4">
@@ -92,24 +116,24 @@
     <div class="card-body">
         <ul class="nav nav-pills llb-tabs mb-4" id="dashboardTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="in-progress-tab" data-bs-toggle="tab" data-bs-target="#in-progress-pane" type="button" role="tab">
+                <button class="@tabButtonClass("in-progress-pane")" id="in-progress-tab" data-bs-toggle="tab" data-bs-target="#in-progress-pane" type="button" role="tab" aria-selected="@(activeTab == "in-progress-pane")">
                     In Progress
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="licences-tab" data-bs-toggle="tab" data-bs-target="#licences-pane" type="button" role="tab">
+                <button class="@tabButtonClass("licences-pane")" id="licences-tab" data-bs-toggle="tab" data-bs-target="#licences-pane" type="button" role="tab" aria-selected="@(activeTab == "licences-pane")">
                     My Licences
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services-pane" type="button" role="tab">
+                <button class="@tabButtonClass("services-pane")" id="services-tab" data-bs-toggle="tab" data-bs-target="#services-pane" type="button" role="tab" aria-selected="@(activeTab == "services-pane")">
                     Post Formations
                 </button>
             </li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="in-progress-pane" role="tabpanel">
+            <div class="@tabPaneClass("in-progress-pane")" id="in-progress-pane" role="tabpanel">
                 @if (ViewBag.Applications.Count == 0)
                 {
                     <div class="llb-empty-state">
@@ -188,7 +212,7 @@
                 }
             </div>
 
-            <div class="tab-pane fade" id="licences-pane" role="tabpanel">
+            <div class="@tabPaneClass("licences-pane")" id="licences-pane" role="tabpanel">
                 @if (ViewBag.ApprovedApplications.Count == 0)
                 {
                     <div class="llb-empty-state">
@@ -242,19 +266,27 @@
                                         </td>
                                         <td class="text-end">
                                             <div class="d-flex justify-content-end flex-wrap gap-2">
-                                                <a href="/Downloads/CheckDownload?LLBNUM=@application.LLBNum&DocumentType=License" target="_blank" class="btn btn-sm btn-primary">
-                                                    Download
+                                                <a href="/Downloads/CheckDownload?LLBNUM=@application.LLBNum&DocumentType=License" class="btn btn-sm btn-primary">
+                                                    Download / Duplicate
                                                 </a>
                                                 @foreach (var outlet in ViewBag.OutletInfo)
                                                 {
                                                     if (outlet.ApplicationId == application.Id)
                                                     {
+                                                        var renewalStartDate = application.ExpiryDate.AddMonths(-1);
+                                                        var isRenewalEligible = DateTime.Now.Date >= renewalStartDate.Date;
+                                                        var renewalWarning = isRenewalEligible
+                                                            ? ""
+                                                            : $"Renewal can only start within one month of expiry. This licence expires on {application.ExpiryDate:dd MMMM yyyy}, so renewal opens on {renewalStartDate:dd MMMM yyyy}.";
+
                                                         <button type="button"
                                                                 class="btn btn-sm btn-outline-primary"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#PostFormationModal"
                                                                 data-application-id="@application.Id"
-                                                                data-trading-name="@outlet.TradingName">
+                                                                data-trading-name="@outlet.TradingName"
+                                                                data-renewal-eligible="@isRenewalEligible.ToString().ToLowerInvariant()"
+                                                                data-renewal-warning="@renewalWarning">
                                                             Post Formation
                                                         </button>
                                                     }
@@ -269,15 +301,15 @@
                 }
             </div>
 
-            <div class="tab-pane fade" id="services-pane" role="tabpanel">
+            <div class="@tabPaneClass("services-pane")" id="services-pane" role="tabpanel">
                 <div class="row g-4">
                     <div class="col-12">
-                        <div class="card llb-panel-card">
+                        <div class="card llb-panel-card" id="renewal-listings">
                             <div class="card-header">
                                 <h5 class="card-title">Renewal Applications</h5>
                             </div>
                             <div class="card-body">
-                                @if (ViewBag.RenewalTasks.Count == 0)
+                                @if (!renewalListings.Any())
                                 {
                                     <div class="llb-empty-state">
                                         <i class="bi bi-arrow-repeat"></i>
@@ -291,6 +323,7 @@
                                         <table class="table table-hover align-middle">
                                             <thead>
                                                 <tr>
+                                                    <th>Reference</th>
                                                     <th>Trading Name</th>
                                                     <th>LLB Number</th>
                                                     <th>Expiry Date</th>
@@ -301,12 +334,13 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach (var renewal in ViewBag.RenewalTasks)
+                                                @foreach (var renewal in renewalListings)
                                                 {
                                                     <tr>
+                                                        <td class="fw-semibold">@(!string.IsNullOrWhiteSpace(renewal.Reference) ? renewal.Reference : "N/A")</td>
                                                         <td class="fw-semibold">@renewal.TradingName</td>
                                                         <td>@renewal.LLBNumber</td>
-                                                        <td>@renewal.PreviousExpiry</td>
+                                                        <td>@(renewal.PreviousExpiry?.ToString("dd MMM yyyy") ?? "N/A")</td>
                                                         <td>@renewal.Licensetype</td>
                                                         <td>@renewal.LicenseRegion</td>
                                                         <td>
@@ -326,12 +360,12 @@
                     </div>
 
                     <div class="col-12">
-                        <div class="card llb-panel-card">
+                        <div class="card llb-panel-card" id="inspection-listings">
                             <div class="card-header">
                                 <h5 class="card-title">Inspections</h5>
                             </div>
                             <div class="card-body">
-                                @if (ViewBag.Inspections.Count == 0)
+                                @if (!inspectionListings.Any())
                                 {
                                     <div class="llb-empty-state">
                                         <i class="bi bi-clipboard2-pulse"></i>
@@ -345,6 +379,7 @@
                                         <table class="table table-hover align-middle">
                                             <thead>
                                                 <tr>
+                                                    <th>Reference</th>
                                                     <th>Trading Name</th>
                                                     <th>LLB Number</th>
                                                     <th>Inspection Date</th>
@@ -356,9 +391,10 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach (var inspection in ViewBag.Inspections)
+                                                @foreach (var inspection in inspectionListings)
                                                 {
                                                     <tr>
+                                                        <td class="fw-semibold">@(!string.IsNullOrWhiteSpace(inspection.Reference) ? inspection.Reference : "N/A")</td>
                                                         <td class="fw-semibold">@inspection.TradingName</td>
                                                         <td>@inspection.LLBNumber</td>
                                                         <td>@inspection.InspectionDate.ToString("dd MMM yyyy")</td>
@@ -370,6 +406,232 @@
                                                         </td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="/Viewing/inspection?Id=@inspection.Id">View Inspection</a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card llb-panel-card" id="manager-change-listings">
+                            <div class="card-header">
+                                <h5 class="card-title">Manager Change Listings</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (!managerChangeListings.Any())
+                                {
+                                    <div class="llb-empty-state">
+                                        <i class="bi bi-person-badge"></i>
+                                        <h5 class="fw-bold">No manager change records</h5>
+                                        <p class="text-muted mb-0">Manager change submissions will appear here after you start one from an approved licence.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>Reference</th>
+                                                    <th>Trading Name</th>
+                                                    <th>LLB Number</th>
+                                                    <th>Submitted</th>
+                                                    <th>Licence</th>
+                                                    <th>For</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var listing in managerChangeListings)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-semibold">@listing.Reference</td>
+                                                        <td class="fw-semibold">@listing.TradingName</td>
+                                                        <td>@listing.LLBNumber</td>
+                                                        <td>@(listing.SubmittedDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                                        <td>@listing.LicenseName</td>
+                                                        <td>@listing.RegionName</td>
+                                                        <td>
+                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card llb-panel-card" id="extended-hours-listings">
+                            <div class="card-header">
+                                <h5 class="card-title">Extended Hours Listings</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (!extendedHourListings.Any())
+                                {
+                                    <div class="llb-empty-state">
+                                        <i class="bi bi-clock-history"></i>
+                                        <h5 class="fw-bold">No extended hours records</h5>
+                                        <p class="text-muted mb-0">Extended hours requests will appear here after you submit one from an approved licence.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>Reference</th>
+                                                    <th>Trading Name</th>
+                                                    <th>LLB Number</th>
+                                                    <th>Extended Hours Date</th>
+                                                    <th>Submitted</th>
+                                                    <th>Licence</th>
+                                                    <th>For</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var listing in extendedHourListings)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-semibold">@listing.Reference</td>
+                                                        <td class="fw-semibold">@listing.TradingName</td>
+                                                        <td>@listing.LLBNumber</td>
+                                                        <td>@(listing.EventDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                                        <td>@(listing.SubmittedDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                                        <td>@listing.LicenseName</td>
+                                                        <td>@listing.RegionName</td>
+                                                        <td>
+                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card llb-panel-card" id="temporary-retail-listings">
+                            <div class="card-header">
+                                <h5 class="card-title">Temporary Retail Listings</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (!temporaryRetailListings.Any())
+                                {
+                                    <div class="llb-empty-state">
+                                        <i class="bi bi-shop-window"></i>
+                                        <h5 class="fw-bold">No temporary retail records</h5>
+                                        <p class="text-muted mb-0">Temporary retail requests will appear here after you submit one from an approved licence.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>Reference</th>
+                                                    <th>Trading Name</th>
+                                                    <th>LLB Number</th>
+                                                    <th>Submitted</th>
+                                                    <th>Licence</th>
+                                                    <th>For</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var listing in temporaryRetailListings)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-semibold">@listing.Reference</td>
+                                                        <td class="fw-semibold">@listing.TradingName</td>
+                                                        <td>@listing.LLBNumber</td>
+                                                        <td>@(listing.SubmittedDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                                        <td>@listing.LicenseName</td>
+                                                        <td>@listing.RegionName</td>
+                                                        <td>
+                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card llb-panel-card" id="extra-counter-listings">
+                            <div class="card-header">
+                                <h5 class="card-title">Extra Counter Listings</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (!extraCounterListings.Any())
+                                {
+                                    <div class="llb-empty-state">
+                                        <i class="bi bi-layout-text-window"></i>
+                                        <h5 class="fw-bold">No extra counter records</h5>
+                                        <p class="text-muted mb-0">Extra counter or plan-change submissions will appear here after you start one from an approved licence.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>Reference</th>
+                                                    <th>Trading Name</th>
+                                                    <th>LLB Number</th>
+                                                    <th>Submitted</th>
+                                                    <th>Licence</th>
+                                                    <th>For</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var listing in extraCounterListings)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-semibold">@listing.Reference</td>
+                                                        <td class="fw-semibold">@listing.TradingName</td>
+                                                        <td>@listing.LLBNumber</td>
+                                                        <td>@(listing.SubmittedDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                                        <td>@listing.LicenseName</td>
+                                                        <td>@listing.RegionName</td>
+                                                        <td>
+                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
                                                         </td>
                                                     </tr>
                                                 }
@@ -411,6 +673,7 @@
                         <option value="TRL">Temporary retail liquor licence</option>
                         <option value="ECF">Extra counter or change plan fee</option>
                     </select>
+                    <div class="alert alert-warning d-none mt-3 mb-0" id="renewalEligibilityWarning" role="alert"></div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Close</button>
@@ -424,9 +687,37 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const modalElement = document.getElementById("PostFormationModal");
+        const processElement = document.getElementById("process");
+        const renewalWarningElement = document.getElementById("renewalEligibilityWarning");
         if (!modalElement) {
             return;
         }
+
+        const syncRenewalOption = function () {
+            if (!processElement || !renewalWarningElement) {
+                return;
+            }
+
+            const renewalOption = processElement.querySelector('option[value="RNW"]');
+            const isRenewalEligible = modalElement.dataset.renewalEligible === "true";
+            const renewalWarning = modalElement.dataset.renewalWarning || "";
+
+            if (renewalOption) {
+                renewalOption.disabled = !isRenewalEligible;
+            }
+
+            if (!isRenewalEligible && renewalWarning) {
+                if (processElement.value === "RNW") {
+                    processElement.value = "";
+                }
+
+                renewalWarningElement.textContent = renewalWarning;
+                renewalWarningElement.classList.remove("d-none");
+            } else {
+                renewalWarningElement.textContent = "";
+                renewalWarningElement.classList.add("d-none");
+            }
+        };
 
         modalElement.addEventListener("show.bs.modal", function (event) {
             const trigger = event.relatedTarget;
@@ -437,6 +728,13 @@
             document.getElementById("ApplicationId").value = trigger.getAttribute("data-application-id") || "";
             document.getElementById("feetitle").textContent = trigger.getAttribute("data-trading-name") || "";
             document.getElementById("process").value = "";
+            modalElement.dataset.renewalEligible = trigger.getAttribute("data-renewal-eligible") || "false";
+            modalElement.dataset.renewalWarning = trigger.getAttribute("data-renewal-warning") || "";
+            syncRenewalOption();
         });
+
+        if (processElement) {
+            processElement.addEventListener("change", syncRenewalOption);
+        }
     });
 </script>

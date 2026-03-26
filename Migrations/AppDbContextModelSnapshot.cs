@@ -287,6 +287,9 @@ namespace LLB.Migrations
                     b.Property<string>("ApplicationId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Reference")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("DateApplied")
                         .HasColumnType("nvarchar(max)");
 
@@ -567,6 +570,9 @@ namespace LLB.Migrations
                     b.Property<string>("HoursOfExtension")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("LocationAddress")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<double?>("PaidFee")
                         .HasColumnType("float");
 
@@ -699,6 +705,9 @@ namespace LLB.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PaymentStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reference")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RubbishDisposal")
@@ -1271,6 +1280,9 @@ namespace LLB.Migrations
 
                     b.Property<DateTime?>("PreviousExpiry")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Service")
                         .HasColumnType("nvarchar(max)");

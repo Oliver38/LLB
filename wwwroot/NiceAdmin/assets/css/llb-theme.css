@@ -539,6 +539,12 @@ a:hover {
   min-height: 52px;
 }
 
+.llb-action-locked {
+  pointer-events: none;
+  cursor: wait !important;
+  opacity: 0.72;
+}
+
 @media (max-width: 1199px) {
   .llb-public-nav {
     display: none !important;

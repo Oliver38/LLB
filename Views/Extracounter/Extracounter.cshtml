@@ -21,6 +21,15 @@
                             @ViewBag.Outletinfo.TradingName
                         </td>
                     </tr>
+                    @if (ViewBag.Inspectiondata != null)
+                    {
+                        <tr>
+                            <th>Extra Counter Reference</th>
+                            <td>
+                                @(ViewBag.Inspectiondata.Reference ?? "N/A")
+                            </td>
+                        </tr>
+                    }
                     <tr>
                         <th>License </th>
                         <td>
