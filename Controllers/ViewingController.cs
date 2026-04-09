@@ -37,7 +37,11 @@ namespace LLB.Controllers
 
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             string id = userId.Id;
-            var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
+            var applications = _db.ApplicationInfo
+                .Where(a => a.UserID == id)
+                .ToList()
+                .Where(a => !TemporaryTransferHelper.IsTemporaryTransferApplication(a))
+                .ToList();
             var outletinfo = _db.OutletInfo.ToList();
             var license = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();

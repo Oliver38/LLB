@@ -1,0 +1,310 @@
+@using System.Globalization
+@using LLB.Models
+
+@{
+    Layout = "_LayoutMain";
+
+    var sourceApplication = ViewBag.SourceApplication as ApplicationInfo;
+    var removalApplication = ViewBag.RemovalApplication as ApplicationInfo;
+    var originalOutlet = ViewBag.OriginalOutlet as OutletInfo;
+    var proposedOutlet = ViewBag.ProposedOutlet as OutletInfo;
+    var license = ViewBag.License as LicenseTypes;
+    var region = ViewBag.Region as LicenseRegion;
+    var proposedLicense = ViewBag.ProposedLicense as LicenseTypes;
+    var proposedRegion = ViewBag.ProposedRegion as LicenseRegion;
+    var payment = ViewBag.Payment as Payments;
+    var attachments = ViewBag.Attachments as IEnumerable<AttachmentInfo> ?? Enumerable.Empty<AttachmentInfo>();
+    var totalFee = ViewBag.TotalFee is decimal feeValue ? feeValue : (decimal?)null;
+    var canAct = ViewBag.CanAct is bool ready && ready;
+
+    string DisplayValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "N/A" : value;
+    }
+
+    string FormatMoney(decimal? value)
+    {
+        return value.HasValue
+            ? value.Value.ToString("0.00", CultureInfo.InvariantCulture)
+            : "N/A";
+    }
+
+    string StatusBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "approved" => "bg-success",
+            "rejected" => "bg-danger",
+            "awaiting approval" => "bg-info text-dark",
+            "submitted" => "bg-primary",
+            "inprogress" => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    string PaymentBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "paid" => "bg-success",
+            "sent" => "bg-warning text-dark",
+            "awaiting delivery" => "bg-warning text-dark",
+            "cancelled" => "bg-danger",
+            "rejected" => "bg-danger",
+            "expired" => "bg-danger",
+            "not paid" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="card-title mb-1">Temporary Removal Review</h5>
+            <p class="text-muted mb-0">Review the current outlet against the proposed new outlet before approving or rejecting the temporary removal application.</p>
+        </div>
+        <span class="badge rounded-pill @StatusBadgeClass(removalApplication?.Status)">@(removalApplication?.Status ?? "Unknown")</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Application Information</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Reference</span>
+                        <span class="fw-semibold text-end">@(removalApplication?.RefNum ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">LLB Number</span>
+                        <span class="fw-semibold text-end">@(sourceApplication?.LLBNum ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Licence</span>
+                        <span class="fw-semibold text-end">@(license?.LicenseName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Location of Premises</span>
+                        <span class="fw-semibold text-end">@(region?.RegionName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Status</span>
+                        <span class="badge rounded-pill @StatusBadgeClass(removalApplication?.Status)">@(removalApplication?.Status ?? "Unknown")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Payment Status</span>
+                        <span class="badge rounded-pill @PaymentBadgeClass(payment?.PaymentStatus ?? payment?.Status ?? removalApplication?.PaymentStatus)">
+                            @(payment?.PaymentStatus ?? payment?.Status ?? removalApplication?.PaymentStatus ?? "Not Paid")
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Fee</span>
+                        <span class="fw-semibold text-end">@FormatMoney(totalFee)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Proposed New Outlet Summary</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Trading Name</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.TradingName)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Licence</span>
+                        <span class="fw-semibold text-end">@(proposedLicense?.LicenseName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Location of Premises</span>
+                        <span class="fw-semibold text-end">@(proposedRegion?.RegionName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Address</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Address)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Province</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Province)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">District / City</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.City)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Council</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Council)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Latitude</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Latitude)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Longitude</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Longitude)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Outlet Comparison</h5>
+        <p class="text-muted mb-0">Compare the existing licensed outlet information with the new outlet information submitted for the temporary removal.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Detail</th>
+                        <th>Current Licensed Outlet</th>
+                        <th>Proposed New Outlet</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-semibold">Trading Name</td>
+                        <td>@(originalOutlet?.TradingName ?? sourceApplication?.BusinessName ?? "N/A")</td>
+                        <td>@DisplayValue(proposedOutlet?.TradingName)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Licence</td>
+                        <td>@(license?.LicenseName ?? "N/A")</td>
+                        <td>@(proposedLicense?.LicenseName ?? "N/A")</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Location of Premises</td>
+                        <td>@(region?.RegionName ?? "N/A")</td>
+                        <td>@(proposedRegion?.RegionName ?? "N/A")</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Address</td>
+                        <td>@(originalOutlet?.Address ?? sourceApplication?.OperationAddress ?? "N/A")</td>
+                        <td>@DisplayValue(proposedOutlet?.Address)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Province</td>
+                        <td>@DisplayValue(originalOutlet?.Province)</td>
+                        <td>@DisplayValue(proposedOutlet?.Province)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">District / City</td>
+                        <td>@DisplayValue(originalOutlet?.City)</td>
+                        <td>@DisplayValue(proposedOutlet?.City)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Council</td>
+                        <td>@DisplayValue(originalOutlet?.Council)</td>
+                        <td>@DisplayValue(proposedOutlet?.Council)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Latitude</td>
+                        <td>@DisplayValue(originalOutlet?.Latitude)</td>
+                        <td>@DisplayValue(proposedOutlet?.Latitude)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Longitude</td>
+                        <td>@DisplayValue(originalOutlet?.Longitude)</td>
+                        <td>@DisplayValue(proposedOutlet?.Longitude)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Submitted Attachments</h5>
+        <p class="text-muted mb-0">Review the supporting approvals and plans that were submitted with the temporary removal application.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Status</th>
+                        <th>File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var attachment in attachments)
+                    {
+                        var uploaded = !string.IsNullOrWhiteSpace(attachment.DocumentLocation);
+                        <tr>
+                            <td class="fw-semibold">@attachment.DocumentTitle</td>
+                            <td>
+                                <span class="badge rounded-pill @(uploaded ? "bg-success" : "bg-secondary")">
+                                    @(uploaded ? "Uploaded" : "Missing")
+                                </span>
+                            </td>
+                            <td>
+                                @if (uploaded)
+                                {
+                                    <a href="@Url.Content($"~/{attachment.DocumentLocation}")" target="_blank">View Attachment</a>
+                                }
+                                else
+                                {
+                                    <span class="text-danger">No file uploaded</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (removalApplication != null
+    && !string.Equals(removalApplication.Status, "Approved", StringComparison.OrdinalIgnoreCase)
+    && !string.Equals(removalApplication.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="d-flex justify-content-end gap-2">
+        <form method="post" action="/TemporaryRemoval/Reject" class="mb-0">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="recordId" value="@removalApplication.Id" />
+            @if (canAct)
+            {
+                <button type="submit"
+                        class="btn btn-outline-danger"
+                        onclick="return confirm('Reject this temporary removal application?');">
+                    Reject
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-outline-danger" disabled>Reject</button>
+            }
+        </form>
+        <form method="post" action="/TemporaryRemoval/Approve" class="mb-0">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="recordId" value="@removalApplication.Id" />
+            @if (canAct)
+            {
+                <button type="submit"
+                        class="btn btn-success"
+                        onclick="return confirm('Approve this temporary removal application?');">
+                    Approve
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-success" disabled>Approve</button>
+            }
+        </form>
+    </div>
+}

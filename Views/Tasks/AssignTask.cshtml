@@ -9,7 +9,7 @@
         <div class="card-body" id="_step1">
             <h5 class="card-title">License Applicant Information</h5>
             <div class="card-header">
-                <form action="/Tasks/AssignTask" method="post" ß enctytpe="multipart/form-data" class="row g-3">
+                <form action="/Tasks/AssignTask" method="post" enctype="multipart/form-data" class="row g-3" data-allow-multiple-submit="true">
                     @if (@ViewBag.TaskDetails.ReAssigner == "")
                         {
                     <div class="row">
@@ -29,7 +29,7 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <input type="submit" value="Reassign Task" name="" class="btn btn-primary col-md-3 form-control" />
+                            <input type="submit" value="Reassign Task" name="" class="btn btn-primary col-md-3 form-control" data-allow-multiple-click="true" />
 
                             </div>
                         </div>

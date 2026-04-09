@@ -96,12 +96,16 @@ namespace LLB.Controllers
             }
             else if (process == "TRM")
             {
-                return RedirectToAction("Tempremoval", "Postprocess", new { param1 = id, param2 = id });
+                return RedirectToAction("Apply", "TemporaryRemoval", new { applicationId = id });
 
             }
             else if (process == "TTR")
             {
-                return RedirectToAction("Temptranfer", "Postprocess", new { param1 = id, param2 = id });
+                var transferSource = _db.ApplicationInfo.FirstOrDefault(a => a.Id == id);
+                return RedirectToAction(
+                    "Apply",
+                    "TemporaryTransfer",
+                    new { llbNumber = transferSource?.LLBNum });
 
             }
             else if (process == "EXH")
@@ -324,9 +328,12 @@ namespace LLB.Controllers
         {
             var renewals = _db.Renewals.Where(q => q.UserId == userId).ToList();
             var allApplications = _db.ApplicationInfo.Where(a => a.UserID == userId).ToList();
-            var applications = allApplications.Where(a => a.Status != "approved").ToList();
-            var approvedapplications = allApplications.Where(a => a.Status == "approved").ToList();
-            var applicationIds = allApplications
+            var clientLicenseApplications = allApplications
+                .Where(a => !TemporaryTransferHelper.IsTemporaryTransferApplication(a))
+                .ToList();
+            var applications = clientLicenseApplications.Where(a => a.Status != "approved").ToList();
+            var approvedapplications = clientLicenseApplications.Where(a => a.Status == "approved").ToList();
+            var applicationIds = clientLicenseApplications
                 .Where(a => !string.IsNullOrWhiteSpace(a.Id))
                 .Select(a => a.Id!)
                 .ToHashSet();
@@ -336,7 +343,7 @@ namespace LLB.Controllers
             var license = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();
             var user = await userManager.FindByIdAsync(userId);
-            var applicationLookup = allApplications
+            var applicationLookup = clientLicenseApplications
                 .Where(a => !string.IsNullOrWhiteSpace(a.Id))
                 .GroupBy(a => a.Id!)
                 .ToDictionary(group => group.Key, group => group.First());
@@ -429,7 +436,7 @@ namespace LLB.Controllers
                     a.Status,
                     ParseClientListingDate(a.DateUpdated) ?? ParseClientListingDate(a.DateApplied),
                     null,
-                    $"/Managers/ManagerChange?id={a.ApplicationId}&process=APM",
+                    $"/Managers/ManagerChange?id={a.ApplicationId}&process=APM&changeId={a.Id}",
                     "View Manager Change",
                     applicationLookup,
                     outletLookup,
@@ -453,8 +460,12 @@ namespace LLB.Controllers
                     a.Status,
                     a.DateUpdated,
                     a.ExtendedHoursDate,
-                    $"/Postprocess/ExtendedHours?id={a.ApplicationId}&process=EXH",
-                    "Display Extended Hours License",
+                    string.Equals(a.Status, "Approved", StringComparison.OrdinalIgnoreCase)
+                        ? $"/Documents/ExtendedHoursLicense?searchref={a.Id}"
+                        : $"/Postprocess/ExtendedHours?id={a.ApplicationId}&process=EXH&extId={a.Id}",
+                    string.Equals(a.Status, "Approved", StringComparison.OrdinalIgnoreCase)
+                        ? "Display Extended Hours License"
+                        : "Open Application",
                     applicationLookup,
                     outletLookup,
                     licenseLookup,
@@ -474,8 +485,12 @@ namespace LLB.Controllers
                     a.Status,
                     a.DateUpdated,
                     a.TemporaryRetailsDate,
-                    $"/Postprocess/TemporaryRetails?id={a.ApplicationId}&process=TRL",
-                    "View Temporary Retail",
+                    string.Equals(a.Status, "Approved", StringComparison.OrdinalIgnoreCase)
+                        ? $"/Documents/TemporaryRetailLicense?searchref={a.Id}"
+                        : $"/Postprocess/TemporaryRetails?id={a.ApplicationId}&process=TRL",
+                    string.Equals(a.Status, "Approved", StringComparison.OrdinalIgnoreCase)
+                        ? "Display Temporary Retail License"
+                        : "Open Application",
                     applicationLookup,
                     outletLookup,
                     licenseLookup,
@@ -495,8 +510,8 @@ namespace LLB.Controllers
                     a.Status,
                     a.DateUpdated,
                     null,
-                    $"/Extracounter/Extracounter?id={a.ApplicationId}&process=ECF",
-                    "View Extra Counter",
+                    $"/Extracounter/Extracounter?id={a.ApplicationId}&process=ECF&ecId={a.Id}",
+                    "Open Permission To Alter",
                     applicationLookup,
                     outletLookup,
                     licenseLookup,
@@ -516,7 +531,7 @@ namespace LLB.Controllers
                     a.DateUpdated,
                     null,
                     $"/Extracounter/Extracounter?id={a.ApplicationId}&process=ECF",
-                    "View Extra Counter",
+                    "Open Permission To Alter",
                     applicationLookup,
                     outletLookup,
                     licenseLookup,

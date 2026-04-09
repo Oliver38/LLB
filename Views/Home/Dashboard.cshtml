@@ -18,6 +18,7 @@
     {
         "approved" => "llb-status-success",
         "submitted" => "llb-status-info",
+        "awaiting approval" => "llb-status-info",
         "payment verification" => "llb-status-info",
         "verified" => "llb-status-success",
         "inprogress" => "llb-status-warning",
@@ -590,15 +591,15 @@
                     <div class="col-12">
                         <div class="card llb-panel-card" id="extra-counter-listings">
                             <div class="card-header">
-                                <h5 class="card-title">Extra Counter Listings</h5>
+                                <h5 class="card-title">Permission To Alter Listings</h5>
                             </div>
                             <div class="card-body">
                                 @if (!extraCounterListings.Any())
                                 {
                                     <div class="llb-empty-state">
                                         <i class="bi bi-layout-text-window"></i>
-                                        <h5 class="fw-bold">No extra counter records</h5>
-                                        <p class="text-muted mb-0">Extra counter or plan-change submissions will appear here after you start one from an approved licence.</p>
+                                        <h5 class="fw-bold">No permission to alter records</h5>
+                                        <p class="text-muted mb-0">Permission to alter submissions will appear here after you start one from an approved licence.</p>
                                     </div>
                                 }
                                 else
@@ -671,7 +672,7 @@
                         <option value="TTR">Temporary transfer</option>
                         <option value="EXH">Extended hours liquor licence</option>
                         <option value="TRL">Temporary retail liquor licence</option>
-                        <option value="ECF">Extra counter or change plan fee</option>
+                        <option value="ECF">Permission to alter</option>
                     </select>
                     <div class="alert alert-warning d-none mt-3 mb-0" id="renewalEligibilityWarning" role="alert"></div>
                 </div>

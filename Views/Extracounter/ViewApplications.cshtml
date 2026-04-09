@@ -1,0 +1,168 @@
+﻿@using LLB.Models
+@using System.Linq
+
+@{
+    Layout = "_LayoutMain";
+
+    var record = ViewBag.Application as ExtraCounter;
+    var application = ViewBag.RootApplication as ApplicationInfo;
+    var outlet = ViewBag.OutletInfo as OutletInfo;
+    var license = ViewBag.License as LicenseTypes;
+    var region = ViewBag.Region as LicenseRegion;
+    var attachments = ViewBag.Attachments as IEnumerable<AttachmentInfo> ?? Enumerable.Empty<AttachmentInfo>();
+    var submittedText = record == null ? "N/A" : record.DateAdded.ToString("dd MMM yyyy HH:mm");
+    var updatedText = record == null ? "N/A" : record.DateUpdated.ToString("dd MMM yyyy HH:mm");
+
+    Func<string?, string> statusBadgeClass = status => status?.Trim().ToLowerInvariant() switch
+    {
+        "approved" => "bg-success",
+        "rejected" => "bg-danger",
+        "awaiting approval" => "bg-info text-dark",
+        "submitted" => "bg-primary",
+        "inprogress" => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+
+    Func<string?, string> paymentBadgeClass = status => status?.Trim().ToLowerInvariant() switch
+    {
+        "paid" => "bg-success",
+        "awaiting delivery" => "bg-warning text-dark",
+        "sent" => "bg-warning text-dark",
+        "not paid" => "bg-secondary",
+        _ => "bg-secondary"
+    };
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="card-title mb-1">Permission To Alter Review</h5>
+            <p class="text-muted mb-0">Secretary approval view for the submitted permission to alter application.</p>
+        </div>
+        <span class="badge rounded-pill @statusBadgeClass(record?.Status)">@(record?.Status ?? "Unknown")</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Application Information</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Reference</span>
+                        <span class="fw-semibold text-end">@(record?.Reference ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Trading Name</span>
+                        <span class="fw-semibold text-end">@(outlet?.TradingName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">LLB Number</span>
+                        <span class="fw-semibold text-end">@(application?.LLBNum ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Licence</span>
+                        <span class="fw-semibold text-end">@(license?.LicenseName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Region</span>
+                        <span class="fw-semibold text-end">@(region?.RegionName ?? "N/A")</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Review Summary</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Status</span>
+                        <span class="badge rounded-pill @statusBadgeClass(record?.Status)">@(record?.Status ?? "Unknown")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Payment Status</span>
+                        <span class="badge rounded-pill @paymentBadgeClass(record?.PaymentStatus)">@(record?.PaymentStatus ?? "Not Paid")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Fee</span>
+                        <span class="fw-semibold text-end">@((record?.PaidFee ?? 0).ToString("N2"))</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Submitted</span>
+                        <span class="fw-semibold text-end">@submittedText</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Updated</span>
+                        <span class="fw-semibold text-end">@updatedText</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Attached Documents</h5>
+        <p class="text-muted mb-0">Review every uploaded document before approving the application.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Status</th>
+                        <th>File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var attachment in attachments)
+                    {
+                        var uploaded = !string.IsNullOrWhiteSpace(attachment.DocumentLocation);
+                        <tr>
+                            <td class="fw-semibold">@attachment.DocumentTitle</td>
+                            <td>
+                                <span class="badge rounded-pill @(uploaded ? "bg-success" : "bg-secondary")">
+                                    @(uploaded ? "Uploaded" : "Missing")
+                                </span>
+                            </td>
+                            <td>
+                                @if (uploaded)
+                                {
+                                    <a href="~/@attachment.DocumentLocation" target="_blank">View Attachment</a>
+                                }
+                                else
+                                {
+                                    <span class="text-danger">No file uploaded</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (record != null && !string.Equals(record.Status, "Approved", StringComparison.OrdinalIgnoreCase) && !string.Equals(record.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="d-flex justify-content-end gap-2">
+        <a href="/Extracounter/Reject?Id=@record.Id"
+           class="btn btn-outline-danger"
+           onclick="return confirm('Reject this permission to alter application?');">
+            Reject
+        </a>
+        <a href="/Extracounter/Approve?Id=@record.Id"
+           class="btn btn-success"
+           onclick="return confirm('Approve this permission to alter application?');">
+            Approve
+        </a>
+    </div>
+}

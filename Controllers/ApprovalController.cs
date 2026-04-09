@@ -937,7 +937,7 @@ namespace LLB.Controllers
 
         private async Task<SecretaryDashboardViewModel> BuildSecretaryDashboardViewModelAsync(string approverId)
         {
-            var postFormationServices = Array.Empty<string>();
+            var postFormationServices = new[] { "Extended Hours", "Temporary Retails", "Manager Change", "Permission to Alter", "Extra Counter", TemporaryTransferHelper.ServiceName, TemporaryRemovalHelper.ServiceName };
 
             var applicationTasks = await _db.Tasks
                 .Where(task => task.ApproverId == approverId
@@ -973,12 +973,61 @@ namespace LLB.Controllers
                 .Distinct()
                 .ToList();
 
+            var managerChangeIds = postFormationTasks
+                .Where(task => task.Service == "Manager Change" && !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Distinct()
+                .ToList();
+
+            var permissionToAlterIds = postFormationTasks
+                .Where(task => (task.Service == "Permission to Alter" || task.Service == "Extra Counter")
+                    && !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Distinct()
+                .ToList();
+
+            var temporaryTransferIds = postFormationTasks
+                .Where(task => task.Service == TemporaryTransferHelper.ServiceName
+                    && !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Distinct()
+                .ToList();
+
+            var temporaryRemovalIds = postFormationTasks
+                .Where(task => task.Service == TemporaryRemovalHelper.ServiceName
+                    && !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Distinct()
+                .ToList();
+
             var extendedHoursRecords = await _db.ExtendedHours
                 .Where(record => record.Id != null && extendedHoursIds.Contains(record.Id))
                 .ToListAsync();
 
             var temporaryRetailRecords = await _db.TemporaryRetails
                 .Where(record => record.Id != null && temporaryRetailIds.Contains(record.Id))
+                .ToListAsync();
+
+            var managerChangeRecords = await _db.ChangeManaager
+                .Where(record => record.Id != null && managerChangeIds.Contains(record.Id))
+                .ToListAsync();
+
+            var permissionToAlterRecords = await _db.ExtraCounter
+                .Where(record => record.Id != null && permissionToAlterIds.Contains(record.Id))
+                .ToListAsync();
+
+            var temporaryTransferRecords = await _db.ApplicationInfo
+                .Where(record =>
+                    record.Id != null
+                    && temporaryTransferIds.Contains(record.Id)
+                    && record.ExaminationStatus == TemporaryTransferHelper.ServiceName)
+                .ToListAsync();
+
+            var temporaryRemovalRecords = await _db.ApplicationInfo
+                .Where(record =>
+                    record.Id != null
+                    && temporaryRemovalIds.Contains(record.Id)
+                    && record.ExaminationStatus == TemporaryRemovalHelper.ServiceName)
                 .ToListAsync();
 
             var renewalApplicationIds = renewalTasks
@@ -1004,6 +1053,15 @@ namespace LLB.Controllers
                 .Concat(temporaryRetailRecords
                     .Where(record => !string.IsNullOrWhiteSpace(record.ApplicationId))
                     .Select(record => record.ApplicationId!))
+                .Concat(permissionToAlterRecords
+                    .Where(record => !string.IsNullOrWhiteSpace(record.ApplicationId))
+                    .Select(record => record.ApplicationId!))
+                .Concat(temporaryTransferRecords
+                    .Where(record => !string.IsNullOrWhiteSpace(record.CompanyNumber))
+                    .Select(record => record.CompanyNumber!))
+                .Concat(temporaryRemovalRecords
+                    .Where(record => !string.IsNullOrWhiteSpace(record.CompanyNumber))
+                    .Select(record => record.CompanyNumber!))
                 .Distinct()
                 .ToList();
 
@@ -1045,6 +1103,18 @@ namespace LLB.Controllers
                 .ToDictionary(record => record.Id!, record => record);
 
             var temporaryRetailLookup = temporaryRetailRecords
+                .ToDictionary(record => record.Id!, record => record);
+
+            var managerChangeLookup = managerChangeRecords
+                .ToDictionary(record => record.Id!, record => record);
+
+            var permissionToAlterLookup = permissionToAlterRecords
+                .ToDictionary(record => record.Id!, record => record);
+
+            var temporaryTransferLookup = temporaryTransferRecords
+                .ToDictionary(record => record.Id!, record => record);
+
+            var temporaryRemovalLookup = temporaryRemovalRecords
                 .ToDictionary(record => record.Id!, record => record);
 
             var renewalLookup = renewalRecords
@@ -1149,6 +1219,58 @@ namespace LLB.Controllers
                     status = temporaryRetail.Status ?? task.Status ?? "Unknown";
                     reviewUrl = $"/TemporaryRetails/ViewApplications?Id={temporaryRetail.Id}";
                 }
+                else if (task.Service == "Manager Change")
+                {
+                    if (!managerChangeLookup.TryGetValue(task.ApplicationId, out var managerChange)
+                        || string.IsNullOrWhiteSpace(managerChange.ApplicationId))
+                    {
+                        continue;
+                    }
+
+                    rootApplicationId = managerChange.ApplicationId;
+                    submittedDate = ParseManagerChangeDate(managerChange.DateUpdated) ?? ParseManagerChangeDate(managerChange.DateApplied) ?? task.DateAdded;
+                    status = managerChange.Status ?? task.Status ?? "Unknown";
+                    reviewUrl = $"/Managers/ViewApplications?Id={managerChange.Id}";
+                }
+                else if (task.Service == TemporaryTransferHelper.ServiceName)
+                {
+                    if (!temporaryTransferLookup.TryGetValue(task.ApplicationId, out var temporaryTransfer)
+                        || string.IsNullOrWhiteSpace(temporaryTransfer.CompanyNumber))
+                    {
+                        continue;
+                    }
+
+                    rootApplicationId = temporaryTransfer.CompanyNumber;
+                    submittedDate = temporaryTransfer.DateUpdated;
+                    status = temporaryTransfer.Status ?? task.Status ?? "Unknown";
+                    reviewUrl = $"/TemporaryTransfer/ViewApplications?id={temporaryTransfer.Id}";
+                }
+                else if (task.Service == TemporaryRemovalHelper.ServiceName)
+                {
+                    if (!temporaryRemovalLookup.TryGetValue(task.ApplicationId, out var temporaryRemoval)
+                        || string.IsNullOrWhiteSpace(temporaryRemoval.CompanyNumber))
+                    {
+                        continue;
+                    }
+
+                    rootApplicationId = temporaryRemoval.CompanyNumber;
+                    submittedDate = temporaryRemoval.DateUpdated;
+                    status = temporaryRemoval.Status ?? task.Status ?? "Unknown";
+                    reviewUrl = $"/TemporaryRemoval/ViewApplications?recordId={temporaryRemoval.Id}";
+                }
+                else if (task.Service == "Permission to Alter" || task.Service == "Extra Counter")
+                {
+                    if (!permissionToAlterLookup.TryGetValue(task.ApplicationId, out var permissionToAlter)
+                        || string.IsNullOrWhiteSpace(permissionToAlter.ApplicationId))
+                    {
+                        continue;
+                    }
+
+                    rootApplicationId = permissionToAlter.ApplicationId;
+                    submittedDate = permissionToAlter.DateUpdated;
+                    status = permissionToAlter.Status ?? task.Status ?? "Unknown";
+                    reviewUrl = $"/Extracounter/ViewApplications?Id={permissionToAlter.Id}";
+                }
                 else
                 {
                     continue;
@@ -1166,9 +1288,17 @@ namespace LLB.Controllers
                     RecordId = task.ApplicationId,
                     Reference = task.Service == "Extended Hours"
                         ? extendedHoursLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty
-                        : temporaryRetailLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty,
+                        : task.Service == "Temporary Retails"
+                            ? temporaryRetailLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty
+                            : task.Service == "Manager Change"
+                                ? managerChangeLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty
+                                : task.Service == TemporaryTransferHelper.ServiceName
+                                    ? temporaryTransferLookup.GetValueOrDefault(task.ApplicationId)?.RefNum ?? string.Empty
+                                    : task.Service == TemporaryRemovalHelper.ServiceName
+                                        ? temporaryRemovalLookup.GetValueOrDefault(task.ApplicationId)?.RefNum ?? string.Empty
+                                    : permissionToAlterLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty,
                     ApplicationId = rootApplicationId,
-                    Service = task.Service ?? "Post Formation",
+                    Service = task.Service == "Extra Counter" ? "Permission to Alter" : task.Service ?? "Post Formation",
                     TradingName = outlet?.TradingName ?? application.BusinessName ?? "N/A",
                     OperatingAddress = outlet?.Address ?? application.OperationAddress ?? "N/A",
                     SubmittedDate = submittedDate,
@@ -1205,6 +1335,13 @@ namespace LLB.Controllers
         {
             return string.IsNullOrWhiteSpace(filter)
                 || string.Equals(value, filter.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static DateTime? ParseManagerChangeDate(string? value)
+        {
+            return DateTime.TryParse(value, out var parsedDate)
+                ? parsedDate
+                : null;
         }
 
         private static string NormalizeDimension(string? value, string fallback = "Unspecified")

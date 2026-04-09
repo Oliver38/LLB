@@ -1,0 +1,713 @@
+@using System.Globalization
+@using System.Linq
+@using LLB.Models
+
+@{
+    Layout = "_LayoutMain";
+
+    var sourceApplication = ViewBag.SourceApplication as ApplicationInfo;
+    var removalApplication = ViewBag.RemovalApplication as ApplicationInfo;
+    var originalOutlet = ViewBag.OriginalOutlet as OutletInfo;
+    var proposedOutlet = ViewBag.ProposedOutlet as OutletInfo;
+    var license = ViewBag.License as LicenseTypes;
+    var region = ViewBag.Region as LicenseRegion;
+    var proposedLicense = ViewBag.ProposedLicense as LicenseTypes;
+    var proposedRegion = ViewBag.ProposedRegion as LicenseRegion;
+    var licenseTypes = ViewBag.LicenseTypes as IEnumerable<LicenseTypes> ?? Enumerable.Empty<LicenseTypes>();
+    var provinces = ViewBag.Provinces as IEnumerable<Province> ?? Enumerable.Empty<Province>();
+    var payment = ViewBag.Payment as Payments;
+    var attachments = ViewBag.Attachments as IEnumerable<AttachmentInfo> ?? Enumerable.Empty<AttachmentInfo>();
+
+    var totalFee = ViewBag.TotalFee is decimal feeValue ? feeValue : (decimal?)null;
+    var outletComplete = ViewBag.OutletComplete is bool outletReady && outletReady;
+    var attachmentsComplete = ViewBag.AttachmentsComplete is bool attachmentsReady && attachmentsReady;
+    var canEditOutlet = ViewBag.CanEditOutlet is bool editOutlet && editOutlet;
+    var canUploadAttachments = ViewBag.CanUploadAttachments is bool uploadAttachments && uploadAttachments;
+    var canSubmit = ViewBag.CanSubmit is bool readyToSubmit && readyToSubmit;
+    var canMakePayment = ViewBag.CanMakePayment is bool readyToPay && readyToPay;
+    var canContinue = ViewBag.CanContinue is bool readyToContinue && readyToContinue;
+    var awaitingSecretary = ViewBag.AwaitingSecretary is bool waitingSecretary && waitingSecretary;
+    var paymentReceived = ViewBag.PaymentReceived is bool received && received;
+    var hasActivePayment = ViewBag.HasActivePayment is bool activePayment && activePayment;
+    var selectedTradingName = proposedOutlet?.TradingName ?? originalOutlet?.TradingName ?? sourceApplication?.BusinessName ?? string.Empty;
+    var selectedLicenseId = proposedOutlet?.LicenseTypeID ?? removalApplication?.LicenseTypeID ?? sourceApplication?.LicenseTypeID ?? string.Empty;
+    var selectedRegionId = proposedOutlet?.ApplicationType ?? removalApplication?.ApplicationType ?? sourceApplication?.ApplicationType ?? string.Empty;
+    var selectedProvince = proposedOutlet?.Province ?? string.Empty;
+    var selectedCity = proposedOutlet?.City ?? string.Empty;
+    var selectedCouncil = proposedOutlet?.Council ?? string.Empty;
+    var selectedLatitude = proposedOutlet?.Latitude ?? string.Empty;
+    var selectedLongitude = proposedOutlet?.Longitude ?? string.Empty;
+    var selectedAddress = proposedOutlet?.Address ?? string.Empty;
+
+    string DisplayValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "N/A" : value;
+    }
+
+    string FormatMoney(decimal? value)
+    {
+        return value.HasValue
+            ? value.Value.ToString("0.00", CultureInfo.InvariantCulture)
+            : "N/A";
+    }
+
+    string StatusBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "approved" => "bg-success",
+            "rejected" => "bg-danger",
+            "awaiting approval" => "bg-info text-dark",
+            "submitted" => "bg-primary",
+            "inprogress" => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    string PaymentBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "paid" => "bg-success",
+            "sent" => "bg-warning text-dark",
+            "awaiting delivery" => "bg-warning text-dark",
+            "cancelled" => "bg-danger",
+            "rejected" => "bg-danger",
+            "expired" => "bg-danger",
+            "not paid" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center gap-3">
+        <div>
+            <h5 class="card-title mb-1">Temporary Removal Application</h5>
+            <p class="text-muted mb-0">Move the bar from the current outlet to a new outlet, upload the required documents, submit the application, pay, and continue to the secretary.</p>
+        </div>
+        @if (removalApplication != null)
+        {
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill bg-dark">@(removalApplication.RefNum ?? "Pending")</span>
+                <span class="badge rounded-pill @StatusBadgeClass(removalApplication.Status)">@(removalApplication.Status ?? "Unknown")</span>
+            </div>
+        }
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Current Licensed Outlet</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Trading Name</span>
+                        <span class="fw-semibold text-end">@(originalOutlet?.TradingName ?? sourceApplication?.BusinessName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Address</span>
+                        <span class="fw-semibold text-end">@(originalOutlet?.Address ?? sourceApplication?.OperationAddress ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Province</span>
+                        <span class="fw-semibold text-end">@DisplayValue(originalOutlet?.Province)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">District / City</span>
+                        <span class="fw-semibold text-end">@DisplayValue(originalOutlet?.City)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Council</span>
+                        <span class="fw-semibold text-end">@DisplayValue(originalOutlet?.Council)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">LLB Number</span>
+                        <span class="fw-semibold text-end">@(sourceApplication?.LLBNum ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Licence</span>
+                        <span class="fw-semibold text-end">@(license?.LicenseName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Location of Premises</span>
+                        <span class="fw-semibold text-end">@(region?.RegionName ?? "N/A")</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Proposed New Outlet</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Trading Name</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.TradingName)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Licence</span>
+                        <span class="fw-semibold text-end">@(proposedLicense?.LicenseName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Location of Premises</span>
+                        <span class="fw-semibold text-end">@(proposedRegion?.RegionName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Address</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Address)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Province</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Province)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">District / City</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.City)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Council</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Council)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Latitude</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Latitude)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Longitude</span>
+                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Longitude)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Outlet Details Complete</span>
+                        <span class="fw-semibold text-end">@(outletComplete ? "Yes" : "No")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-1">New Outlet Information</h5>
+                <p class="text-muted mb-0">Fill in the outlet information for the new place where the bar will operate.</p>
+            </div>
+            <div class="card-body">
+                @if (canEditOutlet && removalApplication != null)
+                {
+                    <form action="/TemporaryRemoval/SaveOutlet" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="recordId" value="@removalApplication.Id" />
+                        <input type="hidden" id="selectedProvince" value="@selectedProvince" />
+                        <input type="hidden" id="selectedDistrict" value="@selectedCity" />
+                        <input type="hidden" id="selectedCouncil" value="@selectedCouncil" />
+                        <input type="hidden" id="locationName" value="@selectedAddress" />
+
+                        <div class="col-md-12">
+                            <label class="form-label">Trading Name</label>
+                            <input type="text" id="tradingName" name="tradingName" class="form-control" value="@selectedTradingName" readonly required />
+                        </div>
+                        <div class="col-md-12">
+                            <div id="map" style="height: 400px; border-radius: 10px;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Latitude</label>
+                            <input type="text" id="latitude" name="latitude" class="form-control" value="@selectedLatitude" placeholder="Latitude" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Longitude</label>
+                            <input type="text" id="longitude" name="longitude" class="form-control" value="@selectedLongitude" placeholder="Longitude" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Licence Type</label>
+                            <select required name="LicenseTypeID" class="form-control" id="LicenseTypeID">
+                                <option value=""> --Select License-- </option>
+                                @foreach (var licenseType in licenseTypes)
+                                {
+                                    if (string.Equals(licenseType.LicenseName, "Managers Fees", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        continue;
+                                    }
+
+                                    if (licenseType.Id == selectedLicenseId)
+                                    {
+                                        <option selected value="@licenseType.Id">@licenseType.LicenseName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@licenseType.Id">@licenseType.LicenseName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Location of Premises</label>
+                            <input type="text" required readonly name="ApplicationTypeName" value="@(proposedRegion?.RegionName ?? region?.RegionName ?? string.Empty)" class="form-control" id="ApplicationTypeName" />
+                            <input type="hidden" name="ApplicationType" value="@selectedRegionId" id="ApplicationType" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <textarea required class="form-control" name="Address" placeholder="Address" id="addressTextarea" style="height: 100px;">@selectedAddress</textarea>
+                                <label for="addressTextarea">Physical Operations Address</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Province</label>
+                            <select required id="provinceSelect" onchange="GetDistCounc()" name="province" class="form-control">
+                                <option value="">--Select Province--</option>
+                                @foreach (var provinceItem in provinces)
+                                {
+                                    if (provinceItem.Name == selectedProvince)
+                                    {
+                                        <option selected value="@provinceItem.Name">@provinceItem.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@provinceItem.Name">@provinceItem.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">District</label>
+                            <select required name="city" class="form-control" id="districtSelect">
+                                @if (string.IsNullOrWhiteSpace(selectedCity))
+                                {
+                                    <option value="">Select District</option>
+                                }
+                                else
+                                {
+                                    <option selected value="@selectedCity">@selectedCity</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="councilSelect" class="form-label">Council</label>
+                            <select id="councilSelect" required onchange="getRegion()" name="council" class="form-control">
+                                @if (string.IsNullOrWhiteSpace(selectedCouncil))
+                                {
+                                    <option value="">Select Council</option>
+                                }
+                                else
+                                {
+                                    <option selected value="@selectedCouncil">@selectedCouncil</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">Save Outlet Information</button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-secondary mb-0">The outlet information is now read-only because the application has moved beyond the draft stage.</div>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-1">Required Attachments</h5>
+                <p class="text-muted mb-0">Upload the Local Authority letter, Gazette proof, Tie Affidavit, Lease or Deed, and approved A3 plan before submitting the application.</p>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Status</th>
+                                <th>File</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var attachment in attachments)
+                            {
+                                var uploaded = !string.IsNullOrWhiteSpace(attachment.DocumentLocation);
+                                <tr>
+                                    <td class="fw-semibold">@attachment.DocumentTitle</td>
+                                    <td>
+                                        <span class="badge rounded-pill @(uploaded ? "bg-success" : "bg-secondary")">
+                                            @(uploaded ? "Uploaded" : "Pending")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (uploaded)
+                                        {
+                                            <a href="@Url.Content($"~/{attachment.DocumentLocation}")" target="_blank">View Attachment</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No file uploaded</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (canUploadAttachments && removalApplication != null)
+                                        {
+                                            <div class="d-flex justify-content-end">
+                                                @if (uploaded)
+                                                {
+                                                    <form method="post" action="/TemporaryRemoval/RemoveAttachment" class="mb-0">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="recordId" value="@removalApplication.Id" />
+                                                        <input type="hidden" name="attachmentId" value="@attachment.Id" />
+                                                        <button type="submit"
+                                                                class="btn btn-sm btn-outline-danger"
+                                                                onclick="return confirm('Remove this attachment?');">
+                                                            Remove
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <form method="post"
+                                                          enctype="multipart/form-data"
+                                                          action="/TemporaryRemoval/UploadAttachment"
+                                                          class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="recordId" value="@removalApplication.Id" />
+                                                        <input type="hidden" name="attachmentId" value="@attachment.Id" />
+                                                        <input type="file" name="file" class="form-control form-control-sm" required />
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">Upload</button>
+                                                    </form>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Locked</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Processing Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                    <span class="text-muted">Status</span>
+                    <span class="badge rounded-pill @StatusBadgeClass(removalApplication?.Status)">@(removalApplication?.Status ?? "Unknown")</span>
+                </div>
+                <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                    <span class="text-muted">Payment Status</span>
+                    <span class="badge rounded-pill @PaymentBadgeClass(payment?.PaymentStatus ?? payment?.Status ?? removalApplication?.PaymentStatus)">
+                        @(payment?.PaymentStatus ?? payment?.Status ?? removalApplication?.PaymentStatus ?? "Not Paid")
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                    <span class="text-muted">Fee</span>
+                    <span class="fw-semibold text-end">@FormatMoney(totalFee)</span>
+                </div>
+                <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                    <span class="text-muted">Outlet Details Complete</span>
+                    <span class="fw-semibold text-end">@(outletComplete ? "Yes" : "No")</span>
+                </div>
+                <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                    <span class="text-muted">Attachments Complete</span>
+                    <span class="fw-semibold text-end">@(attachmentsComplete ? "Yes" : "No")</span>
+                </div>
+                <div class="d-flex justify-content-between gap-3 py-2">
+                    <span class="text-muted">Paynow Reference</span>
+                    <span class="fw-semibold text-end">@(payment?.PaynowRef ?? "N/A")</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-1">Next Step</h5>
+                <p class="text-muted mb-0">The flow is save the new outlet, upload all five attachments, submit, make payment, then continue to the secretary.</p>
+            </div>
+            <div class="card-body">
+                @if (removalApplication != null && string.Equals(removalApplication.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div class="alert alert-success mb-3">This temporary removal application has been approved by the secretary.</div>
+                }
+                else if (removalApplication != null && string.Equals(removalApplication.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div class="alert alert-danger mb-3">This temporary removal application has been rejected.</div>
+                }
+                else if (awaitingSecretary)
+                {
+                    <div class="alert alert-info mb-3">The application has been assigned to the secretary and is now awaiting approval.</div>
+                }
+                else if (canContinue)
+                {
+                    <div class="alert alert-success mb-3">Payment was received successfully. Click continue to send the application to the secretary.</div>
+                }
+                else if (hasActivePayment)
+                {
+                    <div class="alert alert-warning mb-3">A payment attempt is already in progress for this application. Complete it or wait for it to expire before trying again.</div>
+                }
+                else if (canMakePayment)
+                {
+                    <div class="alert alert-primary mb-3">The application has been submitted. You can now complete payment.</div>
+                }
+                else if (canSubmit)
+                {
+                    <div class="alert alert-success mb-3">The outlet details and all required attachments are complete. Submit the application to unlock payment.</div>
+                }
+                else if (!outletComplete)
+                {
+                    <div class="alert alert-warning mb-3">Save the full new outlet information before the application can be submitted.</div>
+                }
+                else if (!attachmentsComplete)
+                {
+                    <div class="alert alert-warning mb-3">Upload all five required temporary removal attachments before the application can be submitted.</div>
+                }
+                else if (removalApplication != null && string.Equals(removalApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase) && !paymentReceived)
+                {
+                    <div class="alert alert-secondary mb-3">This application is submitted and waiting for payment confirmation.</div>
+                }
+
+                <div class="d-flex flex-wrap gap-2">
+                    @if (canSubmit && removalApplication != null)
+                    {
+                        <form method="post" action="/TemporaryRemoval/Submit" class="mb-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="recordId" value="@removalApplication.Id" />
+                            <button type="submit" class="btn btn-primary">Submit Application</button>
+                        </form>
+                    }
+
+                    @if (canMakePayment && removalApplication != null)
+                    {
+                        <a class="btn btn-success" href="/TemporaryRemoval/Payment?recordId=@removalApplication.Id">Make Payment</a>
+                    }
+
+                    @if (canContinue && removalApplication != null)
+                    {
+                        <form method="post" action="/TemporaryRemoval/Continue" class="mb-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="recordId" value="@removalApplication.Id" />
+                            <button type="submit" class="btn btn-primary">Continue</button>
+                        </form>
+                    }
+
+                    <a class="btn btn-light border" href="/Home/Dashboard">Back To Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function populateSelect(selectId, items, selectedValue, placeholder) {
+        var select = $("#" + selectId);
+        var hasSelectedValue = false;
+        select.empty();
+        select.append('<option value="">' + placeholder + '</option>');
+
+        $.each(items || [], function (index, item) {
+            var option = $('<option></option>')
+                .attr("value", item.name)
+                .text(item.name);
+
+            if (selectedValue && item.name === selectedValue) {
+                option.attr("selected", "selected");
+                hasSelectedValue = true;
+            }
+
+            select.append(option);
+        });
+
+        if (selectedValue && !hasSelectedValue) {
+            select.append($('<option></option>').attr("value", selectedValue).text(selectedValue).attr("selected", "selected"));
+        }
+    }
+
+    function GetDistCounc() {
+        var province = $("#provinceSelect").val();
+        var savedProvince = $("#selectedProvince").val();
+
+        if (!province) {
+            $("#selectedProvince").val("");
+            $("#selectedDistrict").val("");
+            $("#selectedCouncil").val("");
+            populateSelect("districtSelect", [], "", "Select District");
+            populateSelect("councilSelect", [], "", "Select Council");
+            $("#ApplicationTypeName").val("");
+            $("#ApplicationType").val("");
+            return;
+        }
+
+        if (savedProvince !== province) {
+            $("#selectedDistrict").val("");
+            $("#selectedCouncil").val("");
+        }
+
+        $("#selectedProvince").val(province);
+
+        $.ajax({
+            type: "GET",
+            url: "/License/GetDistCounc",
+            contentType: "application/json; charset=utf-8",
+            datatype: "text",
+            data: { Province: province },
+            success: function (data) {
+                var selectedDistrict = $("#selectedDistrict").val();
+                var selectedCouncil = $("#selectedCouncil").val();
+
+                populateSelect("districtSelect", data.districts, selectedDistrict, "Select District");
+                populateSelect("councilSelect", data.councils, selectedCouncil, "Select Council");
+
+                if ($("#councilSelect").val()) {
+                    getRegion();
+                }
+            }
+        });
+    }
+</script>
+
+<script>
+    function getRegion() {
+        var selectedCouncil = $("#councilSelect").val();
+        $("#selectedCouncil").val(selectedCouncil || "");
+
+        if (!selectedCouncil) {
+            $("#ApplicationTypeName").val("");
+            $("#ApplicationType").val("");
+            return;
+        }
+
+        $.ajax({
+            type: "GET",
+            url: "/License/GetCouncData",
+            contentType: "application/json; charset=utf-8",
+            datatype: "text",
+            data: { council: selectedCouncil },
+            success: function (data) {
+                var councilData = data.councildata || {};
+                $("#ApplicationTypeName").val(councilData.councilRegion || "");
+                $("#ApplicationType").val(councilData.councilRegionId || "");
+            }
+        });
+    }
+</script>
+
+<script>
+    var map;
+    var marker;
+    var geocoder;
+
+    function initMap() {
+        var mapElement = document.getElementById("map");
+        if (!mapElement) {
+            return;
+        }
+
+        var latitudeValue = parseFloat(document.getElementById("latitude").value);
+        var longitudeValue = parseFloat(document.getElementById("longitude").value);
+        var hasExistingCoordinates = !Number.isNaN(latitudeValue) && !Number.isNaN(longitudeValue);
+        var defaultLocation = hasExistingCoordinates
+            ? { lat: latitudeValue, lng: longitudeValue }
+            : { lat: -17.8292, lng: 31.0522 };
+
+        map = new google.maps.Map(mapElement, {
+            center: defaultLocation,
+            zoom: 12
+        });
+
+        geocoder = new google.maps.Geocoder();
+
+        if (hasExistingCoordinates) {
+            marker = new google.maps.Marker({
+                position: defaultLocation,
+                map: map
+            });
+        }
+
+        map.addListener("click", function (event) {
+            var lat = event.latLng.lat();
+            var lng = event.latLng.lng();
+
+            document.getElementById("latitude").value = lat;
+            document.getElementById("longitude").value = lng;
+
+            if (marker) {
+                marker.setMap(null);
+            }
+
+            marker = new google.maps.Marker({
+                position: event.latLng,
+                map: map
+            });
+
+            getAddress(lat, lng);
+        });
+
+        loadSavedLocations();
+    }
+
+    function getAddress(lat, lng) {
+        if (!geocoder) {
+            return;
+        }
+
+        var latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+
+        geocoder.geocode({ location: latlng }, function (results, status) {
+            if (status === "OK" && results[0]) {
+                document.getElementById("locationName").value = results[0].formatted_address;
+            } else {
+                document.getElementById("locationName").value = "";
+            }
+        });
+    }
+
+    function loadSavedLocations() {
+        if (!map) {
+            return;
+        }
+
+        fetch("/Location/GetSavedCoordinates")
+            .then(response => response.json())
+            .then(locations => {
+                locations.forEach(location => {
+                    new google.maps.Marker({
+                        position: { lat: location.latitude, lng: location.longitude },
+                        map: map
+                    });
+                });
+            })
+            .catch(error => console.error("Error loading saved locations:", error));
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $("#districtSelect").on("change", function () {
+            $("#selectedDistrict").val($(this).val() || "");
+        });
+
+        $("#councilSelect").on("change", function () {
+            $("#selectedCouncil").val($(this).val() || "");
+        });
+
+        if (document.getElementById("provinceSelect") && document.getElementById("provinceSelect").value) {
+            GetDistCounc();
+        }
+    });
+
+    window.initMap = initMap;
+</script>
+
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeS52LU1myA-bb_AzRqn0lazpMTxbPK4c&callback=initMap&libraries=places">
+</script>

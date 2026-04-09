@@ -146,7 +146,7 @@
 else if (activeTemporaryRetail != null && string.Equals(activeTemporaryRetailStatus, "submitted", StringComparison.OrdinalIgnoreCase))
 {
     <div class="alert alert-warning">
-        This temporary retail application has already been submitted. The inspector will approve or reject it after examination.
+        This temporary retail application has already been submitted. The Secretary will approve or reject it after examination.
     </div>
 }
 else if (!string.IsNullOrWhiteSpace(currentTemporaryRetailId))
@@ -181,7 +181,7 @@ else if (!string.IsNullOrWhiteSpace(currentTemporaryRetailId))
                 </div>
                 <div class="border rounded p-3">
                     <div class="fw-semibold mb-1">Step 3: Continue To Submit</div>
-                    <div class="text-muted mb-3">After Paynow confirms payment, continue to send the application to the inspector.</div>
+                    <div class="text-muted mb-3">After Paynow confirms payment, continue to send the application to the Secretary.</div>
                     @if (canSubmitTemporaryRetail)
                     {
                         <form action="/Postprocess/SubmitTemporaryRetails" method="post" class="d-inline">

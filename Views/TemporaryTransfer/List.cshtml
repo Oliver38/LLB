@@ -1,41 +1,50 @@
-﻿@using System.Linq
 @using LLB.Models.ViewModel
 
 @{
     Layout = "_LayoutMain";
-    ViewData["Title"] = "Permission To Alter Listings";
-    var listings = ViewBag.ExtraCounterListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+    ViewData["Title"] = "Temporary Transfer List";
+    ViewData["Subtitle"] = "Submitted temporary transfer applications.";
 
-    Func<string?, string> statusClass = status => status?.ToLowerInvariant() switch
+    var listings = ViewBag.Listings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+
+    string StatusClass(string? status)
     {
-        "approved" => "llb-status-success",
-        "submitted" => "llb-status-info",
-        "awaiting approval" => "llb-status-info",
-        "payment verification" => "llb-status-info",
-        "verified" => "llb-status-success",
-        "inprogress" => "llb-status-warning",
-        "has query" => "llb-status-warning",
-        "rejected" => "llb-status-danger",
-        "inspected" => "llb-status-success",
-        _ => "llb-status-info"
-    };
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "approved" => "llb-status-success",
+            "submitted" => "llb-status-info",
+            "awaiting approval" => "llb-status-info",
+            "rejected" => "llb-status-danger",
+            _ => "llb-status-warning"
+        };
+    }
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
 }
 
 <div class="card llb-panel-card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <div>
-            <h5 class="card-title mb-1">Permission To Alter Listings</h5>
-            <p class="text-muted mb-0">Permission to alter submissions linked to your licences.</p>
+            <h5 class="card-title mb-1">Temporary Transfer Applications</h5>
+            <p class="text-muted mb-0">Applications you submitted against approved liquor licences.</p>
         </div>
-        <a class="btn btn-outline-primary" href="/Home/Dashboard?tab=services-pane">Back To Dashboard</a>
+        <a class="btn btn-primary" href="/TemporaryTransfer/Apply">Apply</a>
     </div>
     <div class="card-body">
         @if (!listings.Any())
         {
             <div class="llb-empty-state">
-                <i class="bi bi-layout-text-window"></i>
-                <h5 class="fw-bold">No permission to alter records</h5>
-                <p class="text-muted mb-0">Permission to alter submissions will appear here after you start one from an approved licence.</p>
+                <i class="bi bi-arrow-left-right"></i>
+                <h5 class="fw-bold">No temporary transfer applications</h5>
+                <p class="text-muted mb-0">Your submitted temporary transfer applications will appear here.</p>
             </div>
         }
         else
@@ -49,7 +58,7 @@
                             <th>LLB Number</th>
                             <th>Submitted</th>
                             <th>Licence</th>
-                            <th>For</th>
+                            <th>Region</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
                         </tr>
@@ -64,9 +73,7 @@
                                 <td>@(listing.SubmittedDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
                                 <td>@listing.LicenseName</td>
                                 <td>@listing.RegionName</td>
-                                <td>
-                                    <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
-                                </td>
+                                <td><span class="llb-status-pill @StatusClass(listing.Status)">@listing.Status</span></td>
                                 <td class="text-end">
                                     <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
                                 </td>

@@ -14,6 +14,7 @@ using Microsoft.Build.Framework;
 using System.Drawing;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using PdfToSvg;
+using LLB.Helpers;
 
 namespace LLB.Controllers
 {
@@ -227,27 +228,7 @@ namespace LLB.Controllers
             details.DateCreated = task.DateAdded;
 
             //var inspector = await userManager.GetUsersInRoleAsync("inspector");
-            List<ApplicationUser> examiners = new List<ApplicationUser>();
-            if(task.ExaminationStatus == "verification")
-            {
-                examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
-
-            }
-            else if (task.ExaminationStatus == "recommendation")
-            {
-                examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
-
-            }
-            else if (task.ExaminationStatus == "approval")
-            {
-                examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
-
-            }
-             else if (task.ExaminationStatus == "inspection")
-            {
-                examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("inspector");
-
-            }
+            var examiners = await GetExaminersForStageAsync(task.ExaminationStatus);
 
             if(task.AssignerId == "system" )
             {
@@ -322,6 +303,10 @@ namespace LLB.Controllers
                 //examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
 
             }
+            else if (task.ExaminationStatus == "inspection")
+            {
+                newtask.VerifierId = reassignedto;
+            }
 
             newtask.Service = task.Service;
             newtask.AssignerId= id;
@@ -344,21 +329,7 @@ namespace LLB.Controllers
             List<TaskDetails> Alldetails = new List<TaskDetails>();
             List<ApplicationUser> examinerslist = new List<ApplicationUser>();
 
-            if (stage == "verification")
-            {
-                examinerslist = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
-
-            }
-            else if (stage == "recommendation")
-            {
-                examinerslist = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
-
-            }
-            else if (stage == "approval")
-            {
-                examinerslist = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
-
-            }
+            examinerslist = await GetExaminersForStageAsync(stage);
 
             foreach (var taskass in assignedtasks)
             {
@@ -409,22 +380,6 @@ namespace LLB.Controllers
                 details.LicenseType = licenseType?.LicenseName ?? "N/A";
 
                 //var inspector = await userManager.GetUsersInRoleAsync("inspector");
-                List<ApplicationUser> examiners = new List<ApplicationUser>();
-                if (taskass.ExaminationStatus == "verification")
-                {
-                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
-
-                }
-                else if (taskass.ExaminationStatus == "recommendation")
-                {
-                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
-
-                }
-                else if (taskass.ExaminationStatus == "approval")
-                {
-                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
-                }
-
                 if (taskass.AssignerId == "system")
                 {
                     details.Assigner = "System";
@@ -468,21 +423,7 @@ namespace LLB.Controllers
             List<TaskDetails> Alldetails = new List<TaskDetails>();
             List<ApplicationUser> examinerslist = new List<ApplicationUser>();
 
-            if (stage == "verification")
-            {
-                examinerslist = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
-
-            }
-            else if (stage == "recommendation")
-            {
-                examinerslist = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
-
-            }
-            else if (stage == "approval")
-            {
-                examinerslist = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
-
-            }
+            examinerslist = await GetExaminersForStageAsync(stage);
            
             foreach (var taskass in assignedtasks)
             {
@@ -533,22 +474,6 @@ namespace LLB.Controllers
                 details.LicenseType = licenseType?.LicenseName ?? "N/A";
 
                 //var inspector = await userManager.GetUsersInRoleAsync("inspector");
-                List<ApplicationUser> examiners = new List<ApplicationUser>();
-                if (taskass.ExaminationStatus == "verification")
-                {
-                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
-
-                }
-                else if (taskass.ExaminationStatus == "recommendation")
-                {
-                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
-
-                }
-                else if (taskass.ExaminationStatus == "approval")
-                {
-                    examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
-                }
-
                 if (taskass.AssignerId == "system")
                 {
                     details.Assigner = "System";
@@ -625,6 +550,10 @@ namespace LLB.Controllers
                     //examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
 
                 }
+                else if (stage == "inspection")
+                {
+                    newtask.VerifierId = examiner;
+                }
                 newtask.Service = task.Service;
                 newtask.AssignerId = id;
                 newtask.Status = "assigned";
@@ -653,6 +582,53 @@ namespace LLB.Controllers
             return View();
         }
 
+        private async Task<List<ApplicationUser>> GetExaminersForStageAsync(string? stage)
+        {
+            var normalizedStage = stage?.Trim().ToLowerInvariant();
+
+            if (normalizedStage == "verification")
+            {
+                return (await userManager.GetUsersInRoleAsync("verifier")).ToList();
+            }
+
+            if (normalizedStage == "recommendation")
+            {
+                return (await userManager.GetUsersInRoleAsync("recommender")).ToList();
+            }
+
+            if (normalizedStage == "approval")
+            {
+                return (await userManager.GetUsersInRoleAsync("secretary")).ToList();
+            }
+
+            if (normalizedStage == "inspection")
+            {
+                var inspectors = (await userManager.GetUsersInRoleAsync("inspector")).ToList();
+                if (inspectors.Count > 0)
+                {
+                    var verifiers = await userManager.GetUsersInRoleAsync("verifier");
+                    var verifierIds = verifiers
+                        .Select(verifier => verifier.Id)
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                    var dualRoleInspectors = inspectors
+                        .Where(inspector => verifierIds.Contains(inspector.Id))
+                        .ToList();
+
+                    if (dualRoleInspectors.Count > 0)
+                    {
+                        return dualRoleInspectors;
+                    }
+
+                    return inspectors;
+                }
+
+                return (await userManager.GetUsersInRoleAsync("verifier")).ToList();
+            }
+
+            return new List<ApplicationUser>();
+        }
+
         private ApplicationInfo? ResolveTaskApplication(Tasks task)
         {
             var rootApplicationId = ResolveTaskRootApplicationId(task);
@@ -679,6 +655,15 @@ namespace LLB.Controllers
                 "temporary retails" => _db.TemporaryRetails.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault(),
                 "extra counter" => _db.ExtraCounter.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault()
                     ?? _db.ExtendedHours.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault(),
+                "permission to alter" => _db.ExtraCounter.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault(),
+                "temporary transfer" => _db.ApplicationInfo
+                    .Where(x => x.Id == task.ApplicationId && x.ExaminationStatus == TemporaryTransferHelper.ServiceName)
+                    .Select(x => x.CompanyNumber)
+                    .FirstOrDefault(),
+                "temporary removal" => _db.ApplicationInfo
+                    .Where(x => x.Id == task.ApplicationId && x.ExaminationStatus == TemporaryRemovalHelper.ServiceName)
+                    .Select(x => x.CompanyNumber)
+                    .FirstOrDefault(),
                 "changemanager" => _db.ChangeManaager.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault()
                     ?? _db.ChangeManaager.Where(x => x.ApplicationId == task.ApplicationId).OrderByDescending(x => x.DateApplied).Select(x => x.ApplicationId).FirstOrDefault()
                     ?? task.ApplicationId,
@@ -738,6 +723,18 @@ namespace LLB.Controllers
                         .Where(x => x.Id == task.ApplicationId)
                         .Select(x => x.Reference)
                         .FirstOrDefault(),
+                "permission to alter" => _db.ExtraCounter
+                    .Where(x => x.Id == task.ApplicationId)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault(),
+                "temporary transfer" => _db.ApplicationInfo
+                    .Where(x => x.Id == task.ApplicationId && x.ExaminationStatus == TemporaryTransferHelper.ServiceName)
+                    .Select(x => x.RefNum)
+                    .FirstOrDefault(),
+                "temporary removal" => _db.ApplicationInfo
+                    .Where(x => x.Id == task.ApplicationId && x.ExaminationStatus == TemporaryRemovalHelper.ServiceName)
+                    .Select(x => x.RefNum)
+                    .FirstOrDefault(),
                 "changemanager" => _db.ChangeManaager
                     .Where(x => x.Id == task.ApplicationId)
                     .Select(x => x.Reference)

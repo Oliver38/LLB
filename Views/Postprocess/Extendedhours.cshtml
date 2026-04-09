@@ -1,34 +1,28 @@
+@using System.Linq
+@using LLB.Models
+
 @{
     Layout = "_LayoutMain";
 
-    var activeExtendedHours = ViewBag.ActiveExtendedHours;
-    var extendedHoursRecord = ViewBag.ExtendedHoursRecord;
-    var payment = ViewBag.Payment;
-    bool canStartNewExtendedHours = ViewBag.CanStartNewExtendedHours is bool canStart && canStart;
+    var extendedHoursRecord = ViewBag.ExtendedHoursRecord as ExtendedHours;
+    var extendedHoursRecords = ViewBag.ExtendedHoursRecords as IEnumerable<ExtendedHours> ?? Enumerable.Empty<ExtendedHours>();
+    var payment = ViewBag.Payment as Payments;
     bool canSubmitExtendedHours = ViewBag.CanSubmitExtendedHours is bool canSubmit && canSubmit;
-    bool isExtendedHoursSubmitted = ViewBag.IsExtendedHoursSubmitted is bool submitted && submitted;
     bool isExtendedHoursPaid = ViewBag.IsExtendedHoursPaid is bool paid && paid;
     string process = ViewBag.Process as string ?? "EXH";
     string? extendedHoursWarning = ViewBag.ExtendedHoursWarning as string;
-    string currentExtendedHoursId = activeExtendedHours?.Id ?? string.Empty;
+    string currentExtendedHoursId = extendedHoursRecord?.Id ?? string.Empty;
     string applicationId = ViewBag.Appinfo?.Id ?? string.Empty;
     DateTime? displayedRequestedDate = null;
     string displayedStatus = extendedHoursRecord?.Status ?? "Not started";
     string displayedPaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? extendedHoursRecord?.PaymentStatus ?? "Not Paid";
     string displayedPaynowReference = payment?.PaynowRef ?? "N/A";
     string displayedJustification = extendedHoursRecord?.ReasonForExtention ?? "Not provided yet";
-    string activeExtendedHoursStatus = activeExtendedHours?.Status ?? string.Empty;
-    DateTime? activeExtendedHoursDate = null;
-    string activeReason = activeExtendedHours?.ReasonForExtention ?? string.Empty;
+    string selectedExtendedHoursStatus = extendedHoursRecord?.Status ?? string.Empty;
 
     if (extendedHoursRecord != null && extendedHoursRecord.ExtendedHoursDate != DateTime.MinValue)
     {
         displayedRequestedDate = extendedHoursRecord.ExtendedHoursDate;
-    }
-
-    if (activeExtendedHours != null && activeExtendedHours.ExtendedHoursDate != DateTime.MinValue)
-    {
-        activeExtendedHoursDate = activeExtendedHours.ExtendedHoursDate;
     }
 }
 
@@ -48,8 +42,86 @@
 }
 
 <div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Create Extended Hours Application</h5>
+    </div>
+    <div class="card-body">
+        <form action="/Postprocess/SaveExtendedHours" method="post">
+            <input type="hidden" name="applicationId" value="@applicationId" />
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Extended Hours Date</label>
+                    <input type="date" name="extendedHoursDate" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Justification</label>
+                    <textarea name="reasonForExtention" class="form-control" rows="5"></textarea>
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                    <button class="btn btn-primary" type="submit">Initialize New Application</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Existing Extended Hours Applications</h5>
+    </div>
+    <div class="card-body">
+        @if (!extendedHoursRecords.Any())
+        {
+            <div class="alert alert-light border mb-0">
+                No extended hours applications have been created for this licence yet.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Requested Date</th>
+                            <th>Payment Status</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in extendedHoursRecords)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.Reference</td>
+                                <td>@(item.ExtendedHoursDate == DateTime.MinValue ? "Not selected" : item.ExtendedHoursDate.ToString("yyyy-MM-dd"))</td>
+                                <td>@(item.PaymentStatus ?? "Not Paid")</td>
+                                <td>@(item.Status ?? "Unknown")</td>
+                                <td>@item.DateUpdated.ToString("yyyy-MM-dd")</td>
+                                <td class="text-end">
+                                    @if (item.Id == currentExtendedHoursId)
+                                    {
+                                        <span class="badge bg-primary">Selected</span>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-sm btn-outline-primary" href="/Postprocess/ExtendedHours?id=@applicationId&process=@process&extId=@item.Id">Open</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title mb-0">Extended Hours Application For @ViewBag.Outletinfo?.TradingName</div>
+        <div class="card-title mb-0">Selected Extended Hours Application For @ViewBag.Outletinfo?.TradingName</div>
         @if (extendedHoursRecord != null)
         {
             <span class="badge bg-light text-dark border">@extendedHoursRecord.Reference</span>
@@ -115,47 +187,35 @@
     </div>
 </div>
 
-@if (canStartNewExtendedHours)
+@if (extendedHoursRecord == null)
 {
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Application Details</h5>
-        </div>
-        <div class="card-body">
-            <form action="/Postprocess/SaveExtendedHours" method="post">
-                <input type="hidden" name="applicationId" value="@applicationId" />
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Extended Hours Date</label>
-                        <input
-                            type="date"
-                            name="extendedHoursDate"
-                            class="form-control"
-                            value="@(activeExtendedHoursDate.HasValue ? activeExtendedHoursDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Justification</label>
-                        <textarea name="reasonForExtention" class="form-control" rows="5">@activeReason</textarea>
-                    </div>
-                    <div class="col-12 d-flex justify-content-end">
-                        <button class="btn btn-primary" type="submit">Initialize Application</button>
-                    </div>
-                </div>
-            </form>
-        </div>
+    <div class="alert alert-light border">
+        Select an existing extended hours application from the list above to manage its payment and submission steps.
     </div>
 }
-else if (activeExtendedHours != null && string.Equals(activeExtendedHoursStatus, "submitted", StringComparison.OrdinalIgnoreCase))
+else if (string.Equals(selectedExtendedHoursStatus, "submitted", StringComparison.OrdinalIgnoreCase))
 {
     <div class="alert alert-warning">
-        This extended hours application has already been submitted. The inspector will approve or reject it after examination.
+        This extended hours application has already been submitted. The Secretary will approve or reject it after examination.
+    </div>
+}
+else if (string.Equals(selectedExtendedHoursStatus, "approved", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="alert alert-success d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <span>This extended hours application has been approved.</span>
+        <a class="btn btn-success" href="/Documents/ExtendedHoursLicense?searchref=@currentExtendedHoursId">View Certificate</a>
+    </div>
+}
+else if (string.Equals(selectedExtendedHoursStatus, "rejected", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="alert alert-danger">
+        This extended hours application has been rejected.
     </div>
 }
 else if (!string.IsNullOrWhiteSpace(currentExtendedHoursId))
 {
     <div class="alert alert-info">
-        This extended hours application has been initialized. Payment is the next step, so the application fields are now read-only.
+        This extended hours application has been initialized. Payment and submission are handled independently for this request.
     </div>
 
     <div class="card">
@@ -184,7 +244,7 @@ else if (!string.IsNullOrWhiteSpace(currentExtendedHoursId))
                 </div>
                 <div class="border rounded p-3">
                     <div class="fw-semibold mb-1">Step 3: Continue To Submit</div>
-                    <div class="text-muted mb-3">After Paynow confirms payment, continue to send the application to the inspector.</div>
+                    <div class="text-muted mb-3">After Paynow confirms payment, continue to send the application to the Secretary.</div>
                     @if (canSubmitExtendedHours)
                     {
                         <form action="/Postprocess/SubmitExtendedHours" method="post" class="d-inline">

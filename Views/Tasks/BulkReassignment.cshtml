@@ -10,7 +10,7 @@
             <h5 class="card-title">Bulk Task Reassignment</h5>
             <div class="card-header">
 
-                <form action="/Tasks/BulkReassignment" method="post"  enctytpe="multipart/form-data" class="row g-3">
+                <form action="/Tasks/BulkReassignment" method="post" enctype="multipart/form-data" class="row g-3" data-allow-multiple-submit="true">
 
                     <div class="row">
 
@@ -20,13 +20,14 @@
                                 <option value="">Select Task Stage</option>
 
                                 <option value="verification">verification </option>
+                                <option value="inspection">inspection </option>
                                 <option value="recommendation">recommendation </option>
                                 <option value="approval">approval </option>
 
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <input type="submit" value="Fetch Tasks" name="" class="btn btn-primary col-md-3 form-control" />
+                            <input type="submit" value="Fetch Tasks" name="" class="btn btn-primary col-md-3 form-control" data-allow-multiple-click="true" />
 
                         </div>
                     </div>
@@ -41,7 +42,7 @@
             {
 
 
-                <form action="/Tasks/BulkAction" method="post" enctytpe="multipart/form-data" class="row g-3">
+                <form action="/Tasks/BulkAction" method="post" enctype="multipart/form-data" class="row g-3" data-allow-multiple-submit="true">
                     @if (ViewBag.Examiners.Count <= 0) { }
                      else
                     {
@@ -63,7 +64,7 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <input type="submit" value="Reassign Task" name="" class="btn btn-primary col-md-3 form-control" />
+                                <input type="submit" value="Reassign Task" name="" class="btn btn-primary col-md-3 form-control" data-allow-multiple-click="true" />
 
                             </div>
                         </div>

@@ -17,15 +17,14 @@ using DNTCaptcha.Core;
 using LLB.Models.ViewModel;
 using System;
 using System.IO;
-using Microsoft.Extensions.Hosting;
 using System.Globalization;
 using IronPdf.Editing;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Web.CodeGeneration;
 using QRCoder;
 using System.Drawing.Imaging;
-using System.Drawing;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using System.Text;
 
 namespace LLB.Controllers
 {
@@ -65,7 +64,12 @@ namespace LLB.Controllers
 
             var pdf = PdfDocument.FromFile(pdfFilePath);
             var applications = _db.ApplicationInfo.Where(a => a.Id == searchref).FirstOrDefault();
-            var managers = _db.ManagersParticulars.Where(b => b.ApplicationId == searchref).ToList();
+            var managers = _db.ManagersParticulars
+                .Where(b => b.ApplicationId == searchref
+                    && (b.Status == "active"
+                        || b.Status == "pending-resigned"
+                        || b.Status == "pending-deceased"))
+                .ToList();
             var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == searchref).FirstOrDefault();
             var licenses = _db.LicenseTypes.Where(b => b.Id == applications.LicenseTypeID).FirstOrDefault();
             //var outletinfo = _db.OutletInfo.ToList();
@@ -374,6 +378,900 @@ namespace LLB.Controllers
             return new FileContentResult(byteArray, "application/pdf");
         }
 
+        [HttpGet("ExtendedHoursLicense")]
+        public IActionResult ExtendedHoursLicense(string searchref)
+        {
+            if (string.IsNullOrWhiteSpace(searchref))
+            {
+                TempData["error"] = "The extended hours certificate could not be found.";
+                return RedirectToAction("ExtendedHoursListings", "Home");
+            }
+
+            var extendedHours = FindExtendedHoursCertificate(searchref);
+            if (extendedHours == null || string.IsNullOrWhiteSpace(extendedHours.ApplicationId))
+            {
+                TempData["error"] = "The extended hours certificate could not be found.";
+                return RedirectToAction("ExtendedHoursListings", "Home");
+            }
+
+            if (!string.Equals(extendedHours.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["error"] = "The extended hours certificate is only available after the application has been approved.";
+                return RedirectToAction("ExtendedHours", "Postprocess", new { id = extendedHours.ApplicationId, process = "EXH" });
+            }
+
+            var application = _db.ApplicationInfo.FirstOrDefault(record => record.Id == extendedHours.ApplicationId);
+            var outlet = _db.OutletInfo.FirstOrDefault(record => record.ApplicationId == extendedHours.ApplicationId);
+            var license = application == null
+                ? null
+                : _db.LicenseTypes.FirstOrDefault(record => record.Id == application.LicenseTypeID);
+            var region = application == null
+                ? null
+                : _db.LicenseRegions.FirstOrDefault(record => record.Id == application.ApplicationType);
+
+            if (application == null || outlet == null)
+            {
+                TempData["error"] = "The extended hours certificate could not be generated because application details are incomplete.";
+                return RedirectToAction("ExtendedHoursListings", "Home");
+            }
+
+            var currentUserId = userManager.GetUserId(User);
+            if (User.IsInRole("client")
+                && !string.Equals(application.UserID, currentUserId, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(extendedHours.UserId, currentUserId, StringComparison.OrdinalIgnoreCase))
+            {
+                return Forbid();
+            }
+
+            var approvalDate = extendedHours.DateOfApproval ?? extendedHours.DateUpdated;
+            var issuedDate = approvalDate == default ? DateTime.Now : approvalDate;
+            var extendedHoursDate = extendedHours.ExtendedHoursDate == default
+                ? issuedDate
+                : extendedHours.ExtendedHoursDate;
+
+            var boardHeading = EncodeHtml("LIQUOR LICENSING BOARD");
+            var certificateTitle = EncodeHtml("Extended Hours Licence Certificate");
+            var rawTradingName = outlet.TradingName ?? application.BusinessName ?? "N/A";
+            var rawBusinessName = application.BusinessName ?? outlet.TradingName ?? "N/A";
+            var rawLlbNumber = application.LLBNum ?? "N/A";
+            var rawReference = extendedHours.Reference ?? "N/A";
+            var rawLicenseName = license?.LicenseName ?? "N/A";
+            var rawRegionName = region?.RegionName ?? "N/A";
+            var rawAddress = outlet.Address ?? application.OperationAddress ?? "N/A";
+            var rawCouncil = outlet.Council ?? "N/A";
+            var rawReason = extendedHours.ReasonForExtention ?? "Not provided";
+            var tradingName = EncodeHtml(rawTradingName);
+            var businessName = EncodeHtml(rawBusinessName);
+            var llbNumber = EncodeHtml(rawLlbNumber);
+            var reference = EncodeHtml(rawReference);
+            var licenseName = EncodeHtml(rawLicenseName);
+            var regionName = EncodeHtml(rawRegionName);
+            var address = EncodeHtml(rawAddress);
+            var council = EncodeHtml(rawCouncil);
+            var reason = EncodeHtml(rawReason);
+            var certificateStatement = EncodeHtml(
+                $"{rawTradingName} has been approved to operate under extended hours on {extendedHoursDate:dd MMMM yyyy}.");
+            var coatOfArmsDataUri = GetImageDataUri(Path.Combine(_env.WebRootPath, "front", "img", "IMG", "Coat_of_arms_of_ZimbabweB.png"));
+            var coatOfArmsMarkup = string.IsNullOrWhiteSpace(coatOfArmsDataUri)
+                ? string.Empty
+                : $"<div class='crest'><img src='{coatOfArmsDataUri}' alt='Zimbabwe Coat of Arms' /></div>";
+            var verificationReference = extendedHours.Reference ?? extendedHours.Id;
+            var verificationUrl = $"{Request.Scheme}://{Request.Host}/Documents/ExtendedHoursLicenseVerification?searchref={Uri.EscapeDataString(verificationReference)}";
+            var qrCodeDataUri = GenerateQrCodeDataUri(verificationUrl);
+            var qrLogoMarkup = string.IsNullOrWhiteSpace(coatOfArmsDataUri)
+                ? string.Empty
+                : $"<img class='qr-logo' src='{coatOfArmsDataUri}' alt='Zimbabwe Coat of Arms' />";
+            var qrCodeMarkup = string.IsNullOrWhiteSpace(qrCodeDataUri)
+                ? string.Empty
+                : $@"<div class='verification'>
+      <div class='verification-label'>Scan To Verify</div>
+      <div class='verification-qr'>
+        <img class='qr-code' src='{qrCodeDataUri}' alt='Certificate verification QR code' />
+        {qrLogoMarkup}
+      </div>
+      <div class='verification-caption'>Extended Hours Certificate</div>
+    </div>";
+
+            var html = $@"
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8' />
+  <style>
+    @@page {{
+      size: A4 portrait;
+      margin: 0;
+    }}
+    html,
+    body {{
+      font-family: 'Times New Roman', serif;
+      color: #10243d;
+      margin: 0;
+      width: 210mm;
+      height: 297mm;
+    }}
+    .certificate {{
+      width: 210mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      border: 8px solid #b48a3c;
+      padding: 10mm 10mm 8mm 10mm;
+      position: relative;
+      background: #fffdfa;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }}
+    .certificate::before {{
+      content: '';
+      position: absolute;
+      inset: 3mm;
+      border: 1px solid #d4bf8d;
+      pointer-events: none;
+    }}
+    .header {{
+      text-align: center;
+      margin-bottom: 8px;
+    }}
+    .board {{
+      font-size: 13.5px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #7a5a1c;
+      margin-bottom: 4px;
+      font-weight: bold;
+      line-height: 1.25;
+    }}
+    .crest {{
+      display: flex;
+      justify-content: center;
+      margin: 2px 0 6px 0;
+    }}
+    .crest img {{
+      width: 22mm;
+      height: auto;
+    }}
+    h1 {{
+      font-size: 29px;
+      margin: 0 0 3px 0;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      line-height: 1.2;
+    }}
+    .subtitle {{
+      font-size: 11px;
+      margin: 0;
+      color: #4d5c6d;
+      line-height: 1.35;
+    }}
+    .statement {{
+      margin: 8px 0 8px 0;
+      padding-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }}
+    .emphasis {{
+      font-weight: bold;
+      color: #0b4a76;
+    }}
+    .details-wrap {{
+      flex: 1 1 auto;
+      display: flex;
+      margin-top: 4px;
+      min-height: 0;
+    }}
+    .details {{
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 11.6px;
+      flex: 1 1 auto;
+    }}
+    .details tbody {{
+      height: 100%;
+    }}
+    .details tbody tr {{
+      height: 10%;
+    }}
+    .details th,
+    .details td {{
+      border: 1px solid #d7dfe8;
+      padding: 7px 7px;
+      vertical-align: middle;
+      font-size: 13.2px;
+      line-height: 1.4;
+    }}
+    .details th {{
+      width: 28%;
+      text-align: left;
+      background: #f4efe2;
+      color: #5f4d24;
+      text-transform: uppercase;
+      font-size: 13.2px;
+      letter-spacing: 0.45px;
+    }}
+    .declaration {{
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #f8fafc;
+      border-left: 3px solid #0b4a76;
+      font-size: 11.2px;
+      line-height: 1.45;
+    }}
+    .body-content {{
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+    }}
+    .bottom-row {{
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: end;
+      gap: 10px;
+    }}
+    .signature {{
+      min-width: 130px;
+      padding-top: 16px;
+      border-top: 1px solid #10243d;
+      text-align: center;
+      font-size: 10.6px;
+      line-height: 1.35;
+      justify-self: end;
+    }}
+    .issued {{
+      font-size: 10.6px;
+      line-height: 1.45;
+      align-self: end;
+    }}
+    .verification {{
+      text-align: center;
+      align-self: end;
+    }}
+    .verification-qr {{
+      position: relative;
+      width: 34mm;
+      height: 34mm;
+      margin: 0 auto 3px auto;
+    }}
+    .verification-qr .qr-code {{
+      width: 100%;
+      height: 100%;
+      display: block;
+    }}
+    .verification-qr .qr-logo {{
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 9.5mm;
+      height: 9.5mm;
+      object-fit: contain;
+      background: #fffdfa;
+      border-radius: 50%;
+      padding: 1mm;
+      box-sizing: border-box;
+    }}
+    .verification-label {{
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: bold;
+      color: #7a5a1c;
+      margin-bottom: 2px;
+    }}
+    .verification-caption {{
+      font-size: 9px;
+      color: #4d5c6d;
+      line-height: 1.3;
+    }}
+  </style>
+</head>
+<body>
+  <div class='certificate'>
+    <div class='body-content'>
+      <div class='header'>
+        <div class='board'>{boardHeading}</div>
+        {coatOfArmsMarkup}
+        <h1>{certificateTitle}</h1>
+        <p class='subtitle'>This certificate confirms board approval for extended trading hours on the stated date.</p>
+      </div>
+
+      <div class='statement'>
+        This is to certify that <span class='emphasis'>{tradingName}</span>, operating under
+        LLB Licence Number <span class='emphasis'>{llbNumber}</span>, has been authorised by the
+        Liquor Licensing Board to trade on extended hours for <span class='emphasis'>{extendedHoursDate:dd MMMM yyyy}</span>.
+      </div>
+
+      <div class='details-wrap'>
+        <table class='details'>
+          <tbody>
+            <tr>
+              <th>Trading Name</th>
+              <td>{tradingName}</td>
+            </tr>
+            <tr>
+              <th>Business Name</th>
+              <td>{businessName}</td>
+            </tr>
+            <tr>
+              <th>Licence Type</th>
+              <td>{licenseName}</td>
+            </tr>
+            <tr>
+              <th>Region</th>
+              <td>{regionName}</td>
+            </tr>
+            <tr>
+              <th>Address</th>
+              <td>{address}</td>
+            </tr>
+            <tr>
+              <th>Council</th>
+              <td>{council}</td>
+            </tr>
+            <tr>
+              <th>Extended Hours Date</th>
+              <td>{extendedHoursDate:dddd, dd MMMM yyyy}</td>
+            </tr>
+            <tr>
+              <th>Application Reference</th>
+              <td>{reference}</td>
+            </tr>
+            <tr>
+              <th>Approved On</th>
+              <td>{issuedDate:dd MMMM yyyy}</td>
+            </tr>
+            <tr>
+              <th>Purpose / Justification</th>
+              <td>{reason}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class='declaration'>
+        {certificateStatement} This approval is valid only for the date stated on this certificate and must be presented together with the main liquor licence whenever required by an inspecting authority.
+      </div>
+    </div>
+
+    <div class='bottom-row'>
+      <div class='issued'>
+        <div><strong>Issued Date:</strong> {issuedDate:dd MMMM yyyy}</div>
+        <div><strong>Certificate Ref:</strong> {reference}</div>
+      </div>
+      {qrCodeMarkup}
+      <div class='signature'>
+        For: Liquor Licensing Board
+      </div>
+    </div>
+  </div>
+</body>
+</html>";
+
+            var renderer = new HtmlToPdf();
+            renderer.PrintOptions.PaperSize = PdfPrintOptions.PdfPaperSize.A4;
+            renderer.PrintOptions.MarginTop = 0;
+            renderer.PrintOptions.MarginBottom = 0;
+            renderer.PrintOptions.MarginLeft = 0;
+            renderer.PrintOptions.MarginRight = 0;
+            var pdf = renderer.RenderHtmlAsPdf(html);
+
+            return File(pdf.BinaryData, "application/pdf");
+        }
+
+        [AllowAnonymous]
+        [HttpGet("ExtendedHoursLicenseVerification")]
+        public IActionResult ExtendedHoursLicenseVerification(string searchref)
+        {
+            var model = new ExtendedHoursCertificateVerificationViewModel();
+
+            if (string.IsNullOrWhiteSpace(searchref))
+            {
+                model.IsValid = false;
+                model.Message = "No certificate reference was supplied.";
+                return View(model);
+            }
+
+            var extendedHours = FindExtendedHoursCertificate(searchref);
+            if (extendedHours == null || string.IsNullOrWhiteSpace(extendedHours.ApplicationId))
+            {
+                model.IsValid = false;
+                model.Message = "The certificate could not be verified from the supplied reference.";
+                return View(model);
+            }
+
+            var application = _db.ApplicationInfo.FirstOrDefault(record => record.Id == extendedHours.ApplicationId);
+            var outlet = _db.OutletInfo.FirstOrDefault(record => record.ApplicationId == extendedHours.ApplicationId);
+            var license = application == null
+                ? null
+                : _db.LicenseTypes.FirstOrDefault(record => record.Id == application.LicenseTypeID);
+            var region = application == null
+                ? null
+                : _db.LicenseRegions.FirstOrDefault(record => record.Id == application.ApplicationType);
+
+            if (application == null || outlet == null)
+            {
+                model.IsValid = false;
+                model.Message = "The certificate record exists, but its application details are incomplete.";
+                return View(model);
+            }
+
+            var approvalDate = extendedHours.DateOfApproval ?? extendedHours.DateUpdated;
+            var issuedDate = approvalDate == default ? (DateTime?)null : approvalDate;
+            var extendedHoursDate = extendedHours.ExtendedHoursDate == default
+                ? (DateTime?)null
+                : extendedHours.ExtendedHoursDate;
+
+            model.IsValid = string.Equals(extendedHours.Status, "Approved", StringComparison.OrdinalIgnoreCase);
+            model.Message = model.IsValid
+                ? "This certificate is valid and matches an approved extended hours application in the system."
+                : $"This record was found, but its current status is '{extendedHours.Status ?? "Unknown"}'.";
+            model.CertificateReference = extendedHours.Reference ?? extendedHours.Id;
+            model.Status = extendedHours.Status ?? "Unknown";
+            model.TradingName = outlet.TradingName ?? application.BusinessName ?? "N/A";
+            model.BusinessName = application.BusinessName ?? outlet.TradingName ?? "N/A";
+            model.LLBNumber = application.LLBNum ?? "N/A";
+            model.LicenseName = license?.LicenseName ?? "N/A";
+            model.RegionName = region?.RegionName ?? "N/A";
+            model.Council = outlet.Council ?? "N/A";
+            model.Address = outlet.Address ?? application.OperationAddress ?? "N/A";
+            model.ExtendedHoursDate = extendedHoursDate;
+            model.ApprovedOn = issuedDate;
+            model.Justification = extendedHours.ReasonForExtention ?? "Not provided";
+
+            return View(model);
+        }
+
+        [HttpGet("TemporaryRetailLicense")]
+        public IActionResult TemporaryRetailLicense(string searchref)
+        {
+            if (string.IsNullOrWhiteSpace(searchref))
+            {
+                TempData["error"] = "The temporary retail certificate could not be found.";
+                return RedirectToAction("TemporaryRetailListings", "Home");
+            }
+
+            var temporaryRetail = FindTemporaryRetailCertificate(searchref);
+            if (temporaryRetail == null || string.IsNullOrWhiteSpace(temporaryRetail.ApplicationId))
+            {
+                TempData["error"] = "The temporary retail certificate could not be found.";
+                return RedirectToAction("TemporaryRetailListings", "Home");
+            }
+
+            if (!string.Equals(temporaryRetail.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["error"] = "The temporary retail certificate is only available after the application has been approved.";
+                return RedirectToAction("TemporaryRetails", "Postprocess", new { id = temporaryRetail.ApplicationId, process = "TRL" });
+            }
+
+            var application = _db.ApplicationInfo.FirstOrDefault(record => record.Id == temporaryRetail.ApplicationId);
+            var outlet = _db.OutletInfo.FirstOrDefault(record => record.ApplicationId == temporaryRetail.ApplicationId);
+            var license = application == null
+                ? null
+                : _db.LicenseTypes.FirstOrDefault(record => record.Id == application.LicenseTypeID);
+            var region = application == null
+                ? null
+                : _db.LicenseRegions.FirstOrDefault(record => record.Id == application.ApplicationType);
+
+            if (application == null || outlet == null)
+            {
+                TempData["error"] = "The temporary retail certificate could not be generated because application details are incomplete.";
+                return RedirectToAction("TemporaryRetailListings", "Home");
+            }
+
+            var currentUserId = userManager.GetUserId(User);
+            if (User.IsInRole("client")
+                && !string.Equals(application.UserID, currentUserId, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(temporaryRetail.UserId, currentUserId, StringComparison.OrdinalIgnoreCase))
+            {
+                return Forbid();
+            }
+
+            var approvalDate = temporaryRetail.DateOfApproval ?? temporaryRetail.DateUpdated;
+            var issuedDate = approvalDate == default ? DateTime.Now : approvalDate;
+            var temporaryRetailDate = temporaryRetail.TemporaryRetailsDate == default
+                ? issuedDate
+                : temporaryRetail.TemporaryRetailsDate;
+
+            var boardHeading = EncodeHtml("L I Q U O R   L I C E N S I N G   B O A R D");
+            var certificateTitle = EncodeHtml("Temporary Retail Licence Certificate");
+            var rawTradingName = outlet.TradingName ?? application.BusinessName ?? "N/A";
+            var rawBusinessName = application.BusinessName ?? outlet.TradingName ?? "N/A";
+            var rawLlbNumber = application.LLBNum ?? "N/A";
+            var rawReference = temporaryRetail.Reference ?? "N/A";
+            var rawLicenseName = license?.LicenseName ?? "N/A";
+            var rawRegionName = region?.RegionName ?? "N/A";
+            var rawAddress = temporaryRetail.LocationAddress ?? outlet.Address ?? application.OperationAddress ?? "N/A";
+            var rawCouncil = outlet.Council ?? "N/A";
+            var rawReason = temporaryRetail.ReasonForExtention ?? "Not provided";
+            var tradingName = EncodeHtml(rawTradingName);
+            var businessName = EncodeHtml(rawBusinessName);
+            var llbNumber = EncodeHtml(rawLlbNumber);
+            var reference = EncodeHtml(rawReference);
+            var licenseName = EncodeHtml(rawLicenseName);
+            var regionName = EncodeHtml(rawRegionName);
+            var address = EncodeHtml(rawAddress);
+            var council = EncodeHtml(rawCouncil);
+            var reason = EncodeHtml(rawReason);
+            var certificateStatement = EncodeHtml(
+                $"{rawTradingName} has been approved to conduct temporary retail trading on {temporaryRetailDate:dd MMMM yyyy} at {rawAddress}.");
+            var coatOfArmsDataUri = GetImageDataUri(Path.Combine(_env.WebRootPath, "front", "img", "IMG", "Coat_of_arms_of_ZimbabweB.png"));
+            var coatOfArmsMarkup = string.IsNullOrWhiteSpace(coatOfArmsDataUri)
+                ? string.Empty
+                : $"<div class='crest'><img src='{coatOfArmsDataUri}' alt='Zimbabwe Coat of Arms' /></div>";
+            var verificationReference = temporaryRetail.Reference ?? temporaryRetail.Id;
+            var verificationUrl = $"{Request.Scheme}://{Request.Host}/Documents/TemporaryRetailLicenseVerification?searchref={Uri.EscapeDataString(verificationReference)}";
+            var qrCodeDataUri = GenerateQrCodeDataUri(verificationUrl);
+            var qrLogoMarkup = string.IsNullOrWhiteSpace(coatOfArmsDataUri)
+                ? string.Empty
+                : $"<img class='qr-logo' src='{coatOfArmsDataUri}' alt='Zimbabwe Coat of Arms' />";
+            var qrCodeMarkup = string.IsNullOrWhiteSpace(qrCodeDataUri)
+                ? string.Empty
+                : $@"<div class='verification'>
+      <div class='verification-label'>Scan To Verify</div>
+      <div class='verification-qr'>
+        <img class='qr-code' src='{qrCodeDataUri}' alt='Certificate verification QR code' />
+        {qrLogoMarkup}
+      </div>
+      <div class='verification-caption'>Temporary Retail Certificate</div>
+    </div>";
+
+            var html = $@"
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8' />
+  <style>
+    @@page {{
+      size: A4 portrait;
+      margin: 0;
+    }}
+    html,
+    body {{
+      font-family: 'Times New Roman', serif;
+      color: #10243d;
+      margin: 0;
+      width: 210mm;
+      height: 297mm;
+    }}
+    .certificate {{
+      width: 210mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      border: 8px solid #b48a3c;
+      padding: 10mm 10mm 8mm 10mm;
+      position: relative;
+      background: #fffdfa;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }}
+    .certificate::before {{
+      content: '';
+      position: absolute;
+      inset: 3mm;
+      border: 1px solid #d4bf8d;
+      pointer-events: none;
+    }}
+    .header {{
+      text-align: center;
+      margin-bottom: 8px;
+    }}
+    .board {{
+      font-size: 13.5px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #7a5a1c;
+      margin-bottom: 4px;
+      font-weight: bold;
+      line-height: 1.25;
+    }}
+    .crest {{
+      display: flex;
+      justify-content: center;
+      margin: 2px 0 6px 0;
+    }}
+    .crest img {{
+      width: 22mm;
+      height: auto;
+    }}
+    h1 {{
+      font-size: 24px;
+      margin: 0 0 3px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      line-height: 1.2;
+    }}
+    .subtitle {{
+      font-size: 11px;
+      margin: 0;
+      color: #4d5c6d;
+      line-height: 1.35;
+    }}
+    .statement {{
+      margin: 8px 0 8px 0;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }}
+    .emphasis {{
+      font-weight: bold;
+      color: #0b4a76;
+    }}
+    .details-wrap {{
+      flex: 1 1 auto;
+      display: flex;
+      margin-top: 4px;
+      min-height: 0;
+    }}
+    .details {{
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 11.6px;
+      flex: 1 1 auto;
+    }}
+    .details tbody {{
+      height: 100%;
+    }}
+    .details tbody tr {{
+      height: 10%;
+    }}
+    .details th,
+    .details td {{
+      border: 1px solid #d7dfe8;
+      padding: 7px 7px;
+      vertical-align: middle;
+      line-height: 1.4;
+    }}
+    .details th {{
+      width: 28%;
+      text-align: left;
+      background: #f4efe2;
+      color: #5f4d24;
+      text-transform: uppercase;
+      font-size: 10.2px;
+      letter-spacing: 0.45px;
+    }}
+    .declaration {{
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #f8fafc;
+      border-left: 3px solid #0b4a76;
+      font-size: 11.2px;
+      line-height: 1.45;
+    }}
+    .body-content {{
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+    }}
+    .bottom-row {{
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: end;
+      gap: 10px;
+    }}
+    .signature {{
+      min-width: 130px;
+      padding-top: 16px;
+      border-top: 1px solid #10243d;
+      text-align: center;
+      font-size: 10.6px;
+      line-height: 1.35;
+      justify-self: end;
+    }}
+    .issued {{
+      font-size: 10.6px;
+      line-height: 1.45;
+      align-self: end;
+    }}
+    .verification {{
+      text-align: center;
+      align-self: end;
+    }}
+    .verification-qr {{
+      position: relative;
+      width: 34mm;
+      height: 34mm;
+      margin: 0 auto 3px auto;
+    }}
+    .verification-qr .qr-code {{
+      width: 100%;
+      height: 100%;
+      display: block;
+    }}
+    .verification-qr .qr-logo {{
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 9.5mm;
+      height: 9.5mm;
+      object-fit: contain;
+      background: #fffdfa;
+      border-radius: 50%;
+      padding: 1mm;
+      box-sizing: border-box;
+    }}
+    .verification-label {{
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: bold;
+      color: #7a5a1c;
+      margin-bottom: 2px;
+    }}
+    .verification-caption {{
+      font-size: 9px;
+      color: #4d5c6d;
+      line-height: 1.3;
+    }}
+  </style>
+</head>
+<body>
+  <div class='certificate'>
+    <div class='body-content'>
+      <div class='header'>
+        <div class='board'>{boardHeading}</div>
+        {coatOfArmsMarkup}
+        <h1>{certificateTitle}</h1>
+        <p class='subtitle'>This certificate confirms board approval for temporary retail trading on the stated date.</p>
+      </div>
+
+      <div class='statement'>
+        This is to certify that <span class='emphasis'>{tradingName}</span>, operating under
+        LLB Licence Number <span class='emphasis'>{llbNumber}</span>, has been authorised by the
+        Liquor Licensing Board to conduct temporary retail trading on <span class='emphasis'>{temporaryRetailDate:dd MMMM yyyy}</span>.
+      </div>
+
+      <div class='details-wrap'>
+        <table class='details'>
+          <tbody>
+            <tr>
+              <th>Trading Name</th>
+              <td>{tradingName}</td>
+            </tr>
+            <tr>
+              <th>Business Name</th>
+              <td>{businessName}</td>
+            </tr>
+            <tr>
+              <th>Licence Type</th>
+              <td>{licenseName}</td>
+            </tr>
+            <tr>
+              <th>Region</th>
+              <td>{regionName}</td>
+            </tr>
+            <tr>
+              <th>Approved Venue</th>
+              <td>{address}</td>
+            </tr>
+            <tr>
+              <th>Council</th>
+              <td>{council}</td>
+            </tr>
+            <tr>
+              <th>Temporary Retail Date</th>
+              <td>{temporaryRetailDate:dddd, dd MMMM yyyy}</td>
+            </tr>
+            <tr>
+              <th>Application Reference</th>
+              <td>{reference}</td>
+            </tr>
+            <tr>
+              <th>Approved On</th>
+              <td>{issuedDate:dd MMMM yyyy}</td>
+            </tr>
+            <tr>
+              <th>Purpose / Justification</th>
+              <td>{reason}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class='declaration'>
+        {certificateStatement} This approval is valid only for the date and venue stated on this certificate and must be presented together with the main liquor licence whenever required by an inspecting authority.
+      </div>
+    </div>
+
+    <div class='bottom-row'>
+      <div class='issued'>
+        <div><strong>Issued Date:</strong> {issuedDate:dd MMMM yyyy}</div>
+        <div><strong>Certificate Ref:</strong> {reference}</div>
+      </div>
+      {qrCodeMarkup}
+      <div class='signature'>
+        For: Liquor Licensing Board
+      </div>
+    </div>
+  </div>
+</body>
+</html>";
+
+            var renderer = new HtmlToPdf();
+            renderer.PrintOptions.PaperSize = PdfPrintOptions.PdfPaperSize.A4;
+            renderer.PrintOptions.MarginTop = 0;
+            renderer.PrintOptions.MarginBottom = 0;
+            renderer.PrintOptions.MarginLeft = 0;
+            renderer.PrintOptions.MarginRight = 0;
+            var pdf = renderer.RenderHtmlAsPdf(html);
+
+            return File(pdf.BinaryData, "application/pdf");
+        }
+
+        [AllowAnonymous]
+        [HttpGet("TemporaryRetailLicenseVerification")]
+        public IActionResult TemporaryRetailLicenseVerification(string searchref)
+        {
+            var model = new TemporaryRetailCertificateVerificationViewModel();
+
+            if (string.IsNullOrWhiteSpace(searchref))
+            {
+                model.IsValid = false;
+                model.Message = "No certificate reference was supplied.";
+                return View(model);
+            }
+
+            var temporaryRetail = FindTemporaryRetailCertificate(searchref);
+            if (temporaryRetail == null || string.IsNullOrWhiteSpace(temporaryRetail.ApplicationId))
+            {
+                model.IsValid = false;
+                model.Message = "The certificate could not be verified from the supplied reference.";
+                return View(model);
+            }
+
+            var application = _db.ApplicationInfo.FirstOrDefault(record => record.Id == temporaryRetail.ApplicationId);
+            var outlet = _db.OutletInfo.FirstOrDefault(record => record.ApplicationId == temporaryRetail.ApplicationId);
+            var license = application == null
+                ? null
+                : _db.LicenseTypes.FirstOrDefault(record => record.Id == application.LicenseTypeID);
+            var region = application == null
+                ? null
+                : _db.LicenseRegions.FirstOrDefault(record => record.Id == application.ApplicationType);
+
+            if (application == null || outlet == null)
+            {
+                model.IsValid = false;
+                model.Message = "The certificate record exists, but its application details are incomplete.";
+                return View(model);
+            }
+
+            var approvalDate = temporaryRetail.DateOfApproval ?? temporaryRetail.DateUpdated;
+            var issuedDate = approvalDate == default ? (DateTime?)null : approvalDate;
+            var temporaryRetailDate = temporaryRetail.TemporaryRetailsDate == default
+                ? (DateTime?)null
+                : temporaryRetail.TemporaryRetailsDate;
+
+            model.IsValid = string.Equals(temporaryRetail.Status, "Approved", StringComparison.OrdinalIgnoreCase);
+            model.Message = model.IsValid
+                ? "This certificate is valid and matches an approved temporary retail application in the system."
+                : $"This record was found, but its current status is '{temporaryRetail.Status ?? "Unknown"}'.";
+            model.CertificateReference = temporaryRetail.Reference ?? temporaryRetail.Id;
+            model.Status = temporaryRetail.Status ?? "Unknown";
+            model.TradingName = outlet.TradingName ?? application.BusinessName ?? "N/A";
+            model.BusinessName = application.BusinessName ?? outlet.TradingName ?? "N/A";
+            model.LLBNumber = application.LLBNum ?? "N/A";
+            model.LicenseName = license?.LicenseName ?? "N/A";
+            model.RegionName = region?.RegionName ?? "N/A";
+            model.Council = outlet.Council ?? "N/A";
+            model.Address = temporaryRetail.LocationAddress ?? outlet.Address ?? application.OperationAddress ?? "N/A";
+            model.TemporaryRetailDate = temporaryRetailDate;
+            model.ApprovedOn = issuedDate;
+            model.Justification = temporaryRetail.ReasonForExtention ?? "Not provided";
+
+            return View(model);
+        }
+
         [Route("E")]
         public IActionResult Testsc(string searchref)
         {
@@ -388,6 +1286,76 @@ namespace LLB.Controllers
             ViewBag.title = "New Search";
 
             return new FileContentResult(byteArray, "application/pdf");
+        }
+
+        private static string EncodeHtml(string? value)
+        {
+            return WebUtility.HtmlEncode(value ?? string.Empty);
+        }
+
+        private static string SanitizeFileName(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return "certificate";
+            }
+
+            var builder = new StringBuilder(value.Length);
+            foreach (var character in value)
+            {
+                builder.Append(Array.IndexOf(Path.GetInvalidFileNameChars(), character) >= 0 ? '-' : character);
+            }
+
+            return builder.ToString();
+        }
+
+        private ExtendedHours? FindExtendedHoursCertificate(string searchref)
+        {
+            var normalizedReference = searchref.Trim();
+            return _db.ExtendedHours.FirstOrDefault(record =>
+                record.Id == normalizedReference || record.Reference == normalizedReference);
+        }
+
+        private TemporaryRetails? FindTemporaryRetailCertificate(string searchref)
+        {
+            var normalizedReference = searchref.Trim();
+            return _db.TemporaryRetails.FirstOrDefault(record =>
+                record.Id == normalizedReference || record.Reference == normalizedReference);
+        }
+
+        private static string GetImageDataUri(string path)
+        {
+            if (!System.IO.File.Exists(path))
+            {
+                return string.Empty;
+            }
+
+            var extension = Path.GetExtension(path).ToLowerInvariant();
+            var mimeType = extension switch
+            {
+                ".png" => "image/png",
+                ".jpg" => "image/jpeg",
+                ".jpeg" => "image/jpeg",
+                ".svg" => "image/svg+xml",
+                _ => "application/octet-stream"
+            };
+
+            var bytes = System.IO.File.ReadAllBytes(path);
+            return $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}";
+        }
+
+        private static string GenerateQrCodeDataUri(string payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return string.Empty;
+            }
+
+            using var qrGenerator = new QRCodeGenerator();
+            using var qrCodeData = qrGenerator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.H);
+            var qrCode = new SvgQRCode(qrCodeData);
+            var svg = qrCode.GetGraphic(12);
+            return $"data:image/svg+xml;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(svg))}";
         }
 
     }

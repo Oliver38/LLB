@@ -632,6 +632,14 @@ namespace LLB.Controllers
                 .FirstOrDefault();
         }
 
+        private List<ExtendedHours> GetExtendedHoursApplications(string applicationId)
+        {
+            return _db.ExtendedHours
+                .Where(application => application.ApplicationId == applicationId)
+                .OrderByDescending(application => application.DateAdded)
+                .ToList();
+        }
+
         private ExtendedHours GetLatestActiveExtendedHoursApplication(string applicationId)
         {
             return _db.ExtendedHours
@@ -972,7 +980,7 @@ namespace LLB.Controllers
 
 
         [HttpGet("ExtendedHours")]
-        public IActionResult ExtendedHours(string id, string process)
+        public IActionResult ExtendedHours(string id, string process, string? extId)
         {
             var appinfo = _db.ApplicationInfo.Where(b => b.Id == id).FirstOrDefault();
             if (appinfo == null)
@@ -980,6 +988,7 @@ namespace LLB.Controllers
                 TempData["error"] = "Application information could not be found.";
                 return RedirectToAction("Dashboard", "Home");
             }
+            
 
             var mainlicense = _db.LicenseTypes.Where(z => z.Id == appinfo.LicenseTypeID).FirstOrDefault();
             var licenseRegion = _db.LicenseRegions.Where(d => d.Id == appinfo.ApplicationType).FirstOrDefault();
@@ -991,15 +1000,24 @@ namespace LLB.Controllers
             }
 
             var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == id && c.Status == "active").FirstOrDefault();
-            var activeExtendedHours = GetLatestActiveExtendedHoursApplication(id);
-            var latestExtendedHours = activeExtendedHours ?? GetLatestExtendedHoursApplication(id);
-            var payment = activeExtendedHours == null
+            var extendedHoursRecords = GetExtendedHoursApplications(id);
+            var selectedExtendedHours = !string.IsNullOrWhiteSpace(extId)
+                ? extendedHoursRecords.FirstOrDefault(record => record.Id == extId)
+                : GetLatestActiveExtendedHoursApplication(id) ?? extendedHoursRecords.FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(extId) && selectedExtendedHours == null)
+            {
+                TempData["error"] = "The selected extended hours application could not be found.";
+                return RedirectToAction("ExtendedHours", new { id, process = "EXH" });
+            }
+
+            var payment = selectedExtendedHours == null
                 ? null
-                : RefreshExtendedHoursPaymentStatus(activeExtendedHours);
+                : RefreshExtendedHoursPaymentStatus(selectedExtendedHours);
 
             var isDraftPaid = payment != null && HasPaymentStatus(payment, "Paid");
-            var hasSubmittedApplication = activeExtendedHours != null
-                && string.Equals(activeExtendedHours.Status, "submitted", StringComparison.OrdinalIgnoreCase);
+            var hasSubmittedApplication = selectedExtendedHours != null
+                && string.Equals(selectedExtendedHours.Status, "submitted", StringComparison.OrdinalIgnoreCase);
 
             var getFee = inspectionFees.Fee;
             ViewBag.License = mainlicense;
@@ -1011,16 +1029,16 @@ namespace LLB.Controllers
             ViewBag.Outletinfo = outletinfo;
             ViewBag.Appinfo = appinfo;
             ViewBag.ServeFee = getFee;
-            ViewBag.ExtendedHoursRecord = latestExtendedHours;
-            ViewBag.ActiveExtendedHours = activeExtendedHours;
+            ViewBag.ExtendedHoursRecord = selectedExtendedHours;
+            ViewBag.ExtendedHoursRecords = extendedHoursRecords;
             ViewBag.IsExtendedHoursPaid = isDraftPaid;
-            ViewBag.CanStartNewExtendedHours = activeExtendedHours == null;
-            ViewBag.CanSubmitExtendedHours = activeExtendedHours != null
-                && string.Equals(activeExtendedHours.Status, "inprogress", StringComparison.OrdinalIgnoreCase)
+            ViewBag.CanStartNewExtendedHours = true;
+            ViewBag.CanSubmitExtendedHours = selectedExtendedHours != null
+                && string.Equals(selectedExtendedHours.Status, "inprogress", StringComparison.OrdinalIgnoreCase)
                 && isDraftPaid;
             ViewBag.IsExtendedHoursSubmitted = hasSubmittedApplication;
             ViewBag.ExtendedHoursWarning = hasSubmittedApplication
-                ? "This extended hours application has already been submitted and is awaiting inspector review."
+                ? "This extended hours application has already been submitted and is awaiting secretary review."
                 : null;
 
             return View();
@@ -1060,37 +1078,27 @@ namespace LLB.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            var activeExtendedHours = GetLatestActiveExtendedHoursApplication(applicationId);
-            ExtendedHours draft;
-
             if (!string.IsNullOrWhiteSpace(extId))
             {
-                TempData["error"] = "This extended hours application has already been initialized. Complete payment or continue submission.";
+                TempData["error"] = "Initialize each extended hours request as a separate application so it keeps its own details and payment.";
                 return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId });
             }
-            else if (activeExtendedHours != null)
-            {
-                TempData["error"] = "An extended hours application has already been initialized for this licence. Complete payment or wait for the current application to be completed before starting a new one.";
-                return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = activeExtendedHours.Id });
-            }
-            else
-            {
-                draft = new ExtendedHours
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    UserId = currentUserId,
-                    Status = "inprogress",
-                    Reference = ReferenceHelper.GeneratePostFormationReferenceNumber(_db, "EXH"),
-                    ApplicationId = applicationId,
-                    PaidFee = fee.Value,
-                    PaymentStatus = "Not Paid",
-                    HoursOfExtension = string.Empty,
-                    DateAdded = DateTime.Now,
-                    DateUpdated = DateTime.Now
-                };
 
-                _db.Add(draft);
-            }
+            ExtendedHours draft = new ExtendedHours
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = currentUserId,
+                Status = "inprogress",
+                Reference = ReferenceHelper.GeneratePostFormationReferenceNumber(_db, "EXH"),
+                ApplicationId = applicationId,
+                PaidFee = fee.Value,
+                PaymentStatus = "Not Paid",
+                HoursOfExtension = string.Empty,
+                DateAdded = DateTime.Now,
+                DateUpdated = DateTime.Now
+            };
+
+            _db.Add(draft);
 
             var currentPayment = GetLatestExtendedHoursPaymentForRecord(draft);
 
@@ -1157,20 +1165,20 @@ namespace LLB.Controllers
 
             if (existingTask == null)
             {
-                var inspectorId = await _taskAllocationHelper.GetInspector(_db, userManager);
-                if (string.IsNullOrWhiteSpace(inspectorId))
+                var secretaryId = await _taskAllocationHelper.GetSecretary(_db, userManager);
+                if (string.IsNullOrWhiteSpace(secretaryId))
                 {
-                    TempData["error"] = "No inspector is currently available to receive the extended hours application.";
+                    TempData["error"] = "No secretary is currently available to receive the extended hours application.";
                     return RedirectToAction("ExtendedHours", new { id = extendedHours.ApplicationId, process = "EXH", extId = extendedHours.Id });
                 }
 
                 Tasks task = new Tasks();
                 task.Id = Guid.NewGuid().ToString();
                 task.ApplicationId = extendedHours.Id;
-                task.VerifierId = inspectorId;
+                task.ApproverId = secretaryId;
                 task.AssignerId = "system";
                 task.Service = "Extended Hours";
-                task.ExaminationStatus = "inspection";
+                task.ExaminationStatus = "approval";
                 task.Status = "assigned";
                 task.DateAdded = DateTime.Now;
                 task.DateUpdated = DateTime.Now;
@@ -1183,7 +1191,7 @@ namespace LLB.Controllers
             _db.Update(extendedHours);
             _db.SaveChanges();
 
-            TempData["success"] = "Extended hours application submitted successfully and sent to the inspector.";
+            TempData["success"] = "Extended hours application submitted successfully and sent to the secretary.";
             return RedirectToAction("ExtendedHours", new { id = extendedHours.ApplicationId, process = "EXH", extId = extendedHours.Id });
         }
 
@@ -1394,7 +1402,7 @@ namespace LLB.Controllers
                 && isDraftPaid;
             ViewBag.IsTemporaryRetailSubmitted = hasSubmittedApplication;
             ViewBag.TemporaryRetailWarning = hasSubmittedApplication
-                ? "This temporary retail application has already been submitted and is awaiting inspector review."
+                ? "This temporary retail application has already been submitted and is awaiting secretary review."
                 : null;
 
             return View();
@@ -1516,20 +1524,20 @@ namespace LLB.Controllers
 
             if (existingTask == null)
             {
-                var inspectorId = await _taskAllocationHelper.GetInspector(_db, userManager);
-                if (string.IsNullOrWhiteSpace(inspectorId))
+                var secretaryId = await _taskAllocationHelper.GetSecretary(_db, userManager);
+                if (string.IsNullOrWhiteSpace(secretaryId))
                 {
-                    TempData["error"] = "No inspector is currently available to receive the temporary retail application.";
+                    TempData["error"] = "No secretary is currently available to receive the temporary retail application.";
                     return RedirectToAction("TemporaryRetails", new { id = temporaryRetail.ApplicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
                 }
 
                 Tasks task = new Tasks();
                 task.Id = Guid.NewGuid().ToString();
                 task.ApplicationId = temporaryRetail.Id;
-                task.VerifierId = inspectorId;
+                task.ApproverId = secretaryId;
                 task.AssignerId = "system";
                 task.Service = "Temporary Retails";
-                task.ExaminationStatus = "inspection";
+                task.ExaminationStatus = "approval";
                 task.Status = "assigned";
                 task.DateAdded = DateTime.Now;
                 task.DateUpdated = DateTime.Now;
@@ -1542,7 +1550,7 @@ namespace LLB.Controllers
             _db.Update(temporaryRetail);
             _db.SaveChanges();
 
-            TempData["success"] = "Temporary retail application submitted successfully and sent to the inspector.";
+            TempData["success"] = "Temporary retail application submitted successfully and sent to the secretary.";
             return RedirectToAction("TemporaryRetails", new { id = temporaryRetail.ApplicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
         }
 

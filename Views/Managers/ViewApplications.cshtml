@@ -1,0 +1,148 @@
+@using System.Globalization
+@using System.Linq
+@model LLB.Models.ViewModel.ManagerChangeReviewViewModel
+
+@{
+    Layout = "_LayoutMain";
+    var currentStatus = Model.ChangeApplication?.Status ?? "Unknown";
+    var paymentStatus = Model.Payment?.PaymentStatus ?? Model.Payment?.Status ?? Model.ChangeApplication?.PaymentStatus ?? "Not Paid";
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Manager Change Review For @Model.Outlet?.TradingName</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <tbody class="table-light">
+                    <tr>
+                        <th>Reference</th>
+                        <td>@Model.ChangeApplication?.Reference</td>
+                    </tr>
+                    <tr>
+                        <th>Outlet Name</th>
+                        <td>@Model.Outlet?.TradingName</td>
+                    </tr>
+                    <tr>
+                        <th>Licence</th>
+                        <td>@Model.License?.LicenseName</td>
+                    </tr>
+                    <tr>
+                        <th>Region</th>
+                        <td>@Model.Region?.RegionName</td>
+                    </tr>
+                    <tr>
+                        <th>Initiated By</th>
+                        <td>@Model.InitiatedByUserName</td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>@currentStatus</td>
+                    </tr>
+                    <tr>
+                        <th>New Managers Count</th>
+                        <td>@Model.NewManagersCount</td>
+                    </tr>
+                    <tr>
+                        <th>Total Fee</th>
+                        <td>@Model.TotalFee.ToString("0.00", CultureInfo.InvariantCulture)</td>
+                    </tr>
+                    <tr>
+                        <th>Payment Status</th>
+                        <td>@paymentStatus</td>
+                    </tr>
+                    <tr>
+                        <th>Paynow Reference</th>
+                        <td>@(Model.Payment?.PaynowRef ?? "N/A")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Requested Changes</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Surname</th>
+                        <th>National ID</th>
+                        <th>Address</th>
+                        <th>Status</th>
+                        <th>Documents</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Changes.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No manager changes were found for this application.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var manager in Model.Changes)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@manager.Name</td>
+                                <td>@manager.Surname</td>
+                                <td>@manager.NationalId</td>
+                                <td>@manager.Address</td>
+                                <td><span class="badge bg-light text-dark border">@manager.DisplayStatus</span></td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @if (!string.IsNullOrWhiteSpace(manager.Attachment))
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary" target="_blank" href="@Url.Content($"~/{manager.Attachment}")">ID</a>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(manager.Fingerprints))
+                                        {
+                                            <a class="btn btn-sm btn-outline-info" target="_blank" href="@Url.Content($"~/{manager.Fingerprints}")">Fingerprints</a>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(manager.Form55))
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary" target="_blank" href="@Url.Content($"~/{manager.Form55}")">Form 55</a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (string.Equals(currentStatus, "submitted", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="d-flex justify-content-end gap-2">
+        <form action="/Managers/Reject" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.ChangeApplication?.Id" />
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Reject this manager change application?');">Reject</button>
+        </form>
+        <form action="/Managers/Approve" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.ChangeApplication?.Id" />
+            <button type="submit" class="btn btn-success" onclick="return confirm('Approve this manager change application?');">Approve</button>
+        </form>
+    </div>
+}

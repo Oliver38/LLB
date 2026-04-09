@@ -1,0 +1,1187 @@
+@using System.Globalization
+@using LLB.Models
+
+@{
+    Layout = "_LayoutMain";
+    ViewData["Title"] = "Temporary Transfer";
+    ViewData["Subtitle"] = "Search an approved liquor licence, capture transfer details and managers, upload attachments, then proceed to payment.";
+
+    var sourceApplication = ViewBag.SourceApplication as ApplicationInfo;
+    var transferApplication = ViewBag.TransferApplication as ApplicationInfo;
+    var applicantUser = ViewBag.ApplicantUser as ApplicationUser;
+    var ownerUser = ViewBag.OwnerUser as ApplicationUser;
+    var outlet = ViewBag.Outlet as OutletInfo;
+    var license = ViewBag.License as LicenseTypes;
+    var region = ViewBag.Region as LicenseRegion;
+    var payment = ViewBag.Payment as Payments;
+    var tieAffidavit = ViewBag.TieAffidavit as AttachmentInfo;
+    var searchValue = ViewBag.SearchValue as string ?? string.Empty;
+    var fee = ViewBag.Fee as decimal?;
+    var baseFee = ViewBag.BaseFee as decimal?;
+    var managerFee = ViewBag.ManagerFee as decimal?;
+    var additionalManagerFee = ViewBag.AdditionalManagerFee as decimal?;
+    var totalFee = ViewBag.TotalFee as decimal?;
+    var managerCount = ViewBag.ManagerCount is int savedManagerCount ? savedManagerCount : 0;
+    var chargeableManagerCount = ViewBag.ChargeableManagerCount is int savedChargeableManagerCount ? savedChargeableManagerCount : 0;
+    var transferManagers = ViewBag.TransferManagers as IEnumerable<ManagersParticulars> ?? Enumerable.Empty<ManagersParticulars>();
+    var paymentReceived = ViewBag.PaymentReceived is bool received && received;
+    var hasActivePayment = ViewBag.HasActivePayment is bool activePayment && activePayment;
+    var attachmentsComplete = ViewBag.AttachmentsComplete is bool complete && complete;
+    var canEditDetails = ViewBag.CanEditDetails is bool canEdit && canEdit;
+    var canUploadAttachments = ViewBag.CanUploadAttachments is bool canUpload && canUpload;
+    var canMakePayment = ViewBag.CanMakePayment is bool pay && pay;
+    var canContinue = ViewBag.CanContinue is bool cont && cont;
+    var awaitingSecretary = ViewBag.AwaitingSecretary is bool awaiting && awaiting;
+    var isEditMode = ViewBag.EditMode is bool editMode && editMode && canEditDetails;
+    var isZimbabweanApplicant = string.Equals(applicantUser?.Nationality, "Zimbabwe", StringComparison.OrdinalIgnoreCase);
+    var initialBaseFee = (baseFee ?? fee ?? 0m).ToString("0.00", CultureInfo.InvariantCulture);
+    var initialManagerFee = (managerFee ?? 0m).ToString("0.00", CultureInfo.InvariantCulture);
+
+    string DisplayUserName(ApplicationUser? user)
+    {
+        if (user == null)
+        {
+            return "N/A";
+        }
+
+        var parts = new[] { user.Name, user.LastName }.Where(item => !string.IsNullOrWhiteSpace(item)).ToList();
+        return parts.Count > 0 ? string.Join(" ", parts) : user.UserName ?? user.Email ?? "N/A";
+    }
+
+    string DisplayValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "N/A" : value;
+    }
+
+    string FormatMoney(decimal? value)
+    {
+        return value.HasValue
+            ? value.Value.ToString("0.00", CultureInfo.InvariantCulture)
+            : "N/A";
+    }
+
+    string StatusBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "approved" => "bg-success",
+            "rejected" => "bg-danger",
+            "awaiting approval" => "bg-info text-dark",
+            "submitted" => "bg-primary",
+            _ => "bg-secondary"
+        };
+    }
+
+    string PaymentBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "paid" => "bg-success",
+            "sent" => "bg-warning text-dark",
+            "awaiting delivery" => "bg-warning text-dark",
+            "cancelled" => "bg-danger",
+            "rejected" => "bg-danger",
+            "expired" => "bg-danger",
+            "not paid" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Search Liquor Licence</h5>
+        <p class="text-muted mb-0">Enter the LLB number for the liquor licence you want to use for the temporary transfer application.</p>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/TemporaryTransfer/Apply" class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label for="llbNumber" class="form-label">LLB Number</label>
+                <input type="text" id="llbNumber" name="llbNumber" value="@searchValue" class="form-control" placeholder="Enter LLB number" required />
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Retrieve Liquor Licence</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (sourceApplication != null)
+{
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="card-title mb-1">Licence Owner Information</h5>
+                <p class="text-muted mb-0">These are the details of the original liquor licence owner.</p>
+            </div>
+            <span class="badge rounded-pill bg-dark">@(sourceApplication.LLBNum ?? "N/A")</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                        <h6 class="text-uppercase text-muted mb-3">Owner Profile</h6>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Name</span>
+                            <span class="fw-semibold text-end">@(ownerUser?.Name ?? "N/A")</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Surname</span>
+                            <span class="fw-semibold text-end">@(ownerUser?.LastName ?? "N/A")</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Date of Birth</span>
+                            <span class="fw-semibold text-end">@DisplayValue(ownerUser?.DOB)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Gender</span>
+                            <span class="fw-semibold text-end">@DisplayValue(ownerUser?.Gender)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Nationality</span>
+                            <span class="fw-semibold text-end">@DisplayValue(ownerUser?.Nationality)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 py-2">
+                            <span class="text-muted">National ID</span>
+                            <span class="fw-semibold text-end">@DisplayValue(ownerUser?.NatID)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                        <h6 class="text-uppercase text-muted mb-3">Licence Information</h6>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Trading Name</span>
+                            <span class="fw-semibold text-end">@(outlet?.TradingName ?? sourceApplication.BusinessName ?? "N/A")</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Licence</span>
+                            <span class="fw-semibold text-end">@(license?.LicenseName ?? "N/A")</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Region</span>
+                            <span class="fw-semibold text-end">@(region?.RegionName ?? "N/A")</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Applicant Type</span>
+                            <span class="fw-semibold text-end">@DisplayValue(sourceApplication.ApplicantType)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Licensee Name</span>
+                            <span class="fw-semibold text-end">@DisplayValue(sourceApplication.BusinessName)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 py-2">
+                            <span class="text-muted">Operating Address</span>
+                            <span class="fw-semibold text-end">@(outlet?.Address ?? sourceApplication.OperationAddress ?? "N/A")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (transferApplication == null)
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-1">Temporary Transfer Details</h5>
+                        <p class="text-muted mb-0">Capture the temporary owner details and the manager list before submitting the application.</p>
+                    </div>
+                    <div class="card-body">
+                        <form action="/TemporaryTransfer/Submit" method="post" class="row g-3" id="temporaryTransferDraftForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="llbNumber" value="@sourceApplication.LLBNum" />
+                            <input type="hidden" name="managerDraftJson" id="managerDraftJson" value="[]" />
+
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" value="@(applicantUser?.Name ?? string.Empty)" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Surname</label>
+                                <input type="text" class="form-control" value="@(applicantUser?.LastName ?? string.Empty)" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="text" class="form-control" value="@(applicantUser?.DOB ?? string.Empty)" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Gender</label>
+                                <input type="text" class="form-control" value="@(applicantUser?.Gender ?? string.Empty)" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nationality</label>
+                                <input type="text" class="form-control" value="@(applicantUser?.Nationality ?? string.Empty)" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">National ID/Passport</label>
+                                <input type="text" class="form-control" value="@(applicantUser?.NatID ?? string.Empty)" readonly />
+                            </div>
+
+                            @if (!isZimbabweanApplicant)
+                            {
+                                <div class="col-md-6">
+                                    <label class="form-label">Place of Entry</label>
+                                    <input type="text" name="placeOfEntry" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date of Entry</label>
+                                    <input type="date" name="dateofEntryIntoZimbabwe" class="form-control" />
+                                </div>
+                            }
+
+                            <div class="col-md-6">
+                                <label class="form-label">Applicant Type</label>
+                                <select name="applicantType" class="form-select" required>
+                                    <option value="">Choose applicant type</option>
+                                    <option value="Individual">Individual</option>
+                                    <option value="Club">Club</option>
+                                    <option value="Company">Company</option>
+                                    <option value="Partnership">Partnership</option>
+                                    <option value="Organisation">Organisation</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Applicant Name / Licensee Name</label>
+                                <input type="text" name="businessName" class="form-control" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Applicant Physical Address</label>
+                                <textarea name="operationAddress" class="form-control" rows="3" required></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="border rounded-3 p-3">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                        <div>
+                                            <h6 class="mb-1">Temporary Transfer Managers</h6>
+                                            <div class="text-muted small">Add managers using the modal. The first manager does not attract an extra manager fee. From manager 2 onward, the manager fee is charged per additional manager.</div>
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#draftManagerModal">
+                                            <i class="bi bi-plus-circle me-2"></i>Add Manager
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Surname</th>
+                                                    <th>National ID</th>
+                                                    <th>Address</th>
+                                                    <th>National ID Copy</th>
+                                                    <th>Fingerprints</th>
+                                                    <th>Form 55</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="draftManagerRows">
+                                                <tr id="draftManagerEmptyRow">
+                                                    <td colspan="8" class="text-center text-muted py-4">No managers added yet.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">Submit Application</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Fee Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Base Temporary Transfer Fee</span>
+                            <span class="fw-semibold" id="draftBaseFeeDisplay">@FormatMoney(baseFee ?? fee)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Manager Fee Per Additional Manager</span>
+                            <span class="fw-semibold" id="draftManagerFeeDisplay">@FormatMoney(managerFee)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Managers Added</span>
+                            <span class="fw-semibold" id="draftManagerCountDisplay">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Chargeable Managers</span>
+                            <span class="fw-semibold" id="draftChargeableManagerCountDisplay">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Additional Manager Fee</span>
+                            <span class="fw-semibold" id="draftAdditionalManagerFeeDisplay">0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 py-2">
+                            <span class="text-muted">Estimated Total Fee</span>
+                            <span class="fw-bold" id="draftTotalFeeDisplay">@FormatMoney(totalFee ?? baseFee ?? fee)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center gap-3">
+                <div>
+                    <h5 class="card-title mb-1">Temporary Transfer Application</h5>
+                    <p class="text-muted mb-0">Review the temporary transfer details, managers, attachments, and payment status for this application.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    @if (canEditDetails && !isEditMode)
+                    {
+                        <a class="btn btn-outline-primary btn-sm" href="/TemporaryTransfer/Apply?id=@transferApplication.Id&edit=true">Edit Details</a>
+                    }
+                    <span class="badge rounded-pill @StatusBadgeClass(transferApplication.Status)">@(transferApplication.Status ?? "Unknown")</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                            <h6 class="text-uppercase text-muted mb-3">Application Summary</h6>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Reference</span>
+                                <span class="fw-semibold text-end">@(transferApplication.RefNum ?? "Pending")</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Applicant</span>
+                                <span class="fw-semibold text-end">@DisplayUserName(applicantUser)</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Applicant Type</span>
+                                <span class="fw-semibold text-end">@DisplayValue(transferApplication.ApplicantType)</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Applicant Name</span>
+                                <span class="fw-semibold text-end">@DisplayValue(transferApplication.BusinessName)</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Applicant Address</span>
+                                <span class="fw-semibold text-end">@DisplayValue(transferApplication.OperationAddress)</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Place of Entry</span>
+                                <span class="fw-semibold text-end">@DisplayValue(transferApplication.PlaceOfEntry)</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 py-2">
+                                <span class="text-muted">Date of Entry</span>
+                                <span class="fw-semibold text-end">@DisplayValue(transferApplication.DateofEntryIntoZimbabwe)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                            <h6 class="text-uppercase text-muted mb-3">Fee And Status</h6>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Payment Status</span>
+                                <span class="badge rounded-pill @PaymentBadgeClass(payment?.PaymentStatus ?? payment?.Status ?? transferApplication.PaymentStatus)">
+                                    @(payment?.PaymentStatus ?? payment?.Status ?? transferApplication.PaymentStatus ?? "Not Paid")
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Managers Added</span>
+                                <span class="fw-semibold text-end">@managerCount</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Chargeable Managers</span>
+                                <span class="fw-semibold text-end">@chargeableManagerCount</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Base Fee</span>
+                                <span class="fw-semibold text-end">@FormatMoney(baseFee)</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Manager Fee Per Additional Manager</span>
+                                <span class="fw-semibold text-end">@FormatMoney(managerFee)</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Additional Manager Fee</span>
+                                <span class="fw-semibold text-end">@FormatMoney(additionalManagerFee)</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Total Fee</span>
+                                <span class="fw-bold text-end">@FormatMoney(totalFee ?? transferApplication.PaymentFee)</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 py-2">
+                                <span class="text-muted">Last Updated</span>
+                                <span class="fw-semibold text-end">@transferApplication.DateUpdated.ToString("dd MMM yyyy HH:mm")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (isEditMode)
+        {
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-1">Edit Temporary Transfer Details</h5>
+                        <p class="text-muted mb-0">Update the temporary transfer details before payment starts.</p>
+                    </div>
+                    <a class="btn btn-light border btn-sm" href="/TemporaryTransfer/Apply?id=@transferApplication.Id">Cancel</a>
+                </div>
+                <div class="card-body">
+                    <form action="/TemporaryTransfer/UpdateDetails" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@transferApplication.Id" />
+
+                        <div class="col-md-6">
+                            <label class="form-label">Applicant Type</label>
+                            <select name="applicantType" class="form-select" required>
+                                <option value="">Choose applicant type</option>
+                                @if (string.Equals(transferApplication.ApplicantType, "Individual", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="Individual" selected>Individual</option>
+                                }
+                                else
+                                {
+                                    <option value="Individual">Individual</option>
+                                }
+                                @if (string.Equals(transferApplication.ApplicantType, "Club", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="Club" selected>Club</option>
+                                }
+                                else
+                                {
+                                    <option value="Club">Club</option>
+                                }
+                                @if (string.Equals(transferApplication.ApplicantType, "Company", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="Company" selected>Company</option>
+                                }
+                                else
+                                {
+                                    <option value="Company">Company</option>
+                                }
+                                @if (string.Equals(transferApplication.ApplicantType, "Partnership", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="Partnership" selected>Partnership</option>
+                                }
+                                else
+                                {
+                                    <option value="Partnership">Partnership</option>
+                                }
+                                @if (string.Equals(transferApplication.ApplicantType, "Organisation", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="Organisation" selected>Organisation</option>
+                                }
+                                else
+                                {
+                                    <option value="Organisation">Organisation</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Applicant Name / Licensee Name</label>
+                            <input type="text" name="businessName" class="form-control" value="@transferApplication.BusinessName" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Applicant Physical Address</label>
+                            <textarea name="operationAddress" class="form-control" rows="3" required>@transferApplication.OperationAddress</textarea>
+                        </div>
+
+                        @if (!isZimbabweanApplicant)
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label">Place of Entry</label>
+                                <input type="text" name="placeOfEntry" class="form-control" value="@transferApplication.PlaceOfEntry" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Entry</label>
+                                <input type="date" name="dateofEntryIntoZimbabwe" class="form-control" value="@transferApplication.DateofEntryIntoZimbabwe" />
+                            </div>
+                        }
+
+                        <div class="col-12 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-1">Temporary Transfer Managers</h5>
+                    <p class="text-muted mb-0">The first manager is included in the base fee. From manager 2 onward, the manager fee is charged for each additional manager.</p>
+                </div>
+                @if (canEditDetails)
+                {
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#savedManagerModal">
+                        <i class="bi bi-plus-circle me-2"></i>Add Manager
+                    </button>
+                }
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Surname</th>
+                                <th>National ID</th>
+                                <th>Address</th>
+                                <th>National ID Copy</th>
+                                <th>Fingerprints</th>
+                                <th>Form 55</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!transferManagers.Any())
+                            {
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">No temporary transfer managers have been added yet.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var manager in transferManagers)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@manager.Name</td>
+                                        <td>@manager.Surname</td>
+                                        <td>@manager.NationalId</td>
+                                        <td>@manager.Address</td>
+                                        <td>
+                                            @if (string.IsNullOrWhiteSpace(manager.Attachment))
+                                            {
+                                                <span class="text-muted">No Attachment</span>
+                                            }
+                                            else
+                                            {
+                                                <a target="_blank" href="@Url.Content($"~/{manager.Attachment}")">National ID</a>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (string.IsNullOrWhiteSpace(manager.Fingerprints))
+                                            {
+                                                <span class="text-muted">No Attachment</span>
+                                            }
+                                            else
+                                            {
+                                                <a target="_blank" href="@Url.Content($"~/{manager.Fingerprints}")">Fingerprints</a>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (string.IsNullOrWhiteSpace(manager.Form55))
+                                            {
+                                                <span class="text-muted">No Attachment</span>
+                                            }
+                                            else
+                                            {
+                                                <a target="_blank" href="@Url.Content($"~/{manager.Form55}")">Form 55</a>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            @if (canEditDetails)
+                                            {
+                                                <form method="post" action="/TemporaryTransfer/DeleteManager" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@transferApplication.Id" />
+                                                    <input type="hidden" name="managerId" value="@manager.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this manager from the temporary transfer application?');">Remove</button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">Locked</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-1">Required Attachments</h5>
+                <p class="text-muted mb-0">Upload or replace each required attachment one by one before payment. Payment stays locked until all required attachments are present.</p>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Status</th>
+                                <th>File</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-semibold">ID/Passport Copy</td>
+                                <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication.IdCopy) ? "Missing" : "Uploaded")</span></td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(transferApplication.IdCopy))
+                                    {
+                                        <span class="text-muted">No file uploaded</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="~/@transferApplication.IdCopy" target="_blank">View Attachment</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canUploadAttachments)
+                                    {
+                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@transferApplication.Id" />
+                                            <input type="hidden" name="documentType" value="idCopy" />
+                                            <input type="file" name="file" class="form-control form-control-sm" required />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(transferApplication.IdCopy) ? "Upload" : "Replace")</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Locked</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Fingerprints</td>
+                                <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication.Fingerprints) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication.Fingerprints) ? "Missing" : "Uploaded")</span></td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(transferApplication.Fingerprints))
+                                    {
+                                        <span class="text-muted">No file uploaded</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="~/@transferApplication.Fingerprints" target="_blank">View Attachment</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canUploadAttachments)
+                                    {
+                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@transferApplication.Id" />
+                                            <input type="hidden" name="documentType" value="fingerprints" />
+                                            <input type="file" name="file" class="form-control form-control-sm" required />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(transferApplication.Fingerprints) ? "Upload" : "Replace")</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Locked</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Form 55</td>
+                                <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication.FormFF) ? "Missing" : "Uploaded")</span></td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(transferApplication.FormFF))
+                                    {
+                                        <span class="text-muted">No file uploaded</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="~/@transferApplication.FormFF" target="_blank">View Attachment</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canUploadAttachments)
+                                    {
+                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@transferApplication.Id" />
+                                            <input type="hidden" name="documentType" value="form55" />
+                                            <input type="file" name="file" class="form-control form-control-sm" required />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(transferApplication.FormFF) ? "Upload" : "Replace")</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Locked</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Tie Affidavit</td>
+                                <td><span class="badge rounded-pill @(tieAffidavit == null || string.IsNullOrWhiteSpace(tieAffidavit.DocumentLocation) ? "bg-secondary" : "bg-success")">@(tieAffidavit == null || string.IsNullOrWhiteSpace(tieAffidavit.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                                <td>
+                                    @if (tieAffidavit == null || string.IsNullOrWhiteSpace(tieAffidavit.DocumentLocation))
+                                    {
+                                        <span class="text-muted">No file uploaded</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="~/@tieAffidavit.DocumentLocation" target="_blank">View Attachment</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canUploadAttachments)
+                                    {
+                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@transferApplication.Id" />
+                                            <input type="hidden" name="documentType" value="tieAffidavit" />
+                                            <input type="file" name="file" class="form-control form-control-sm" required />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(tieAffidavit == null || string.IsNullOrWhiteSpace(tieAffidavit.DocumentLocation) ? "Upload" : "Replace")</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Locked</span>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-1">Next Step</h5>
+                <p class="text-muted mb-0">The workflow is submit details and managers, upload attachments, pay, then continue to secretary approval.</p>
+            </div>
+            <div class="card-body">
+                @if (string.Equals(transferApplication.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div class="alert alert-success mb-3">This temporary transfer application has been approved by the secretary.</div>
+                }
+                else if (string.Equals(transferApplication.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div class="alert alert-danger mb-3">This temporary transfer application has been rejected.</div>
+                }
+                else if (awaitingSecretary)
+                {
+                    <div class="alert alert-info mb-3">The application has been assigned to the secretary and is waiting for examination and approval.</div>
+                }
+                else if (canContinue)
+                {
+                    <div class="alert alert-success mb-3">Payment was received successfully. Click continue to send the application to the secretary.</div>
+                }
+                else if (hasActivePayment)
+                {
+                    <div class="alert alert-warning mb-3">A payment attempt is already in progress for this application. Complete it or wait for it to expire before changing the managers or details again.</div>
+                }
+                else if (!attachmentsComplete)
+                {
+                    <div class="alert alert-warning mb-3">Upload the ID copy, fingerprints, Form 55, and tie affidavit before payment can start.</div>
+                }
+                else if (canMakePayment)
+                {
+                    <div class="alert alert-primary mb-3">All required attachments are in place. You can now proceed to payment.</div>
+                }
+                else if (string.Equals(transferApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase) && !paymentReceived)
+                {
+                    <div class="alert alert-secondary mb-3">This application is still in the pre-payment stage.</div>
+                }
+
+                <div class="d-flex flex-wrap gap-2">
+                    @if (canEditDetails && !isEditMode)
+                    {
+                        <a class="btn btn-outline-primary" href="/TemporaryTransfer/Apply?id=@transferApplication.Id&edit=true">Edit Details</a>
+                    }
+
+                    @if (canMakePayment)
+                    {
+                        <a class="btn btn-success" href="/TemporaryTransfer/Payment?id=@transferApplication.Id">Make Payment</a>
+                    }
+
+                    @if (canContinue)
+                    {
+                        <form method="post" action="/TemporaryTransfer/Continue" class="mb-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@transferApplication.Id" />
+                            <button type="submit" class="btn btn-primary">Continue</button>
+                        </form>
+                    }
+
+                    <a class="btn btn-light border" href="/TemporaryTransfer/List">Back To List</a>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@if (sourceApplication != null && transferApplication == null)
+{
+    <div class="modal fade" id="draftManagerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Manager</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="draftManagerName" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Surname</label>
+                            <input type="text" class="form-control" id="draftManagerSurname" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">National ID</label>
+                            <input type="text" class="form-control" id="draftManagerNationalId" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Address</label>
+                            <textarea class="form-control" rows="3" id="draftManagerAddress"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">National ID Copy</label>
+                            <input type="file" class="form-control" id="draftManagerAttachment" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Fingerprints Copy</label>
+                            <input type="file" class="form-control" id="draftManagerFingerprints" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Form 55</label>
+                            <input type="file" class="form-control" id="draftManagerForm55" />
+                        </div>
+                    </div>
+                    <div class="small text-danger mt-3 d-none" id="draftManagerError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveDraftManagerButton">Add Manager</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (transferApplication != null && canEditDetails)
+{
+    <div class="modal fade" id="savedManagerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Manager</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/TemporaryTransfer/AddManager" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <input type="hidden" name="id" value="@transferApplication.Id" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input type="text" name="name" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Surname</label>
+                                <input type="text" name="surname" class="form-control" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">National ID</label>
+                                <input type="text" name="nationalId" class="form-control" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Address</label>
+                                <textarea name="address" class="form-control" rows="3" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">National ID Copy</label>
+                                <input type="file" name="file" class="form-control" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Fingerprints Copy</label>
+                                <input type="file" name="fileb" class="form-control" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Form 55</label>
+                                <input type="file" name="form55" class="form-control" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Manager</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (sourceApplication != null && transferApplication == null)
+{
+    <script>
+        (function () {
+            const rowsBody = document.getElementById("draftManagerRows");
+            const emptyRow = document.getElementById("draftManagerEmptyRow");
+            const hiddenInput = document.getElementById("managerDraftJson");
+            const saveButton = document.getElementById("saveDraftManagerButton");
+            const errorBox = document.getElementById("draftManagerError");
+            const baseFee = Number.parseFloat("@initialBaseFee") || 0;
+            const managerFee = Number.parseFloat("@initialManagerFee") || 0;
+            const addDraftManagerUrl = "@Url.Action("AddDraftManager", "TemporaryTransfer")";
+            const appRoot = "@Url.Content("~/")";
+            const modalElement = document.getElementById("draftManagerModal");
+            const modal = modalElement && window.bootstrap
+                ? bootstrap.Modal.getOrCreateInstance(modalElement)
+                : null;
+
+            const nameInput = document.getElementById("draftManagerName");
+            const surnameInput = document.getElementById("draftManagerSurname");
+            const nationalIdInput = document.getElementById("draftManagerNationalId");
+            const addressInput = document.getElementById("draftManagerAddress");
+            const attachmentInput = document.getElementById("draftManagerAttachment");
+            const fingerprintsInput = document.getElementById("draftManagerFingerprints");
+            const form55Input = document.getElementById("draftManagerForm55");
+            const antiForgeryInput = document.querySelector("#temporaryTransferDraftForm input[name='__RequestVerificationToken']");
+
+            const managerCountDisplay = document.getElementById("draftManagerCountDisplay");
+            const chargeableCountDisplay = document.getElementById("draftChargeableManagerCountDisplay");
+            const additionalFeeDisplay = document.getElementById("draftAdditionalManagerFeeDisplay");
+            const totalFeeDisplay = document.getElementById("draftTotalFeeDisplay");
+
+            let draftManagers = [];
+
+            function showError(message) {
+                if (!errorBox) {
+                    return;
+                }
+
+                if (!message) {
+                    errorBox.textContent = "";
+                    errorBox.classList.add("d-none");
+                    return;
+                }
+
+                errorBox.textContent = message;
+                errorBox.classList.remove("d-none");
+            }
+
+            function clearModal() {
+                if (nameInput) nameInput.value = "";
+                if (surnameInput) surnameInput.value = "";
+                if (nationalIdInput) nationalIdInput.value = "";
+                if (addressInput) addressInput.value = "";
+                if (attachmentInput) attachmentInput.value = "";
+                if (fingerprintsInput) fingerprintsInput.value = "";
+                if (form55Input) form55Input.value = "";
+                showError("");
+            }
+
+            function syncHiddenInput() {
+                if (hiddenInput) {
+                    hiddenInput.value = JSON.stringify(draftManagers);
+                }
+            }
+
+            function updateFeeSummary() {
+                const managerCount = draftManagers.length;
+                const chargeableCount = Math.max(managerCount - 1, 0);
+                const additionalFee = managerFee * chargeableCount;
+                const totalFee = baseFee + additionalFee;
+
+                if (managerCountDisplay) managerCountDisplay.textContent = String(managerCount);
+                if (chargeableCountDisplay) chargeableCountDisplay.textContent = String(chargeableCount);
+                if (additionalFeeDisplay) additionalFeeDisplay.textContent = additionalFee.toFixed(2);
+                if (totalFeeDisplay) totalFeeDisplay.textContent = totalFee.toFixed(2);
+            }
+
+            function renderRows() {
+                if (!rowsBody) {
+                    return;
+                }
+
+                rowsBody.innerHTML = "";
+
+                if (draftManagers.length === 0) {
+                    if (emptyRow) {
+                        rowsBody.appendChild(emptyRow);
+                    }
+                    updateFeeSummary();
+                    syncHiddenInput();
+                    return;
+                }
+
+                draftManagers.forEach(function (manager, index) {
+                    const row = document.createElement("tr");
+
+                    const nameCell = document.createElement("td");
+                    nameCell.className = "fw-semibold";
+                    nameCell.textContent = manager.name;
+                    row.appendChild(nameCell);
+
+                    const surnameCell = document.createElement("td");
+                    surnameCell.textContent = manager.surname;
+                    row.appendChild(surnameCell);
+
+                    const nationalIdCell = document.createElement("td");
+                    nationalIdCell.textContent = manager.nationalId;
+                    row.appendChild(nationalIdCell);
+
+                    const addressCell = document.createElement("td");
+                    addressCell.textContent = manager.address;
+                    row.appendChild(addressCell);
+
+                    row.appendChild(createAttachmentCell("National ID", manager.attachment));
+                    row.appendChild(createAttachmentCell("Fingerprints", manager.fingerprints));
+                    row.appendChild(createAttachmentCell("Form 55", manager.form55));
+
+                    const actionCell = document.createElement("td");
+                    actionCell.className = "text-end";
+
+                    const removeButton = document.createElement("button");
+                    removeButton.type = "button";
+                    removeButton.className = "btn btn-sm btn-outline-danger";
+                    removeButton.setAttribute("data-index", String(index));
+                    removeButton.textContent = "Remove";
+
+                    if (removeButton) {
+                        removeButton.addEventListener("click", function () {
+                            draftManagers.splice(index, 1);
+                            renderRows();
+                        });
+                    }
+
+                    actionCell.appendChild(removeButton);
+                    row.appendChild(actionCell);
+                    rowsBody.appendChild(row);
+                });
+
+                updateFeeSummary();
+                syncHiddenInput();
+            }
+
+            function createAttachmentCell(label, relativePath) {
+                const cell = document.createElement("td");
+
+                if (!relativePath) {
+                    cell.className = "text-muted";
+                    cell.textContent = "No Attachment";
+                    return cell;
+                }
+
+                const link = document.createElement("a");
+                link.href = appRoot + relativePath;
+                link.target = "_blank";
+                link.textContent = label;
+                cell.appendChild(link);
+                return cell;
+            }
+
+            if (saveButton) {
+                saveButton.addEventListener("click", async function () {
+                    const manager = {
+                        name: nameInput ? nameInput.value.trim() : "",
+                        surname: surnameInput ? surnameInput.value.trim() : "",
+                        nationalId: nationalIdInput ? nationalIdInput.value.trim() : "",
+                        address: addressInput ? addressInput.value.trim() : ""
+                    };
+
+                    if (!manager.name || !manager.surname || !manager.nationalId || !manager.address) {
+                        showError("Complete the manager name, surname, national ID, and address before adding the manager.");
+                        return;
+                    }
+
+                    const duplicate = draftManagers.some(function (item) {
+                        return item.nationalId.toLowerCase() === manager.nationalId.toLowerCase();
+                    });
+
+                    if (duplicate) {
+                        showError("A manager with the same national ID has already been added.");
+                        return;
+                    }
+
+                    const attachmentFile = attachmentInput && attachmentInput.files ? attachmentInput.files[0] : null;
+                    const fingerprintsFile = fingerprintsInput && fingerprintsInput.files ? fingerprintsInput.files[0] : null;
+                    const form55File = form55Input && form55Input.files ? form55Input.files[0] : null;
+
+                    if (!attachmentFile || !fingerprintsFile || !form55File) {
+                        showError("Upload the manager national ID copy, fingerprints, and Form 55 before adding the manager.");
+                        return;
+                    }
+
+                    if (!antiForgeryInput || !antiForgeryInput.value) {
+                        showError("The form security token is missing. Refresh the page and try again.");
+                        return;
+                    }
+
+                    const originalButtonText = saveButton.textContent;
+                    saveButton.disabled = true;
+                    saveButton.textContent = "Saving...";
+
+                    const formData = new FormData();
+                    formData.append("__RequestVerificationToken", antiForgeryInput.value);
+                    formData.append("llbNumber", "@(sourceApplication.LLBNum ?? string.Empty)");
+                    formData.append("name", manager.name);
+                    formData.append("surname", manager.surname);
+                    formData.append("nationalId", manager.nationalId);
+                    formData.append("address", manager.address);
+                    formData.append("file", attachmentFile);
+                    formData.append("fileb", fingerprintsFile);
+                    formData.append("form55", form55File);
+
+                    try {
+                        const response = await fetch(addDraftManagerUrl, {
+                            method: "POST",
+                            body: formData
+                        });
+
+                        const payload = await response.json();
+                        if (!response.ok || !payload.success || !payload.manager) {
+                            showError(payload && payload.message
+                                ? payload.message
+                                : "The manager could not be added. Try again.");
+                            return;
+                        }
+
+                        draftManagers.push(payload.manager);
+                        renderRows();
+                        clearModal();
+                        if (modal) {
+                            modal.hide();
+                        }
+                    } catch {
+                        showError("The manager could not be added. Check the files and try again.");
+                    } finally {
+                        saveButton.disabled = false;
+                        saveButton.textContent = originalButtonText || "Add Manager";
+                    }
+                });
+            }
+
+            if (modalElement) {
+                modalElement.addEventListener("hidden.bs.modal", clearModal);
+            }
+
+            renderRows();
+        })();
+    </script>
+}

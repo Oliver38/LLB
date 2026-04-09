@@ -1,0 +1,435 @@
+@using System.Globalization
+@using LLB.Models
+
+@{
+    Layout = "_LayoutMain";
+    ViewData["Title"] = "Temporary Transfer Review";
+    ViewData["Subtitle"] = "Secretary examination and approval.";
+
+    var transferApplication = ViewBag.TransferApplication as ApplicationInfo;
+    var sourceApplication = ViewBag.SourceApplication as ApplicationInfo;
+    var applicantUser = ViewBag.ApplicantUser as ApplicationUser;
+    var ownerUser = ViewBag.OwnerUser as ApplicationUser;
+    var outlet = ViewBag.Outlet as OutletInfo;
+    var license = ViewBag.License as LicenseTypes;
+    var region = ViewBag.Region as LicenseRegion;
+    var tieAffidavit = ViewBag.TieAffidavit as AttachmentInfo;
+    var transferManagers = ViewBag.TransferManagers as IEnumerable<ManagersParticulars> ?? Enumerable.Empty<ManagersParticulars>();
+    var baseFee = ViewBag.BaseFee as decimal?;
+    var managerFee = ViewBag.ManagerFee as decimal?;
+    var additionalManagerFee = ViewBag.AdditionalManagerFee as decimal?;
+    var totalFee = ViewBag.TotalFee as decimal?;
+    var managerCount = ViewBag.ManagerCount is int savedManagerCount ? savedManagerCount : transferManagers.Count();
+    var chargeableManagerCount = ViewBag.ChargeableManagerCount is int savedChargeableManagerCount ? savedChargeableManagerCount : Math.Max(managerCount - 1, 0);
+
+    string DisplayUserName(ApplicationUser? user)
+    {
+        if (user == null)
+        {
+            return "N/A";
+        }
+
+        var parts = new[] { user.Name, user.LastName }.Where(item => !string.IsNullOrWhiteSpace(item)).ToList();
+        return parts.Count > 0 ? string.Join(" ", parts) : user.UserName ?? user.Email ?? "N/A";
+    }
+
+    string DisplayValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "N/A" : value;
+    }
+
+    string FormatMoney(decimal? value)
+    {
+        return value.HasValue
+            ? value.Value.ToString("0.00", CultureInfo.InvariantCulture)
+            : "N/A";
+    }
+
+    string StatusBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "approved" => "bg-success",
+            "rejected" => "bg-danger",
+            "awaiting approval" => "bg-info text-dark",
+            "submitted" => "bg-primary",
+            _ => "bg-secondary"
+        };
+    }
+
+    string PaymentBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "paid" => "bg-success",
+            "sent" => "bg-warning text-dark",
+            "awaiting delivery" => "bg-warning text-dark",
+            "not paid" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="card-title mb-1">Temporary Transfer Review</h5>
+            <p class="text-muted mb-0">Secretary review of the submitted temporary transfer application.</p>
+        </div>
+        <span class="badge rounded-pill @StatusBadgeClass(transferApplication?.Status)">@(transferApplication?.Status ?? "Unknown")</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Application Information</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Reference</span>
+                        <span class="fw-semibold text-end">@(transferApplication?.RefNum ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Temporary Applicant</span>
+                        <span class="fw-semibold text-end">@DisplayUserName(applicantUser)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Original Licence Owner</span>
+                        <span class="fw-semibold text-end">@DisplayUserName(ownerUser)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Trading Name</span>
+                        <span class="fw-semibold text-end">@(outlet?.TradingName ?? sourceApplication?.BusinessName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">LLB Number</span>
+                        <span class="fw-semibold text-end">@(sourceApplication?.LLBNum ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Licence</span>
+                        <span class="fw-semibold text-end">@(license?.LicenseName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Region</span>
+                        <span class="fw-semibold text-end">@(region?.RegionName ?? "N/A")</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Fee And Review Summary</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Status</span>
+                        <span class="badge rounded-pill @StatusBadgeClass(transferApplication?.Status)">@(transferApplication?.Status ?? "Unknown")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Payment Status</span>
+                        <span class="badge rounded-pill @PaymentBadgeClass(transferApplication?.PaymentStatus)">@(transferApplication?.PaymentStatus ?? "Not Paid")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Managers Added</span>
+                        <span class="fw-semibold text-end">@managerCount</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Chargeable Managers</span>
+                        <span class="fw-semibold text-end">@chargeableManagerCount</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Base Fee</span>
+                        <span class="fw-semibold text-end">@FormatMoney(baseFee)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Manager Fee Per Additional Manager</span>
+                        <span class="fw-semibold text-end">@FormatMoney(managerFee)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Additional Manager Fee</span>
+                        <span class="fw-semibold text-end">@FormatMoney(additionalManagerFee)</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Total Fee</span>
+                        <span class="fw-bold text-end">@FormatMoney(totalFee ?? transferApplication?.PaymentFee)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Owner Comparison</h5>
+        <p class="text-muted mb-0">Compare the original licence owner details against the temporary transfer applicant before approving the application.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Detail</th>
+                        <th>Original Licence Owner</th>
+                        <th>Temporary Transfer Applicant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-semibold">Name</td>
+                        <td>@DisplayValue(ownerUser?.Name)</td>
+                        <td>@DisplayValue(applicantUser?.Name)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Surname</td>
+                        <td>@DisplayValue(ownerUser?.LastName)</td>
+                        <td>@DisplayValue(applicantUser?.LastName)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Date of Birth</td>
+                        <td>@DisplayValue(ownerUser?.DOB)</td>
+                        <td>@DisplayValue(applicantUser?.DOB)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Gender</td>
+                        <td>@DisplayValue(ownerUser?.Gender)</td>
+                        <td>@DisplayValue(applicantUser?.Gender)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Nationality</td>
+                        <td>@DisplayValue(ownerUser?.Nationality)</td>
+                        <td>@DisplayValue(applicantUser?.Nationality)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">National ID / Passport</td>
+                        <td>@DisplayValue(ownerUser?.NatID)</td>
+                        <td>@DisplayValue(applicantUser?.NatID ?? transferApplication?.IdPass)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Email</td>
+                        <td>@DisplayValue(ownerUser?.Email)</td>
+                        <td>@DisplayValue(applicantUser?.Email)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Phone Number</td>
+                        <td>@DisplayValue(ownerUser?.PhoneNumber)</td>
+                        <td>@DisplayValue(applicantUser?.PhoneNumber)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Residential Address</td>
+                        <td>@DisplayValue(ownerUser?.PhysicalAddress)</td>
+                        <td>@DisplayValue(applicantUser?.PhysicalAddress)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Applicant Type</td>
+                        <td>@DisplayValue(sourceApplication?.ApplicantType)</td>
+                        <td>@DisplayValue(transferApplication?.ApplicantType)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Licensee / Applicant Name</td>
+                        <td>@DisplayValue(sourceApplication?.BusinessName)</td>
+                        <td>@DisplayValue(transferApplication?.BusinessName)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Operating Address</td>
+                        <td>@(outlet?.Address ?? sourceApplication?.OperationAddress ?? "N/A")</td>
+                        <td>@DisplayValue(transferApplication?.OperationAddress)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Place of Entry</td>
+                        <td>N/A</td>
+                        <td>@DisplayValue(transferApplication?.PlaceOfEntry)</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Date of Entry</td>
+                        <td>N/A</td>
+                        <td>@DisplayValue(transferApplication?.DateofEntryIntoZimbabwe)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Submitted Managers</h5>
+        <p class="text-muted mb-0">These managers were submitted with the temporary transfer application and drive the additional manager fee from manager 2 onward.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Surname</th>
+                        <th>National ID</th>
+                        <th>Address</th>
+                        <th>National ID Copy</th>
+                        <th>Fingerprints</th>
+                        <th>Form 55</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!transferManagers.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">No temporary transfer managers were captured on this application.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var manager in transferManagers)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@manager.Name</td>
+                                <td>@manager.Surname</td>
+                                <td>@manager.NationalId</td>
+                                <td>@manager.Address</td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(manager.Attachment))
+                                    {
+                                        <span class="text-muted">No Attachment</span>
+                                    }
+                                    else
+                                    {
+                                        <a target="_blank" href="@Url.Content($"~/{manager.Attachment}")">National ID</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(manager.Fingerprints))
+                                    {
+                                        <span class="text-muted">No Attachment</span>
+                                    }
+                                    else
+                                    {
+                                        <a target="_blank" href="@Url.Content($"~/{manager.Fingerprints}")">Fingerprints</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(manager.Form55))
+                                    {
+                                        <span class="text-muted">No Attachment</span>
+                                    }
+                                    else
+                                    {
+                                        <a target="_blank" href="@Url.Content($"~/{manager.Form55}")">Form 55</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Submitted Attachments</h5>
+        <p class="text-muted mb-0">Review the applicant files and the tie affidavit before deciding on the application.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Status</th>
+                        <th>File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-semibold">ID/Passport Copy</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication?.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication?.IdCopy) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(transferApplication?.IdCopy))
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                            else
+                            {
+                                <a href="~/@transferApplication!.IdCopy" target="_blank">View Attachment</a>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Fingerprints</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication?.Fingerprints) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication?.Fingerprints) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(transferApplication?.Fingerprints))
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                            else
+                            {
+                                <a href="~/@transferApplication!.Fingerprints" target="_blank">View Attachment</a>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Form 55</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication?.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication?.FormFF) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(transferApplication?.FormFF))
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                            else
+                            {
+                                <a href="~/@transferApplication!.FormFF" target="_blank">View Attachment</a>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Tie Affidavit</td>
+                        <td><span class="badge rounded-pill @(tieAffidavit == null || string.IsNullOrWhiteSpace(tieAffidavit.DocumentLocation) ? "bg-secondary" : "bg-success")">@(tieAffidavit == null || string.IsNullOrWhiteSpace(tieAffidavit.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (tieAffidavit == null || string.IsNullOrWhiteSpace(tieAffidavit.DocumentLocation))
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                            else
+                            {
+                                <a href="~/@tieAffidavit.DocumentLocation" target="_blank">View Attachment</a>
+                            }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (transferApplication != null
+    && !string.Equals(transferApplication.Status, "Approved", StringComparison.OrdinalIgnoreCase)
+    && !string.Equals(transferApplication.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="d-flex justify-content-end gap-2">
+        <form method="post" action="/TemporaryTransfer/Reject" class="mb-0">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@transferApplication.Id" />
+            <button type="submit"
+                    class="btn btn-outline-danger"
+                    onclick="return confirm('Reject this temporary transfer application?');">
+                Reject
+            </button>
+        </form>
+        <form method="post" action="/TemporaryTransfer/Approve" class="mb-0">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@transferApplication.Id" />
+            <button type="submit"
+                    class="btn btn-success"
+                    onclick="return confirm('Approve this temporary transfer application?');">
+                Approve
+            </button>
+        </form>
+    </div>
+}

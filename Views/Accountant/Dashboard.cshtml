@@ -1,5 +1,24 @@
-﻿@{
+﻿@using LLB.Models
+@{
     Layout = "_LayoutMain";
+    var todaysExchangeRate = ViewBag.TodaysExchangeRate as ExchangeRate;
+    var todaysExchangeRateUserName = ViewBag.TodaysExchangeRateUserName as string;
+    bool exchangeRateNeedsUpdate = ViewBag.ExchangeRateNeedsUpdate is bool needsUpdate && needsUpdate;
+}
+
+@if (exchangeRateNeedsUpdate)
+{
+    <div class="alert alert-warning d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+        <div>No USD/ZWG exchange rate has been updated for today, @DateTime.Today.ToString("dd-MM-yyyy").</div>
+        <a class="btn btn-warning" href="/Accountant/ExchangeRate">Update Exchange Rate</a>
+    </div>
+}
+else if (todaysExchangeRate != null)
+{
+    <div class="alert alert-success d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+        <div>Today's USD/ZWG exchange rate is <strong>@todaysExchangeRate.ZWGrate?.ToString("0.0000")</strong>, updated by <strong>@(string.IsNullOrWhiteSpace(todaysExchangeRateUserName) ? "N/A" : todaysExchangeRateUserName)</strong>.</div>
+        <a class="btn btn-success" href="/Accountant/ExchangeRate">Manage Exchange Rate</a>
+    </div>
 }
 
    

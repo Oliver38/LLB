@@ -1,311 +1,299 @@
-﻿@{
+﻿@using LLB.Models
+@using System.Linq
+
+@{
     Layout = "_LayoutMain";
+
+    var application = ViewBag.Appinfo as ApplicationInfo;
+    var outlet = ViewBag.Outletinfo as OutletInfo;
+    var license = ViewBag.License as LicenseTypes;
+    var region = ViewBag.Region as LicenseRegion;
+    var record = ViewBag.ApplicationRecord as ExtraCounter;
+    var payment = ViewBag.Payment as Payments;
+    var attachments = ViewBag.Attachments as IEnumerable<AttachmentInfo> ?? Enumerable.Empty<AttachmentInfo>();
+    var allApplications = ViewBag.Applications as IEnumerable<ExtraCounter> ?? Enumerable.Empty<ExtraCounter>();
+
+    var canUploadAttachments = ViewBag.CanUploadAttachments is bool upload && upload;
+    var attachmentsComplete = ViewBag.AttachmentsComplete is bool complete && complete;
+    var canSubmit = ViewBag.CanSubmit is bool submit && submit;
+    var canMakePayment = ViewBag.CanMakePayment is bool pay && pay;
+    var canContinue = ViewBag.CanContinue is bool cont && cont;
+    var awaitingSecretary = ViewBag.AwaitingSecretary is bool awaiting && awaiting;
+    var paymentReceived = ViewBag.PaymentReceived is bool received && received;
+    var fee = ViewBag.TotalFee is double totalFee ? totalFee : record?.PaidFee ?? 0;
+    var updatedText = record == null ? "N/A" : record.DateUpdated.ToString("dd MMM yyyy HH:mm");
+
+    Func<string?, string> statusBadgeClass = status => status?.Trim().ToLowerInvariant() switch
+    {
+        "approved" => "bg-success",
+        "rejected" => "bg-danger",
+        "awaiting approval" => "bg-info text-dark",
+        "submitted" => "bg-primary",
+        "inprogress" => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+
+    Func<string?, string> paymentBadgeClass = status => status?.Trim().ToLowerInvariant() switch
+    {
+        "paid" => "bg-success",
+        "awaiting delivery" => "bg-warning text-dark",
+        "sent" => "bg-warning text-dark",
+        "not paid" => "bg-secondary",
+        _ => "bg-secondary"
+    };
 }
 
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
 
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
 
-<div class="card">
+<div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title mb-0">Extended Hours Application For @ViewBag.Outletinfo.TradingName</div>
-        @*<button class="btn btn-primary" onclick="PostFormationModal()">Add Post Formation Fee</button>*@
+        <div>
+            <h5 class="card-title mb-1">Permission To Alter Application</h5>
+            <p class="text-muted mb-0">Attach the required approval documents, submit the application, complete payment, and continue to secretary review.</p>
+        </div>
+        @if (record != null)
+        {
+            <span class="badge rounded-pill @statusBadgeClass(record.Status)">
+                @(string.IsNullOrWhiteSpace(record.Status) ? "Unknown" : record.Status)
+            </span>
+        }
     </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Application Information</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Reference</span>
+                        <span class="fw-semibold text-end">@(record?.Reference ?? "Pending")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Trading Name</span>
+                        <span class="fw-semibold text-end">@(outlet?.TradingName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">LLB Number</span>
+                        <span class="fw-semibold text-end">@(application?.LLBNum ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Licence</span>
+                        <span class="fw-semibold text-end">@(license?.LicenseName ?? "N/A")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Region</span>
+                        <span class="fw-semibold text-end">@(region?.RegionName ?? "N/A")</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <h6 class="text-uppercase text-muted mb-3">Processing Status</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Change Status</span>
+                        <span class="badge rounded-pill @statusBadgeClass(record?.Status)">@(record?.Status ?? "Unknown")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Payment Status</span>
+                        <span class="badge rounded-pill @paymentBadgeClass(payment?.PaymentStatus ?? payment?.Status ?? record?.PaymentStatus)">
+                            @(payment?.PaymentStatus ?? payment?.Status ?? record?.PaymentStatus ?? "Not Paid")
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Fee</span>
+                        <span class="fw-semibold text-end">@fee.ToString("N2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Attachments Complete</span>
+                        <span class="fw-semibold text-end">@(attachmentsComplete ? "Yes" : "No")</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 py-2">
+                        <span class="text-muted">Last Updated</span>
+                        <span class="fw-semibold text-end">@updatedText</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Required Attachments</h5>
+        <p class="text-muted mb-0">Upload each document individually. The submit button only appears after all four documents are uploaded.</p>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <tbody class="table-light">
-
+            <table class="table table-hover align-middle mb-0">
+                <thead>
                     <tr>
-                        <th>Outlet Name</th>
-                        <td>
-                            @ViewBag.Outletinfo.TradingName
-                        </td>
+                        <th>Document</th>
+                        <th>Status</th>
+                        <th>File</th>
+                        <th class="text-end">Action</th>
                     </tr>
-                    @if (ViewBag.Inspectiondata != null)
+                </thead>
+                <tbody>
+                    @foreach (var attachment in attachments)
                     {
+                        var uploaded = !string.IsNullOrWhiteSpace(attachment.DocumentLocation);
                         <tr>
-                            <th>Extra Counter Reference</th>
+                            <td class="fw-semibold">@attachment.DocumentTitle</td>
                             <td>
-                                @(ViewBag.Inspectiondata.Reference ?? "N/A")
+                                <span class="badge rounded-pill @(uploaded ? "bg-success" : "bg-secondary")">
+                                    @(uploaded ? "Uploaded" : "Pending")
+                                </span>
+                            </td>
+                            <td>
+                                @if (uploaded)
+                                {
+                                    <a href="~/@attachment.DocumentLocation" target="_blank">View Attachment</a>
+                                }
+                                else if (canUploadAttachments)
+                                {
+                                    <form method="post" enctype="multipart/form-data" action="/Extracounter/UploadPermissionToAlterAttachment" class="d-flex flex-column flex-md-row gap-2">
+                                        <input type="hidden" name="attachmentId" value="@attachment.Id" />
+                                        <input type="hidden" name="applicationId" value="@application?.Id" />
+                                        <input type="hidden" name="ecId" value="@record?.Id" />
+                                        <input type="file" name="file" class="form-control" required />
+                                        <button type="submit" class="btn btn-primary btn-sm">Upload</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No file uploaded</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (uploaded && canUploadAttachments)
+                                {
+                                    <a href="/Extracounter/RemovePermissionToAlterAttachment?attachmentId=@attachment.Id&applicationId=@application?.Id&ecId=@record?.Id"
+                                       class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('Remove this attachment?');">
+                                        Remove
+                                    </a>
+                                }
                             </td>
                         </tr>
                     }
-                    <tr>
-                        <th>License </th>
-                        <td>
-                            @ViewBag.License.LicenseName
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Region </th>
-                        <td>
-                            @ViewBag.Region.RegionName
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Fee</th>
-                        <td>
-                            @ViewBag.Fee
-                        </td>
-                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Next Step</h5>
+        <p class="text-muted mb-0">The workflow is attachments, submit, payment, then continue to secretary.</p>
+    </div>
+    <div class="card-body">
+        @if (record != null && string.Equals(record.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="alert alert-success mb-3">This permission to alter application has been approved by the secretary.</div>
+        }
+        else if (record != null && string.Equals(record.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="alert alert-danger mb-3">This permission to alter application has been rejected.</div>
+        }
+        else if (awaitingSecretary)
+        {
+            <div class="alert alert-info mb-3">The application has been assigned to the secretary and is now waiting for approval.</div>
+        }
+        else if (canContinue)
+        {
+            <div class="alert alert-success mb-3">Payment was received successfully. Click continue to send the application to the secretary.</div>
+        }
+        else if (canMakePayment)
+        {
+            <div class="alert alert-primary mb-3">The application has been submitted. Complete payment to continue.</div>
+        }
+        else if (record != null && string.Equals(record.Status, "submitted", StringComparison.OrdinalIgnoreCase) && !paymentReceived)
+        {
+            <div class="alert alert-warning mb-3">The application is submitted and waiting for payment confirmation.</div>
+        }
+        else if (record != null && string.Equals(record.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="alert alert-warning mb-3">Upload every required attachment first. The submit button will appear once the checklist is complete.</div>
+        }
 
+        <div class="d-flex flex-wrap gap-2">
+            @if (canSubmit && record != null)
+            {
+                <form method="post" action="/Extracounter/SubmitPermissionToAlter" class="mb-0">
+                    <input type="hidden" name="ecId" value="@record.Id" />
+                    <button type="submit" class="btn btn-primary">Submit Application</button>
+                </form>
+            }
 
+            @if (canMakePayment && record != null)
+            {
+                <a class="btn btn-success" href="/Extracounter/PermissionToAlterPayment?id=@application?.Id&process=ECF&ecId=@record.Id">
+                    Make Payment
+                </a>
+            }
 
-                    <tr>
-                        <th>Total Fee</th>
-                        <td>@ViewBag.TotalFee</td>
-                    </tr>
-                    <tr>
-                        <th>Payment Status</th>
-                        <td>
-                            @if (ViewBag.Payment == null)
-                            {<span style="color:red"> Not Paid</span>}
-                            else
-                            { <span style="color:green"> @ViewBag.Payment.Status</span>}
-                        </td>
-                    </tr>
+            @if (canContinue && record != null)
+            {
+                <form method="post" action="/Extracounter/ContinuePermissionToAlter" class="mb-0">
+                    <input type="hidden" name="ecId" value="@record.Id" />
+                    <button type="submit" class="btn btn-success">Continue</button>
+                </form>
+            }
 
+            <a class="btn btn-outline-secondary" href="/Home/ExtraCounterListings">View All Permission To Alter Applications</a>
+        </div>
+    </div>
+</div>
 
-                    @*[Key]
-                        // Liquor Outlet Info
-                        public string? Id { get; set; }
-                        public string? ApplicationId { get; set; }
-                        public string? UserId { get; set; }
-                        public string? PreviousExpiry { get; set; }
-                        public string? FeePaid { get; set; }
-                        public string? PenaltyPaid { get; set; }
-                        public string? PaymentStatus { get; set; }
-                        public string? LLBNumber { get; set; }
-
-                        public string? Service { get; set; }
-                        public DateTime DateApplied { get; set; }
-                        public DateTime DateUpdated { get; set; }*@
-
-
-
-
-                    @if (ViewBag.Payment == null)
-                    {
-                        @*<span style="color:red"> Not Paid</span>*@
-                    <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Extended Hours</button></td>
-
-                }
-                else
-                {
-                    @if (ViewBag.Payment.Status == "Paid")
-                    {
-
-                        @if (ViewBag.Inspectiondata != null)
-                        {
-                            <form action="/Postprocess/PostExtendedHours" enctype="multipart/form-data" method="post">
-
-                            <tr>
-                                <th>Inspection Submission </th>
-                                <td><span class="text-success"> Ready for submission</span></td>
-
-                            </tr>
-                            <input type="hidden" name="ExtId" value="@ViewBag.Inspectiondata.Id" />
-                            <tr>
-                                <th>Date For Extended Hours</th>
-                                <td><input type="date" name="ExtendedHoursDate" class="form-control" /></td>
-                            </tr>
-                            <tr>
-                                <th>Reason For Extended Hours</th>
-                                <td><textarea type="text" name="ReasonForExtention" class="form-control"></textarea></td>
-                            </tr>
-                            <tr>
-
-
-
-                                <th>
-                                    @*public string? Id { get; set; }
-                                        public string? UserId { get; set; }
-                                        public string? Status  { get; set; }
-                                        public string? Reference { get; set; }
-
-                                        public string? ApplicationId { get; set; }
-
-
-                                        public string? PaidFee { get; set; }
-                                        public string? PaymentStatus { get; set; }
-                                        public string? ReasonForExtention { get; set; }
-                                        public string? HoursOfExtension { get; set; }
-                                        public string? ExtendedHoursDate { get; set; }
-
-                                        public DateTime DateAdded { get; set; }
-                                        public DateTime DateUpdated { get; set; }*@
-
-                                    @*<input type="hidden" name="service" value="Inspection" />*@
-                                    <!--<input type="hidden" name="lLBNumber" value="@ViewBag.Appinfo.LLBNum" />
-                                    <input type="hidden" name="PaymentStatus" value="Paid" />
-                                    <input type="hidden" name="penaltyPaid" value="@ViewBag.Penalty" />
-                                    <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
-                                    <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
-                                    <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />-->
-                                    @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
-
-
-                                </th>
-
-
-                                <td><button class="btn btn-primary" type="submit"> Submit For Inspection</button></td>
-                            </tr>
-
-                            </form>
-
-
-
-                        }
-                        else
+@if (allApplications.Count() > 1)
+{
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-1">Application History</h5>
+            <p class="text-muted mb-0">Other permission to alter applications submitted for this licence.</p>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in allApplications.Where(item => item.Id != record?.Id))
                         {
                             <tr>
+                                <td class="fw-semibold">@item.Reference</td>
+                                <td>@item.DateAdded.ToString("dd MMM yyyy")</td>
                                 <td>
-                                    your inspection application has been submmited , Click Continue to set for awaiting and inspection.
+                                    <span class="badge rounded-pill @statusBadgeClass(item.Status)">@item.Status</span>
                                 </td>
                                 <td>
-                                    <a class="btn btn-primary" href="/Home/Dashboard">
-                                        Continue
+                                    <span class="badge rounded-pill @paymentBadgeClass(item.PaymentStatus)">@item.PaymentStatus</span>
+                                </td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary" href="/Extracounter/Extracounter?id=@application?.Id&process=ECF&ecId=@item.Id">
+                                        Open
                                     </a>
                                 </td>
                             </tr>
                         }
-
-
-
-                        @*<td><button type="button" href="/Postprocess/Complete?Id=@ViewBag.Inspectiondata.Id" class="btn btn-primary"> Continue</button></td>*@
-                    }
-                    else
-                    {
-                        <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Inspection</button></td>
-
-                    }
-                }
-
-
-
-
-
-
                     </tbody>
-
                 </table>
-            </div>`
-        </div>
-    </div>
-
-
-
-
-    <!-- Basic Modal -->
-
-    <div class="modal fade" id="PaymentModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Post Fomation For </h5> &nbsp;<b><h5 class="modal-title" id="feetitle"></h5></b>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="/Postprocess/AddFee" enctype="multipart/form-data" method="post">
-
-                        <div class="col-md-12">
-                            @*<label for="inputName5" class="form-label">Select Post Formation Process</label>
-                                <input type="hidden" name="id" class="form-control" value="" id="ApplicationId">*@
-
-
-
-                            <form action="/Postprocess/UpdateFee" enctype="multipart/form-data" method="post">
-
-
-                                <table class="table table-bordered table-hover">
-                                    <tbody class="table-light">
-
-                                        <tr>
-                                            <th>Outlet Name</th>
-                                            <td>
-                                                @ViewBag.Outletinfo.TradingName
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>License ExpiryDate</th>
-                                            <td>
-                                                @ViewBag.Appinfo.ExpiryDate
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>Fee</th>
-                                            <td>
-                                                @ViewBag.Fee
-                                            </td>
-                                        </tr>
-
-
-
-
-                                        <tr>
-                                            <th>Total Fee</th>
-                                            <td>@ViewBag.TotalFee</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Payment Status</th>
-                                            <td>
-                                                @if (ViewBag.Payment == null)
-                                                {<span style="color:red"> Not Paid</span>}
-                                                else
-                                                { <span style="color:green"> @ViewBag.Payment.Status</span>}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="2">
-
-                                                <p><b>NB:</b> After making this payment,the system will recognise that you have made a payment. You are required to return and submit your inspection </p>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th></th>
-                                            <td>
-                                                @if (ViewBag.Payment == null)
-                                                {
-                                                    <a class="btn btn-primary" href="/Extracounter/ExtendedHoursPayment?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=extendedhours&process=@ViewBag.Process">
-                                                        Make Payment
-                                                    </a>
-                                                }
-                                                else
-                                                { <a class="btn btn-primary" href="/Extracounter/ExtendedHoursPayment?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=extendedhours&process=@ViewBag.Process">
-                                                        Make Payment
-                                                    </a>
-                                                }
-                                            </td>
-                                        </tr>
-                                    </tbody>
-
-                                </table>
-                            </form>
-
-
-                        </div>
-
-
-
-                        @*<div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary">Submit</button>
-
-
-                            </div>*@
-                    </form>
-                </div>
             </div>
         </div>
-    </div><!-- End Basic Modal-->
-    <!-- Basic Modal -->
-
-
-
-    <script>function Payment() {
-            // alert(Id + Name + CityFee + Municipalty + TownFee + RDCFee);
-
-            $('#PaymentModal').modal('show');
-
-        }</script>
+    </div>
+}

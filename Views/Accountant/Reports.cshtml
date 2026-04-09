@@ -1,0 +1,327 @@
+@using System
+@using System.Globalization
+@model LLB.Models.ViewModel.AccountantFinancialReportsViewModel
+
+@{
+    Layout = "_LayoutMain";
+}
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                    <div>
+                        <h5 class="card-title mb-1">Financial Reports</h5>
+                        <p class="text-muted mb-0">Track revenue, payment channels, and transaction statuses across applications and post formations.</p>
+                    </div>
+                    <a class="btn btn-outline-primary" href="/Accountant/ExportReportsCsv?startDate=@Model.StartDate.ToString("yyyy-MM-dd")&endDate=@Model.EndDate.ToString("yyyy-MM-dd")&service=@Model.ServiceFilter&channel=@Model.ChannelFilter&status=@Model.StatusFilter">
+                        <i class="bi bi-download me-2"></i>Export CSV
+                    </a>
+                </div>
+
+                <form method="get" action="/Accountant/Reports" class="row g-3 mt-1">
+                    <div class="col-md-3">
+                        <label class="form-label">From</label>
+                        <input type="date" name="startDate" class="form-control" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">To</label>
+                        <input type="date" name="endDate" class="form-control" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Service</label>
+                        <select name="service" class="form-select">
+                            <option value="">All services</option>
+                            @foreach (var service in Model.ServiceOptions)
+                            {
+                                <option value="@service" selected="@(string.Equals(Model.ServiceFilter, service, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@service</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Channel</label>
+                        <select name="channel" class="form-select">
+                            <option value="">All channels</option>
+                            @foreach (var channel in Model.ChannelOptions)
+                            {
+                                <option value="@channel" selected="@(string.Equals(Model.ChannelFilter, channel, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@channel</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All statuses</option>
+                            @foreach (var status in Model.StatusOptions)
+                            {
+                                <option value="@status" selected="@(string.Equals(Model.StatusFilter, status, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@status</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-funnel me-2"></i>Apply Filters
+                        </button>
+                        <a class="btn btn-light border" href="/Accountant/Reports">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card info-card sales-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Filtered Transactions</h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h6>@Model.FilteredTransactions</h6>
+                        <span class="text-muted small pt-1">of @Model.TotalTransactions total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card info-card revenue-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Revenue Collected</h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h6>$@Model.PaidAmount.ToString("N2", CultureInfo.InvariantCulture)</h6>
+                        <span class="text-muted small pt-1">paid transactions</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card info-card customers-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Pending Value</h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h6>$@Model.PendingAmount.ToString("N2", CultureInfo.InvariantCulture)</h6>
+                        <span class="text-muted small pt-1">awaiting completion</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card info-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Filtered Value</h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-bar-chart-line"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h6>$@Model.FilteredAmount.ToString("N2", CultureInfo.InvariantCulture)</h6>
+                        <span class="text-muted small pt-1">$@Model.FailedAmount.ToString("N2", CultureInfo.InvariantCulture) failed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">By Service</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                <th class="text-end">Count</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ServiceBreakdown.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-muted text-center py-3">No records found.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.ServiceBreakdown)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td class="text-end fw-semibold">@item.Count</td>
+                                        <td class="text-end">$@item.Amount.ToString("N2", CultureInfo.InvariantCulture)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">By Channel</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Channel</th>
+                                <th class="text-end">Count</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ChannelBreakdown.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-muted text-center py-3">No records found.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.ChannelBreakdown)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td class="text-end fw-semibold">@item.Count</td>
+                                        <td class="text-end">$@item.Amount.ToString("N2", CultureInfo.InvariantCulture)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">By Status</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th class="text-end">Count</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.StatusBreakdown.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-muted text-center py-3">No records found.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.StatusBreakdown)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td class="text-end fw-semibold">@item.Count</td>
+                                        <td class="text-end">$@item.Amount.ToString("N2", CultureInfo.InvariantCulture)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Transaction Detail</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Application Ref</th>
+                                <th>Trading Name</th>
+                                <th>Payer</th>
+                                <th>Service</th>
+                                <th>Channel</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Paynow Ref</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Transactions.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted py-4">No transactions matched the selected filters.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var transaction in Model.Transactions)
+                                {
+                                    var badgeClass = "bg-secondary";
+
+                                    if (string.Equals(transaction.Status, "Paid", StringComparison.OrdinalIgnoreCase) || string.Equals(transaction.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        badgeClass = "bg-success";
+                                    }
+                                    else if (string.Equals(transaction.Status, "Awaiting Verification", StringComparison.OrdinalIgnoreCase) || string.Equals(transaction.Status, "Awaiting Payment", StringComparison.OrdinalIgnoreCase) || string.Equals(transaction.Status, "Created", StringComparison.OrdinalIgnoreCase) || string.Equals(transaction.Status, "Sent", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        badgeClass = "bg-warning text-dark";
+                                    }
+                                    else if (string.Equals(transaction.Status, "Rejected", StringComparison.OrdinalIgnoreCase) || string.Equals(transaction.Status, "Cancelled", StringComparison.OrdinalIgnoreCase) || string.Equals(transaction.Status, "Expired", StringComparison.OrdinalIgnoreCase) || string.Equals(transaction.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        badgeClass = "bg-danger";
+                                    }
+                                    else if (string.Equals(transaction.Status, "Not Paid", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        badgeClass = "bg-info text-dark";
+                                    }
+
+                                    <tr>
+                                        <td class="fw-semibold">@transaction.Reference</td>
+                                        <td>@transaction.ApplicationReference</td>
+                                        <td>@transaction.TradingName</td>
+                                        <td>@transaction.Payer</td>
+                                        <td>@transaction.Service</td>
+                                        <td>@transaction.Channel</td>
+                                        <td>$@transaction.Amount.ToString("N2", CultureInfo.InvariantCulture)</td>
+                                        <td><span class="badge @badgeClass">@transaction.Status</span></td>
+                                        <td>@transaction.PaynowReference</td>
+                                        <td>@transaction.TransactionDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

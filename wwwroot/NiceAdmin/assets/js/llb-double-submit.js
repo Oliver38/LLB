@@ -1,13 +1,24 @@
 (() => {
   "use strict";
 
+  if (window.__llbDoubleSubmitInitialized === true) {
+    return;
+  }
+
+  window.__llbDoubleSubmitInitialized = true;
+
   const actionCooldownMs = 1800;
   const lockedClassName = "llb-action-locked";
   const submitSelector = 'button[type="submit"], input[type="submit"], input[type="image"]';
   const actionSelector = 'button, input[type="button"], input[type="submit"], input[type="image"], a.btn, .btn';
+  const protectionSelector = "[data-prevent-double-submit='true']";
 
   const shouldAllowMultiple = (element) => {
     return element?.closest("[data-allow-multiple-click='true'], [data-allow-multiple-submit='true']") !== null;
+  };
+
+  const shouldProtect = (element) => {
+    return element?.matches(protectionSelector) || element?.closest(protectionSelector) !== null;
   };
 
   const isBootstrapToggle = (element) => {
@@ -93,15 +104,17 @@
     }
 
     delete element.dataset.llbClickLocked;
+    delete element.dataset.llbClickToken;
     setLockedState(element, false);
   };
 
-  const lockActionTemporarily = (element) => {
+  const lockActionTemporarily = (element, clickToken) => {
     if (!element) {
       return;
     }
 
     element.dataset.llbClickLocked = "true";
+    element.dataset.llbClickToken = clickToken;
     setLockedState(element, true);
     window.setTimeout(() => clearActionLock(element), actionCooldownMs);
   };
@@ -129,6 +142,7 @@
     }
 
     delete form.dataset.llbSubmitting;
+    delete form.dataset.llbSubmitToken;
     form.classList.remove("llb-is-submitting");
 
     getAssociatedSubmitControls(form).forEach((element) => {
@@ -139,32 +153,35 @@
 
   document.addEventListener("click", (event) => {
     const actionElement = event.target.closest(actionSelector);
-    if (!actionElement || event.defaultPrevented || shouldIgnoreActionLock(actionElement)) {
+    if (!actionElement || !shouldProtect(actionElement) || event.defaultPrevented || shouldIgnoreActionLock(actionElement)) {
       return;
     }
 
-    if (actionElement.dataset.llbClickLocked === "true") {
+    const clickToken = String(event.timeStamp);
+    if (actionElement.dataset.llbClickLocked === "true" && actionElement.dataset.llbClickToken !== clickToken) {
       event.preventDefault();
       event.stopImmediatePropagation();
       return;
     }
 
-    lockActionTemporarily(actionElement);
+    lockActionTemporarily(actionElement, clickToken);
   });
 
   document.addEventListener("submit", (event) => {
     const form = event.target;
-    if (!(form instanceof HTMLFormElement) || shouldAllowMultiple(form) || event.defaultPrevented) {
+    if (!(form instanceof HTMLFormElement) || !shouldProtect(form) || shouldAllowMultiple(form) || event.defaultPrevented) {
       return;
     }
 
-    if (form.dataset.llbSubmitting === "true") {
+    const submitToken = String(event.timeStamp);
+    if (form.dataset.llbSubmitting === "true" && form.dataset.llbSubmitToken !== submitToken) {
       event.preventDefault();
       event.stopImmediatePropagation();
       return;
     }
 
     form.dataset.llbSubmitting = "true";
+    form.dataset.llbSubmitToken = submitToken;
     form.classList.add("llb-is-submitting");
     window.setTimeout(() => disableFormSubmitControls(form), 0);
   });
