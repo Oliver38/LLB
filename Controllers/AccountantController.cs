@@ -1169,7 +1169,7 @@ namespace LLB.Controllers
                 "temporary retails" => "Temporary Retail",
                 "temporary retail" => "Temporary Retail",
                 "temporary transfer" => "Temporary Transfer",
-                "extra counter" => "Permission to Alter",
+                "extra counter" => "Extra Counter",
                 "permission to alter" => "Permission to Alter",
                 "changemanager" => "Manager Change",
                 "inspection" => "Inspection",

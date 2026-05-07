@@ -1,9 +1,10 @@
 @using System.Globalization
+@using LLB.Helpers
 @using LLB.Models
 
 @{
     Layout = "_LayoutMain";
-    ViewData["Title"] = "Temporary Transfer Review";
+    ViewData["Title"] = "Transfer Review";
     ViewData["Subtitle"] = "Secretary examination and approval.";
 
     var transferApplication = ViewBag.TransferApplication as ApplicationInfo;
@@ -13,7 +14,10 @@
     var outlet = ViewBag.Outlet as OutletInfo;
     var license = ViewBag.License as LicenseTypes;
     var region = ViewBag.Region as LicenseRegion;
+    var proofOfPublication = ViewBag.ProofOfPublication as AttachmentInfo;
     var tieAffidavit = ViewBag.TieAffidavit as AttachmentInfo;
+    var transferAffidavit = ViewBag.TransferAffidavit as AttachmentInfo;
+    var leaseDocuments = ViewBag.LeaseDocuments as AttachmentInfo;
     var transferManagers = ViewBag.TransferManagers as IEnumerable<ManagersParticulars> ?? Enumerable.Empty<ManagersParticulars>();
     var baseFee = ViewBag.BaseFee as decimal?;
     var managerFee = ViewBag.ManagerFee as decimal?;
@@ -21,6 +25,7 @@
     var totalFee = ViewBag.TotalFee as decimal?;
     var managerCount = ViewBag.ManagerCount is int savedManagerCount ? savedManagerCount : transferManagers.Count();
     var chargeableManagerCount = ViewBag.ChargeableManagerCount is int savedChargeableManagerCount ? savedChargeableManagerCount : Math.Max(managerCount - 1, 0);
+    var displayTransferType = TemporaryTransferHelper.GetTransferType(transferApplication);
 
     string DisplayUserName(ApplicationUser? user)
     {
@@ -83,8 +88,8 @@
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <div>
-            <h5 class="card-title mb-1">Temporary Transfer Review</h5>
-            <p class="text-muted mb-0">Secretary review of the submitted temporary transfer application.</p>
+            <h5 class="card-title mb-1">@displayTransferType Review</h5>
+            <p class="text-muted mb-0">Secretary review of the submitted transfer application.</p>
         </div>
         <span class="badge rounded-pill @StatusBadgeClass(transferApplication?.Status)">@(transferApplication?.Status ?? "Unknown")</span>
     </div>
@@ -98,7 +103,11 @@
                         <span class="fw-semibold text-end">@(transferApplication?.RefNum ?? "N/A")</span>
                     </div>
                     <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">Temporary Applicant</span>
+                        <span class="text-muted">Transfer Type</span>
+                        <span class="fw-semibold text-end">@displayTransferType</span>
+                    </div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Transfer Applicant</span>
                         <span class="fw-semibold text-end">@DisplayUserName(applicantUser)</span>
                     </div>
                     <div class="d-flex justify-content-between gap-3 border-bottom py-2">
@@ -167,7 +176,7 @@
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="card-title mb-1">Owner Comparison</h5>
-        <p class="text-muted mb-0">Compare the original licence owner details against the temporary transfer applicant before approving the application.</p>
+        <p class="text-muted mb-0">Compare the original licence owner details against the transfer applicant before approving the application.</p>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -176,10 +185,15 @@
                     <tr>
                         <th>Detail</th>
                         <th>Original Licence Owner</th>
-                        <th>Temporary Transfer Applicant</th>
+                        <th>Transfer Applicant</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td class="fw-semibold">Transfer Type</td>
+                        <td>N/A</td>
+                        <td>@displayTransferType</td>
+                    </tr>
                     <tr>
                         <td class="fw-semibold">Name</td>
                         <td>@DisplayValue(ownerUser?.Name)</td>
@@ -259,7 +273,7 @@
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="card-title mb-1">Submitted Managers</h5>
-        <p class="text-muted mb-0">These managers were submitted with the temporary transfer application and drive the additional manager fee from manager 2 onward.</p>
+        <p class="text-muted mb-0">These managers were submitted with the transfer application and drive the additional manager fee from manager 2 onward.</p>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -279,7 +293,7 @@
                     @if (!transferManagers.Any())
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No temporary transfer managers were captured on this application.</td>
+                            <td colspan="7" class="text-center text-muted py-4">No transfer managers were captured on this application.</td>
                         </tr>
                     }
                     else
@@ -333,7 +347,7 @@
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="card-title mb-1">Submitted Attachments</h5>
-        <p class="text-muted mb-0">Review the applicant files and the tie affidavit before deciding on the application.</p>
+        <p class="text-muted mb-0">Review the required transfer documents before deciding on the application.</p>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -347,44 +361,16 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="fw-semibold">ID/Passport Copy</td>
-                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication?.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication?.IdCopy) ? "Missing" : "Uploaded")</span></td>
+                        <td class="fw-semibold">Proof of publication in the government gazette and local paper.{L.G 2}</td>
+                        <td><span class="badge rounded-pill @(proofOfPublication == null || string.IsNullOrWhiteSpace(proofOfPublication.DocumentLocation) ? "bg-secondary" : "bg-success")">@(proofOfPublication == null || string.IsNullOrWhiteSpace(proofOfPublication.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
                         <td>
-                            @if (string.IsNullOrWhiteSpace(transferApplication?.IdCopy))
+                            @if (proofOfPublication == null || string.IsNullOrWhiteSpace(proofOfPublication.DocumentLocation))
                             {
                                 <span class="text-danger">No file uploaded</span>
                             }
                             else
                             {
-                                <a href="~/@transferApplication!.IdCopy" target="_blank">View Attachment</a>
-                            }
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="fw-semibold">Fingerprints</td>
-                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication?.Fingerprints) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication?.Fingerprints) ? "Missing" : "Uploaded")</span></td>
-                        <td>
-                            @if (string.IsNullOrWhiteSpace(transferApplication?.Fingerprints))
-                            {
-                                <span class="text-danger">No file uploaded</span>
-                            }
-                            else
-                            {
-                                <a href="~/@transferApplication!.Fingerprints" target="_blank">View Attachment</a>
-                            }
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="fw-semibold">Form 55</td>
-                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication?.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication?.FormFF) ? "Missing" : "Uploaded")</span></td>
-                        <td>
-                            @if (string.IsNullOrWhiteSpace(transferApplication?.FormFF))
-                            {
-                                <span class="text-danger">No file uploaded</span>
-                            }
-                            else
-                            {
-                                <a href="~/@transferApplication!.FormFF" target="_blank">View Attachment</a>
+                                <a href="~/@proofOfPublication.DocumentLocation" target="_blank">View Attachment</a>
                             }
                         </td>
                     </tr>
@@ -399,6 +385,62 @@
                             else
                             {
                                 <a href="~/@tieAffidavit.DocumentLocation" target="_blank">View Attachment</a>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Transfer affidavit</td>
+                        <td><span class="badge rounded-pill @(transferAffidavit == null || string.IsNullOrWhiteSpace(transferAffidavit.DocumentLocation) ? "bg-secondary" : "bg-success")">@(transferAffidavit == null || string.IsNullOrWhiteSpace(transferAffidavit.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (transferAffidavit == null || string.IsNullOrWhiteSpace(transferAffidavit.DocumentLocation))
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                            else
+                            {
+                                <a href="~/@transferAffidavit.DocumentLocation" target="_blank">View Attachment</a>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Certified copies of ID or PASSPORT of applicant</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication?.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication?.IdCopy) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(transferApplication?.IdCopy))
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                            else
+                            {
+                                <a href="~/@transferApplication!.IdCopy" target="_blank">View Attachment</a>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">FORM 55 against finger prints</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication?.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication?.FormFF) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(transferApplication?.FormFF))
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                            else
+                            {
+                                <a href="~/@transferApplication!.FormFF" target="_blank">View Attachment</a>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-semibold">Lease documents, title deeds or any evidence of right of occupation.</td>
+                        <td><span class="badge rounded-pill @(leaseDocuments == null || string.IsNullOrWhiteSpace(leaseDocuments.DocumentLocation) ? "bg-secondary" : "bg-success")">@(leaseDocuments == null || string.IsNullOrWhiteSpace(leaseDocuments.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (leaseDocuments == null || string.IsNullOrWhiteSpace(leaseDocuments.DocumentLocation))
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                            else
+                            {
+                                <a href="~/@leaseDocuments.DocumentLocation" target="_blank">View Attachment</a>
                             }
                         </td>
                     </tr>
@@ -418,7 +460,7 @@
             <input type="hidden" name="id" value="@transferApplication.Id" />
             <button type="submit"
                     class="btn btn-outline-danger"
-                    onclick="return confirm('Reject this temporary transfer application?');">
+                    onclick="return confirm('Reject this transfer application?');">
                 Reject
             </button>
         </form>
@@ -427,7 +469,7 @@
             <input type="hidden" name="id" value="@transferApplication.Id" />
             <button type="submit"
                     class="btn btn-success"
-                    onclick="return confirm('Approve this temporary transfer application?');">
+                    onclick="return confirm('Approve this transfer application?');">
                 Approve
             </button>
         </form>

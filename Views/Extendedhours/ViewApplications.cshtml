@@ -1,69 +1,125 @@
-﻿@{
+@model LLB.Models.ViewModel.ExtendedHoursReviewViewModel
+
+@{
     Layout = "_LayoutMain";
-    var model = ViewBag.Application; // or strongly typed: @model YourNamespace.LiquorOutlet
+    var currentStatus = Model.Status ?? "Unknown";
+    var paymentStatus = Model.PaymentStatus ?? "Not Paid";
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
 }
 
 <div class="pagetitle">
     <h1>View Application Details</h1>
-</div><!-- End Page Title -->
+</div>
 
 <section class="section">
-    <div class="row">
-        <div class="col-lg-8 offset-lg-2">
-
-            <div class="card">
+    <div class="row g-4">
+        <div class="col-12 col-xl-6">
+            <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Liquor Outlet Info</h5>
-                    @*<a href="/Extendedhours/AllApplications" class="btn btn-secondary btn-sm">Back to List</a>*@
+                    <h5 class="card-title mb-0">Extended Hours Application</h5>
                 </div>
 
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <tbody>
-                                
+                        <table class="table table-bordered align-middle">
+                            <tbody class="table-light">
                                 <tr>
                                     <th>Status</th>
-                                    <td>@ViewBag.Application.Status</td>
+                                    <td>@currentStatus</td>
                                 </tr>
                                 <tr>
                                     <th>Reference</th>
-                                    <td>@ViewBag.Application.Reference</td>
+                                    <td>@Model.Reference</td>
                                 </tr>
-                               
                                 <tr>
                                     <th>Paid Fee</th>
-                                    <td>@ViewBag.Application.PaidFee?.ToString("N2")</td>
+                                    <td>@(Model.PaidFee?.ToString("N2") ?? "0.00")</td>
                                 </tr>
                                 <tr>
                                     <th>Payment Status</th>
-                                    <td>@ViewBag.Application.PaymentStatus</td>
+                                    <td>@paymentStatus</td>
+                                </tr>
+                                <tr>
+                                    <th>Paynow Reference</th>
+                                    <td>@(Model.PaynowReference ?? "N/A")</td>
                                 </tr>
                                 <tr>
                                     <th>Reason For Extension</th>
-                                    <td>@ViewBag.Application.ReasonForExtention</td>
-                                </tr>
-                                <tr>
-                                    <th>Hours Of Extension</th>
-                                    <td>5 @ViewBag.Application.HoursOfExtension</td>
+                                    <td>@(Model.ReasonForExtention ?? "N/A")</td>
                                 </tr>
                                 <tr>
                                     <th>Extended Hours Date</th>
-                                    <td>@ViewBag.Application.ExtendedHoursDate.ToString("yyyy-MM-dd")</td>
+                                    <td>
+                                        @(Model.ExtendedHoursDate == DateTime.MinValue
+                                            ? "N/A"
+                                            : Model.ExtendedHoursDate.ToString("yyyy-MM-dd"))
+                                    </td>
                                 </tr>
-                              
+                                <tr>
+                                    <th>Requested On</th>
+                                    <td>@Model.RequestedOn.ToString("yyyy-MM-dd")</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="mt-4 d-flex justify-content-end gap-2">
-                        <a href="#" class="btn btn-warning">Send Query</a>
-                        <a href="/Extendedhours/Reject?Id=@ViewBag.Application.Id" class="btn btn-danger">Reject</a>
-                        <a href="/Extendedhours/Approve?Id=@ViewBag.Application.Id" class="btn btn-success">Approve</a>
+        <div class="col-12 col-xl-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Outlet Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle mb-0">
+                            <tbody class="table-light">
+                                <tr>
+                                    <th>Trading Name</th>
+                                    <td>@(Model.TradingName ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th>Address</th>
+                                    <td>@(Model.Address ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th>Type Of Licence</th>
+                                    <td>@(Model.LicenseType ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th>Province</th>
+                                    <td>@(Model.Province ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th>Council</th>
+                                    <td>@(Model.Council ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th>LLB Number</th>
+                                    <td>@(Model.LLBNumber ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th>Region</th>
+                                    <td>@(Model.LicenseRegion ?? "N/A")</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div><!-- End Card -->
+            </div>
+        </div>
 
+        <div class="col-12">
+            <div class="mt-4 d-flex justify-content-end gap-2">
+                <a href="#" class="btn btn-warning">Send Query</a>
+                <a href="/Extendedhours/Reject?Id=@Model.Id" class="btn btn-danger">Reject</a>
+                <a href="/Extendedhours/Approve?Id=@Model.Id" class="btn btn-success">Approve</a>
+            </div>
         </div>
     </div>
 </section>

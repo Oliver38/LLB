@@ -7,6 +7,9 @@ namespace LLB.Models.ViewModel
         public string ApplicationId { get; set; } = string.Empty;
         public string Reference { get; set; } = string.Empty;
         public string? TradingName { get; set; }
+        public string? Address { get; set; }
+        public string? Province { get; set; }
+        public string? Council { get; set; }
         public string? LLBNumber { get; set; }
         public string? LicenseType { get; set; }
         public string? LicenseRegion { get; set; }

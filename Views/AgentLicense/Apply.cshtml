@@ -1,0 +1,375 @@
+@using LLB.Helpers
+@using LLB.Models
+
+@{
+    Layout = "_LayoutMain";
+    ViewData["Title"] = "Agent License";
+
+    var user = ViewBag.User as ApplicationUser;
+    var wholesaleApplication = ViewBag.WholesaleApplication as ApplicationInfo;
+    var agentApplication = ViewBag.AgentApplication as ApplicationInfo;
+    var wholesaleLicense = ViewBag.WholesaleLicense as LicenseTypes;
+    var agentLicense = ViewBag.AgentLicense as LicenseTypes;
+    var wholesaleOutlet = ViewBag.WholesaleOutlet as OutletInfo;
+    var publicationProof = ViewBag.PublicationProof as AttachmentInfo;
+    var tieAffidavit = ViewBag.TieAffidavit as AttachmentInfo;
+    var wholesaleLicenseAttachment = ViewBag.WholesaleLicenseAttachment as AttachmentInfo;
+    var searchValue = ViewBag.SearchValue as string ?? string.Empty;
+
+    string DisplayValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "N/A" : value;
+    }
+
+    string StatusBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "approved" => "bg-success",
+            "awaiting approval" => "bg-info text-dark",
+            "rejected" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    var nameValue = agentApplication?.PlaceOfBirth ?? user?.Name ?? string.Empty;
+    var surnameValue = agentApplication?.PlaceOfEntry ?? user?.LastName ?? string.Empty;
+    var dobValue = agentApplication?.DateofEntryIntoZimbabwe ?? user?.DOB ?? string.Empty;
+    var genderValue = agentApplication?.RenewalStatus ?? user?.Gender ?? string.Empty;
+    var nationalityValue = agentApplication?.OperationAddress ?? user?.Nationality ?? string.Empty;
+    var idPassValue = agentApplication?.IdPass ?? user?.NatID ?? string.Empty;
+    var businessNameValue = agentApplication?.BusinessName ?? $"{user?.Name} {user?.LastName}".Trim();
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Wholesale Licence</h5>
+        <p class="text-muted mb-0">Enter the LLB number for the wholesale licence the agent is applying under.</p>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/AgentLicense/Apply" class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label class="form-label" for="llbNumber">Wholesale LLB Number</label>
+                <input type="text" id="llbNumber" name="llbNumber" value="@searchValue" class="form-control" required />
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Retrieve Wholesale Licence</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (wholesaleApplication != null)
+{
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="card-title mb-1">Wholesale Licence Details</h5>
+                <p class="text-muted mb-0">The agent licence will be linked to this wholesale licence.</p>
+            </div>
+            <span class="badge rounded-pill bg-dark">@(wholesaleApplication.LLBNum ?? "N/A")</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Licensee</span>
+                        <span class="fw-semibold text-end">@DisplayValue(wholesaleApplication.BusinessName)</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Licence</span>
+                        <span class="fw-semibold text-end">@DisplayValue(wholesaleLicense?.LicenseName)</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">Trading Name</span>
+                        <span class="fw-semibold text-end">@DisplayValue(wholesaleOutlet?.TradingName)</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Address</span>
+                        <span class="fw-semibold text-end">@DisplayValue(wholesaleOutlet?.Address)</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Council</span>
+                        <span class="fw-semibold text-end">@DisplayValue(wholesaleOutlet?.Council)</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">City</span>
+                        <span class="fw-semibold text-end">@DisplayValue(wholesaleOutlet?.City)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (agentApplication == null)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-1">Agent Information</h5>
+                <p class="text-muted mb-0">Review and edit the agent details, then attach the required documents.</p>
+            </div>
+            <div class="card-body">
+                <form method="post" action="/AgentLicense/Submit" enctype="multipart/form-data" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="llbNumber" value="@wholesaleApplication.LLBNum" />
+
+                    <div class="col-md-6">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" value="@nameValue" class="form-control" id="agentName" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Surname</label>
+                        <input type="text" name="surname" value="@surnameValue" class="form-control" id="agentSurname" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">DOB</label>
+                        <input type="text" name="dob" value="@dobValue" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Gender</label>
+                        <input type="text" name="gender" value="@genderValue" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nationality</label>
+                        <input type="text" name="nationality" value="@nationalityValue" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">ID or Passport Number</label>
+                        <input type="text" name="idPass" value="@idPassValue" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Applicant Type</label>
+                        <input type="text" name="applicantType" value="Individual" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Licensee Name</label>
+                        <input type="text" name="businessName" value="@businessNameValue" class="form-control" id="agentBusinessName" readonly required />
+                    </div>
+
+                    <div class="col-12">
+                        <hr />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Advert and Proof of publication in the government gazette and local paper.{L.G 2}</label>
+                        <input type="file" name="publicationProof" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tie Affidavit</label>
+                        <input type="file" name="tieAffidavit" class="form-control" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fingerprint</label>
+                        <input type="file" name="fingerprints" class="form-control" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Form 55</label>
+                        <input type="file" name="form55" class="form-control" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">ID</label>
+                        <input type="file" name="idCopy" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Wholesale license</label>
+                        <input type="file" name="wholesaleLicense" class="form-control" required />
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">Submit Agent License Application</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+}
+
+<script>
+    (function () {
+        const nameInput = document.getElementById("agentName");
+        const surnameInput = document.getElementById("agentSurname");
+        const businessNameInput = document.getElementById("agentBusinessName");
+        if (!nameInput || !surnameInput || !businessNameInput) {
+            return;
+        }
+
+        function syncBusinessName() {
+            businessNameInput.value = [nameInput.value, surnameInput.value]
+                .map(function (value) { return value.trim(); })
+                .filter(Boolean)
+                .join(" ");
+        }
+
+        nameInput.addEventListener("input", syncBusinessName);
+        surnameInput.addEventListener("input", syncBusinessName);
+    })();
+</script>
+
+@if (agentApplication != null)
+{
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="card-title mb-1">Agent License Application</h5>
+                <p class="text-muted mb-0">Submitted agent details and required attachments.</p>
+            </div>
+            <span class="badge rounded-pill @StatusBadgeClass(agentApplication.Status)">@(agentApplication.Status ?? "Unknown")</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Reference</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.RefNum)</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Name</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.PlaceOfBirth)</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Surname</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.PlaceOfEntry)</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">DOB</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.DateofEntryIntoZimbabwe)</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">Gender</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.RenewalStatus)</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Nationality</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.OperationAddress)</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">ID or Passport</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.IdPass)</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Applicant Type</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.ApplicantType)</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Licensee Name</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.BusinessName)</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">Agent Licence</span>
+                        <span class="fw-semibold text-end">@DisplayValue(agentLicense?.LicenseName)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive mt-4">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Document</th>
+                            <th>File</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Advert and Proof of publication in the government gazette and local paper.{L.G 2}</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(publicationProof?.DocumentLocation))
+                                {
+                                    <a href="~/@publicationProof.DocumentLocation" target="_blank">View Attachment</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Missing</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Tie Affidavit</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation))
+                                {
+                                    <a href="~/@tieAffidavit.DocumentLocation" target="_blank">View Attachment</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Missing</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Fingerprint</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(agentApplication.Fingerprints))
+                                {
+                                    <a href="~/@agentApplication.Fingerprints" target="_blank">View Attachment</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Missing</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Form 55</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(agentApplication.FormFF))
+                                {
+                                    <a href="~/@agentApplication.FormFF" target="_blank">View Attachment</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Missing</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>ID</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(agentApplication.IdCopy))
+                                {
+                                    <a href="~/@agentApplication.IdCopy" target="_blank">View Attachment</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Missing</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Wholesale license</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation))
+                                {
+                                    <a href="~/@wholesaleLicenseAttachment.DocumentLocation" target="_blank">View Attachment</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Missing</span>
+                                }
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            @if (string.Equals(agentApplication.Status, "approved", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(agentApplication.LLBNum))
+            {
+                <a class="btn btn-success" href="/Downloads/CheckDownload?LLBNUM=@agentApplication.LLBNum&DocumentType=License">Download Agent Licence</a>
+            }
+        </div>
+    </div>
+}

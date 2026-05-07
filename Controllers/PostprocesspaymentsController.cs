@@ -39,6 +39,39 @@ namespace LLB.Controllers
         [HttpGet("Paynow")]
         public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount,string  service ,string process)
         {
+            if (IsPostFormationInspectionPayment(service))
+            {
+                var activeInspection = GetActivePostFormationInspection(Id);
+                if (activeInspection != null)
+                {
+                    TempData["error"] = "An inspection application is already in progress for this licence.";
+                    return RedirectToAction("Inspection", "Postprocess", new { id = Id, process = process });
+                }
+
+                var latestPayment = RefreshLatestInspectionPayment(Id);
+                var latestInspection = GetLatestPostFormationInspection(Id);
+                var paymentAlreadyUsed = latestPayment != null
+                    && latestInspection != null
+                    && latestInspection.DateApplied >= latestPayment.DateAdded;
+
+                if (latestPayment != null && !paymentAlreadyUsed && HasPaymentStatus(latestPayment, "Paid"))
+                {
+                    TempData["success"] = "Inspection payment is complete. Submit the inspection application.";
+                    return RedirectToAction("Inspection", "Postprocess", new { id = Id, process = process });
+                }
+
+                if (latestPayment != null && !paymentAlreadyUsed && IsActivePaymentTransaction(latestPayment))
+                {
+                    if (!string.IsNullOrWhiteSpace(latestPayment.SystemRef))
+                    {
+                        return Redirect(latestPayment.SystemRef);
+                    }
+
+                    TempData["error"] = "Complete the current inspection payment before starting another inspection application.";
+                    return RedirectToAction("Inspection", "Postprocess", new { id = Id, process = process });
+                }
+            }
+
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
@@ -80,6 +113,7 @@ namespace LLB.Controllers
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
                 transaction.PopDoc = "";
+                transaction.SystemRef = response.RedirectLink();
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
                 transaction.DateUpdated = DateTime.Now;
@@ -115,6 +149,39 @@ namespace LLB.Controllers
         [HttpGet("InspectionPaynow")]
         public async Task<IActionResult> InspectionPaynow(string Id, double amount, string service, string process)
         {
+            if (IsPostFormationInspectionPayment(service))
+            {
+                var activeInspection = GetActivePostFormationInspection(Id);
+                if (activeInspection != null)
+                {
+                    TempData["error"] = "An inspection application is already in progress for this licence.";
+                    return RedirectToAction("Inspection", "Postprocess", new { id = Id, process = process });
+                }
+
+                var latestPayment = RefreshLatestInspectionPayment(Id);
+                var latestInspection = GetLatestPostFormationInspection(Id);
+                var paymentAlreadyUsed = latestPayment != null
+                    && latestInspection != null
+                    && latestInspection.DateApplied >= latestPayment.DateAdded;
+
+                if (latestPayment != null && !paymentAlreadyUsed && HasPaymentStatus(latestPayment, "Paid"))
+                {
+                    TempData["success"] = "Inspection payment is complete. Submit the inspection application.";
+                    return RedirectToAction("Inspection", "Postprocess", new { id = Id, process = process });
+                }
+
+                if (latestPayment != null && !paymentAlreadyUsed && IsActivePaymentTransaction(latestPayment))
+                {
+                    if (!string.IsNullOrWhiteSpace(latestPayment.SystemRef))
+                    {
+                        return Redirect(latestPayment.SystemRef);
+                    }
+
+                    TempData["error"] = "Complete the current inspection payment before starting another inspection application.";
+                    return RedirectToAction("Inspection", "Postprocess", new { id = Id, process = process });
+                }
+            }
+
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
             //amount = 55.7;
             var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
@@ -156,6 +223,7 @@ namespace LLB.Controllers
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
                 transaction.PopDoc = "";
+                transaction.SystemRef = response.RedirectLink();
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
                 transaction.DateUpdated = DateTime.Now;
@@ -184,6 +252,71 @@ namespace LLB.Controllers
 
 
             return View();
+        }
+
+        private static bool IsPostFormationInspectionPayment(string service)
+        {
+            return string.Equals(service, "inspection", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool HasPaymentStatus(Payments payment, string expectedStatus)
+        {
+            return string.Equals(payment.Status, expectedStatus, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(payment.PaymentStatus, expectedStatus, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsActivePaymentTransaction(Payments payment)
+        {
+            return !HasPaymentStatus(payment, "Paid")
+                && !HasPaymentStatus(payment, "Cancelled")
+                && !HasPaymentStatus(payment, "Rejected")
+                && !HasPaymentStatus(payment, "Expired");
+        }
+
+        private Inspection GetLatestPostFormationInspection(string applicationId)
+        {
+            return _db.Inspection
+                .Where(inspection => inspection.ApplicationId == applicationId
+                    && inspection.Service == "Inspection")
+                .OrderByDescending(inspection => inspection.DateApplied)
+                .FirstOrDefault();
+        }
+
+        private Inspection GetActivePostFormationInspection(string applicationId)
+        {
+            return _db.Inspection
+                .Where(inspection => inspection.ApplicationId == applicationId
+                    && inspection.Service == "Inspection"
+                    && (inspection.Status == null || inspection.Status.ToLower() != "inspected"))
+                .OrderByDescending(inspection => inspection.DateApplied)
+                .FirstOrDefault();
+        }
+
+        private Payments RefreshLatestInspectionPayment(string applicationId)
+        {
+            var payment = _db.Payments
+                .Where(transaction => transaction.ApplicationId == applicationId
+                    && transaction.Service == "inspection")
+                .OrderByDescending(transaction => transaction.DateAdded)
+                .FirstOrDefault();
+
+            if (payment == null || string.IsNullOrWhiteSpace(payment.PollUrl))
+            {
+                return payment;
+            }
+
+            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            var status = paynow.PollTransaction(payment.PollUrl);
+            var statusdata = status.GetData();
+            payment.PaynowRef = statusdata["paynowreference"];
+            payment.PaymentStatus = statusdata["status"];
+            payment.Status = statusdata["status"];
+            payment.DateUpdated = DateTime.Now;
+
+            _db.Update(payment);
+            _db.SaveChanges();
+
+            return payment;
         }
 
         //[HttpPost("UpdateFee")]

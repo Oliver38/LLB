@@ -1,4 +1,5 @@
 ﻿@using System.Linq
+@using LLB.Helpers
 @using LLB.Models.ViewModel
 
 @{
@@ -30,6 +31,22 @@
 
     Func<string, string> tabButtonClass = tabId => activeTab == tabId ? "nav-link active" : "nav-link";
     Func<string, string> tabPaneClass = tabId => activeTab == tabId ? "tab-pane fade show active" : "tab-pane fade";
+    Func<ClientPostFormationListingViewModel, bool> isExtraCounter = listing =>
+        listing.Reference?.StartsWith("PF-EXC-", StringComparison.OrdinalIgnoreCase) == true;
+    Func<ClientPostFormationListingViewModel, string> displayExtraCounterStatus = listing =>
+        isExtraCounter(listing) && string.Equals(listing.Status, "submitted", StringComparison.OrdinalIgnoreCase)
+            ? "Initialised"
+            : listing.Status ?? "Unknown";
+    Func<InspectionViewModel, bool> isDirectInspection = inspection =>
+        string.Equals(inspection.Service, "Inspection", StringComparison.OrdinalIgnoreCase);
+    Func<InspectionViewModel, bool> inspectionPassed = inspection =>
+        string.Equals(inspection.Overall, "true", StringComparison.OrdinalIgnoreCase);
+    Func<InspectionViewModel, bool> inspectionFailed = inspection =>
+        string.Equals(inspection.Overall, "false", StringComparison.OrdinalIgnoreCase);
+    Func<InspectionViewModel, string> inspectionOutcomeText = inspection =>
+        inspectionPassed(inspection) ? "Passed" : inspectionFailed(inspection) ? "Failed" : "Pending";
+    Func<InspectionViewModel, string> inspectionOutcomeClass = inspection =>
+        inspectionPassed(inspection) ? "llb-status-success" : inspectionFailed(inspection) ? "llb-status-danger" : "llb-status-info";
 }
 
 @if (TempData["error"] != null)
@@ -202,7 +219,14 @@
                                             }
                                             else
                                             {
-                                                <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-sm btn-outline-primary">View</a>
+                                                if (AgentLicenseHelper.IsAgentLicenseApplication(application))
+                                                {
+                                                    <a href="/AgentLicense/Apply?id=@application.Id" class="btn btn-sm btn-outline-primary">View</a>
+                                                }
+                                                else
+                                                {
+                                                    <a href="~/Viewing/Apply?Id=@application.Id" class="btn btn-sm btn-outline-primary">View</a>
+                                                }
                                             }
                                         </td>
                                     </tr>
@@ -388,6 +412,7 @@
                                                     <th>For</th>
                                                     <th>Service</th>
                                                     <th>Status</th>
+                                                    <th>Outcome</th>
                                                     <th class="text-end">Action</th>
                                                 </tr>
                                             </thead>
@@ -405,8 +430,23 @@
                                                         <td>
                                                             <span class="llb-status-pill @statusClass(inspection.Status)">@inspection.Status</span>
                                                         </td>
+                                                        <td>
+                                                            <span class="llb-status-pill @inspectionOutcomeClass(inspection)">@inspectionOutcomeText(inspection)</span>
+                                                        </td>
                                                         <td class="text-end">
-                                                            <a class="btn btn-sm btn-outline-primary" href="/Viewing/inspection?Id=@inspection.Id">View Inspection</a>
+                                                            @if (isDirectInspection(inspection) && inspectionPassed(inspection))
+                                                            {
+                                                                <a class="btn btn-sm btn-outline-primary" href="/Documents/InspectionComplianceCertificate?searchref=@inspection.Id">View Certificate</a>
+                                                            }
+                                                            else if (isDirectInspection(inspection) && inspectionFailed(inspection))
+                                                            {
+                                                                <a class="btn btn-sm btn-outline-danger" href="/Documents/InspectionFailedReport?searchref=@inspection.Id">View Failed Report</a>
+                                                                <a class="btn btn-sm btn-primary ms-1" href="/Postprocess/Inspection?id=@inspection.ApplicationId&process=INP">Resubmit</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a class="btn btn-sm btn-outline-primary" href="/Viewing/inspection?Id=@inspection.Id">View Inspection</a>
+                                                            }
                                                         </td>
                                                     </tr>
                                                 }
@@ -591,15 +631,15 @@
                     <div class="col-12">
                         <div class="card llb-panel-card" id="extra-counter-listings">
                             <div class="card-header">
-                                <h5 class="card-title">Permission To Alter Listings</h5>
+                                <h5 class="card-title">Permission To Alter / Extra Counter Listings</h5>
                             </div>
                             <div class="card-body">
                                 @if (!extraCounterListings.Any())
                                 {
                                     <div class="llb-empty-state">
                                         <i class="bi bi-layout-text-window"></i>
-                                        <h5 class="fw-bold">No permission to alter records</h5>
-                                        <p class="text-muted mb-0">Permission to alter submissions will appear here after you start one from an approved licence.</p>
+                                        <h5 class="fw-bold">No permission to alter or extra counter records</h5>
+                                        <p class="text-muted mb-0">Permission to alter and extra counter applications will appear here after you start one from an approved licence.</p>
                                     </div>
                                 }
                                 else
@@ -611,7 +651,7 @@
                                                     <th>Reference</th>
                                                     <th>Trading Name</th>
                                                     <th>LLB Number</th>
-                                                    <th>Submitted</th>
+                                                    <th>Submitted / Initialised</th>
                                                     <th>Licence</th>
                                                     <th>For</th>
                                                     <th>Status</th>
@@ -629,7 +669,7 @@
                                                         <td>@listing.LicenseName</td>
                                                         <td>@listing.RegionName</td>
                                                         <td>
-                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                            <span class="llb-status-pill @statusClass(listing.Status)">@displayExtraCounterStatus(listing)</span>
                                                         </td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
@@ -669,10 +709,11 @@
                         <option value="APM">Change or approval of a manager</option>
                         <option value="INP">Inspection</option>
                         <option value="TRM">Temporary removal</option>
-                        <option value="TTR">Temporary transfer</option>
+                        <option value="TTR">Transfer</option>
                         <option value="EXH">Extended hours liquor licence</option>
                         <option value="TRL">Temporary retail liquor licence</option>
                         <option value="ECF">Permission to alter</option>
+                        <option value="EXC">Extra counter</option>
                     </select>
                     <div class="alert alert-warning d-none mt-3 mb-0" id="renewalEligibilityWarning" role="alert"></div>
                 </div>

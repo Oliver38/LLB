@@ -1,9 +1,10 @@
 @using System.Globalization
+@using LLB.Helpers
 @using LLB.Models
 
 @{
     Layout = "_LayoutMain";
-    ViewData["Title"] = "Temporary Transfer";
+    ViewData["Title"] = "Transfer";
     ViewData["Subtitle"] = "Search an approved liquor licence, capture transfer details and managers, upload attachments, then proceed to payment.";
 
     var sourceApplication = ViewBag.SourceApplication as ApplicationInfo;
@@ -14,7 +15,10 @@
     var license = ViewBag.License as LicenseTypes;
     var region = ViewBag.Region as LicenseRegion;
     var payment = ViewBag.Payment as Payments;
+    var proofOfPublication = ViewBag.ProofOfPublication as AttachmentInfo;
     var tieAffidavit = ViewBag.TieAffidavit as AttachmentInfo;
+    var transferAffidavit = ViewBag.TransferAffidavit as AttachmentInfo;
+    var leaseDocuments = ViewBag.LeaseDocuments as AttachmentInfo;
     var searchValue = ViewBag.SearchValue as string ?? string.Empty;
     var fee = ViewBag.Fee as decimal?;
     var baseFee = ViewBag.BaseFee as decimal?;
@@ -34,6 +38,10 @@
     var awaitingSecretary = ViewBag.AwaitingSecretary is bool awaiting && awaiting;
     var isEditMode = ViewBag.EditMode is bool editMode && editMode && canEditDetails;
     var isZimbabweanApplicant = string.Equals(applicantUser?.Nationality, "Zimbabwe", StringComparison.OrdinalIgnoreCase);
+    var selectedTransferType = TemporaryTransferHelper.NormalizeTransferType(ViewBag.SelectedTransferType as string ?? transferApplication?.PlaceOfBirth);
+    var displayTransferType = transferApplication != null
+        ? TemporaryTransferHelper.GetTransferType(transferApplication)
+        : TemporaryTransferHelper.GetTransferTypeDisplayName(selectedTransferType);
     var initialBaseFee = (baseFee ?? fee ?? 0m).ToString("0.00", CultureInfo.InvariantCulture);
     var initialManagerFee = (managerFee ?? 0m).ToString("0.00", CultureInfo.InvariantCulture);
 
@@ -101,15 +109,23 @@
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="card-title mb-1">Search Liquor Licence</h5>
-        <p class="text-muted mb-0">Enter the LLB number for the liquor licence you want to use for the temporary transfer application.</p>
+        <p class="text-muted mb-0">Enter the LLB number for the liquor licence you want to use for the transfer application.</p>
     </div>
     <div class="card-body">
         <form method="get" action="/TemporaryTransfer/Apply" class="row g-3 align-items-end">
-            <div class="col-md-8">
+            <div class="col-md-5">
                 <label for="llbNumber" class="form-label">LLB Number</label>
                 <input type="text" id="llbNumber" name="llbNumber" value="@searchValue" class="form-control" placeholder="Enter LLB number" required />
             </div>
             <div class="col-md-4">
+                <label for="transferTypeSearch" class="form-label">Transfer Type</label>
+                <select id="transferTypeSearch" name="transferType" class="form-select" required>
+                    <option value="">Choose transfer type</option>
+                    <option value="@TemporaryTransferHelper.PermanentTransferType" selected="@(string.Equals(selectedTransferType, TemporaryTransferHelper.PermanentTransferType, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Permanent Transfer</option>
+                    <option value="@TemporaryTransferHelper.TemporaryTransferType" selected="@(string.Equals(selectedTransferType, TemporaryTransferHelper.TemporaryTransferType, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Temporary Transfer</option>
+                </select>
+            </div>
+            <div class="col-md-3">
                 <button type="submit" class="btn btn-primary w-100">Retrieve Liquor Licence</button>
             </div>
         </form>
@@ -196,8 +212,8 @@
             <div class="col-lg-8">
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h5 class="card-title mb-1">Temporary Transfer Details</h5>
-                        <p class="text-muted mb-0">Capture the temporary owner details and the manager list before submitting the application.</p>
+                        <h5 class="card-title mb-1">Transfer Details</h5>
+                        <p class="text-muted mb-0">Capture the applicant details and the manager list before submitting the application.</p>
                     </div>
                     <div class="card-body">
                         <form action="/TemporaryTransfer/Submit" method="post" class="row g-3" id="temporaryTransferDraftForm">
@@ -243,6 +259,15 @@
                             }
 
                             <div class="col-md-6">
+                                <label class="form-label">Transfer Type</label>
+                                <select name="transferType" class="form-select" required>
+                                    <option value="">Choose transfer type</option>
+                                    <option value="@TemporaryTransferHelper.PermanentTransferType" selected="@(string.Equals(selectedTransferType, TemporaryTransferHelper.PermanentTransferType, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Permanent Transfer</option>
+                                    <option value="@TemporaryTransferHelper.TemporaryTransferType" selected="@(string.Equals(selectedTransferType, TemporaryTransferHelper.TemporaryTransferType, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Temporary Transfer</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
                                 <label class="form-label">Applicant Type</label>
                                 <select name="applicantType" class="form-select" required>
                                     <option value="">Choose applicant type</option>
@@ -258,7 +283,7 @@
                                 <input type="text" name="businessName" class="form-control" required />
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Applicant Physical Address</label>
+                                <label class="form-label">Licensee Address</label>
                                 <textarea name="operationAddress" class="form-control" rows="3" required></textarea>
                             </div>
 
@@ -266,7 +291,7 @@
                                 <div class="border rounded-3 p-3">
                                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                                         <div>
-                                            <h6 class="mb-1">Temporary Transfer Managers</h6>
+                                            <h6 class="mb-1">Transfer Managers</h6>
                                             <div class="text-muted small">Add managers using the modal. The first manager does not attract an extra manager fee. From manager 2 onward, the manager fee is charged per additional manager.</div>
                                         </div>
                                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#draftManagerModal">
@@ -312,7 +337,7 @@
                     </div>
                     <div class="card-body">
                         <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                            <span class="text-muted">Base Temporary Transfer Fee</span>
+                            <span class="text-muted">Base Transfer Fee</span>
                             <span class="fw-semibold" id="draftBaseFeeDisplay">@FormatMoney(baseFee ?? fee)</span>
                         </div>
                         <div class="d-flex justify-content-between gap-3 border-bottom py-2">
@@ -345,8 +370,8 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center gap-3">
                 <div>
-                    <h5 class="card-title mb-1">Temporary Transfer Application</h5>
-                    <p class="text-muted mb-0">Review the temporary transfer details, managers, attachments, and payment status for this application.</p>
+                    <h5 class="card-title mb-1">@displayTransferType Application</h5>
+                    <p class="text-muted mb-0">Review the transfer details, managers, attachments, and payment status for this application.</p>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     @if (canEditDetails && !isEditMode)
@@ -364,6 +389,10 @@
                             <div class="d-flex justify-content-between gap-3 border-bottom py-2">
                                 <span class="text-muted">Reference</span>
                                 <span class="fw-semibold text-end">@(transferApplication.RefNum ?? "Pending")</span>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                                <span class="text-muted">Transfer Type</span>
+                                <span class="fw-semibold text-end">@displayTransferType</span>
                             </div>
                             <div class="d-flex justify-content-between gap-3 border-bottom py-2">
                                 <span class="text-muted">Applicant</span>
@@ -439,8 +468,8 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="card-title mb-1">Edit Temporary Transfer Details</h5>
-                        <p class="text-muted mb-0">Update the temporary transfer details before payment starts.</p>
+                        <h5 class="card-title mb-1">Edit Transfer Details</h5>
+                        <p class="text-muted mb-0">Update the transfer details before payment starts.</p>
                     </div>
                     <a class="btn btn-light border btn-sm" href="/TemporaryTransfer/Apply?id=@transferApplication.Id">Cancel</a>
                 </div>
@@ -448,6 +477,15 @@
                     <form action="/TemporaryTransfer/UpdateDetails" method="post" class="row g-3">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@transferApplication.Id" />
+
+                        <div class="col-md-6">
+                            <label class="form-label">Transfer Type</label>
+                            <select name="transferType" class="form-select" required>
+                                <option value="">Choose transfer type</option>
+                                <option value="@TemporaryTransferHelper.PermanentTransferType" selected="@(string.Equals(displayTransferType, TemporaryTransferHelper.PermanentTransferType, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Permanent Transfer</option>
+                                <option value="@TemporaryTransferHelper.TemporaryTransferType" selected="@(string.Equals(displayTransferType, TemporaryTransferHelper.TemporaryTransferType, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Temporary Transfer</option>
+                            </select>
+                        </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Applicant Type</label>
@@ -500,7 +538,7 @@
                             <input type="text" name="businessName" class="form-control" value="@transferApplication.BusinessName" required />
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Applicant Physical Address</label>
+                            <label class="form-label">Licensee Address</label>
                             <textarea name="operationAddress" class="form-control" rows="3" required>@transferApplication.OperationAddress</textarea>
                         </div>
 
@@ -527,7 +565,7 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="card-title mb-1">Temporary Transfer Managers</h5>
+                    <h5 class="card-title mb-1">Transfer Managers</h5>
                     <p class="text-muted mb-0">The first manager is included in the base fee. From manager 2 onward, the manager fee is charged for each additional manager.</p>
                 </div>
                 @if (canEditDetails)
@@ -556,7 +594,7 @@
                             @if (!transferManagers.Any())
                             {
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">No temporary transfer managers have been added yet.</td>
+                                    <td colspan="8" class="text-center text-muted py-4">No transfer managers have been added yet.</td>
                                 </tr>
                             }
                             else
@@ -605,7 +643,7 @@
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="id" value="@transferApplication.Id" />
                                                     <input type="hidden" name="managerId" value="@manager.Id" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this manager from the temporary transfer application?');">Remove</button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this manager from the transfer application?');">Remove</button>
                                                 </form>
                                             }
                                             else
@@ -640,16 +678,16 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td class="fw-semibold">ID/Passport Copy</td>
-                                <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication.IdCopy) ? "Missing" : "Uploaded")</span></td>
+                                <td class="fw-semibold">Proof of publication in the government gazette and local paper.{L.G 2}</td>
+                                <td><span class="badge rounded-pill @(proofOfPublication == null || string.IsNullOrWhiteSpace(proofOfPublication.DocumentLocation) ? "bg-secondary" : "bg-success")">@(proofOfPublication == null || string.IsNullOrWhiteSpace(proofOfPublication.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
                                 <td>
-                                    @if (string.IsNullOrWhiteSpace(transferApplication.IdCopy))
+                                    @if (proofOfPublication == null || string.IsNullOrWhiteSpace(proofOfPublication.DocumentLocation))
                                     {
                                         <span class="text-muted">No file uploaded</span>
                                     }
                                     else
                                     {
-                                        <a href="~/@transferApplication.IdCopy" target="_blank">View Attachment</a>
+                                        <a href="~/@proofOfPublication.DocumentLocation" target="_blank">View Attachment</a>
                                     }
                                 </td>
                                 <td>
@@ -658,69 +696,9 @@
                                         <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@transferApplication.Id" />
-                                            <input type="hidden" name="documentType" value="idCopy" />
+                                            <input type="hidden" name="documentType" value="proofOfPublication" />
                                             <input type="file" name="file" class="form-control form-control-sm" required />
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(transferApplication.IdCopy) ? "Upload" : "Replace")</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">Locked</span>
-                                    }
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">Fingerprints</td>
-                                <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication.Fingerprints) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication.Fingerprints) ? "Missing" : "Uploaded")</span></td>
-                                <td>
-                                    @if (string.IsNullOrWhiteSpace(transferApplication.Fingerprints))
-                                    {
-                                        <span class="text-muted">No file uploaded</span>
-                                    }
-                                    else
-                                    {
-                                        <a href="~/@transferApplication.Fingerprints" target="_blank">View Attachment</a>
-                                    }
-                                </td>
-                                <td>
-                                    @if (canUploadAttachments)
-                                    {
-                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@transferApplication.Id" />
-                                            <input type="hidden" name="documentType" value="fingerprints" />
-                                            <input type="file" name="file" class="form-control form-control-sm" required />
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(transferApplication.Fingerprints) ? "Upload" : "Replace")</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">Locked</span>
-                                    }
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">Form 55</td>
-                                <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication.FormFF) ? "Missing" : "Uploaded")</span></td>
-                                <td>
-                                    @if (string.IsNullOrWhiteSpace(transferApplication.FormFF))
-                                    {
-                                        <span class="text-muted">No file uploaded</span>
-                                    }
-                                    else
-                                    {
-                                        <a href="~/@transferApplication.FormFF" target="_blank">View Attachment</a>
-                                    }
-                                </td>
-                                <td>
-                                    @if (canUploadAttachments)
-                                    {
-                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@transferApplication.Id" />
-                                            <input type="hidden" name="documentType" value="form55" />
-                                            <input type="file" name="file" class="form-control form-control-sm" required />
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(transferApplication.FormFF) ? "Upload" : "Replace")</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(proofOfPublication == null || string.IsNullOrWhiteSpace(proofOfPublication.DocumentLocation) ? "Upload" : "Replace")</button>
                                         </form>
                                     }
                                     else
@@ -759,6 +737,126 @@
                                     }
                                 </td>
                             </tr>
+                            <tr>
+                                <td class="fw-semibold">Transfer affidavit</td>
+                                <td><span class="badge rounded-pill @(transferAffidavit == null || string.IsNullOrWhiteSpace(transferAffidavit.DocumentLocation) ? "bg-secondary" : "bg-success")">@(transferAffidavit == null || string.IsNullOrWhiteSpace(transferAffidavit.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                                <td>
+                                    @if (transferAffidavit == null || string.IsNullOrWhiteSpace(transferAffidavit.DocumentLocation))
+                                    {
+                                        <span class="text-muted">No file uploaded</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="~/@transferAffidavit.DocumentLocation" target="_blank">View Attachment</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canUploadAttachments)
+                                    {
+                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@transferApplication.Id" />
+                                            <input type="hidden" name="documentType" value="transferAffidavit" />
+                                            <input type="file" name="file" class="form-control form-control-sm" required />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(transferAffidavit == null || string.IsNullOrWhiteSpace(transferAffidavit.DocumentLocation) ? "Upload" : "Replace")</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Locked</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Certified copies of ID or PASSPORT of applicant</td>
+                                <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication.IdCopy) ? "Missing" : "Uploaded")</span></td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(transferApplication.IdCopy))
+                                    {
+                                        <span class="text-muted">No file uploaded</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="~/@transferApplication.IdCopy" target="_blank">View Attachment</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canUploadAttachments)
+                                    {
+                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@transferApplication.Id" />
+                                            <input type="hidden" name="documentType" value="idCopy" />
+                                            <input type="file" name="file" class="form-control form-control-sm" required />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(transferApplication.IdCopy) ? "Upload" : "Replace")</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Locked</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">FORM 55 against finger prints</td>
+                                <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(transferApplication.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(transferApplication.FormFF) ? "Missing" : "Uploaded")</span></td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(transferApplication.FormFF))
+                                    {
+                                        <span class="text-muted">No file uploaded</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="~/@transferApplication.FormFF" target="_blank">View Attachment</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canUploadAttachments)
+                                    {
+                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@transferApplication.Id" />
+                                            <input type="hidden" name="documentType" value="form55" />
+                                            <input type="file" name="file" class="form-control form-control-sm" required />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(transferApplication.FormFF) ? "Upload" : "Replace")</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Locked</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Lease documents, title deeds or any evidence of right of occupation.</td>
+                                <td><span class="badge rounded-pill @(leaseDocuments == null || string.IsNullOrWhiteSpace(leaseDocuments.DocumentLocation) ? "bg-secondary" : "bg-success")">@(leaseDocuments == null || string.IsNullOrWhiteSpace(leaseDocuments.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                                <td>
+                                    @if (leaseDocuments == null || string.IsNullOrWhiteSpace(leaseDocuments.DocumentLocation))
+                                    {
+                                        <span class="text-muted">No file uploaded</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="~/@leaseDocuments.DocumentLocation" target="_blank">View Attachment</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canUploadAttachments)
+                                    {
+                                        <form method="post" action="/TemporaryTransfer/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@transferApplication.Id" />
+                                            <input type="hidden" name="documentType" value="leaseDocuments" />
+                                            <input type="file" name="file" class="form-control form-control-sm" required />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">@(leaseDocuments == null || string.IsNullOrWhiteSpace(leaseDocuments.DocumentLocation) ? "Upload" : "Replace")</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Locked</span>
+                                    }
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -773,11 +871,11 @@
             <div class="card-body">
                 @if (string.Equals(transferApplication.Status, "Approved", StringComparison.OrdinalIgnoreCase))
                 {
-                    <div class="alert alert-success mb-3">This temporary transfer application has been approved by the secretary.</div>
+                    <div class="alert alert-success mb-3">This transfer application has been approved by the secretary.</div>
                 }
                 else if (string.Equals(transferApplication.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
                 {
-                    <div class="alert alert-danger mb-3">This temporary transfer application has been rejected.</div>
+                    <div class="alert alert-danger mb-3">This transfer application has been rejected.</div>
                 }
                 else if (awaitingSecretary)
                 {
@@ -793,7 +891,7 @@
                 }
                 else if (!attachmentsComplete)
                 {
-                    <div class="alert alert-warning mb-3">Upload the ID copy, fingerprints, Form 55, and tie affidavit before payment can start.</div>
+                    <div class="alert alert-warning mb-3">Upload proof of publication, tie affidavit, transfer affidavit, certified ID/passport copies, Form 55 against fingerprints, and lease/title deed/right of occupation documents before payment can start.</div>
                 }
                 else if (canMakePayment)
                 {

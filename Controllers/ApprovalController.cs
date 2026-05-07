@@ -937,7 +937,7 @@ namespace LLB.Controllers
 
         private async Task<SecretaryDashboardViewModel> BuildSecretaryDashboardViewModelAsync(string approverId)
         {
-            var postFormationServices = new[] { "Extended Hours", "Temporary Retails", "Manager Change", "Permission to Alter", "Extra Counter", TemporaryTransferHelper.ServiceName, TemporaryRemovalHelper.ServiceName };
+            var postFormationServices = new[] { "Extended Hours", "Temporary Retails", "Manager Change", "Permission to Alter", "Extra Counter", TemporaryTransferHelper.ServiceName, TemporaryRemovalHelper.ServiceName, AgentLicenseHelper.ServiceName };
 
             var applicationTasks = await _db.Tasks
                 .Where(task => task.ApproverId == approverId
@@ -1000,6 +1000,13 @@ namespace LLB.Controllers
                 .Distinct()
                 .ToList();
 
+            var agentLicenseIds = postFormationTasks
+                .Where(task => task.Service == AgentLicenseHelper.ServiceName
+                    && !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Distinct()
+                .ToList();
+
             var extendedHoursRecords = await _db.ExtendedHours
                 .Where(record => record.Id != null && extendedHoursIds.Contains(record.Id))
                 .ToListAsync();
@@ -1028,6 +1035,13 @@ namespace LLB.Controllers
                     record.Id != null
                     && temporaryRemovalIds.Contains(record.Id)
                     && record.ExaminationStatus == TemporaryRemovalHelper.ServiceName)
+                .ToListAsync();
+
+            var agentLicenseRecords = await _db.ApplicationInfo
+                .Where(record =>
+                    record.Id != null
+                    && agentLicenseIds.Contains(record.Id)
+                    && record.ExaminationStatus == AgentLicenseHelper.ServiceName)
                 .ToListAsync();
 
             var renewalApplicationIds = renewalTasks
@@ -1062,6 +1076,9 @@ namespace LLB.Controllers
                 .Concat(temporaryRemovalRecords
                     .Where(record => !string.IsNullOrWhiteSpace(record.CompanyNumber))
                     .Select(record => record.CompanyNumber!))
+                .Concat(agentLicenseRecords
+                    .Where(record => !string.IsNullOrWhiteSpace(record.Id))
+                    .Select(record => record.Id!))
                 .Distinct()
                 .ToList();
 
@@ -1115,6 +1132,9 @@ namespace LLB.Controllers
                 .ToDictionary(record => record.Id!, record => record);
 
             var temporaryRemovalLookup = temporaryRemovalRecords
+                .ToDictionary(record => record.Id!, record => record);
+
+            var agentLicenseLookup = agentLicenseRecords
                 .ToDictionary(record => record.Id!, record => record);
 
             var renewalLookup = renewalRecords
@@ -1258,6 +1278,19 @@ namespace LLB.Controllers
                     status = temporaryRemoval.Status ?? task.Status ?? "Unknown";
                     reviewUrl = $"/TemporaryRemoval/ViewApplications?recordId={temporaryRemoval.Id}";
                 }
+                else if (task.Service == AgentLicenseHelper.ServiceName)
+                {
+                    if (!agentLicenseLookup.TryGetValue(task.ApplicationId, out var agentLicense)
+                        || string.IsNullOrWhiteSpace(agentLicense.Id))
+                    {
+                        continue;
+                    }
+
+                    rootApplicationId = agentLicense.Id;
+                    submittedDate = agentLicense.DateUpdated;
+                    status = agentLicense.Status ?? task.Status ?? "Unknown";
+                    reviewUrl = $"/AgentLicense/ViewApplications?id={agentLicense.Id}";
+                }
                 else if (task.Service == "Permission to Alter" || task.Service == "Extra Counter")
                 {
                     if (!permissionToAlterLookup.TryGetValue(task.ApplicationId, out var permissionToAlter)
@@ -1296,9 +1329,15 @@ namespace LLB.Controllers
                                     ? temporaryTransferLookup.GetValueOrDefault(task.ApplicationId)?.RefNum ?? string.Empty
                                     : task.Service == TemporaryRemovalHelper.ServiceName
                                         ? temporaryRemovalLookup.GetValueOrDefault(task.ApplicationId)?.RefNum ?? string.Empty
+                                    : task.Service == AgentLicenseHelper.ServiceName
+                                        ? agentLicenseLookup.GetValueOrDefault(task.ApplicationId)?.RefNum ?? string.Empty
                                     : permissionToAlterLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty,
                     ApplicationId = rootApplicationId,
-                    Service = task.Service == "Extra Counter" ? "Permission to Alter" : task.Service ?? "Post Formation",
+                    Service = task.Service == TemporaryTransferHelper.ServiceName
+                        ? TemporaryTransferHelper.GetTransferType(temporaryTransferLookup.GetValueOrDefault(task.ApplicationId))
+                        : task.Service == AgentLicenseHelper.ServiceName
+                            ? AgentLicenseHelper.ServiceName
+                        : task.Service ?? "Post Formation",
                     TradingName = outlet?.TradingName ?? application.BusinessName ?? "N/A",
                     OperatingAddress = outlet?.Address ?? application.OperationAddress ?? "N/A",
                     SubmittedDate = submittedDate,

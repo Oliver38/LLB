@@ -1,8 +1,11 @@
 ﻿@{
     Layout = "_LayoutMain";
 
-
-
+    string Checked(string? actual, string expected)
+    {
+        var selected = string.IsNullOrWhiteSpace(actual) ? "true" : actual;
+        return string.Equals(selected, expected, StringComparison.OrdinalIgnoreCase) ? "checked" : string.Empty;
+    }
 }
 
 
@@ -107,13 +110,13 @@
                                     <input type="hidden" name="TaskId" value="@ViewBag.TaskId" />
                                     <input type="hidden" name="ApplicationId" value="@ViewBag.Inspection.ApplicationId" />
 
-                                    <input class="form-check-input" type="radio" name="Ventilation" id="Ventilation" value="true" checked>
+                                    <input class="form-check-input" type="radio" name="Ventilation" id="VentilationPassed" value="true" @Checked(ViewBag.Inspection.Ventilation, "true")>
                                     <label class="form-check-label" for="Ventilation">
                                         passed
                                     </label>
                                 </td>
                                 <td>
-                                    <input class="form-check-input" type="radio" name="Ventilation" id="Ventilation" value="false">
+                                    <input class="form-check-input" type="radio" name="Ventilation" id="VentilationFailed" value="false" @Checked(ViewBag.Inspection.Ventilation, "false")>
                                     <label class="form-check-label" for="Ventilation">
                                         failed
                                     </label>
@@ -121,55 +124,55 @@
                             </tr>
                             <tr>
                                 <th>Lighting </th>
-                                <td>    <input class="form-check-input" type="radio" name="Lighting" id="Lighting" value="true" checked> <label class="form-check-label" for="Lighting">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="Lighting" id="Lighting" value="false"> <label class="form-check-label" for="Lighting">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="Lighting" id="LightingPassed" value="true" @Checked(ViewBag.Inspection.Lighting, "true")> <label class="form-check-label" for="Lighting">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="Lighting" id="LightingFailed" value="false" @Checked(ViewBag.Inspection.Lighting, "false")> <label class="form-check-label" for="Lighting">    failed </label> </td>
                             </tr>
                             <tr>
                                 <th>Sewage Disposal And Drainage</th>
-                                <td>    <input class="form-check-input" type="radio" name="SewageDisposalAndDrainage" id="SewageDisposalAndDrainage" value="true" checked> <label class="form-check-label" for="SewageDisposalAndDrainage">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="SewageDisposalAndDrainage" id="SewageDisposalAndDrainage" value="false"> <label class="form-check-label" for="SewageDisposalAndDrainage">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="SewageDisposalAndDrainage" id="SewageDisposalAndDrainagePassed" value="true" @Checked(ViewBag.Inspection.SewageDisposalAndDrainage, "true")> <label class="form-check-label" for="SewageDisposalAndDrainage">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="SewageDisposalAndDrainage" id="SewageDisposalAndDrainageFailed" value="false" @Checked(ViewBag.Inspection.SewageDisposalAndDrainage, "false")> <label class="form-check-label" for="SewageDisposalAndDrainage">    failed </label> </td>
                             </tr>
                             <tr>
                                 <th>Toilets</th>
-                                <td>    <input class="form-check-input" type="radio" name="Toilets" id="Toilets" value="true" checked> <label class="form-check-label" for="Toilets">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="Toilets" id="Toilets" value="false"> <label class="form-check-label" for="Toilets">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="Toilets" id="ToiletsPassed" value="true" @Checked(ViewBag.Inspection.Toilets, "true")> <label class="form-check-label" for="Toilets">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="Toilets" id="ToiletsFailed" value="false" @Checked(ViewBag.Inspection.Toilets, "false")> <label class="form-check-label" for="Toilets">    failed </label> </td>
                             </tr>
                             <tr>
                                 <th>Water Supply</th>
-                                <td>    <input class="form-check-input" type="radio" name="WaterSupply" id="WaterSupply" value="true" checked> <label class="form-check-label" for="WaterSupply">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="WaterSupply" id="WaterSupply" value="false"> <label class="form-check-label" for="WaterSupply">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="WaterSupply" id="WaterSupplyPassed" value="true" @Checked(ViewBag.Inspection.WaterSupply, "true")> <label class="form-check-label" for="WaterSupply">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="WaterSupply" id="WaterSupplyFailed" value="false" @Checked(ViewBag.Inspection.WaterSupply, "false")> <label class="form-check-label" for="WaterSupply">    failed </label> </td>
                             </tr>
                             <tr>
                                 <th>Rubbish Disposal</th>
-                                <td>    <input class="form-check-input" type="radio" name="RubbishDisposal" id="RubbishDisposal" value="true" checked> <label class="form-check-label" for="RubbishDisposal">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="RubbishDisposal" id="RubbishDisposal" value="false"> <label class="form-check-label" for="RubbishDisposal">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="RubbishDisposal" id="RubbishDisposalPassed" value="true" @Checked(ViewBag.Inspection.RubbishDisposal, "true")> <label class="form-check-label" for="RubbishDisposal">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="RubbishDisposal" id="RubbishDisposalFailed" value="false" @Checked(ViewBag.Inspection.RubbishDisposal, "false")> <label class="form-check-label" for="RubbishDisposal">    failed </label> </td>
                             </tr>
                             <tr>
                                 <th>Standard Of Food</th>
-                                <td>    <input class="form-check-input" type="radio" name="StandardOfFood" id="StandardOfFood" value="true" checked> <label class="form-check-label" for="StandardOfFood">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="StandardOfFood" id="StandardOfFood" value="false"> <label class="form-check-label" for="StandardOfFood">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="StandardOfFood" id="StandardOfFoodPassed" value="true" @Checked(ViewBag.Inspection.StandardOfFood, "true")> <label class="form-check-label" for="StandardOfFood">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="StandardOfFood" id="StandardOfFoodFailed" value="false" @Checked(ViewBag.Inspection.StandardOfFood, "false")> <label class="form-check-label" for="StandardOfFood">    failed </label> </td>
                             </tr>
                             <tr>
                                 <th>Food Storage Arrangements</th>
-                                <td>    <input class="form-check-input" type="radio" name="FoodStorageArrangements" id="FoodStorageArrangements" value="true" checked> <label class="form-check-label" for="FoodStorageArrangements">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="FoodStorageArrangements" id="FoodStorageArrangements" value="false"> <label class="form-check-label" for="FoodStorageArrangements">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="FoodStorageArrangements" id="FoodStorageArrangementsPassed" value="true" @Checked(ViewBag.Inspection.FoodStorageArrangements, "true")> <label class="form-check-label" for="FoodStorageArrangements">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="FoodStorageArrangements" id="FoodStorageArrangementsFailed" value="false" @Checked(ViewBag.Inspection.FoodStorageArrangements, "false")> <label class="form-check-label" for="FoodStorageArrangements">    failed </label> </td>
                             </tr>
 
                             <tr>
                                 <th>Staff Uniforms And Accommodation</th>
-                                <td>    <input class="form-check-input" type="radio" name="StaffUniformsAndAccommodation" id="StaffUniformsAndAccommodation" value="true" checked> <label class="form-check-label" for="StaffUniformsAndAccommodation">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="StaffUniformsAndAccommodation" id="StaffUniformsAndAccommodation" value="false"> <label class="form-check-label" for="StaffUniformsAndAccommodation">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="StaffUniformsAndAccommodation" id="StaffUniformsAndAccommodationPassed" value="true" @Checked(ViewBag.Inspection.StaffUniformsAndAccommodation, "true")> <label class="form-check-label" for="StaffUniformsAndAccommodation">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="StaffUniformsAndAccommodation" id="StaffUniformsAndAccommodationFailed" value="false" @Checked(ViewBag.Inspection.StaffUniformsAndAccommodation, "false")> <label class="form-check-label" for="StaffUniformsAndAccommodation">    failed </label> </td>
                             </tr>
 
                             <tr>
                                 <th>Equipment And Appointments</th>
-                                <td>    <input class="form-check-input" type="radio" name="EquipmentAndAppointments" id="EquipmentAndAppointments" value="true" checked> <label class="form-check-label" for="EquipmentAndAppointments">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="EquipmentAndAppointments" id="EquipmentAndAppointments" value="false"> <label class="form-check-label" for="EquipmentAndAppointments">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="EquipmentAndAppointments" id="EquipmentAndAppointmentsPassed" value="true" @Checked(ViewBag.Inspection.EquipmentAndAppointments, "true")> <label class="form-check-label" for="EquipmentAndAppointments">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="EquipmentAndAppointments" id="EquipmentAndAppointmentsFailed" value="false" @Checked(ViewBag.Inspection.EquipmentAndAppointments, "false")> <label class="form-check-label" for="EquipmentAndAppointments">    failed </label> </td>
                             </tr>
                             <tr>
                                 <th>Hygiene Standards</th>
-                                <td>    <input class="form-check-input" type="radio" name="HygieneStandards" id="HygieneStandards" value="true" checked> <label class="form-check-label" for="HygieneStandards">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="HygieneStandards" id="HygieneStandards" value="false"> <label class="form-check-label" for="HygieneStandards">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="HygieneStandards" id="HygieneStandardsPassed" value="true" @Checked(ViewBag.Inspection.HygieneStandards, "true")> <label class="form-check-label" for="HygieneStandards">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="HygieneStandards" id="HygieneStandardsFailed" value="false" @Checked(ViewBag.Inspection.HygieneStandards, "false")> <label class="form-check-label" for="HygieneStandards">    failed </label> </td>
                             </tr>
 
 
@@ -183,8 +186,8 @@
                             <tr>
 
                                 <th>Overal Remark (Satisfactory)</th>
-                                <td>    <input class="form-check-input" type="radio" name="Overall" id="Overall" value="true" checked> <label class="form-check-label" for="HygieneStandards">     passed </label> </td>
-                                <td> <input class="form-check-input" type="radio" name="Overall" id="Overall" value="false"> <label class="form-check-label" for="HygieneStandards">    failed </label> </td>
+                                <td>    <input class="form-check-input" type="radio" name="Overall" id="OverallPassed" value="true" @Checked(ViewBag.Inspection.Overall, "true")> <label class="form-check-label" for="HygieneStandards">     passed </label> </td>
+                                <td> <input class="form-check-input" type="radio" name="Overall" id="OverallFailed" value="false" @Checked(ViewBag.Inspection.Overall, "false")> <label class="form-check-label" for="HygieneStandards">    failed </label> </td>
                             </tr>
 
                             <tr class="text-center">

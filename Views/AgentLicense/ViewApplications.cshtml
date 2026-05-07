@@ -1,0 +1,241 @@
+@using LLB.Models
+
+@{
+    Layout = "_LayoutMain";
+    ViewData["Title"] = "Agent License Review";
+
+    var agentApplication = ViewBag.AgentApplication as ApplicationInfo;
+    var wholesaleApplication = ViewBag.WholesaleApplication as ApplicationInfo;
+    var agentLicense = ViewBag.AgentLicense as LicenseTypes;
+    var wholesaleLicense = ViewBag.WholesaleLicense as LicenseTypes;
+    var wholesaleOutlet = ViewBag.WholesaleOutlet as OutletInfo;
+    var publicationProof = ViewBag.PublicationProof as AttachmentInfo;
+    var tieAffidavit = ViewBag.TieAffidavit as AttachmentInfo;
+    var wholesaleLicenseAttachment = ViewBag.WholesaleLicenseAttachment as AttachmentInfo;
+
+    string DisplayValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "N/A" : value;
+    }
+
+    string StatusBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "approved" => "bg-success",
+            "awaiting approval" => "bg-info text-dark",
+            "rejected" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="card-title mb-1">Agent License Review</h5>
+            <p class="text-muted mb-0">Secretary examination of the agent license application.</p>
+        </div>
+        <span class="badge rounded-pill @StatusBadgeClass(agentApplication?.Status)">@(agentApplication?.Status ?? "Unknown")</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <h6 class="text-uppercase text-muted mb-3">Agent Information</h6>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Reference</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.RefNum)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Name</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.PlaceOfBirth)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Surname</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.PlaceOfEntry)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">DOB</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.DateofEntryIntoZimbabwe)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Gender</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.RenewalStatus)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Nationality</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.OperationAddress)</span>
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span class="text-muted">ID or Passport</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.IdPass)</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-uppercase text-muted mb-3">Licence Link</h6>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Applicant Type</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.ApplicantType)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Licensee Name</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.BusinessName)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Agent Licence</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentLicense?.LicenseName)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Wholesale LLB Number</span>
+                    <span class="fw-semibold text-end">@DisplayValue(wholesaleApplication?.LLBNum)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Wholesale Licence</span>
+                    <span class="fw-semibold text-end">@DisplayValue(wholesaleLicense?.LicenseName)</span>
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span class="text-muted">Wholesale Outlet</span>
+                    <span class="fw-semibold text-end">@DisplayValue(wholesaleOutlet?.TradingName)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Submitted Attachments</h5>
+        <p class="text-muted mb-0">Review all required agent license documents before deciding on the application.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Status</th>
+                        <th>File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Advert and Proof of publication in the government gazette and local paper.{L.G 2}</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(publicationProof?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(publicationProof?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(publicationProof?.DocumentLocation))
+                            {
+                                <a href="~/@publicationProof.DocumentLocation" target="_blank">View Attachment</a>
+                            }
+                            else
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Tie Affidavit</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation))
+                            {
+                                <a href="~/@tieAffidavit.DocumentLocation" target="_blank">View Attachment</a>
+                            }
+                            else
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Fingerprint</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(agentApplication?.Fingerprints) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(agentApplication?.Fingerprints) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(agentApplication?.Fingerprints))
+                            {
+                                <a href="~/@agentApplication!.Fingerprints" target="_blank">View Attachment</a>
+                            }
+                            else
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Form 55</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(agentApplication?.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(agentApplication?.FormFF) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(agentApplication?.FormFF))
+                            {
+                                <a href="~/@agentApplication!.FormFF" target="_blank">View Attachment</a>
+                            }
+                            else
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>ID</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(agentApplication?.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(agentApplication?.IdCopy) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(agentApplication?.IdCopy))
+                            {
+                                <a href="~/@agentApplication!.IdCopy" target="_blank">View Attachment</a>
+                            }
+                            else
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Wholesale license</td>
+                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation))
+                            {
+                                <a href="~/@wholesaleLicenseAttachment.DocumentLocation" target="_blank">View Attachment</a>
+                            }
+                            else
+                            {
+                                <span class="text-danger">No file uploaded</span>
+                            }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (agentApplication != null
+    && !string.Equals(agentApplication.Status, "approved", StringComparison.OrdinalIgnoreCase)
+    && !string.Equals(agentApplication.Status, "rejected", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="d-flex justify-content-end gap-2">
+        <form method="post" action="/AgentLicense/Reject" class="mb-0">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@agentApplication.Id" />
+            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Reject this agent license application?');">Reject</button>
+        </form>
+        <form method="post" action="/AgentLicense/Approve" class="mb-0">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@agentApplication.Id" />
+            <button type="submit" class="btn btn-success" onclick="return confirm('Approve this agent license application?');">Approve</button>
+        </form>
+    </div>
+}
+else if (agentApplication != null && string.Equals(agentApplication.Status, "approved", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="alert alert-success">This agent license has been approved. Licence number: <strong>@agentApplication.LLBNum</strong></div>
+}

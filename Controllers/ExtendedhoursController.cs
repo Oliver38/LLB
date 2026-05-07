@@ -5,6 +5,7 @@ using LLB.Models;
 using Microsoft.AspNetCore.Identity;
 using LLB.Data;
 using LLB.Helpers;
+using LLB.Models.ViewModel;
 using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
 using Webdev.Payments;
@@ -71,52 +72,38 @@ namespace LLB.Controllers
         [HttpGet("ViewApplications")]
         public async Task<IActionResult> ViewApplications(string Id)
         {
+            var model = BuildExtendedHoursReviewModel(Id);
+            if (model == null)
+            {
+                TempData["error"] = "The extended hours application could not be found.";
+                return RedirectToAction("AllApplications");
+            }
 
-            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
-            string id = userId.Id;
-
-
-
-            ExtendedHours getinfo = new  ExtendedHours();
-
-                var applications = _db.ExtendedHours.Where(a => a.Id == Id).FirstOrDefault();
-
-                getinfo = applications;
-            
-
-            //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
-            var outletinfo = _db.OutletInfo.ToList();
-            var license = _db.LicenseTypes.ToList();
-            var regions = _db.LicenseRegions.ToList();
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
-
+            var user = await userManager.FindByEmailAsync(User.Identity?.Name);
             ViewBag.User = user;
-            ViewBag.OutletInfo = outletinfo;
-            ViewBag.Regions = regions;
-            ViewBag.License = license;
-            ViewBag.Application = getinfo;
-            return View();
+            return View(model);
         }
 
 
         [HttpGet("Approve")]
         public async Task<IActionResult> Approve(string Id)
         {
+            var applications = _db.ExtendedHours.Where(a => a.Id == Id).FirstOrDefault();
+            if (applications == null)
+            {
+                TempData["error"] = "The extended hours application could not be found.";
+                return RedirectToAction("Dashboard", "Approval");
+            }
 
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             string id = userId.Id;
+            var outlet = _db.OutletInfo.Where(a => a.ApplicationId == applications.ApplicationId).FirstOrDefault();
+            var tradingName = outlet?.TradingName ?? "the selected outlet";
 
-
-
-            ExtendedHours getinfo = new ExtendedHours();
-
-            var applications = _db.ExtendedHours.Where(a => a.Id == Id).FirstOrDefault();
             applications.ApproverId = id;
             applications.DateOfApproval = DateTime.Now;
             applications.Status = "Approved";
             applications.DateUpdated = DateTime.Now;
-
-            getinfo = applications;
             _db.Update(applications);
             _db.SaveChanges();
 
@@ -125,25 +112,16 @@ namespace LLB.Controllers
 
             //complete task
             var task = _db.Tasks.Where(a => a.ApplicationId == Id && a.Service == "Extended Hours").FirstOrDefault();
-            task.Status = "completed";
-            task.ApprovedDate = DateTime.Now;
-            _db.Update(task);
-            _db.SaveChanges();
+            if (task != null)
+            {
+                task.Status = "completed";
+                task.ApprovedDate = DateTime.Now;
+                _db.Update(task);
+                _db.SaveChanges();
+            }
 
-            //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
-            var outletinfo = _db.OutletInfo.ToList();
-            var license = _db.LicenseTypes.ToList();
-            var regions = _db.LicenseRegions.ToList();
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
-
-            ViewBag.User = user;
-            ViewBag.OutletInfo = outletinfo;
-            ViewBag.Regions = regions;
-            ViewBag.License = license;
-            ViewBag.Application = getinfo;
-
-            return RedirectToAction("ViewApplications", "Extendedhours" , new {Id= Id });
-            return View();
+            TempData["success"] = $"Approved extended hours for {tradingName}.";
+            return RedirectToAction("Dashboard", "Approval");
         }
 
 
@@ -227,6 +205,52 @@ namespace LLB.Controllers
         //Submitted
         //Rejected
         //statuses for the submitted and rejected applications
+
+        private ExtendedHoursReviewViewModel? BuildExtendedHoursReviewModel(string extendedHoursId)
+        {
+            var extendedHours = _db.ExtendedHours.Where(application => application.Id == extendedHoursId).FirstOrDefault();
+            if (extendedHours == null || string.IsNullOrWhiteSpace(extendedHours.ApplicationId))
+            {
+                return null;
+            }
+
+            var application = _db.ApplicationInfo.Where(record => record.Id == extendedHours.ApplicationId).FirstOrDefault();
+            if (application == null)
+            {
+                return null;
+            }
+
+            var outlet = _db.OutletInfo.Where(record => record.ApplicationId == application.Id).FirstOrDefault();
+            var licenseType = _db.LicenseTypes.Where(record => record.Id == application.LicenseTypeID).FirstOrDefault();
+            var licenseRegion = _db.LicenseRegions.Where(record => record.Id == application.ApplicationType).FirstOrDefault();
+            var payment = _db.Payments
+                .Where(record => record.ApplicationId == extendedHours.Id
+                    && (record.Service == "extended hours"
+                        || record.Service == "Extended Hours"))
+                .OrderByDescending(record => record.DateAdded)
+                .FirstOrDefault();
+
+            return new ExtendedHoursReviewViewModel
+            {
+                Id = extendedHours.Id ?? string.Empty,
+                ApplicationId = application.Id ?? string.Empty,
+                Reference = extendedHours.Reference ?? string.Empty,
+                TradingName = outlet?.TradingName,
+                Address = outlet?.Address ?? application.OperationAddress,
+                Province = outlet?.Province,
+                Council = outlet?.Council,
+                LLBNumber = application.LLBNum,
+                LicenseType = licenseType?.LicenseName,
+                LicenseRegion = licenseRegion?.RegionName,
+                Status = extendedHours.Status,
+                PaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? extendedHours.PaymentStatus ?? "Not Paid",
+                PaynowReference = payment?.PaynowRef,
+                ReasonForExtention = extendedHours.ReasonForExtention,
+                PaidFee = extendedHours.PaidFee,
+                ExtendedHoursDate = extendedHours.ExtendedHoursDate,
+                RequestedOn = extendedHours.DateAdded
+            };
+        }
 
 
     }

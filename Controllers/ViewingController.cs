@@ -31,6 +31,31 @@ namespace LLB.Controllers
             this.signInManager = signInManager;
             _validatorService = validatorService;
         }
+
+        [HttpGet("inspection")]
+        public IActionResult Inspection(string Id)
+        {
+            var inspection = _db.Inspection.FirstOrDefault(record => record.Id == Id || record.Reference == Id);
+            if (inspection == null)
+            {
+                TempData["error"] = "The inspection report could not be found.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            if (string.Equals(inspection.Service, "Inspection", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.Equals(inspection.Overall, "true", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("InspectionComplianceCertificate", "Documents", new { searchref = inspection.Id });
+                }
+
+                return RedirectToAction("InspectionFailedReport", "Documents", new { searchref = inspection.Id });
+            }
+
+            TempData["error"] = "This inspection report is not available from the client inspection listings.";
+            return RedirectToAction("InspectionListings", "Home");
+        }
+
         [HttpGet("Dashboard")]
         public async Task<IActionResult> DashboardAsync()
         {

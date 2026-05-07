@@ -1044,6 +1044,8 @@ namespace LLB.Controllers
         private static List<AttachmentInfo> OrderRequiredTemporaryRemovalAttachments(IEnumerable<AttachmentInfo> attachments)
         {
             return attachments
+                .Where(item => TemporaryRemovalHelper.RequiredDocumentTitles.Any(
+                    title => string.Equals(title, item.DocumentTitle, StringComparison.OrdinalIgnoreCase)))
                 .OrderBy(item =>
                 {
                     var index = Array.FindIndex(

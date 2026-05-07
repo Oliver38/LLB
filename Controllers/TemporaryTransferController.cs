@@ -138,8 +138,9 @@ namespace LLB.Controllers
                     RegionName = regionName,
                     Status = transferApplication.Status ?? "Unknown",
                     SubmittedDate = transferApplication.ApplicationDate,
+                    ServiceName = TemporaryTransferHelper.GetTransferType(transferApplication),
                     ActionUrl = $"/TemporaryTransfer/Apply?id={transferApplication.Id}",
-                    ActionLabel = "Open Application"
+                    ActionLabel = "Open Transfer"
                 });
             }
 
@@ -148,7 +149,7 @@ namespace LLB.Controllers
         }
 
         [HttpGet("Apply")]
-        public async Task<IActionResult> ApplyAsync(string? id, string? llbNumber, bool edit = false)
+        public async Task<IActionResult> ApplyAsync(string? id, string? llbNumber, string? transferType, bool edit = false)
         {
             var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
@@ -170,14 +171,14 @@ namespace LLB.Controllers
 
                 if (transferApplication == null)
                 {
-                    TempData["error"] = "The temporary transfer application could not be found.";
+                    TempData["error"] = "The transfer application could not be found.";
                     return RedirectToAction("List");
                 }
 
                 sourceApplication = await GetSourceApplicationAsync(transferApplication.CompanyNumber);
                 if (sourceApplication == null)
                 {
-                    TempData["error"] = "The source liquor licence linked to this temporary transfer could not be found.";
+                    TempData["error"] = "The source liquor licence linked to this transfer could not be found.";
                     return RedirectToAction("List");
                 }
             }
@@ -187,14 +188,14 @@ namespace LLB.Controllers
                 if (sourceApplication == null)
                 {
                     TempData["error"] = $"No approved liquor licence was found for LLB number {llbNumber}.";
-                    await PopulateApplyViewAsync(currentUser, null, null, llbNumber);
+                    await PopulateApplyViewAsync(currentUser, null, null, llbNumber, transferType);
                     return View();
                 }
 
-                transferApplication = await GetOpenTemporaryTransferApplicationAsync(currentUser.Id, sourceApplication.Id);
+                transferApplication = await GetOpenTemporaryTransferApplicationAsync(currentUser.Id, sourceApplication.Id, transferType);
             }
 
-            await PopulateApplyViewAsync(currentUser, sourceApplication, transferApplication, llbNumber);
+            await PopulateApplyViewAsync(currentUser, sourceApplication, transferApplication, llbNumber, transferType);
             ViewBag.EditMode = edit;
             return View();
         }
@@ -203,6 +204,7 @@ namespace LLB.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitAsync(
             string llbNumber,
+            string transferType,
             string applicantType,
             string businessName,
             string operationAddress,
@@ -223,10 +225,17 @@ namespace LLB.Controllers
                 return RedirectToAction("Apply");
             }
 
-            var existingOpenApplication = await GetOpenTemporaryTransferApplicationAsync(currentUser.Id, sourceApplication.Id);
+            var normalizedTransferType = TemporaryTransferHelper.NormalizeTransferType(transferType);
+            if (string.IsNullOrWhiteSpace(normalizedTransferType))
+            {
+                TempData["error"] = "Select whether this is a permanent transfer or a temporary transfer.";
+                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum });
+            }
+
+            var existingOpenApplication = await GetOpenTemporaryTransferApplicationAsync(currentUser.Id, sourceApplication.Id, normalizedTransferType);
             if (existingOpenApplication != null)
             {
-                TempData["error"] = "A temporary transfer application for this liquor licence is already in progress.";
+                TempData["error"] = $"A {normalizedTransferType.ToLowerInvariant()} application for this liquor licence is already in progress.";
                 return RedirectToAction("Apply", new { id = existingOpenApplication.Id });
             }
 
@@ -234,49 +243,49 @@ namespace LLB.Controllers
                 || string.IsNullOrWhiteSpace(businessName)
                 || string.IsNullOrWhiteSpace(operationAddress))
             {
-                TempData["error"] = "Complete all applicant information fields before submitting the temporary transfer application.";
-                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum });
+                TempData["error"] = "Complete all applicant information fields before submitting the transfer application.";
+                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum, transferType = normalizedTransferType });
             }
 
             var fee = await GetTemporaryTransferFeeAsync(sourceApplication);
             if (fee == null)
             {
-                TempData["error"] = "The temporary transfer fee has not been configured.";
-                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum });
+                TempData["error"] = "The transfer fee has not been configured.";
+                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum, transferType = normalizedTransferType });
             }
 
             var draftManagers = ParseTemporaryTransferDraftManagers(managerDraftJson);
             if (draftManagers == null)
             {
-                TempData["error"] = "The temporary transfer managers list could not be processed. Add the managers again and retry.";
-                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum });
+                TempData["error"] = "The transfer managers list could not be processed. Add the managers again and retry.";
+                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum, transferType = normalizedTransferType });
             }
 
             var managerValidationError = ValidateTemporaryTransferManagers(draftManagers);
             if (!string.IsNullOrWhiteSpace(managerValidationError))
             {
                 TempData["error"] = managerValidationError;
-                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum });
+                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum, transferType = normalizedTransferType });
             }
 
             var draftManagerPathValidationError = ValidateTemporaryTransferDraftManagerFiles(draftManagers, currentUser.Id);
             if (!string.IsNullOrWhiteSpace(draftManagerPathValidationError))
             {
                 TempData["error"] = draftManagerPathValidationError;
-                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum });
+                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum, transferType = normalizedTransferType });
             }
 
             var pricing = await BuildTemporaryTransferPricingAsync(sourceApplication, draftManagers.Count);
             if (!pricing.BaseFee.HasValue)
             {
-                TempData["error"] = "The temporary transfer fee has not been configured.";
-                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum });
+                TempData["error"] = "The transfer fee has not been configured.";
+                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum, transferType = normalizedTransferType });
             }
 
             if (pricing.ChargeableManagerCount > 0 && !pricing.ManagerFee.HasValue)
             {
                 TempData["error"] = "The additional manager fee has not been configured.";
-                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum });
+                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum, transferType = normalizedTransferType });
             }
 
             var transferApplication = new ApplicationInfo
@@ -290,6 +299,7 @@ namespace LLB.Controllers
                 RefNum = ReferenceHelper.GeneratePostFormationReferenceNumber(_db, TemporaryTransferHelper.ServiceCode),
                 ExaminationStatus = TemporaryTransferHelper.ServiceName,
                 PaymentFee = pricing.TotalFee ?? fee.Value,
+                PlaceOfBirth = normalizedTransferType,
                 DateofEntryIntoZimbabwe = IsZimbabweanApplicant(currentUser) ? string.Empty : dateofEntryIntoZimbabwe ?? string.Empty,
                 PlaceOfEntry = IsZimbabweanApplicant(currentUser) ? string.Empty : placeOfEntry ?? string.Empty,
                 OperationAddress = operationAddress,
@@ -337,8 +347,8 @@ namespace LLB.Controllers
 
             var ownerNotified = await TryNotifyLicenseOwnerAsync(sourceApplication, transferApplication, currentUser);
             TempData["success"] = ownerNotified
-                ? "Temporary transfer application submitted and the licence owner has been notified. Add the required attachments, then complete payment."
-                : "Temporary transfer application submitted. Add the required attachments, then complete payment.";
+                ? $"{normalizedTransferType} application submitted and the licence owner has been notified. Add the required attachments, then complete payment."
+                : $"{normalizedTransferType} application submitted. Add the required attachments, then complete payment.";
 
             return RedirectToAction("Apply", new { id = transferApplication.Id });
         }
@@ -426,7 +436,7 @@ namespace LLB.Controllers
 
             if (transferApplication == null)
             {
-                TempData["error"] = "The temporary transfer application could not be found.";
+                TempData["error"] = "The transfer application could not be found.";
                 return RedirectToAction("List");
             }
 
@@ -455,7 +465,7 @@ namespace LLB.Controllers
             var existingManagers = await GetTemporaryTransferManagersAsync(transferApplication.Id);
             if (existingManagers.Any(item => string.Equals(item.NationalId, normalizedManager.NationalId, StringComparison.OrdinalIgnoreCase)))
             {
-                TempData["error"] = "A manager with the same national ID has already been added to this temporary transfer application.";
+                TempData["error"] = "A manager with the same national ID has already been added to this transfer application.";
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
             }
 
@@ -496,7 +506,7 @@ namespace LLB.Controllers
             _db.Update(transferApplication);
             _db.SaveChanges();
 
-            TempData["success"] = "Manager added to the temporary transfer application.";
+            TempData["success"] = "Manager added to the transfer application.";
             return RedirectToAction("Apply", new { id = transferApplication.Id });
         }
 
@@ -517,7 +527,7 @@ namespace LLB.Controllers
 
             if (transferApplication == null)
             {
-                TempData["error"] = "The temporary transfer application could not be found.";
+                TempData["error"] = "The transfer application could not be found.";
                 return RedirectToAction("List");
             }
 
@@ -552,7 +562,7 @@ namespace LLB.Controllers
             _db.Update(transferApplication);
             _db.SaveChanges();
 
-            TempData["success"] = "Manager removed from the temporary transfer application.";
+            TempData["success"] = "Manager removed from the transfer application.";
             return RedirectToAction("Apply", new { id = transferApplication.Id });
         }
 
@@ -560,6 +570,7 @@ namespace LLB.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateDetailsAsync(
             string id,
+            string transferType,
             string applicantType,
             string businessName,
             string operationAddress,
@@ -579,15 +590,33 @@ namespace LLB.Controllers
 
             if (transferApplication == null)
             {
-                TempData["error"] = "The temporary transfer application could not be found.";
+                TempData["error"] = "The transfer application could not be found.";
                 return RedirectToAction("List");
             }
 
             var payment = await GetLatestTemporaryTransferPaymentAsync(transferApplication.Id);
             if (!CanModifyBeforePayment(transferApplication, payment))
             {
-                TempData["error"] = "Temporary transfer details can only be edited before payment starts.";
+                TempData["error"] = "Transfer details can only be edited before payment starts.";
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
+            }
+
+            var normalizedTransferType = TemporaryTransferHelper.NormalizeTransferType(transferType);
+            if (string.IsNullOrWhiteSpace(normalizedTransferType))
+            {
+                TempData["error"] = "Select whether this is a permanent transfer or a temporary transfer.";
+                return RedirectToAction("Apply", new { id = transferApplication.Id, edit = true });
+            }
+
+            var existingOpenApplication = await GetOpenTemporaryTransferApplicationAsync(
+                currentUser.Id,
+                transferApplication.CompanyNumber,
+                normalizedTransferType);
+            if (existingOpenApplication != null
+                && !string.Equals(existingOpenApplication.Id, transferApplication.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["error"] = $"A {normalizedTransferType.ToLowerInvariant()} application for this liquor licence is already in progress.";
+                return RedirectToAction("Apply", new { id = transferApplication.Id, edit = true });
             }
 
             if (string.IsNullOrWhiteSpace(applicantType)
@@ -598,6 +627,7 @@ namespace LLB.Controllers
                 return RedirectToAction("Apply", new { id = transferApplication.Id, edit = true });
             }
 
+            transferApplication.PlaceOfBirth = normalizedTransferType;
             transferApplication.ApplicantType = applicantType;
             transferApplication.BusinessName = businessName;
             transferApplication.OperationAddress = operationAddress;
@@ -609,7 +639,7 @@ namespace LLB.Controllers
             _db.Update(transferApplication);
             _db.SaveChanges();
 
-            TempData["success"] = "Temporary transfer details updated.";
+            TempData["success"] = "Transfer details updated.";
             return RedirectToAction("Apply", new { id = transferApplication.Id });
         }
 
@@ -630,7 +660,7 @@ namespace LLB.Controllers
 
             if (transferApplication == null)
             {
-                TempData["error"] = "The temporary transfer application could not be found.";
+                TempData["error"] = "The transfer application could not be found.";
                 return RedirectToAction("List");
             }
 
@@ -666,29 +696,44 @@ namespace LLB.Controllers
                     transferApplication.FormFF = await SaveApplicantFileAsync(file, "FormFF", transferApplication.Id!);
                     break;
 
-                case "tieaffidavit":
-                    var tieAffidavit = await GetLatestTemporaryTransferAttachmentAsync(
+                case "proofofpublication":
+                case "publicationproof":
+                case "lg2":
+                    await SaveTemporaryTransferAttachmentAsync(
                         transferApplication.Id,
-                        TemporaryTransferHelper.TieAffidavitDocumentTitle);
+                        currentUser.Id,
+                        TemporaryTransferHelper.ProofOfPublicationDocumentTitle,
+                        file,
+                        now);
+                    break;
 
-                    if (tieAffidavit == null)
-                    {
-                        tieAffidavit = new AttachmentInfo
-                        {
-                            Id = Guid.NewGuid().ToString(),
-                            UserId = currentUser.Id,
-                            ApplicationId = transferApplication.Id,
-                            DocumentTitle = TemporaryTransferHelper.TieAffidavitDocumentTitle,
-                            Status = "uploaded",
-                            DateAdded = now
-                        };
+                case "tieaffidavit":
+                    await SaveTemporaryTransferAttachmentAsync(
+                        transferApplication.Id,
+                        currentUser.Id,
+                        TemporaryTransferHelper.TieAffidavitDocumentTitle,
+                        file,
+                        now);
+                    break;
 
-                        _db.Add(tieAffidavit);
-                    }
+                case "transferaffidavit":
+                    await SaveTemporaryTransferAttachmentAsync(
+                        transferApplication.Id,
+                        currentUser.Id,
+                        TemporaryTransferHelper.TransferAffidavitDocumentTitle,
+                        file,
+                        now);
+                    break;
 
-                    tieAffidavit.DocumentLocation = await SaveApplicationAttachmentAsync(file);
-                    tieAffidavit.Status = "uploaded";
-                    tieAffidavit.DateUpdated = now;
+                case "leasedocuments":
+                case "rightofoccupation":
+                case "titledeeds":
+                    await SaveTemporaryTransferAttachmentAsync(
+                        transferApplication.Id,
+                        currentUser.Id,
+                        TemporaryTransferHelper.LeaseDocumentsDocumentTitle,
+                        file,
+                        now);
                     break;
 
                 default:
@@ -720,13 +765,13 @@ namespace LLB.Controllers
 
             if (transferApplication == null)
             {
-                TempData["error"] = "The temporary transfer application could not be found.";
+                TempData["error"] = "The transfer application could not be found.";
                 return RedirectToAction("List");
             }
 
             if (!string.Equals(transferApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase))
             {
-                TempData["error"] = "Only submitted temporary transfer applications can proceed to payment.";
+                TempData["error"] = "Only submitted transfer applications can proceed to payment.";
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
             }
 
@@ -740,7 +785,7 @@ namespace LLB.Controllers
             var pricing = await BuildTemporaryTransferPricingAsync(sourceApplication, transferApplication.Id);
             if (!pricing.TotalFee.HasValue)
             {
-                TempData["error"] = "The temporary transfer fee has not been configured.";
+                TempData["error"] = "The transfer fee has not been configured.";
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
             }
 
@@ -758,7 +803,7 @@ namespace LLB.Controllers
                 _db.Update(transferApplication);
                 _db.SaveChanges();
 
-                TempData["success"] = "This temporary transfer application has already been paid for.";
+                TempData["success"] = "This transfer application has already been paid for.";
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
             }
 
@@ -773,14 +818,26 @@ namespace LLB.Controllers
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
             }
 
+            var proofOfPublication = await GetLatestTemporaryTransferAttachmentAsync(
+                transferApplication.Id,
+                TemporaryTransferHelper.ProofOfPublicationDocumentTitle,
+                asNoTracking: true);
             var tieAffidavit = await GetLatestTemporaryTransferAttachmentAsync(
                 transferApplication.Id,
                 TemporaryTransferHelper.TieAffidavitDocumentTitle,
                 asNoTracking: true);
+            var transferAffidavit = await GetLatestTemporaryTransferAttachmentAsync(
+                transferApplication.Id,
+                TemporaryTransferHelper.TransferAffidavitDocumentTitle,
+                asNoTracking: true);
+            var leaseDocuments = await GetLatestTemporaryTransferAttachmentAsync(
+                transferApplication.Id,
+                TemporaryTransferHelper.LeaseDocumentsDocumentTitle,
+                asNoTracking: true);
 
-            if (!HasRequiredAttachments(transferApplication, tieAffidavit))
+            if (!HasRequiredAttachments(transferApplication, proofOfPublication, tieAffidavit, transferAffidavit, leaseDocuments))
             {
-                TempData["error"] = "Upload the ID copy, fingerprints, Form 55, and tie affidavit before making payment.";
+                TempData["error"] = "Upload proof of publication, tie affidavit, transfer affidavit, certified ID/passport copies, Form 55 against fingerprints, and lease/title deed/right of occupation documents before making payment.";
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
             }
 
@@ -857,13 +914,13 @@ namespace LLB.Controllers
 
             if (transferApplication == null)
             {
-                TempData["error"] = "The temporary transfer application could not be found.";
+                TempData["error"] = "The transfer application could not be found.";
                 return RedirectToAction("List");
             }
 
             if (!string.Equals(transferApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase))
             {
-                TempData["error"] = "This temporary transfer application is not ready to continue.";
+                TempData["error"] = "This transfer application is not ready to continue.";
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
             }
 
@@ -874,11 +931,23 @@ namespace LLB.Controllers
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
             }
 
+            var proofOfPublication = await GetLatestTemporaryTransferAttachmentAsync(
+                transferApplication.Id,
+                TemporaryTransferHelper.ProofOfPublicationDocumentTitle,
+                asNoTracking: true);
             var tieAffidavit = await GetLatestTemporaryTransferAttachmentAsync(
                 transferApplication.Id,
                 TemporaryTransferHelper.TieAffidavitDocumentTitle,
                 asNoTracking: true);
-            if (!HasRequiredAttachments(transferApplication, tieAffidavit))
+            var transferAffidavit = await GetLatestTemporaryTransferAttachmentAsync(
+                transferApplication.Id,
+                TemporaryTransferHelper.TransferAffidavitDocumentTitle,
+                asNoTracking: true);
+            var leaseDocuments = await GetLatestTemporaryTransferAttachmentAsync(
+                transferApplication.Id,
+                TemporaryTransferHelper.LeaseDocumentsDocumentTitle,
+                asNoTracking: true);
+            if (!HasRequiredAttachments(transferApplication, proofOfPublication, tieAffidavit, transferAffidavit, leaseDocuments))
             {
                 TempData["error"] = "Upload all required attachments before sending the application to the secretary.";
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
@@ -894,7 +963,7 @@ namespace LLB.Controllers
                 var secretaryId = await _taskAllocationHelper.GetSecretary(_db, _userManager);
                 if (string.IsNullOrWhiteSpace(secretaryId))
                 {
-                    TempData["error"] = "No secretary is currently available to receive this temporary transfer application.";
+                    TempData["error"] = "No secretary is currently available to receive this transfer application.";
                     return RedirectToAction("Apply", new { id = transferApplication.Id });
                 }
 
@@ -918,7 +987,7 @@ namespace LLB.Controllers
             _db.Update(transferApplication);
             _db.SaveChanges();
 
-            TempData["success"] = "Temporary transfer application sent to the secretary for examination and approval.";
+            TempData["success"] = "Transfer application sent to the secretary for examination and approval.";
             return RedirectToAction("Apply", new { id = transferApplication.Id });
         }
 
@@ -932,7 +1001,7 @@ namespace LLB.Controllers
 
             if (transferApplication == null)
             {
-                TempData["error"] = "The temporary transfer application could not be found.";
+                TempData["error"] = "The transfer application could not be found.";
                 return RedirectToAction("Dashboard", "Approval");
             }
 
@@ -946,7 +1015,7 @@ namespace LLB.Controllers
             var reviewTask = await GetTemporaryTransferReviewTaskAsync(transferApplication.Id, includeCompleted: true);
             if (!CanBypassReviewAssignment() && reviewTask == null)
             {
-                TempData["error"] = "This temporary transfer application is not assigned to you.";
+                TempData["error"] = "This transfer application is not assigned to you.";
                 return RedirectToAction("Dashboard", "Approval");
             }
 
@@ -968,9 +1037,21 @@ namespace LLB.Controllers
                 ? null
                 : await _db.LicenseRegions.AsNoTracking().FirstOrDefaultAsync(item => item.Id == sourceApplication.ApplicationType);
 
+            var proofOfPublication = await GetLatestTemporaryTransferAttachmentAsync(
+                transferApplication.Id,
+                TemporaryTransferHelper.ProofOfPublicationDocumentTitle,
+                asNoTracking: true);
             var tieAffidavit = await GetLatestTemporaryTransferAttachmentAsync(
                 transferApplication.Id,
                 TemporaryTransferHelper.TieAffidavitDocumentTitle,
+                asNoTracking: true);
+            var transferAffidavit = await GetLatestTemporaryTransferAttachmentAsync(
+                transferApplication.Id,
+                TemporaryTransferHelper.TransferAffidavitDocumentTitle,
+                asNoTracking: true);
+            var leaseDocuments = await GetLatestTemporaryTransferAttachmentAsync(
+                transferApplication.Id,
+                TemporaryTransferHelper.LeaseDocumentsDocumentTitle,
                 asNoTracking: true);
             var managers = await GetTemporaryTransferManagersAsync(transferApplication.Id, asNoTracking: true);
             var pricing = await BuildTemporaryTransferPricingAsync(sourceApplication, managers.Count);
@@ -982,7 +1063,10 @@ namespace LLB.Controllers
             ViewBag.Outlet = outlet;
             ViewBag.License = license;
             ViewBag.Region = region;
+            ViewBag.ProofOfPublication = proofOfPublication;
             ViewBag.TieAffidavit = tieAffidavit;
+            ViewBag.TransferAffidavit = transferAffidavit;
+            ViewBag.LeaseDocuments = leaseDocuments;
             ViewBag.TransferManagers = managers;
             ViewBag.BaseFee = pricing.BaseFee;
             ViewBag.ManagerFee = pricing.ManagerFee;
@@ -1004,27 +1088,27 @@ namespace LLB.Controllers
 
             if (transferApplication == null)
             {
-                TempData["error"] = "The temporary transfer application could not be found.";
+                TempData["error"] = "The transfer application could not be found.";
                 return RedirectToAction("Dashboard", "Approval");
             }
 
             var reviewTask = await GetTemporaryTransferReviewTaskAsync(transferApplication.Id, includeCompleted: false);
             if (!CanBypassReviewAssignment() && reviewTask == null)
             {
-                TempData["error"] = "This temporary transfer application is not assigned to you.";
+                TempData["error"] = "This transfer application is not assigned to you.";
                 return RedirectToAction("Dashboard", "Approval");
             }
 
             if (!string.Equals(transferApplication.Status, "awaiting approval", StringComparison.OrdinalIgnoreCase))
             {
-                TempData["error"] = "Only temporary transfer applications awaiting approval can be approved.";
+                TempData["error"] = "Only transfer applications awaiting approval can be approved.";
                 return RedirectToAction("ViewApplications", new { id = transferApplication.Id });
             }
 
             var payment = await RefreshTemporaryTransferPaymentStatusAsync(transferApplication.Id);
             if (payment == null || !HasPaymentStatus(payment, "Paid"))
             {
-                TempData["error"] = "Payment has not been confirmed for this temporary transfer application.";
+                TempData["error"] = "Payment has not been confirmed for this transfer application.";
                 return RedirectToAction("ViewApplications", new { id = transferApplication.Id });
             }
 
@@ -1044,7 +1128,7 @@ namespace LLB.Controllers
             }
 
             _db.SaveChanges();
-            TempData["success"] = "Temporary transfer application approved.";
+            TempData["success"] = "Transfer application approved.";
             return RedirectToAction("ViewApplications", new { id = transferApplication.Id });
         }
 
@@ -1058,20 +1142,20 @@ namespace LLB.Controllers
 
             if (transferApplication == null)
             {
-                TempData["error"] = "The temporary transfer application could not be found.";
+                TempData["error"] = "The transfer application could not be found.";
                 return RedirectToAction("Dashboard", "Approval");
             }
 
             var reviewTask = await GetTemporaryTransferReviewTaskAsync(transferApplication.Id, includeCompleted: false);
             if (!CanBypassReviewAssignment() && reviewTask == null)
             {
-                TempData["error"] = "This temporary transfer application is not assigned to you.";
+                TempData["error"] = "This transfer application is not assigned to you.";
                 return RedirectToAction("Dashboard", "Approval");
             }
 
             if (!string.Equals(transferApplication.Status, "awaiting approval", StringComparison.OrdinalIgnoreCase))
             {
-                TempData["error"] = "Only temporary transfer applications awaiting approval can be rejected.";
+                TempData["error"] = "Only transfer applications awaiting approval can be rejected.";
                 return RedirectToAction("ViewApplications", new { id = transferApplication.Id });
             }
 
@@ -1090,7 +1174,7 @@ namespace LLB.Controllers
             }
 
             _db.SaveChanges();
-            TempData["success"] = "Temporary transfer application rejected.";
+            TempData["success"] = "Transfer application rejected.";
             return RedirectToAction("ViewApplications", new { id = transferApplication.Id });
         }
 
@@ -1098,13 +1182,17 @@ namespace LLB.Controllers
             ApplicationUser applicantUser,
             ApplicationInfo? sourceApplication,
             ApplicationInfo? transferApplication,
-            string? llbNumber)
+            string? llbNumber,
+            string? selectedTransferType = null)
         {
             ApplicationUser? ownerUser = null;
             OutletInfo? outlet = null;
             LicenseTypes? license = null;
             LicenseRegion? region = null;
+            AttachmentInfo? proofOfPublication = null;
             AttachmentInfo? tieAffidavit = null;
+            AttachmentInfo? transferAffidavit = null;
+            AttachmentInfo? leaseDocuments = null;
             Payments? payment = null;
             decimal? fee = null;
             decimal? baseFee = null;
@@ -1143,9 +1231,24 @@ namespace LLB.Controllers
 
             if (transferApplication != null)
             {
+                proofOfPublication = await GetLatestTemporaryTransferAttachmentAsync(
+                    transferApplication.Id,
+                    TemporaryTransferHelper.ProofOfPublicationDocumentTitle,
+                    asNoTracking: true);
+
                 tieAffidavit = await GetLatestTemporaryTransferAttachmentAsync(
                     transferApplication.Id,
                     TemporaryTransferHelper.TieAffidavitDocumentTitle,
+                    asNoTracking: true);
+
+                transferAffidavit = await GetLatestTemporaryTransferAttachmentAsync(
+                    transferApplication.Id,
+                    TemporaryTransferHelper.TransferAffidavitDocumentTitle,
+                    asNoTracking: true);
+
+                leaseDocuments = await GetLatestTemporaryTransferAttachmentAsync(
+                    transferApplication.Id,
+                    TemporaryTransferHelper.LeaseDocumentsDocumentTitle,
                     asNoTracking: true);
 
                 managers = await GetTemporaryTransferManagersAsync(transferApplication.Id, asNoTracking: true);
@@ -1167,7 +1270,7 @@ namespace LLB.Controllers
 
             var paymentReceived = payment != null && HasPaymentStatus(payment, "Paid");
             var hasActivePayment = payment != null && IsActivePaymentTransaction(payment);
-            var attachmentsComplete = HasRequiredAttachments(transferApplication, tieAffidavit);
+            var attachmentsComplete = HasRequiredAttachments(transferApplication, proofOfPublication, tieAffidavit, transferAffidavit, leaseDocuments);
             var canEditDetails = CanModifyBeforePayment(transferApplication, payment);
             var canMakePayment = transferApplication != null
                 && string.Equals(transferApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase)
@@ -1179,8 +1282,11 @@ namespace LLB.Controllers
             var awaitingSecretary = transferApplication != null
                 && string.Equals(transferApplication.Status, "awaiting approval", StringComparison.OrdinalIgnoreCase);
 
-            ViewData["Title"] = "Temporary Transfer";
+            ViewData["Title"] = TemporaryTransferHelper.DisplayServiceName;
             ViewBag.SearchValue = llbNumber ?? sourceApplication?.LLBNum ?? string.Empty;
+            ViewBag.SelectedTransferType = transferApplication != null
+                ? TemporaryTransferHelper.GetTransferType(transferApplication)
+                : TemporaryTransferHelper.NormalizeTransferType(selectedTransferType);
             ViewBag.SourceApplication = sourceApplication;
             ViewBag.TransferApplication = transferApplication;
             ViewBag.ApplicantUser = applicantUser;
@@ -1188,7 +1294,10 @@ namespace LLB.Controllers
             ViewBag.Outlet = outlet;
             ViewBag.License = license;
             ViewBag.Region = region;
+            ViewBag.ProofOfPublication = proofOfPublication;
             ViewBag.TieAffidavit = tieAffidavit;
+            ViewBag.TransferAffidavit = transferAffidavit;
+            ViewBag.LeaseDocuments = leaseDocuments;
             ViewBag.TransferManagers = managers;
             ViewBag.BaseFee = baseFee;
             ViewBag.ManagerFee = managerFee;
@@ -1255,12 +1364,14 @@ namespace LLB.Controllers
                     && (item.ExaminationStatus == null || item.ExaminationStatus != TemporaryTransferHelper.ServiceName));
         }
 
-        private async Task<ApplicationInfo?> GetOpenTemporaryTransferApplicationAsync(string applicantUserId, string? sourceApplicationId)
+        private async Task<ApplicationInfo?> GetOpenTemporaryTransferApplicationAsync(string applicantUserId, string? sourceApplicationId, string? transferType = null)
         {
             if (string.IsNullOrWhiteSpace(applicantUserId) || string.IsNullOrWhiteSpace(sourceApplicationId))
             {
                 return null;
             }
+
+            var normalizedTransferType = TemporaryTransferHelper.NormalizeTransferType(transferType);
 
             return await _db.ApplicationInfo
                 .AsNoTracking()
@@ -1268,6 +1379,10 @@ namespace LLB.Controllers
                     item.UserID == applicantUserId
                     && item.CompanyNumber == sourceApplicationId
                     && item.ExaminationStatus == TemporaryTransferHelper.ServiceName
+                    && (string.IsNullOrWhiteSpace(normalizedTransferType)
+                        || item.PlaceOfBirth == normalizedTransferType
+                        || (normalizedTransferType == TemporaryTransferHelper.TemporaryTransferType
+                            && (item.PlaceOfBirth == null || item.PlaceOfBirth == string.Empty)))
                     && (item.Status == null
                         || (item.Status != "Approved"
                             && item.Status != "Rejected")))
@@ -1433,14 +1548,53 @@ namespace LLB.Controllers
                 .FirstOrDefaultAsync();
         }
 
-        private static bool HasRequiredAttachments(ApplicationInfo? transferApplication, AttachmentInfo? tieAffidavit)
+        private async Task SaveTemporaryTransferAttachmentAsync(
+            string? applicationId,
+            string userId,
+            string documentTitle,
+            IFormFile file,
+            DateTime now)
+        {
+            var attachment = await GetLatestTemporaryTransferAttachmentAsync(applicationId, documentTitle);
+
+            if (attachment == null)
+            {
+                attachment = new AttachmentInfo
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = userId,
+                    ApplicationId = applicationId,
+                    DocumentTitle = documentTitle,
+                    Status = "uploaded",
+                    DateAdded = now
+                };
+
+                _db.Add(attachment);
+            }
+
+            attachment.DocumentLocation = await SaveApplicationAttachmentAsync(file);
+            attachment.Status = "uploaded";
+            attachment.DateUpdated = now;
+        }
+
+        private static bool HasRequiredAttachments(
+            ApplicationInfo? transferApplication,
+            AttachmentInfo? proofOfPublication,
+            AttachmentInfo? tieAffidavit,
+            AttachmentInfo? transferAffidavit,
+            AttachmentInfo? leaseDocuments)
         {
             return transferApplication != null
                 && !string.IsNullOrWhiteSpace(transferApplication.IdCopy)
-                && !string.IsNullOrWhiteSpace(transferApplication.Fingerprints)
                 && !string.IsNullOrWhiteSpace(transferApplication.FormFF)
+                && proofOfPublication != null
+                && !string.IsNullOrWhiteSpace(proofOfPublication.DocumentLocation)
                 && tieAffidavit != null
-                && !string.IsNullOrWhiteSpace(tieAffidavit.DocumentLocation);
+                && !string.IsNullOrWhiteSpace(tieAffidavit.DocumentLocation)
+                && transferAffidavit != null
+                && !string.IsNullOrWhiteSpace(transferAffidavit.DocumentLocation)
+                && leaseDocuments != null
+                && !string.IsNullOrWhiteSpace(leaseDocuments.DocumentLocation);
         }
 
         private static bool CanModifyBeforePayment(ApplicationInfo? transferApplication, Payments? payment)
@@ -1802,10 +1956,13 @@ namespace LLB.Controllers
         {
             return NormalizeDocumentType(documentType) switch
             {
-                "idcopy" => "ID/Passport copy",
+                "idcopy" => "Certified copies of ID or passport of applicant",
                 "fingerprints" => "Fingerprints",
-                "form55" or "formff" => "Form 55",
+                "form55" or "formff" => "Form 55 against fingerprints",
+                "proofofpublication" or "publicationproof" or "lg2" => "Proof of publication in the government gazette and local paper.{L.G 2}",
                 "tieaffidavit" => "Tie affidavit",
+                "transferaffidavit" => "Transfer affidavit",
+                "leasedocuments" or "rightofoccupation" or "titledeeds" => "Lease documents, title deeds or evidence of right of occupation",
                 _ => "Attachment"
             };
         }
@@ -1892,6 +2049,7 @@ namespace LLB.Controllers
 
             var applicantName = BuildDisplayName(applicantUser);
             var ownerName = BuildDisplayName(owner);
+            var transferType = TemporaryTransferHelper.GetTransferType(transferApplication);
 
             try
             {
@@ -1904,12 +2062,12 @@ namespace LLB.Controllers
                 var message = new MailMessage
                 {
                     From = new MailAddress("ftagwirei24@gmail.com"),
-                    Subject = "Temporary Transfer Application Notification",
+                    Subject = $"{transferType} Application Notification",
                     IsBodyHtml = true,
                     Body =
                         "<html><body style=\"font-family:Arial,Helvetica,sans-serif;\">" +
                         $"<p>Dear {WebUtility.HtmlEncode(ownerName)},</p>" +
-                        $"<p>A temporary transfer application has been submitted against liquor licence <strong>{WebUtility.HtmlEncode(sourceApplication.LLBNum ?? "N/A")}</strong>.</p>" +
+                        $"<p>A {WebUtility.HtmlEncode(transferType.ToLowerInvariant())} application has been submitted against liquor licence <strong>{WebUtility.HtmlEncode(sourceApplication.LLBNum ?? "N/A")}</strong>.</p>" +
                         $"<p>Applicant: <strong>{WebUtility.HtmlEncode(applicantName)}</strong></p>" +
                         $"<p>Reference: <strong>{WebUtility.HtmlEncode(transferApplication.RefNum ?? "Pending")}</strong></p>" +
                         "<p>This notification is for your information while the application proceeds through the approval workflow.</p>" +

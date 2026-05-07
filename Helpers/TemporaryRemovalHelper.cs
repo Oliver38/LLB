@@ -11,9 +11,9 @@ namespace LLB.Helpers
         {
             "Local Authority Letter of approval",
             "Proof of publication in the Government Gazette",
-            "Tie Affidavit",
             "Lease/Deed documents",
-            "A3 Plan approved by local Environmental Health"
+            "A3 Plan approved by local Environmental Health",
+            "An inspection report from the local healthy officer on LG25 approving the premises & inspector of premises"
         };
 
         public static bool IsTemporaryRemovalApplication(ApplicationInfo? application)

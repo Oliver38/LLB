@@ -1,28 +1,44 @@
+@using System.Linq
+@using LLB.Models
+
 @{
     Layout = "_LayoutMain";
 
-    var activeTemporaryRetail = ViewBag.ActiveTemporaryRetail;
-    var temporaryRetailRecord = ViewBag.TemporaryRetailRecord;
-    var payment = ViewBag.Payment;
+    var temporaryRetailRecord = ViewBag.TemporaryRetailRecord as TemporaryRetails;
+    var temporaryRetailRecords = ViewBag.TemporaryRetailRecords as IEnumerable<TemporaryRetails> ?? Enumerable.Empty<TemporaryRetails>();
+    var editableTemporaryRetailRecord = ViewBag.EditableTemporaryRetailRecord as TemporaryRetails;
+    var payment = ViewBag.Payment as Payments;
     bool canStartNewTemporaryRetail = ViewBag.CanStartNewTemporaryRetail is bool canStart && canStart;
     bool canSubmitTemporaryRetail = ViewBag.CanSubmitTemporaryRetail is bool canSubmit && canSubmit;
+    bool isExplicitTemporaryRetailSelection = ViewBag.IsExplicitTemporaryRetailSelection is bool isExplicit && isExplicit;
+    bool hasPendingSubmittedTemporaryRetail = ViewBag.HasPendingSubmittedTemporaryRetail is bool hasPending && hasPending;
+    bool hasAnotherSubmittedTemporaryRetail = ViewBag.HasAnotherSubmittedTemporaryRetail is bool hasAnotherSubmitted && hasAnotherSubmitted;
     bool isTemporaryRetailPaid = ViewBag.IsTemporaryRetailPaid is bool paid && paid;
+    bool isEditableTemporaryRetailPaid = ViewBag.IsEditableTemporaryRetailPaid is bool editablePaid && editablePaid;
+    bool hasEditableInProgressTemporaryRetail = editableTemporaryRetailRecord != null
+        && string.Equals(editableTemporaryRetailRecord.Status, "inprogress", StringComparison.OrdinalIgnoreCase);
     string process = ViewBag.Process as string ?? "TRL";
     string? temporaryRetailWarning = ViewBag.TemporaryRetailWarning as string;
-    string currentTemporaryRetailId = activeTemporaryRetail?.Id ?? string.Empty;
+    string currentTemporaryRetailId = temporaryRetailRecord?.Id ?? string.Empty;
     string applicationId = ViewBag.Appinfo?.Id ?? string.Empty;
+    string outletName = Convert.ToString(ViewBag.Outletinfo?.TradingName) ?? "this outlet";
     string displayedStatus = temporaryRetailRecord?.Status ?? "Not started";
     string displayedPaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? temporaryRetailRecord?.PaymentStatus ?? "Not Paid";
     string displayedPaynowReference = payment?.PaynowRef ?? "N/A";
     string displayedJustification = temporaryRetailRecord?.ReasonForExtention ?? "Not provided yet";
     string displayedLocationAddress = temporaryRetailRecord?.LocationAddress ?? "Not provided yet";
-    string activeTemporaryRetailStatus = activeTemporaryRetail?.Status ?? string.Empty;
+    string selectedTemporaryRetailStatus = temporaryRetailRecord?.Status ?? string.Empty;
     DateTime? displayedTemporaryRetailDate = null;
 
     if (temporaryRetailRecord != null && temporaryRetailRecord.TemporaryRetailsDate != DateTime.MinValue)
     {
         displayedTemporaryRetailDate = temporaryRetailRecord.TemporaryRetailsDate;
     }
+
+    string editableTemporaryRetailDateValue = editableTemporaryRetailRecord != null
+        && editableTemporaryRetailRecord.TemporaryRetailsDate != DateTime.MinValue
+        ? editableTemporaryRetailRecord.TemporaryRetailsDate.ToString("yyyy-MM-dd")
+        : string.Empty;
 }
 
 @if (TempData["error"] != null)
@@ -41,12 +57,27 @@
 }
 
 <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title mb-0">Temporary Retail Licence Application For @ViewBag.Outletinfo?.TradingName</div>
-        @if (temporaryRetailRecord != null)
-        {
-            <span class="badge bg-light text-dark border">@temporaryRetailRecord.Reference</span>
-        }
+    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="card-title mb-0">Selected Temporary Retail Application For @outletName</div>
+        <div class="d-flex align-items-center gap-2">
+            @if (temporaryRetailRecord != null)
+            {
+                <span class="badge bg-light text-dark border">@temporaryRetailRecord.Reference</span>
+            }
+
+            @if (temporaryRetailRecords.Any())
+            {
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#existingTemporaryRetailModal">
+                    Existing Temporary Retail Applications
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-sm btn-outline-secondary" type="button" disabled>
+                    Existing Temporary Retail Applications
+                </button>
+            }
+        </div>
     </div>
 
     <div class="card-body">
@@ -55,7 +86,7 @@
                 <tbody class="table-light">
                     <tr>
                         <th>Outlet Name</th>
-                        <td>@ViewBag.Outletinfo?.TradingName</td>
+                        <td>@outletName</td>
                     </tr>
                     <tr>
                         <th>Licence</th>
@@ -112,13 +143,34 @@
     </div>
 </div>
 
-@if (canStartNewTemporaryRetail)
-{
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Application Details</h5>
-        </div>
-        <div class="card-body">
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Create Temporary Retail Application</h5>
+    </div>
+    <div class="card-body">
+        @if (hasEditableInProgressTemporaryRetail)
+        {
+            @if (isEditableTemporaryRetailPaid)
+            {
+                <div class="alert alert-info mb-0">
+                    This in-progress temporary retail application has already been paid for. Its details are locked and can no longer be edited.
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <div class="fw-semibold">An in-progress temporary retail application already exists.</div>
+                        <div class="text-muted">Edit the current draft to update the date, address or location, and justification before payment and submission.</div>
+                    </div>
+                    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#editTemporaryRetailModal">
+                        Edit Current Application
+                    </button>
+                </div>
+            }
+        }
+        else if (canStartNewTemporaryRetail)
+        {
             <form action="/Postprocess/SaveTemporaryRetails" method="post">
                 <input type="hidden" name="applicationId" value="@applicationId" />
 
@@ -140,30 +192,111 @@
                     </div>
                 </div>
             </form>
-        </div>
+        }
+        else
+        {
+            @if (hasPendingSubmittedTemporaryRetail)
+            {
+                <div class="alert alert-warning mb-0">
+                    A submitted temporary retail application is already awaiting a decision. Create another one after it has been approved or rejected.
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info mb-0">
+                    A temporary retail application is already in progress for this licence. Complete payment and submission for the current draft before starting another one.
+                </div>
+            }
+        }
     </div>
-}
-else if (activeTemporaryRetail != null && string.Equals(activeTemporaryRetailStatus, "submitted", StringComparison.OrdinalIgnoreCase))
-{
-    <div class="alert alert-warning">
-        This temporary retail application has already been submitted. The Secretary will approve or reject it after examination.
-    </div>
-}
-else if (!string.IsNullOrWhiteSpace(currentTemporaryRetailId))
-{
-    <div class="alert alert-info">
-        This temporary retail application has been initialized. Payment is the next step, so the application fields are now read-only.
-    </div>
+</div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Submission Steps</h5>
-        </div>
-        <div class="card-body">
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Submission Steps</h5>
+    </div>
+    <div class="card-body">
+        @if (temporaryRetailRecord == null)
+        {
+            @if (canStartNewTemporaryRetail)
+            {
+                <div class="d-flex flex-column gap-3">
+                    <div class="border rounded p-3">
+                        <div class="fw-semibold mb-1">Step 1: Create The Application</div>
+                        <div class="text-muted">Use the form above to initialize a fresh temporary retail application for this licence.</div>
+                    </div>
+                    <div class="border rounded p-3">
+                        <div class="fw-semibold mb-1">Step 2: Make Payment</div>
+                        <div class="text-muted">Once the application is initialized, open it and complete its Paynow payment.</div>
+                    </div>
+                    <div class="border rounded p-3">
+                        <div class="fw-semibold mb-1">Step 3: Submit To The Secretary</div>
+                        <div class="text-muted">After payment is confirmed, continue the same application to send it for review.</div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @if (hasPendingSubmittedTemporaryRetail)
+                {
+                    <div class="alert alert-light border mb-0">
+                        Select the submitted temporary retail application from the button above to review its current status.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-light border mb-0">
+                        Select the in-progress temporary retail application from the button above to continue with payment and submission.
+                    </div>
+                }
+            }
+        }
+        else if (string.Equals(selectedTemporaryRetailStatus, "submitted", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="alert alert-warning mb-0">
+                This temporary retail application has already been submitted. The Secretary will approve or reject it after examination.
+            </div>
+        }
+        else if (string.Equals(selectedTemporaryRetailStatus, "approved", StringComparison.OrdinalIgnoreCase) && isExplicitTemporaryRetailSelection)
+        {
+            <div class="alert alert-success mb-0">
+                This temporary retail application has been approved.
+            </div>
+        }
+        else if (string.Equals(selectedTemporaryRetailStatus, "rejected", StringComparison.OrdinalIgnoreCase) && isExplicitTemporaryRetailSelection)
+        {
+            <div class="alert alert-danger mb-0">
+                This temporary retail application has been rejected.
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(currentTemporaryRetailId))
+        {
+            <div class="alert alert-info">
+                This temporary retail application has been initialized. Payment and submission are handled independently for this request.
+            </div>
+
             <div class="d-flex flex-column gap-3">
                 <div class="border rounded p-3">
                     <div class="fw-semibold mb-1">Step 1: Application Initialized</div>
-                    <div class="text-muted">The temporary retail date, address or location, and justification have already been captured for this application.</div>
+                    <div class="text-muted">
+                        The temporary retail date, address or location, and justification have already been captured for this application.
+                        @if (hasEditableInProgressTemporaryRetail
+                            && string.Equals(editableTemporaryRetailRecord?.Id, currentTemporaryRetailId, StringComparison.OrdinalIgnoreCase)
+                            && !isEditableTemporaryRetailPaid)
+                        {
+                            <button class="btn btn-link btn-sm p-0 ms-1 align-baseline" type="button" data-bs-toggle="modal" data-bs-target="#editTemporaryRetailModal">
+                                Edit details
+                            </button>
+                        }
+                    </div>
+                    @if (hasEditableInProgressTemporaryRetail
+                        && string.Equals(editableTemporaryRetailRecord?.Id, currentTemporaryRetailId, StringComparison.OrdinalIgnoreCase)
+                        && isEditableTemporaryRetailPaid)
+                    {
+                        <div class="mt-2">
+                            <span class="badge bg-secondary">Locked after payment</span>
+                        </div>
+                    }
                 </div>
                 <div class="border rounded p-3">
                     <div class="fw-semibold mb-1">Step 2: Make Payment</div>
@@ -189,6 +322,10 @@ else if (!string.IsNullOrWhiteSpace(currentTemporaryRetailId))
                             <button class="btn btn-success" type="submit">Continue</button>
                         </form>
                     }
+                    else if (hasAnotherSubmittedTemporaryRetail)
+                    {
+                        <span class="badge bg-warning text-dark">Another submitted application is awaiting review</span>
+                    }
                     else if (isTemporaryRetailPaid)
                     {
                         <span class="badge bg-secondary">Ready for submission</span>
@@ -198,7 +335,113 @@ else if (!string.IsNullOrWhiteSpace(currentTemporaryRetailId))
                         <span class="badge bg-light text-dark border">Complete payment first</span>
                     }
                 </div>
+                @if (hasPendingSubmittedTemporaryRetail && hasAnotherSubmittedTemporaryRetail)
+                {
+                    <div class="alert alert-warning mb-0">
+                        Another temporary retail application for this licence is already with the Secretary. This draft cannot proceed until that application has been approved or rejected.
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@if (hasEditableInProgressTemporaryRetail && !isEditableTemporaryRetailPaid)
+{
+    <div class="modal fade" id="editTemporaryRetailModal" tabindex="-1" aria-labelledby="editTemporaryRetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form action="/Postprocess/SaveTemporaryRetails" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editTemporaryRetailModalLabel">Edit Temporary Retail Application</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="applicationId" value="@applicationId" />
+                        <input type="hidden" name="temporaryRetailId" value="@editableTemporaryRetailRecord?.Id" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Temporary Retail Date</label>
+                                <input type="date" name="temporaryRetailsDate" class="form-control" value="@editableTemporaryRetailDateValue" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Address / Location</label>
+                                <input type="text" name="locationAddress" class="form-control" value="@(editableTemporaryRetailRecord?.LocationAddress ?? string.Empty)" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Justification</label>
+                                <textarea name="reasonForExtention" class="form-control" rows="5" required>@(editableTemporaryRetailRecord?.ReasonForExtention ?? string.Empty)</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button class="btn btn-primary" type="submit">Save Changes</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 }
+
+<div class="modal fade" id="existingTemporaryRetailModal" tabindex="-1" aria-labelledby="existingTemporaryRetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="existingTemporaryRetailModalLabel">Existing Temporary Retail Applications</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (!temporaryRetailRecords.Any())
+                {
+                    <div class="alert alert-light border mb-0">
+                        No temporary retail applications have been created for this licence yet.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Temporary Retail Date</th>
+                                    <th>Payment Status</th>
+                                    <th>Status</th>
+                                    <th>Updated</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in temporaryRetailRecords)
+                                {
+                                    var itemPaymentStatus = item.PaymentStatus ?? "Not Paid";
+                                    var itemStatus = item.Status ?? "Unknown";
+
+                                    <tr>
+                                        <td class="fw-semibold">@item.Reference</td>
+                                        <td>@(item.TemporaryRetailsDate == DateTime.MinValue ? "Not selected" : item.TemporaryRetailsDate.ToString("yyyy-MM-dd"))</td>
+                                        <td>@itemPaymentStatus</td>
+                                        <td>@itemStatus</td>
+                                        <td>@item.DateUpdated.ToString("yyyy-MM-dd")</td>
+                                        <td class="text-end">
+                                            @if (item.Id == currentTemporaryRetailId)
+                                            {
+                                                <span class="badge bg-primary">Selected</span>
+                                            }
+                                            else
+                                            {
+                                                <a class="btn btn-sm btn-outline-primary" href="/Postprocess/TemporaryRetails?id=@applicationId&process=@process&temporaryRetailId=@item.Id">Open</a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

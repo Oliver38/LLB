@@ -38,6 +38,8 @@
     var selectedLatitude = proposedOutlet?.Latitude ?? string.Empty;
     var selectedLongitude = proposedOutlet?.Longitude ?? string.Empty;
     var selectedAddress = proposedOutlet?.Address ?? string.Empty;
+    var showProposedOutletSummary = removalApplication != null
+        && !string.Equals(removalApplication.Status, "inprogress", StringComparison.OrdinalIgnoreCase);
 
     string DisplayValue(string? value)
     {
@@ -146,46 +148,53 @@
             <div class="col-md-6">
                 <div class="border rounded-3 p-3 h-100 bg-light-subtle">
                     <h6 class="text-uppercase text-muted mb-3">Proposed New Outlet</h6>
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">Trading Name</span>
-                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.TradingName)</span>
-                    </div>
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">Licence</span>
-                        <span class="fw-semibold text-end">@(proposedLicense?.LicenseName ?? "N/A")</span>
-                    </div>
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">Location of Premises</span>
-                        <span class="fw-semibold text-end">@(proposedRegion?.RegionName ?? "N/A")</span>
-                    </div>
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">Address</span>
-                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Address)</span>
-                    </div>
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">Province</span>
-                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Province)</span>
-                    </div>
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">District / City</span>
-                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.City)</span>
-                    </div>
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">Council</span>
-                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Council)</span>
-                    </div>
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">Latitude</span>
-                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Latitude)</span>
-                    </div>
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <span class="text-muted">Longitude</span>
-                        <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Longitude)</span>
-                    </div>
-                    <div class="d-flex justify-content-between gap-3 py-2">
-                        <span class="text-muted">Outlet Details Complete</span>
-                        <span class="fw-semibold text-end">@(outletComplete ? "Yes" : "No")</span>
-                    </div>
+                    @if (showProposedOutletSummary)
+                    {
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Trading Name</span>
+                            <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.TradingName)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Licence</span>
+                            <span class="fw-semibold text-end">@(proposedLicense?.LicenseName ?? "N/A")</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Location of Premises</span>
+                            <span class="fw-semibold text-end">@(proposedRegion?.RegionName ?? "N/A")</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Address</span>
+                            <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Address)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Province</span>
+                            <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Province)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">District / City</span>
+                            <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.City)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Council</span>
+                            <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Council)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Latitude</span>
+                            <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Latitude)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                            <span class="text-muted">Longitude</span>
+                            <span class="fw-semibold text-end">@DisplayValue(proposedOutlet?.Longitude)</span>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 py-2">
+                            <span class="text-muted">Outlet Details Complete</span>
+                            <span class="fw-semibold text-end">@(outletComplete ? "Yes" : "No")</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary mb-0">Proposed new outlet details will appear here after the application has been submitted or initialised.</div>
+                    }
                 </div>
             </div>
         </div>
@@ -316,7 +325,7 @@
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-1">Required Attachments</h5>
-                <p class="text-muted mb-0">Upload the Local Authority letter, Gazette proof, Tie Affidavit, Lease or Deed, and approved A3 plan before submitting the application.</p>
+                <p class="text-muted mb-0">Upload the Local Authority letter, Gazette proof, Lease or Deed, approved A3 plan, and LG25 local healthy officer / premises inspector report before submitting the application.</p>
             </div>
             <div class="card-body">
                 <div class="table-responsive">

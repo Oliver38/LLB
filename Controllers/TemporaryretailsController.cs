@@ -5,6 +5,7 @@ using LLB.Models;
 using Microsoft.AspNetCore.Identity;
 using LLB.Data;
 using LLB.Helpers;
+using LLB.Models.ViewModel;
 using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
 using Webdev.Payments;
@@ -71,52 +72,39 @@ namespace LLB.Controllers
         [HttpGet("ViewApplications")]
         public async Task<IActionResult> ViewApplications(string Id)
         {
+            var model = BuildTemporaryRetailReviewModel(Id);
+            if (model == null)
+            {
+                TempData["error"] = "The temporary retail application could not be found.";
+                return RedirectToAction("AllApplications");
+            }
 
-            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
-            string id = userId.Id;
-
-
-
-            TemporaryRetails getinfo = new  TemporaryRetails();
-
-                var applications = _db.TemporaryRetails.Where(a => a.Id == Id).FirstOrDefault();
-
-                getinfo = applications;
-            
-
-            //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
-            var outletinfo = _db.OutletInfo.ToList();
-            var license = _db.LicenseTypes.ToList();
-            var regions = _db.LicenseRegions.ToList();
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
-
+            var user = await userManager.FindByEmailAsync(User.Identity?.Name);
             ViewBag.User = user;
-            ViewBag.OutletInfo = outletinfo;
-            ViewBag.Regions = regions;
-            ViewBag.License = license;
-            ViewBag.Application = getinfo;
-            return View();
+            return View(model);
         }
 
 
         [HttpGet("Approve")]
         public async Task<IActionResult> Approve(string Id)
         {
-
             var userId = await userManager.FindByEmailAsync(User.Identity.Name);
             string id = userId.Id;
 
-
-
-            TemporaryRetails getinfo = new TemporaryRetails();
-
             var applications = _db.TemporaryRetails.Where(a => a.Id == Id).FirstOrDefault();
+            if (applications == null)
+            {
+                TempData["error"] = "The temporary retail application could not be found.";
+                return RedirectToAction("Dashboard", "Approval");
+            }
+
+            var outlet = _db.OutletInfo.Where(a => a.ApplicationId == applications.ApplicationId).FirstOrDefault();
+            var tradingName = outlet?.TradingName ?? "the selected outlet";
+
             applications.ApproverId = id;
             applications.DateOfApproval = DateTime.Now;
             applications.Status = "Approved";
             applications.DateUpdated = DateTime.Now;
-
-            getinfo = applications;
             _db.Update(applications);
             _db.SaveChanges();
 
@@ -125,25 +113,17 @@ namespace LLB.Controllers
 
             //complete task
             var task = _db.Tasks.Where(a => a.ApplicationId == Id && a.Service == "Temporary Retails").FirstOrDefault();
-            task.Status = "completed";
-            task.ApprovedDate = DateTime.Now;
-            _db.Update(task);
+            if (task != null)
+            {
+                task.Status = "completed";
+                task.ApprovedDate = DateTime.Now;
+                _db.Update(task);
+            }
+
             _db.SaveChanges();
 
-            //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
-            var outletinfo = _db.OutletInfo.ToList();
-            var license = _db.LicenseTypes.ToList();
-            var regions = _db.LicenseRegions.ToList();
-            var user = await userManager.FindByEmailAsync(User.Identity.Name);
-
-            ViewBag.User = user;
-            ViewBag.OutletInfo = outletinfo;
-            ViewBag.Regions = regions;
-            ViewBag.License = license;
-            ViewBag.Application = getinfo;
-
-            return RedirectToAction("ViewApplications", "TemporaryRetails" , new {Id= Id });
-            return View();
+            TempData["success"] = $"Temporary retail application approved successfully for {tradingName}.";
+            return RedirectToAction("Dashboard", "Approval");
         }
 
 
@@ -228,6 +208,52 @@ namespace LLB.Controllers
         //Rejected
         //statuses for the submitted and rejected applications
 
+        private TemporaryRetailReviewViewModel? BuildTemporaryRetailReviewModel(string temporaryRetailId)
+        {
+            var temporaryRetail = _db.TemporaryRetails.Where(application => application.Id == temporaryRetailId).FirstOrDefault();
+            if (temporaryRetail == null || string.IsNullOrWhiteSpace(temporaryRetail.ApplicationId))
+            {
+                return null;
+            }
+
+            var application = _db.ApplicationInfo.Where(record => record.Id == temporaryRetail.ApplicationId).FirstOrDefault();
+            if (application == null)
+            {
+                return null;
+            }
+
+            var outlet = _db.OutletInfo.Where(record => record.ApplicationId == application.Id).FirstOrDefault();
+            var licenseType = _db.LicenseTypes.Where(record => record.Id == application.LicenseTypeID).FirstOrDefault();
+            var licenseRegion = _db.LicenseRegions.Where(record => record.Id == application.ApplicationType).FirstOrDefault();
+            var payment = _db.Payments
+                .Where(record => record.ApplicationId == temporaryRetail.Id
+                    && (record.Service == "temporary retails"
+                        || record.Service == "Temporary Retails"))
+                .OrderByDescending(record => record.DateAdded)
+                .FirstOrDefault();
+
+            return new TemporaryRetailReviewViewModel
+            {
+                Id = temporaryRetail.Id ?? string.Empty,
+                ApplicationId = application.Id ?? string.Empty,
+                Reference = temporaryRetail.Reference ?? string.Empty,
+                TradingName = outlet?.TradingName,
+                Address = outlet?.Address ?? application.OperationAddress,
+                Province = outlet?.Province,
+                Council = outlet?.Council,
+                LLBNumber = application.LLBNum,
+                LicenseType = licenseType?.LicenseName,
+                LicenseRegion = licenseRegion?.RegionName,
+                Status = temporaryRetail.Status,
+                PaymentStatus = payment?.PaymentStatus ?? payment?.Status ?? temporaryRetail.PaymentStatus ?? "Not Paid",
+                PaynowReference = payment?.PaynowRef,
+                ReasonForExtention = temporaryRetail.ReasonForExtention,
+                LocationAddress = temporaryRetail.LocationAddress,
+                PaidFee = temporaryRetail.PaidFee,
+                TemporaryRetailDate = temporaryRetail.TemporaryRetailsDate,
+                RequestedOn = temporaryRetail.DateAdded
+            };
+        }
 
     }
 }

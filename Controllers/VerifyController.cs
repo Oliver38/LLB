@@ -94,7 +94,7 @@ namespace LLB.Controllers
                 var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
                 var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
                 var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
-                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId && s.Service == "Renewal Inspection").OrderByDescending(z => z.DateApplied).FirstOrDefault();
                 InspectionViewModel renewalinspectiontask = new InspectionViewModel();
 
                 renewalinspectiontask.TradingName = outletinfoq.TradingName;
@@ -156,7 +156,7 @@ namespace LLB.Controllers
                 var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
                 var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
                 var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
-                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId && s.Service == "Verification Inspection").OrderByDescending(z => z.DateApplied).FirstOrDefault();
                 InspectionViewModel inspectiontask = new InspectionViewModel();
 
                 inspectiontask.TradingName = outletinfoq.TradingName;
@@ -180,7 +180,11 @@ namespace LLB.Controllers
 
             //verification inspection
             List<InspectionViewModel> directinspections = new List<InspectionViewModel>();
-            var directinspection = _db.Tasks.Where(f => f.VerifierId == id && f.Service == "Inspection" && f.Status == "assigned").ToList();
+            var directinspection = _db.Tasks
+                .Where(f => f.VerifierId == id
+                    && (f.Service == "Inspection" || f.Service == "inspection")
+                    && f.Status == "assigned")
+                .ToList();
             foreach (var directinspectiontask in directinspection)
             {
                 var applIdd = directinspectiontask.ApplicationId;
@@ -188,7 +192,7 @@ namespace LLB.Controllers
                 var outletinfoqd = _db.OutletInfo.Where(i => i.ApplicationId == applIdd).FirstOrDefault();
                 var licensetyped = _db.LicenseTypes.Where(a => a.Id == appinfoqd.LicenseTypeID).FirstOrDefault();
                 var licenseregiond = _db.LicenseRegions.Where(a => a.Id == appinfoqd.ApplicationType).FirstOrDefault();
-                var inspecyd = _db.Inspection.Where(s => s.ApplicationId == applIdd).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+                var inspecyd = _db.Inspection.Where(s => s.ApplicationId == applIdd && s.Service == "Inspection").OrderByDescending(z => z.DateApplied).FirstOrDefault();
                 InspectionViewModel inspectiontask = new InspectionViewModel();
 
                 inspectiontask.TradingName = outletinfoqd.TradingName;
@@ -1360,7 +1364,12 @@ namespace LLB.Controllers
                 var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
                 var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
                 var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
-                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+                var inspectionService = string.Equals(reninsptasks.Service, "renewal inspection", StringComparison.OrdinalIgnoreCase)
+                    ? "Renewal Inspection"
+                    : string.Equals(reninsptasks.Service, "inspection", StringComparison.OrdinalIgnoreCase)
+                        ? "Inspection"
+                        : reninsptasks.Service;
+                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId && s.Service == inspectionService).OrderByDescending(z => z.DateApplied).FirstOrDefault();
                 InspectionViewModel renewalinspectiontask = new InspectionViewModel();
 
                 renewalinspectiontask.TradingName = outletinfoq.TradingName;
@@ -1374,7 +1383,19 @@ namespace LLB.Controllers
                 renewalinspectiontask.LicenseType = licensetype.LicenseName;
                 renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
                 renewalinspectiontask.TaskId = reninsptasks.Id;
-            renewalinspectiontask.Comments = inspecy.Comments;
+                renewalinspectiontask.Comments = inspecy.Comments;
+                renewalinspectiontask.Ventilation = inspecy.Ventilation;
+                renewalinspectiontask.Lighting = inspecy.Lighting;
+                renewalinspectiontask.SewageDisposalAndDrainage = inspecy.SewageDisposalAndDrainage;
+                renewalinspectiontask.Toilets = inspecy.Toilets;
+                renewalinspectiontask.WaterSupply = inspecy.WaterSupply;
+                renewalinspectiontask.RubbishDisposal = inspecy.RubbishDisposal;
+                renewalinspectiontask.StandardOfFood = inspecy.StandardOfFood;
+                renewalinspectiontask.FoodStorageArrangements = inspecy.FoodStorageArrangements;
+                renewalinspectiontask.StaffUniformsAndAccommodation = inspecy.StaffUniformsAndAccommodation;
+                renewalinspectiontask.EquipmentAndAppointments = inspecy.EquipmentAndAppointments;
+                renewalinspectiontask.HygieneStandards = inspecy.HygieneStandards;
+                renewalinspectiontask.Overall = inspecy.Overall;
 
 
             //  renewalinspectiontasks.Add(renewalinspectiontask);
@@ -1524,7 +1545,7 @@ namespace LLB.Controllers
             var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
             var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
             var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
-            var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+            var inspecy = inspec;
             InspectionViewModel renewalinspectiontask = new InspectionViewModel();
 
             renewalinspectiontask.TradingName = outletinfoq.TradingName;
@@ -1538,6 +1559,18 @@ namespace LLB.Controllers
             renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
             renewalinspectiontask.TaskId = inspec.Id;
             renewalinspectiontask.Comments = inspecy.Comments;
+            renewalinspectiontask.Ventilation = inspecy.Ventilation;
+            renewalinspectiontask.Lighting = inspecy.Lighting;
+            renewalinspectiontask.SewageDisposalAndDrainage = inspecy.SewageDisposalAndDrainage;
+            renewalinspectiontask.Toilets = inspecy.Toilets;
+            renewalinspectiontask.WaterSupply = inspecy.WaterSupply;
+            renewalinspectiontask.RubbishDisposal = inspecy.RubbishDisposal;
+            renewalinspectiontask.StandardOfFood = inspecy.StandardOfFood;
+            renewalinspectiontask.FoodStorageArrangements = inspecy.FoodStorageArrangements;
+            renewalinspectiontask.StaffUniformsAndAccommodation = inspecy.StaffUniformsAndAccommodation;
+            renewalinspectiontask.EquipmentAndAppointments = inspecy.EquipmentAndAppointments;
+            renewalinspectiontask.HygieneStandards = inspecy.HygieneStandards;
+            renewalinspectiontask.Overall = inspecy.Overall;
 
 
             //  renewalinspectiontasks.Add(renewalinspectiontask);
@@ -1659,6 +1692,9 @@ namespace LLB.Controllers
                 ApplicationId = application.Id ?? string.Empty,
                 Reference = extendedHours.Reference ?? string.Empty,
                 TradingName = outlet?.TradingName,
+                Address = outlet?.Address ?? application.OperationAddress,
+                Province = outlet?.Province,
+                Council = outlet?.Council,
                 LLBNumber = application.LLBNum,
                 LicenseType = licenseType?.LicenseName,
                 LicenseRegion = licenseRegion?.RegionName,

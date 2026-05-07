@@ -9,6 +9,7 @@ namespace LLB.Models.ViewModel
         public string LLBNumber { get; set; } = "N/A";
         public string LicenseName { get; set; } = "N/A";
         public string RegionName { get; set; } = "N/A";
+        public string ServiceName { get; set; } = string.Empty;
         public string Status { get; set; } = "Unknown";
         public DateTime? SubmittedDate { get; set; }
         public DateTime? EventDate { get; set; }

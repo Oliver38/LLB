@@ -1272,6 +1272,308 @@ namespace LLB.Controllers
             return View(model);
         }
 
+        [HttpGet("InspectionComplianceCertificate")]
+        public IActionResult InspectionComplianceCertificate(string searchref)
+        {
+            if (string.IsNullOrWhiteSpace(searchref))
+            {
+                TempData["error"] = "The inspection certificate could not be found.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            var inspection = FindInspectionRecord(searchref);
+            if (inspection == null || string.IsNullOrWhiteSpace(inspection.ApplicationId))
+            {
+                TempData["error"] = "The inspection certificate could not be found.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            if (!string.Equals(inspection.Service, "Inspection", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["error"] = "Only post-formation inspection certificates are available here.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            if (!string.Equals(inspection.Status, "Inspected", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["error"] = "The inspection certificate is only available after the inspection report has been submitted.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            if (!IsPassed(inspection.Overall))
+            {
+                return RedirectToAction("InspectionFailedReport", new { searchref = inspection.Id });
+            }
+
+            var application = _db.ApplicationInfo.FirstOrDefault(record => record.Id == inspection.ApplicationId);
+            var outlet = _db.OutletInfo.FirstOrDefault(record => record.ApplicationId == inspection.ApplicationId);
+            var license = application == null
+                ? null
+                : _db.LicenseTypes.FirstOrDefault(record => record.Id == application.LicenseTypeID);
+            var region = application == null
+                ? null
+                : _db.LicenseRegions.FirstOrDefault(record => record.Id == application.ApplicationType);
+
+            if (application == null || outlet == null)
+            {
+                TempData["error"] = "The inspection certificate could not be generated because application details are incomplete.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            var currentUserId = userManager.GetUserId(User);
+            if (User.IsInRole("client")
+                && !string.Equals(application.UserID, currentUserId, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(inspection.UserId, currentUserId, StringComparison.OrdinalIgnoreCase))
+            {
+                return Forbid();
+            }
+
+            var issuedDate = inspection.InspectionDate == default ? DateTime.Now : inspection.InspectionDate;
+            var rawTradingName = outlet.TradingName ?? application.BusinessName ?? "N/A";
+            var rawBusinessName = application.BusinessName ?? outlet.TradingName ?? "N/A";
+            var rawLlbNumber = application.LLBNum ?? "N/A";
+            var rawReference = inspection.Reference ?? inspection.Id ?? "N/A";
+            var rawLicenseName = license?.LicenseName ?? "N/A";
+            var rawRegionName = region?.RegionName ?? "N/A";
+            var rawAddress = outlet.Address ?? application.OperationAddress ?? "N/A";
+            var rawCouncil = outlet.Council ?? "N/A";
+            var rawComments = inspection.Comments ?? "No comments recorded.";
+            var criteriaRows = BuildInspectionCriteriaRows(inspection);
+            var coatOfArmsDataUri = GetImageDataUri(Path.Combine(_env.WebRootPath, "front", "img", "IMG", "Coat_of_arms_of_ZimbabweB.png"));
+            var coatOfArmsMarkup = string.IsNullOrWhiteSpace(coatOfArmsDataUri)
+                ? string.Empty
+                : $"<div class='crest'><img src='{coatOfArmsDataUri}' alt='Zimbabwe Coat of Arms' /></div>";
+
+            var html = $@"
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8' />
+  <style>
+    body {{ margin: 0; font-family: Arial, Helvetica, sans-serif; color: #17212b; background: #f3f5f7; }}
+    .document {{ width: 760px; min-height: 1030px; margin: 0 auto; padding: 42px 46px; background: #fff; box-sizing: border-box; }}
+    .header {{ text-align: center; border-bottom: 3px solid #183b56; padding-bottom: 18px; margin-bottom: 24px; }}
+    .board {{ font-size: 14px; font-weight: 700; letter-spacing: 2px; color: #183b56; }}
+    .crest img {{ height: 82px; margin: 12px auto; display: block; }}
+    h1 {{ margin: 8px 0 6px; font-size: 25px; text-transform: uppercase; }}
+    .subtitle {{ margin: 0; font-size: 13px; color: #52616f; }}
+    .statement {{ border: 1px solid #cad4dd; padding: 18px; font-size: 16px; line-height: 1.6; margin-bottom: 20px; }}
+    .emphasis {{ font-weight: 700; color: #0f5132; }}
+    table {{ width: 100%; border-collapse: collapse; margin-bottom: 18px; }}
+    th, td {{ border: 1px solid #d9e1e8; padding: 9px 10px; font-size: 12px; vertical-align: top; }}
+    th {{ width: 34%; background: #eef3f7; text-align: left; color: #243746; }}
+    .criteria th {{ width: auto; }}
+    .pass {{ color: #0f5132; font-weight: 700; }}
+    .comments {{ border: 1px solid #d9e1e8; padding: 13px; font-size: 12px; line-height: 1.5; min-height: 56px; }}
+    .footer {{ margin-top: 28px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; }}
+    .signature {{ border-top: 1px solid #17212b; padding-top: 8px; min-width: 210px; text-align: center; }}
+  </style>
+</head>
+<body>
+  <div class='document'>
+    <div class='header'>
+      <div class='board'>LIQUOR LICENSING BOARD</div>
+      {coatOfArmsMarkup}
+      <h1>Inspection Compliance Certificate</h1>
+      <p class='subtitle'>Post-formation inspection compliance certificate</p>
+    </div>
+
+    <div class='statement'>
+      This is to certify that <span class='emphasis'>{EncodeHtml(rawTradingName)}</span>, operating under
+      LLB Licence Number <span class='emphasis'>{EncodeHtml(rawLlbNumber)}</span>, passed the post-formation
+      inspection and was found compliant with the applicable liquor licensing regulations.
+    </div>
+
+    <table>
+      <tbody>
+        <tr><th>Trading Name</th><td>{EncodeHtml(rawTradingName)}</td></tr>
+        <tr><th>Business Name</th><td>{EncodeHtml(rawBusinessName)}</td></tr>
+        <tr><th>Licence Type</th><td>{EncodeHtml(rawLicenseName)}</td></tr>
+        <tr><th>Region</th><td>{EncodeHtml(rawRegionName)}</td></tr>
+        <tr><th>LLB Number</th><td>{EncodeHtml(rawLlbNumber)}</td></tr>
+        <tr><th>Outlet Address</th><td>{EncodeHtml(rawAddress)}</td></tr>
+        <tr><th>Council</th><td>{EncodeHtml(rawCouncil)}</td></tr>
+        <tr><th>Inspection Reference</th><td>{EncodeHtml(rawReference)}</td></tr>
+        <tr><th>Inspection Date</th><td>{issuedDate:dd MMMM yyyy}</td></tr>
+      </tbody>
+    </table>
+
+    <table class='criteria'>
+      <thead><tr><th>Inspection Item</th><th>Result</th></tr></thead>
+      <tbody>{criteriaRows}</tbody>
+    </table>
+
+    <div class='comments'><strong>Inspector Comments:</strong><br />{EncodeHtml(rawComments)}</div>
+
+    <div class='footer'>
+      <div>
+        <div><strong>Issued Date:</strong> {issuedDate:dd MMMM yyyy}</div>
+        <div><strong>Certificate Ref:</strong> {EncodeHtml(rawReference)}</div>
+      </div>
+      <div class='signature'>For: Liquor Licensing Board</div>
+    </div>
+  </div>
+</body>
+</html>";
+
+            var renderer = new HtmlToPdf();
+            renderer.PrintOptions.PaperSize = PdfPrintOptions.PdfPaperSize.A4;
+            renderer.PrintOptions.MarginTop = 0;
+            renderer.PrintOptions.MarginBottom = 0;
+            renderer.PrintOptions.MarginLeft = 0;
+            renderer.PrintOptions.MarginRight = 0;
+            var pdf = renderer.RenderHtmlAsPdf(html);
+            return File(pdf.BinaryData, "application/pdf", $"{SanitizeFileName(rawTradingName)}-inspection-certificate.pdf");
+        }
+
+        [HttpGet("InspectionFailedReport")]
+        public IActionResult InspectionFailedReport(string searchref)
+        {
+            if (string.IsNullOrWhiteSpace(searchref))
+            {
+                TempData["error"] = "The failed inspection report could not be found.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            var inspection = FindInspectionRecord(searchref);
+            if (inspection == null || string.IsNullOrWhiteSpace(inspection.ApplicationId))
+            {
+                TempData["error"] = "The failed inspection report could not be found.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            if (!string.Equals(inspection.Service, "Inspection", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["error"] = "Only post-formation inspection reports are available here.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            if (!string.Equals(inspection.Status, "Inspected", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["error"] = "The failed inspection report is only available after the inspection report has been submitted.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            if (IsPassed(inspection.Overall))
+            {
+                return RedirectToAction("InspectionComplianceCertificate", new { searchref = inspection.Id });
+            }
+
+            var application = _db.ApplicationInfo.FirstOrDefault(record => record.Id == inspection.ApplicationId);
+            var outlet = _db.OutletInfo.FirstOrDefault(record => record.ApplicationId == inspection.ApplicationId);
+            var license = application == null
+                ? null
+                : _db.LicenseTypes.FirstOrDefault(record => record.Id == application.LicenseTypeID);
+            var region = application == null
+                ? null
+                : _db.LicenseRegions.FirstOrDefault(record => record.Id == application.ApplicationType);
+
+            if (application == null || outlet == null)
+            {
+                TempData["error"] = "The failed inspection report could not be generated because application details are incomplete.";
+                return RedirectToAction("InspectionListings", "Home");
+            }
+
+            var currentUserId = userManager.GetUserId(User);
+            if (User.IsInRole("client")
+                && !string.Equals(application.UserID, currentUserId, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(inspection.UserId, currentUserId, StringComparison.OrdinalIgnoreCase))
+            {
+                return Forbid();
+            }
+
+            var issuedDate = inspection.InspectionDate == default ? DateTime.Now : inspection.InspectionDate;
+            var rawTradingName = outlet.TradingName ?? application.BusinessName ?? "N/A";
+            var rawBusinessName = application.BusinessName ?? outlet.TradingName ?? "N/A";
+            var rawLlbNumber = application.LLBNum ?? "N/A";
+            var rawReference = inspection.Reference ?? inspection.Id ?? "N/A";
+            var rawLicenseName = license?.LicenseName ?? "N/A";
+            var rawRegionName = region?.RegionName ?? "N/A";
+            var rawAddress = outlet.Address ?? application.OperationAddress ?? "N/A";
+            var rawCouncil = outlet.Council ?? "N/A";
+            var rawComments = inspection.Comments ?? "No comments recorded.";
+            var criteriaRows = BuildInspectionCriteriaRows(inspection);
+
+            var html = $@"
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8' />
+  <style>
+    body {{ margin: 0; font-family: Arial, Helvetica, sans-serif; color: #17212b; background: #f3f5f7; }}
+    .document {{ width: 760px; min-height: 1030px; margin: 0 auto; padding: 42px 46px; background: #fff; box-sizing: border-box; }}
+    .header {{ border-bottom: 3px solid #7f1d1d; padding-bottom: 16px; margin-bottom: 22px; }}
+    .board {{ font-size: 14px; font-weight: 700; letter-spacing: 2px; color: #183b56; }}
+    h1 {{ margin: 12px 0 6px; font-size: 25px; text-transform: uppercase; color: #7f1d1d; }}
+    .subtitle {{ margin: 0; font-size: 13px; color: #52616f; }}
+    .notice {{ border: 1px solid #f1c0c0; background: #fff4f4; padding: 16px; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }}
+    table {{ width: 100%; border-collapse: collapse; margin-bottom: 18px; }}
+    th, td {{ border: 1px solid #d9e1e8; padding: 9px 10px; font-size: 12px; vertical-align: top; }}
+    th {{ width: 34%; background: #eef3f7; text-align: left; color: #243746; }}
+    .criteria th {{ width: auto; }}
+    .pass {{ color: #0f5132; font-weight: 700; }}
+    .fail {{ color: #842029; font-weight: 700; }}
+    .comments {{ border: 1px solid #d9e1e8; padding: 13px; font-size: 12px; line-height: 1.5; min-height: 56px; }}
+    .footer {{ margin-top: 28px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; }}
+    .signature {{ border-top: 1px solid #17212b; padding-top: 8px; min-width: 210px; text-align: center; }}
+  </style>
+</head>
+<body>
+  <div class='document'>
+    <div class='header'>
+      <div class='board'>LIQUOR LICENSING BOARD</div>
+      <h1>Failed Inspection Report</h1>
+      <p class='subtitle'>Post-formation inspection report</p>
+    </div>
+
+    <div class='notice'>
+      The post-formation inspection for <strong>{EncodeHtml(rawTradingName)}</strong> was not passed.
+      Corrective action is required before resubmission. A fresh inspection application and payment must be submitted after corrective action.
+    </div>
+
+    <table>
+      <tbody>
+        <tr><th>Trading Name</th><td>{EncodeHtml(rawTradingName)}</td></tr>
+        <tr><th>Business Name</th><td>{EncodeHtml(rawBusinessName)}</td></tr>
+        <tr><th>Licence Type</th><td>{EncodeHtml(rawLicenseName)}</td></tr>
+        <tr><th>Region</th><td>{EncodeHtml(rawRegionName)}</td></tr>
+        <tr><th>LLB Number</th><td>{EncodeHtml(rawLlbNumber)}</td></tr>
+        <tr><th>Outlet Address</th><td>{EncodeHtml(rawAddress)}</td></tr>
+        <tr><th>Council</th><td>{EncodeHtml(rawCouncil)}</td></tr>
+        <tr><th>Inspection Reference</th><td>{EncodeHtml(rawReference)}</td></tr>
+        <tr><th>Inspection Date</th><td>{issuedDate:dd MMMM yyyy}</td></tr>
+        <tr><th>Overall Remark</th><td><span class='fail'>Failed</span></td></tr>
+      </tbody>
+    </table>
+
+    <table class='criteria'>
+      <thead><tr><th>Inspection Item</th><th>Result</th></tr></thead>
+      <tbody>{criteriaRows}</tbody>
+    </table>
+
+    <div class='comments'><strong>Inspector Comments:</strong><br />{EncodeHtml(rawComments)}</div>
+
+    <div class='footer'>
+      <div>
+        <div><strong>Report Date:</strong> {issuedDate:dd MMMM yyyy}</div>
+        <div><strong>Report Ref:</strong> {EncodeHtml(rawReference)}</div>
+      </div>
+      <div class='signature'>For: Liquor Licensing Board</div>
+    </div>
+  </div>
+</body>
+</html>";
+
+            var renderer = new HtmlToPdf();
+            renderer.PrintOptions.PaperSize = PdfPrintOptions.PdfPaperSize.A4;
+            renderer.PrintOptions.MarginTop = 0;
+            renderer.PrintOptions.MarginBottom = 0;
+            renderer.PrintOptions.MarginLeft = 0;
+            renderer.PrintOptions.MarginRight = 0;
+            var pdf = renderer.RenderHtmlAsPdf(html);
+            return File(pdf.BinaryData, "application/pdf", $"{SanitizeFileName(rawTradingName)}-failed-inspection-report.pdf");
+        }
+
         [Route("E")]
         public IActionResult Testsc(string searchref)
         {
@@ -1321,6 +1623,61 @@ namespace LLB.Controllers
             var normalizedReference = searchref.Trim();
             return _db.TemporaryRetails.FirstOrDefault(record =>
                 record.Id == normalizedReference || record.Reference == normalizedReference);
+        }
+
+        private Inspection? FindInspectionRecord(string searchref)
+        {
+            var normalizedReference = searchref.Trim();
+            return _db.Inspection.FirstOrDefault(record =>
+                record.Id == normalizedReference || record.Reference == normalizedReference);
+        }
+
+        private static bool IsPassed(string? value)
+        {
+            return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string InspectionOutcomeText(string? value)
+        {
+            return IsPassed(value) ? "Passed" : "Failed";
+        }
+
+        private static string InspectionOutcomeCssClass(string? value)
+        {
+            return IsPassed(value) ? "pass" : "fail";
+        }
+
+        private static string BuildInspectionCriteriaRows(Inspection inspection)
+        {
+            var rows = new (string Label, string? Value)[]
+            {
+                ("Ventilation", inspection.Ventilation),
+                ("Lighting", inspection.Lighting),
+                ("Sewage Disposal And Drainage", inspection.SewageDisposalAndDrainage),
+                ("Toilets", inspection.Toilets),
+                ("Water Supply", inspection.WaterSupply),
+                ("Rubbish Disposal", inspection.RubbishDisposal),
+                ("Standard Of Food", inspection.StandardOfFood),
+                ("Food Storage Arrangements", inspection.FoodStorageArrangements),
+                ("Staff Uniforms And Accommodation", inspection.StaffUniformsAndAccommodation),
+                ("Equipment And Appointments", inspection.EquipmentAndAppointments),
+                ("Hygiene Standards", inspection.HygieneStandards),
+                ("Overall Remark", inspection.Overall)
+            };
+
+            var builder = new StringBuilder();
+            foreach (var row in rows)
+            {
+                builder.Append("<tr><td>");
+                builder.Append(EncodeHtml(row.Label));
+                builder.Append("</td><td><span class='");
+                builder.Append(InspectionOutcomeCssClass(row.Value));
+                builder.Append("'>");
+                builder.Append(InspectionOutcomeText(row.Value));
+                builder.Append("</span></td></tr>");
+            }
+
+            return builder.ToString();
         }
 
         private static string GetImageDataUri(string path)

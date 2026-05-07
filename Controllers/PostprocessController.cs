@@ -624,6 +624,52 @@ namespace LLB.Controllers
                 || string.Equals(payment.PaymentStatus, expectedStatus, StringComparison.OrdinalIgnoreCase);
         }
 
+        private Inspection GetLatestPostFormationInspection(string applicationId)
+        {
+            return _db.Inspection
+                .Where(inspection => inspection.ApplicationId == applicationId
+                    && inspection.Service == "Inspection")
+                .OrderByDescending(inspection => inspection.DateApplied)
+                .FirstOrDefault();
+        }
+
+        private Inspection GetActivePostFormationInspection(string applicationId)
+        {
+            return _db.Inspection
+                .Where(inspection => inspection.ApplicationId == applicationId
+                    && inspection.Service == "Inspection"
+                    && (inspection.Status == null || inspection.Status.ToLower() != "inspected"))
+                .OrderByDescending(inspection => inspection.DateApplied)
+                .FirstOrDefault();
+        }
+
+        private Payments RefreshLatestInspectionPayment(string applicationId)
+        {
+            var payment = _db.Payments
+                .Where(transaction => transaction.ApplicationId == applicationId
+                    && transaction.Service == "inspection")
+                .OrderByDescending(transaction => transaction.DateAdded)
+                .FirstOrDefault();
+
+            if (payment == null || string.IsNullOrWhiteSpace(payment.PollUrl))
+            {
+                return payment;
+            }
+
+            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            var status = paynow.PollTransaction(payment.PollUrl);
+            var statusdata = status.GetData();
+            payment.PaynowRef = statusdata["paynowreference"];
+            payment.PaymentStatus = statusdata["status"];
+            payment.Status = statusdata["status"];
+            payment.DateUpdated = DateTime.Now;
+
+            _db.Update(payment);
+            _db.SaveChanges();
+
+            return payment;
+        }
+
         private double? GetExtendedHoursFee()
         {
             return _db.PostFormationFees
@@ -645,8 +691,35 @@ namespace LLB.Controllers
             return _db.ExtendedHours
                 .Where(application => application.ApplicationId == applicationId
                     && application.Status != null
-                    && application.Status != "Approved"
-                    && application.Status != "Rejected")
+                    && application.Status.ToLower() != "approved"
+                    && application.Status.ToLower() != "rejected")
+                .OrderByDescending(application => application.DateAdded)
+                .FirstOrDefault();
+        }
+
+        private ExtendedHours GetLatestInProgressExtendedHoursApplication(string applicationId)
+        {
+            return _db.ExtendedHours
+                .Where(application => application.ApplicationId == applicationId
+                    && application.Status != null
+                    && application.Status.ToLower() == "inprogress")
+                .OrderByDescending(application => application.DateAdded)
+                .FirstOrDefault();
+        }
+
+        private ExtendedHours GetLatestSubmittedExtendedHoursApplication(string applicationId, string? excludedExtendedHoursId = null)
+        {
+            var query = _db.ExtendedHours
+                .Where(application => application.ApplicationId == applicationId
+                    && application.Status != null
+                    && application.Status.ToLower() == "submitted");
+
+            if (!string.IsNullOrWhiteSpace(excludedExtendedHoursId))
+            {
+                query = query.Where(application => application.Id != excludedExtendedHoursId);
+            }
+
+            return query
                 .OrderByDescending(application => application.DateAdded)
                 .FirstOrDefault();
         }
@@ -709,13 +782,48 @@ namespace LLB.Controllers
                 .FirstOrDefault();
         }
 
+        private List<TemporaryRetails> GetTemporaryRetailApplications(string applicationId)
+        {
+            return _db.TemporaryRetails
+                .Where(application => application.ApplicationId == applicationId)
+                .OrderByDescending(application => application.DateAdded)
+                .ToList();
+        }
+
         private TemporaryRetails GetLatestActiveTemporaryRetailApplication(string applicationId)
         {
             return _db.TemporaryRetails
                 .Where(application => application.ApplicationId == applicationId
                     && application.Status != null
-                    && application.Status != "Approved"
-                    && application.Status != "Rejected")
+                    && application.Status.ToLower() != "approved"
+                    && application.Status.ToLower() != "rejected")
+                .OrderByDescending(application => application.DateAdded)
+                .FirstOrDefault();
+        }
+
+        private TemporaryRetails GetLatestInProgressTemporaryRetailApplication(string applicationId)
+        {
+            return _db.TemporaryRetails
+                .Where(application => application.ApplicationId == applicationId
+                    && application.Status != null
+                    && application.Status.ToLower() == "inprogress")
+                .OrderByDescending(application => application.DateAdded)
+                .FirstOrDefault();
+        }
+
+        private TemporaryRetails GetLatestSubmittedTemporaryRetailApplication(string applicationId, string? excludedTemporaryRetailId = null)
+        {
+            var query = _db.TemporaryRetails
+                .Where(application => application.ApplicationId == applicationId
+                    && application.Status != null
+                    && application.Status.ToLower() == "submitted");
+
+            if (!string.IsNullOrWhiteSpace(excludedTemporaryRetailId))
+            {
+                query = query.Where(application => application.Id != excludedTemporaryRetailId);
+            }
+
+            return query
                 .OrderByDescending(application => application.DateAdded)
                 .FirstOrDefault();
         }
@@ -826,6 +934,11 @@ namespace LLB.Controllers
 
 
             var appinfo = _db.ApplicationInfo.Where(b => b.Id == id).FirstOrDefault();
+            if (appinfo == null)
+            {
+                TempData["error"] = "Application information could not be found.";
+                return RedirectToAction("Dashboard", "Home");
+            }
             var mainlicense = _db.LicenseTypes.Where(z => z.Id == appinfo.LicenseTypeID).FirstOrDefault();
             var licenseRegion = _db.LicenseRegions.Where(d => d.Id == appinfo.ApplicationType).FirstOrDefault();
             var InspectionFees = _db.PostFormationFees.Where(a => a.ProcessName == "Inspection Fee").FirstOrDefault();
@@ -848,59 +961,23 @@ namespace LLB.Controllers
 
             var totalfee = getFee;
 
-            Payments payment = null;
-            //payments loop sorted by inspection table status trick
-            var previousinpections = _db.Inspection.Where(x => x.ApplicationId == id && x.Status == "submitted").ToList();
+            var payment = RefreshLatestInspectionPayment(id);
+            var activeInspection = GetActivePostFormationInspection(id);
+            var latestInspection = GetLatestPostFormationInspection(id);
+            var paymentAlreadyUsed = payment != null
+                && latestInspection != null
+                && latestInspection.DateApplied >= payment.DateAdded;
 
-            //List<Inspection> inspectionsin = new List<Inspection>();
+            var currentPayment = paymentAlreadyUsed ? null : payment;
+            var canSubmitInspection = activeInspection == null
+                && currentPayment != null
+                && HasPaymentStatus(currentPayment, "Paid");
+            var canMakePayment = activeInspection == null
+                && (currentPayment == null
+                    || (!HasPaymentStatus(currentPayment, "Paid") && !IsActivePaymentTransaction(currentPayment)));
 
-            //foreach(var previousinpectionslist in previousinpections)
-            //{
-            //    if(previousinpectionslist.Status == "submitted")
-            //    {
-            //        inspectionsin.Add(previousinpectionslist);
-            //    }
-
-            //}
-            //get them into a list
-            
-           
-                var paymentTrans = _db.Payments.Where(s => s.ApplicationId == id && s.Service == "inspection").OrderByDescending(x => x.DateAdded).FirstOrDefault();
-                if (paymentTrans == null)
-                {
-
-                }
-                else
-                {
-
-
-                if (previousinpections.Count <= 1)
-                {
-               
-                    var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
-
-                    var status = paynow.PollTransaction(paymentTrans.PollUrl);
-
-                    var statusdata = status.GetData();
-                    paymentTrans.PaynowRef = statusdata["paynowreference"];
-                    paymentTrans.PaymentStatus = statusdata["status"];
-                    paymentTrans.Status = statusdata["status"];
-                    paymentTrans.DateUpdated = DateTime.Now;
-
-                    _db.Update(paymentTrans);
-                    _db.SaveChanges();
-                    payment = paymentTrans;
-                }
-                else
-                {
-                }
-                }
-            
-            var inspectiondata = _db.Inspection.Where(x => x.ApplicationId == id  &&  x.Status == "submitted").OrderByDescending(s => s.DateApplied).FirstOrDefault();
-            //check status
-           // var inspectiondatastate = 
-            //submitted check status
-            ViewBag.Payment = payment;
+            ViewBag.Payment = currentPayment;
+            ViewBag.CurrentInspectionPayment = currentPayment;
             ViewBag.Process = process;
             ViewBag.Fee = getFee;
            // ViewBag.Penalty = penalty;
@@ -909,7 +986,14 @@ namespace LLB.Controllers
             ViewBag.Outletinfo = outletinfo;
             ViewBag.Appinfo = appinfo;
             ViewBag.ServeFee = getFee;
-            ViewBag.Inspectiondata = inspectiondata;
+            ViewBag.Inspectiondata = activeInspection;
+            ViewBag.LatestInspectiondata = latestInspection;
+            ViewBag.CanSubmitInspection = canSubmitInspection;
+            ViewBag.CanMakeInspectionPayment = canMakePayment;
+            ViewBag.HasActiveInspectionPayment = currentPayment != null
+                && !HasPaymentStatus(currentPayment, "Paid")
+                && IsActivePaymentTransaction(currentPayment);
+            ViewBag.InspectionPaymentRedirect = currentPayment?.SystemRef;
 
             return View();
         }
@@ -920,6 +1004,31 @@ namespace LLB.Controllers
         [HttpPost("PostInspection")]
         public async Task<IActionResult> PostInspection(Renewals renewal)
         {
+            if (string.IsNullOrWhiteSpace(renewal.ApplicationId))
+            {
+                TempData["error"] = "Application information could not be found.";
+                return RedirectToAction("Dashboard", "Home");
+            }
+
+            var activeInspection = GetActivePostFormationInspection(renewal.ApplicationId);
+            if (activeInspection != null)
+            {
+                TempData["error"] = "An inspection application is already in progress for this licence.";
+                return RedirectToAction("Inspection", "Postprocess", new { id = renewal.ApplicationId, process = "INP" });
+            }
+
+            var payment = RefreshLatestInspectionPayment(renewal.ApplicationId);
+            var latestInspection = GetLatestPostFormationInspection(renewal.ApplicationId);
+            var paymentAlreadyUsed = payment != null
+                && latestInspection != null
+                && latestInspection.DateApplied >= payment.DateAdded;
+
+            if (payment == null || paymentAlreadyUsed || !HasPaymentStatus(payment, "Paid"))
+            {
+                TempData["error"] = "Complete payment before submitting the inspection application.";
+                return RedirectToAction("Inspection", "Postprocess", new { id = renewal.ApplicationId, process = "INP" });
+            }
+
             Inspection newinspection = new Inspection();
             //     [Key]
             //     public string? Id { get; set; }
@@ -944,6 +1053,8 @@ namespace LLB.Controllers
             newinspection.ApplicationId = renewal.ApplicationId;
             newinspection.DateApplied = DateTime.Now;
             newinspection.DateUpdate = DateTime.Now;
+            newinspection.PaymentStatus = payment.PaymentStatus ?? payment.Status ?? "Paid";
+            newinspection.PaymentDate = payment.DateUpdated > DateTime.MinValue ? payment.DateUpdated : payment.DateAdded;
             _db.Add(newinspection);
             _db.SaveChanges();
 
@@ -1001,9 +1112,11 @@ namespace LLB.Controllers
 
             var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == id && c.Status == "active").FirstOrDefault();
             var extendedHoursRecords = GetExtendedHoursApplications(id);
+            var editableExtendedHours = GetLatestInProgressExtendedHoursApplication(id);
+            var submittedExtendedHours = GetLatestSubmittedExtendedHoursApplication(id);
             var selectedExtendedHours = !string.IsNullOrWhiteSpace(extId)
                 ? extendedHoursRecords.FirstOrDefault(record => record.Id == extId)
-                : GetLatestActiveExtendedHoursApplication(id) ?? extendedHoursRecords.FirstOrDefault();
+                : submittedExtendedHours ?? GetLatestActiveExtendedHoursApplication(id);
 
             if (!string.IsNullOrWhiteSpace(extId) && selectedExtendedHours == null)
             {
@@ -1014,10 +1127,19 @@ namespace LLB.Controllers
             var payment = selectedExtendedHours == null
                 ? null
                 : RefreshExtendedHoursPaymentStatus(selectedExtendedHours);
+            var editableExtendedHoursPayment = editableExtendedHours == null
+                ? null
+                : selectedExtendedHours != null && string.Equals(selectedExtendedHours.Id, editableExtendedHours.Id, StringComparison.OrdinalIgnoreCase)
+                    ? payment
+                    : RefreshExtendedHoursPaymentStatus(editableExtendedHours);
 
             var isDraftPaid = payment != null && HasPaymentStatus(payment, "Paid");
-            var hasSubmittedApplication = selectedExtendedHours != null
-                && string.Equals(selectedExtendedHours.Status, "submitted", StringComparison.OrdinalIgnoreCase);
+            var isEditableExtendedHoursPaid = editableExtendedHoursPayment != null && HasPaymentStatus(editableExtendedHoursPayment, "Paid")
+                || string.Equals(editableExtendedHours?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
+            var hasSubmittedApplication = submittedExtendedHours != null;
+            var hasAnotherSubmittedApplication = submittedExtendedHours != null
+                && selectedExtendedHours != null
+                && !string.Equals(submittedExtendedHours.Id, selectedExtendedHours.Id, StringComparison.OrdinalIgnoreCase);
 
             var getFee = inspectionFees.Fee;
             ViewBag.License = mainlicense;
@@ -1031,11 +1153,17 @@ namespace LLB.Controllers
             ViewBag.ServeFee = getFee;
             ViewBag.ExtendedHoursRecord = selectedExtendedHours;
             ViewBag.ExtendedHoursRecords = extendedHoursRecords;
+            ViewBag.EditableExtendedHoursRecord = editableExtendedHours;
             ViewBag.IsExtendedHoursPaid = isDraftPaid;
-            ViewBag.CanStartNewExtendedHours = true;
+            ViewBag.IsEditableExtendedHoursPaid = isEditableExtendedHoursPaid;
+            ViewBag.CanStartNewExtendedHours = !hasSubmittedApplication;
             ViewBag.CanSubmitExtendedHours = selectedExtendedHours != null
                 && string.Equals(selectedExtendedHours.Status, "inprogress", StringComparison.OrdinalIgnoreCase)
-                && isDraftPaid;
+                && isDraftPaid
+                && !hasAnotherSubmittedApplication;
+            ViewBag.IsExplicitExtendedHoursSelection = !string.IsNullOrWhiteSpace(extId);
+            ViewBag.HasPendingSubmittedExtendedHours = hasSubmittedApplication;
+            ViewBag.HasAnotherSubmittedExtendedHours = hasAnotherSubmittedApplication;
             ViewBag.IsExtendedHoursSubmitted = hasSubmittedApplication;
             ViewBag.ExtendedHoursWarning = hasSubmittedApplication
                 ? "This extended hours application has already been submitted and is awaiting secretary review."
@@ -1051,6 +1179,13 @@ namespace LLB.Controllers
             {
                 TempData["error"] = "The application could not be found.";
                 return RedirectToAction("Dashboard", "Home");
+            }
+
+            var submittedExtendedHours = GetLatestSubmittedExtendedHoursApplication(applicationId);
+            if (submittedExtendedHours != null)
+            {
+                TempData["error"] = "An extended hours application is already awaiting secretary review. Create another one after it has been approved or rejected.";
+                return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = submittedExtendedHours.Id });
             }
 
             if (extendedHoursDate == default)
@@ -1080,8 +1215,51 @@ namespace LLB.Controllers
 
             if (!string.IsNullOrWhiteSpace(extId))
             {
-                TempData["error"] = "Initialize each extended hours request as a separate application so it keeps its own details and payment.";
-                return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId });
+                var existingDraft = _db.ExtendedHours
+                    .Where(application => application.Id == extId && application.ApplicationId == applicationId)
+                    .FirstOrDefault();
+
+                if (existingDraft == null)
+                {
+                    TempData["error"] = "The extended hours application you want to edit could not be found.";
+                    return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH" });
+                }
+
+                if (!string.Equals(existingDraft.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+                {
+                    TempData["error"] = "Only in-progress extended hours applications can be edited.";
+                    return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = existingDraft.Id });
+                }
+
+                var existingPayment = GetLatestExtendedHoursPaymentForRecord(existingDraft);
+                var isExistingDraftPaid = existingPayment != null && HasPaymentStatus(existingPayment, "Paid")
+                    || string.Equals(existingDraft.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
+
+                if (isExistingDraftPaid)
+                {
+                    TempData["error"] = "Paid extended hours applications cannot be edited.";
+                    return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = existingDraft.Id });
+                }
+
+                existingDraft.UserId = currentUserId;
+                existingDraft.ExtendedHoursDate = extendedHoursDate;
+                existingDraft.ReasonForExtention = reasonForExtention.Trim();
+                existingDraft.PaidFee = fee.Value;
+                existingDraft.DateUpdated = DateTime.Now;
+                existingDraft.PaymentStatus = existingPayment != null && HasPaymentStatus(existingPayment, "Paid")
+                    ? (existingPayment.PaymentStatus ?? existingPayment.Status ?? "Paid")
+                    : (existingPayment?.PaymentStatus ?? existingPayment?.Status ?? existingDraft.PaymentStatus ?? "Not Paid");
+
+                if (string.IsNullOrWhiteSpace(existingDraft.Reference))
+                {
+                    existingDraft.Reference = ReferenceHelper.GeneratePostFormationReferenceNumber(_db, "EXH");
+                }
+
+                _db.Update(existingDraft);
+                _db.SaveChanges();
+
+                TempData["success"] = "Extended hours application updated.";
+                return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = existingDraft.Id });
             }
 
             ExtendedHours draft = new ExtendedHours
@@ -1132,29 +1310,44 @@ namespace LLB.Controllers
                 return RedirectToAction("Dashboard", "Home");
             }
 
+            if (string.IsNullOrWhiteSpace(extendedHours.ApplicationId))
+            {
+                TempData["error"] = "The linked licence for this extended hours application could not be found.";
+                return RedirectToAction("Dashboard", "Home");
+            }
+
+            var applicationId = extendedHours.ApplicationId;
+
             if (string.Equals(extendedHours.Status, "submitted", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["success"] = "This extended hours application has already been submitted.";
-                return RedirectToAction("ExtendedHours", new { id = extendedHours.ApplicationId, process = "EXH", extId = extendedHours.Id });
+                return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = extendedHours.Id });
             }
 
             if (!string.Equals(extendedHours.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["error"] = "This extended hours application is no longer open for submission.";
-                return RedirectToAction("ExtendedHours", new { id = extendedHours.ApplicationId, process = "EXH", extId = extendedHours.Id });
+                return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = extendedHours.Id });
             }
 
             if (extendedHours.ExtendedHoursDate == default || string.IsNullOrWhiteSpace(extendedHours.ReasonForExtention))
             {
                 TempData["error"] = "Complete the extended hours date and justification before submitting.";
-                return RedirectToAction("ExtendedHours", new { id = extendedHours.ApplicationId, process = "EXH", extId = extendedHours.Id });
+                return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = extendedHours.Id });
+            }
+
+            var submittedExtendedHours = GetLatestSubmittedExtendedHoursApplication(applicationId, extendedHours.Id);
+            if (submittedExtendedHours != null)
+            {
+                TempData["error"] = "Another extended hours application is already awaiting secretary review. Wait for it to be approved or rejected before submitting a new one.";
+                return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = submittedExtendedHours.Id });
             }
 
             var payment = GetLatestExtendedHoursPaymentForRecord(extendedHours);
             if (payment == null || !HasPaymentStatus(payment, "Paid"))
             {
                 TempData["error"] = "Complete payment before submitting the extended hours application.";
-                return RedirectToAction("ExtendedHours", new { id = extendedHours.ApplicationId, process = "EXH", extId = extendedHours.Id });
+                return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = extendedHours.Id });
             }
 
             var existingTask = _db.Tasks
@@ -1169,7 +1362,7 @@ namespace LLB.Controllers
                 if (string.IsNullOrWhiteSpace(secretaryId))
                 {
                     TempData["error"] = "No secretary is currently available to receive the extended hours application.";
-                    return RedirectToAction("ExtendedHours", new { id = extendedHours.ApplicationId, process = "EXH", extId = extendedHours.Id });
+                    return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = extendedHours.Id });
                 }
 
                 Tasks task = new Tasks();
@@ -1192,7 +1385,7 @@ namespace LLB.Controllers
             _db.SaveChanges();
 
             TempData["success"] = "Extended hours application submitted successfully and sent to the secretary.";
-            return RedirectToAction("ExtendedHours", new { id = extendedHours.ApplicationId, process = "EXH", extId = extendedHours.Id });
+            return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = extendedHours.Id });
         }
 
 
@@ -1354,7 +1547,7 @@ namespace LLB.Controllers
 
 
         [HttpGet("TemporaryRetails")]
-        public IActionResult TemporaryRetails(string id, string process)
+        public IActionResult TemporaryRetails(string id, string process, string? temporaryRetailId)
         {
             var appinfo = _db.ApplicationInfo.Where(b => b.Id == id).FirstOrDefault();
             if (appinfo == null)
@@ -1373,15 +1566,35 @@ namespace LLB.Controllers
             }
 
             var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == id && c.Status == "active").FirstOrDefault();
-            var activeTemporaryRetail = GetLatestActiveTemporaryRetailApplication(id);
-            var latestTemporaryRetail = activeTemporaryRetail ?? GetLatestTemporaryRetailApplication(id);
-            var payment = activeTemporaryRetail == null
+            var temporaryRetailRecords = GetTemporaryRetailApplications(id);
+            var inProgressTemporaryRetail = GetLatestInProgressTemporaryRetailApplication(id);
+            var submittedTemporaryRetail = GetLatestSubmittedTemporaryRetailApplication(id);
+            var selectedTemporaryRetail = !string.IsNullOrWhiteSpace(temporaryRetailId)
+                ? temporaryRetailRecords.FirstOrDefault(record => record.Id == temporaryRetailId)
+                : submittedTemporaryRetail ?? inProgressTemporaryRetail;
+
+            if (!string.IsNullOrWhiteSpace(temporaryRetailId) && selectedTemporaryRetail == null)
+            {
+                TempData["error"] = "The selected temporary retail application could not be found.";
+                return RedirectToAction("TemporaryRetails", new { id, process = "TRL" });
+            }
+
+            var payment = selectedTemporaryRetail == null
                 ? null
-                : RefreshTemporaryRetailPaymentStatus(activeTemporaryRetail);
+                : RefreshTemporaryRetailPaymentStatus(selectedTemporaryRetail);
+            var editableTemporaryRetailPayment = inProgressTemporaryRetail == null
+                ? null
+                : selectedTemporaryRetail != null && string.Equals(selectedTemporaryRetail.Id, inProgressTemporaryRetail.Id, StringComparison.OrdinalIgnoreCase)
+                    ? payment
+                    : RefreshTemporaryRetailPaymentStatus(inProgressTemporaryRetail);
 
             var isDraftPaid = payment != null && HasPaymentStatus(payment, "Paid");
-            var hasSubmittedApplication = activeTemporaryRetail != null
-                && string.Equals(activeTemporaryRetail.Status, "submitted", StringComparison.OrdinalIgnoreCase);
+            var isEditableTemporaryRetailPaid = editableTemporaryRetailPayment != null && HasPaymentStatus(editableTemporaryRetailPayment, "Paid")
+                || string.Equals(inProgressTemporaryRetail?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
+            var hasSubmittedApplication = submittedTemporaryRetail != null;
+            var hasAnotherSubmittedApplication = submittedTemporaryRetail != null
+                && selectedTemporaryRetail != null
+                && !string.Equals(submittedTemporaryRetail.Id, selectedTemporaryRetail.Id, StringComparison.OrdinalIgnoreCase);
 
             var getFee = temporaryRetailFees.Fee;
             ViewBag.License = mainlicense;
@@ -1393,14 +1606,20 @@ namespace LLB.Controllers
             ViewBag.Outletinfo = outletinfo;
             ViewBag.Appinfo = appinfo;
             ViewBag.ServeFee = getFee;
-            ViewBag.TemporaryRetailRecord = latestTemporaryRetail;
-            ViewBag.ActiveTemporaryRetail = activeTemporaryRetail;
+            ViewBag.TemporaryRetailRecord = selectedTemporaryRetail;
+            ViewBag.TemporaryRetailRecords = temporaryRetailRecords;
+            ViewBag.EditableTemporaryRetailRecord = inProgressTemporaryRetail;
+            ViewBag.InProgressTemporaryRetail = inProgressTemporaryRetail;
             ViewBag.IsTemporaryRetailPaid = isDraftPaid;
-            ViewBag.CanStartNewTemporaryRetail = activeTemporaryRetail == null;
-            ViewBag.CanSubmitTemporaryRetail = activeTemporaryRetail != null
-                && string.Equals(activeTemporaryRetail.Status, "inprogress", StringComparison.OrdinalIgnoreCase)
-                && isDraftPaid;
-            ViewBag.IsTemporaryRetailSubmitted = hasSubmittedApplication;
+            ViewBag.IsEditableTemporaryRetailPaid = isEditableTemporaryRetailPaid;
+            ViewBag.CanStartNewTemporaryRetail = inProgressTemporaryRetail == null && !hasSubmittedApplication;
+            ViewBag.CanSubmitTemporaryRetail = selectedTemporaryRetail != null
+                && string.Equals(selectedTemporaryRetail.Status, "inprogress", StringComparison.OrdinalIgnoreCase)
+                && isDraftPaid
+                && !hasAnotherSubmittedApplication;
+            ViewBag.IsExplicitTemporaryRetailSelection = !string.IsNullOrWhiteSpace(temporaryRetailId);
+            ViewBag.HasPendingSubmittedTemporaryRetail = hasSubmittedApplication;
+            ViewBag.HasAnotherSubmittedTemporaryRetail = hasAnotherSubmittedApplication;
             ViewBag.TemporaryRetailWarning = hasSubmittedApplication
                 ? "This temporary retail application has already been submitted and is awaiting secretary review."
                 : null;
@@ -1409,7 +1628,7 @@ namespace LLB.Controllers
         }
 
         [HttpPost("SaveTemporaryRetails")]
-        public IActionResult SaveTemporaryRetailsAsync(string applicationId, DateTime temporaryRetailsDate, string reasonForExtention, string locationAddress)
+        public IActionResult SaveTemporaryRetailsAsync(string? temporaryRetailId, string applicationId, DateTime temporaryRetailsDate, string reasonForExtention, string locationAddress)
         {
             if (string.IsNullOrWhiteSpace(applicationId))
             {
@@ -1417,29 +1636,38 @@ namespace LLB.Controllers
                 return RedirectToAction("Dashboard", "Home");
             }
 
+            var submittedTemporaryRetail = string.IsNullOrWhiteSpace(temporaryRetailId)
+                ? GetLatestSubmittedTemporaryRetailApplication(applicationId)
+                : null;
+            if (submittedTemporaryRetail != null)
+            {
+                TempData["error"] = "A temporary retail application is already awaiting secretary review. Create another one after it has been approved or rejected.";
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = submittedTemporaryRetail.Id });
+            }
+
             if (temporaryRetailsDate == default)
             {
                 TempData["error"] = "Select the temporary retail date before initializing the application.";
-                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL" });
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId });
             }
 
             if (string.IsNullOrWhiteSpace(reasonForExtention))
             {
                 TempData["error"] = "Provide a justification for the temporary retail application.";
-                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL" });
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId });
             }
 
             if (string.IsNullOrWhiteSpace(locationAddress))
             {
                 TempData["error"] = "Provide the address or location for the temporary retail application.";
-                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL" });
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId });
             }
 
             var fee = GetTemporaryRetailFee();
             if (fee == null)
             {
                 TempData["error"] = "The temporary retail fee has not been configured.";
-                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL" });
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId });
             }
 
             var currentUserId = userManager.GetUserId(User);
@@ -1448,11 +1676,61 @@ namespace LLB.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            var activeTemporaryRetail = GetLatestActiveTemporaryRetailApplication(applicationId);
-            if (activeTemporaryRetail != null)
+            if (!string.IsNullOrWhiteSpace(temporaryRetailId))
             {
-                TempData["error"] = "A temporary retail application has already been initialized for this licence. Complete payment or wait for the current application to be completed before starting a new one.";
-                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = activeTemporaryRetail.Id });
+                var existingDraft = _db.TemporaryRetails
+                    .Where(application => application.Id == temporaryRetailId && application.ApplicationId == applicationId)
+                    .FirstOrDefault();
+
+                if (existingDraft == null)
+                {
+                    TempData["error"] = "The temporary retail application you want to edit could not be found.";
+                    return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL" });
+                }
+
+                if (!string.Equals(existingDraft.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+                {
+                    TempData["error"] = "Only in-progress temporary retail applications can be edited.";
+                    return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = existingDraft.Id });
+                }
+
+                var existingPayment = GetLatestTemporaryRetailPaymentForRecord(existingDraft);
+                var isExistingDraftPaid = existingPayment != null && HasPaymentStatus(existingPayment, "Paid")
+                    || string.Equals(existingDraft.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
+
+                if (isExistingDraftPaid)
+                {
+                    TempData["error"] = "Paid temporary retail applications cannot be edited.";
+                    return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = existingDraft.Id });
+                }
+
+                existingDraft.UserId = currentUserId;
+                existingDraft.TemporaryRetailsDate = temporaryRetailsDate;
+                existingDraft.ReasonForExtention = reasonForExtention.Trim();
+                existingDraft.LocationAddress = locationAddress.Trim();
+                existingDraft.PaidFee = fee.Value;
+                existingDraft.DateUpdated = DateTime.Now;
+                existingDraft.PaymentStatus = existingPayment != null && HasPaymentStatus(existingPayment, "Paid")
+                    ? (existingPayment.PaymentStatus ?? existingPayment.Status ?? "Paid")
+                    : (existingPayment?.PaymentStatus ?? existingPayment?.Status ?? existingDraft.PaymentStatus ?? "Not Paid");
+
+                if (string.IsNullOrWhiteSpace(existingDraft.Reference))
+                {
+                    existingDraft.Reference = ReferenceHelper.GeneratePostFormationReferenceNumber(_db, "TRL");
+                }
+
+                _db.Update(existingDraft);
+                _db.SaveChanges();
+
+                TempData["success"] = "Temporary retail application updated.";
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = existingDraft.Id });
+            }
+
+            var inProgressTemporaryRetail = GetLatestInProgressTemporaryRetailApplication(applicationId);
+            if (inProgressTemporaryRetail != null)
+            {
+                TempData["error"] = "A temporary retail application is already in progress for this licence. Complete payment and submission for the current draft before starting another one.";
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = inProgressTemporaryRetail.Id });
             }
 
             TemporaryRetails temporaryRetail = new TemporaryRetails
@@ -1489,16 +1767,24 @@ namespace LLB.Controllers
                 return RedirectToAction("Dashboard", "Home");
             }
 
+            if (string.IsNullOrWhiteSpace(temporaryRetail.ApplicationId))
+            {
+                TempData["error"] = "The linked licence for this temporary retail application could not be found.";
+                return RedirectToAction("Dashboard", "Home");
+            }
+
+            var applicationId = temporaryRetail.ApplicationId;
+
             if (string.Equals(temporaryRetail.Status, "submitted", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["success"] = "This temporary retail application has already been submitted.";
-                return RedirectToAction("TemporaryRetails", new { id = temporaryRetail.ApplicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
             }
 
             if (!string.Equals(temporaryRetail.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["error"] = "This temporary retail application is no longer open for submission.";
-                return RedirectToAction("TemporaryRetails", new { id = temporaryRetail.ApplicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
             }
 
             if (temporaryRetail.TemporaryRetailsDate == default
@@ -1506,14 +1792,21 @@ namespace LLB.Controllers
                 || string.IsNullOrWhiteSpace(temporaryRetail.LocationAddress))
             {
                 TempData["error"] = "Complete the temporary retail date, address or location, and justification before submitting.";
-                return RedirectToAction("TemporaryRetails", new { id = temporaryRetail.ApplicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
+            }
+
+            var submittedTemporaryRetail = GetLatestSubmittedTemporaryRetailApplication(applicationId, temporaryRetail.Id);
+            if (submittedTemporaryRetail != null)
+            {
+                TempData["error"] = "Another temporary retail application is already awaiting secretary review. Wait for it to be approved or rejected before submitting a new one.";
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = submittedTemporaryRetail.Id });
             }
 
             var payment = GetLatestTemporaryRetailPaymentForRecord(temporaryRetail);
             if (payment == null || !HasPaymentStatus(payment, "Paid"))
             {
                 TempData["error"] = "Complete payment before submitting the temporary retail application.";
-                return RedirectToAction("TemporaryRetails", new { id = temporaryRetail.ApplicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
+                return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
             }
 
             var existingTask = _db.Tasks
@@ -1528,7 +1821,7 @@ namespace LLB.Controllers
                 if (string.IsNullOrWhiteSpace(secretaryId))
                 {
                     TempData["error"] = "No secretary is currently available to receive the temporary retail application.";
-                    return RedirectToAction("TemporaryRetails", new { id = temporaryRetail.ApplicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
+                    return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
                 }
 
                 Tasks task = new Tasks();
@@ -1551,7 +1844,7 @@ namespace LLB.Controllers
             _db.SaveChanges();
 
             TempData["success"] = "Temporary retail application submitted successfully and sent to the secretary.";
-            return RedirectToAction("TemporaryRetails", new { id = temporaryRetail.ApplicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
+            return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = temporaryRetail.Id });
         }
 
         [HttpGet("TemporaryRetailsPayment")]
@@ -1565,7 +1858,7 @@ namespace LLB.Controllers
             }
 
             var temporaryRetail = string.IsNullOrWhiteSpace(temporaryRetailId)
-                ? GetLatestActiveTemporaryRetailApplication(id)
+                ? GetLatestInProgressTemporaryRetailApplication(id)
                 : _db.TemporaryRetails.Where(a => a.Id == temporaryRetailId && a.ApplicationId == id).FirstOrDefault();
 
             if (temporaryRetail == null)

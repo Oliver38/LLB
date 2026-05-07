@@ -1,5 +1,9 @@
 ﻿@{
     Layout = "_LayoutMain";
+    var canSubmitInspection = ViewBag.CanSubmitInspection == true;
+    var canMakeInspectionPayment = ViewBag.CanMakeInspectionPayment == true;
+    var hasActiveInspectionPayment = ViewBag.HasActiveInspectionPayment == true;
+    var inspectionPaymentRedirect = ViewBag.InspectionPaymentRedirect as string;
 }
 
 
@@ -53,10 +57,10 @@
                     <tr>
                         <th>Payment Status</th>
                         <td>
-                            @if (ViewBag.Payment == null)
+                    @if (ViewBag.Payment == null)
                             {<span style="color:red"> Not Paid</span>}
                             else
-                            { <span style="color:green"> @ViewBag.Payment.Status</span>}
+                            { <span class="@(ViewBag.Payment.Status == "Paid" ? "text-success" : "text-danger")"> @ViewBag.Payment.Status</span>}
                         </td>
                     </tr>
 
@@ -79,25 +83,25 @@
 
 
 
-                    @if (ViewBag.Payment == null)
+                    @if (ViewBag.Inspectiondata != null)
                     {
-                        @*<span style="color:red"> Not Paid</span>*@
-                    <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Inspection</button></td>
-
-                }
-                else
-                {
-                    @if (ViewBag.Payment.Status == "Paid")
+                        <tr>
+                            <td>
+                                Your inspection application has been submitted and is in progress.
+                            </td>
+                            <td>
+                                <a class="btn btn-primary" href="/Home/Dashboard">
+                                    Continue
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    else if (canSubmitInspection)
                     {
-
-                        @if (ViewBag.Inspectiondata == null)
-                        {
-                            <form action="/Postprocess/PostInspection" enctype="multipart/form-data" method="post">
-
+                        <form action="/Postprocess/PostInspection" enctype="multipart/form-data" method="post">
                             <tr>
                                 <th>Inspection Submission </th>
                                 <td><span class="text-success"> Ready for submission</span></td>
-
                             </tr>
                             <tr>
                                 <th>
@@ -108,44 +112,29 @@
                                     <input type="hidden" name="feePaid" value="@ViewBag.Fee" />
                                     <input type="hidden" name="previousExpiry" value="@ViewBag.Appinfo.ExpiryDate" />
                                     <input type="hidden" name="applicationId" value="@ViewBag.Appinfo.Id" />
-                                    @*<input type="hidden" name="dateApplied" value="@ViewBag.Appinfo.Id" />*@
-
-
                                 </th>
-
-
                                 <td><button class="btn btn-primary" type="submit"> Submit For Inspection</button></td>
                             </tr>
-
-                            </form>
-
-
-
-                        }
-                        else
-                        {
-                            <tr>
-                                <td>
-                                    your inspection application has been submmited , Click Continue to set for awaiting and inspection.
-                                </td>
-                                <td>
-                                    <a class="btn btn-primary" href="/Home/Dashboard">
-                                        Continue
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-
-
-
-                        @*<td><button type="button" href="/Postprocess/Complete?Id=@ViewBag.Inspectiondata.Id" class="btn btn-primary"> Continue</button></td>*@
+                        </form>
                     }
-                    else
+                    else if (canMakeInspectionPayment)
                     {
-                        <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Inspection</button></td>
-
+                        <tr>
+                            <td colspan="2"><button type="button" class="btn btn-primary" onclick="Payment()"> Pay For Inspection</button></td>
+                        </tr>
                     }
-                }
+                    else if (hasActiveInspectionPayment)
+                    {
+                        <tr>
+                            <td colspan="2">
+                                Complete the current inspection payment before starting another inspection application.
+                                @if (!string.IsNullOrWhiteSpace(inspectionPaymentRedirect))
+                                {
+                                    <a class="btn btn-primary ms-2" href="@inspectionPaymentRedirect">Continue Payment</a>
+                                }
+                            </td>
+                        </tr>
+                    }
 
 
 
@@ -218,7 +207,7 @@
                                             @if (ViewBag.Payment == null)
                                             {<span style="color:red"> Not Paid</span>}
                                             else
-                                            { <span style="color:green"> @ViewBag.Payment.Status</span>}
+                                            { <span class="@(ViewBag.Payment.Status == "Paid" ? "text-success" : "text-danger")"> @ViewBag.Payment.Status</span>}
                                         </td>
                                     </tr>
                                     <tr>
@@ -230,16 +219,19 @@
                                     <tr>
                                         <th></th>
                                         <td>
-                                            @if (ViewBag.Payment == null)
+                                            @if (canMakeInspectionPayment)
                                             {
                                                 <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process">
                                                     Make Payment
                                                 </a>
                                             }
+                                            else if (hasActiveInspectionPayment && !string.IsNullOrWhiteSpace(inspectionPaymentRedirect))
+                                            {
+                                                <a class="btn btn-primary" href="@inspectionPaymentRedirect">Continue Payment</a>
+                                            }
                                             else
-                                            { <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process">
-                                                    Make Payment
-                                                </a>
+                                            {
+                                                <span class="text-muted">Payment is not available while an inspection is in progress.</span>
                                             }
                                         </td>
                                     </tr>

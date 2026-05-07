@@ -123,6 +123,11 @@ namespace LLB.Controllers
                 return RedirectToAction("Extracounter", "Extracounter", new { id = id, process = process });
 
             }
+            else if (process == "EXC")
+            {
+                return RedirectToAction("Extracounter", "Extracounter", new { id = id, process = process });
+
+            }
             else { }
             //< option value = "APM" > Approval of a person as a Manager 100.00 </ option >
             //@*< option value = "GDP" > Government Department Permit 100.00 </ option > *@
@@ -405,23 +410,41 @@ namespace LLB.Controllers
                 var applId = insptask.ApplicationId;
                 var appinfoq = _db.ApplicationInfo.Where(i => i.Id == applId).FirstOrDefault();
                 var outletinfoq = _db.OutletInfo.Where(i => i.ApplicationId == applId).FirstOrDefault();
+                if (appinfoq == null || outletinfoq == null)
+                {
+                    continue;
+                }
+
                 var licensetype = _db.LicenseTypes.Where(a => a.Id == appinfoq.LicenseTypeID).FirstOrDefault();
                 var licenseregion = _db.LicenseRegions.Where(a => a.Id == appinfoq.ApplicationType).FirstOrDefault();
-                var inspecy = _db.Inspection.Where(s => s.ApplicationId == applId).OrderByDescending(z => z.DateApplied).FirstOrDefault();
+                var inspecy = insptask;
                 InspectionViewModel renewalinspectiontask = new InspectionViewModel();
 
-                renewalinspectiontask.TradingName = outletinfoq.TradingName;
-                renewalinspectiontask.LLBNumber = appinfoq.LLBNum;
+                renewalinspectiontask.TradingName = outletinfoq.TradingName ?? "N/A";
+                renewalinspectiontask.LLBNumber = appinfoq.LLBNum ?? "N/A";
                 renewalinspectiontask.ApplicationId = applId;
                 renewalinspectiontask.DateApplied = inspecy.DateApplied;
                 renewalinspectiontask.Id = inspecy.Id;
                 renewalinspectiontask.Reference = inspecy.Reference;
                 renewalinspectiontask.Status = inspecy.Status;
                 renewalinspectiontask.Service = inspecy.Service;
-                renewalinspectiontask.LicenseType = licensetype.LicenseName;
-                renewalinspectiontask.LicenseRegion = licenseregion.RegionName;
+                renewalinspectiontask.LicenseType = licensetype?.LicenseName ?? "N/A";
+                renewalinspectiontask.LicenseRegion = licenseregion?.RegionName ?? "N/A";
                 renewalinspectiontask.TaskId = insptask.Id;
                 renewalinspectiontask.InspectionDate = insptask.InspectionDate;
+                renewalinspectiontask.Comments = inspecy.Comments;
+                renewalinspectiontask.Ventilation = inspecy.Ventilation;
+                renewalinspectiontask.Lighting = inspecy.Lighting;
+                renewalinspectiontask.SewageDisposalAndDrainage = inspecy.SewageDisposalAndDrainage;
+                renewalinspectiontask.Toilets = inspecy.Toilets;
+                renewalinspectiontask.WaterSupply = inspecy.WaterSupply;
+                renewalinspectiontask.RubbishDisposal = inspecy.RubbishDisposal;
+                renewalinspectiontask.StandardOfFood = inspecy.StandardOfFood;
+                renewalinspectiontask.FoodStorageArrangements = inspecy.FoodStorageArrangements;
+                renewalinspectiontask.StaffUniformsAndAccommodation = inspecy.StaffUniformsAndAccommodation;
+                renewalinspectiontask.EquipmentAndAppointments = inspecy.EquipmentAndAppointments;
+                renewalinspectiontask.HygieneStandards = inspecy.HygieneStandards;
+                renewalinspectiontask.Overall = inspecy.Overall;
 
                 renewalinspectiontasks.Add(renewalinspectiontask);
             }
@@ -510,8 +533,8 @@ namespace LLB.Controllers
                     a.Status,
                     a.DateUpdated,
                     null,
-                    $"/Extracounter/Extracounter?id={a.ApplicationId}&process=ECF&ecId={a.Id}",
-                    "Open Permission To Alter",
+                    $"/Extracounter/Extracounter?id={a.ApplicationId}&process={(IsStandaloneExtraCounterReference(a.Reference) ? "EXC" : "ECF")}&ecId={a.Id}",
+                    IsStandaloneExtraCounterReference(a.Reference) ? "Open Extra Counter" : "Open Permission To Alter",
                     applicationLookup,
                     outletLookup,
                     licenseLookup,
@@ -598,6 +621,12 @@ namespace LLB.Controllers
         {
             return !string.IsNullOrWhiteSpace(reference)
                 && reference.StartsWith("PF-ECF-", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsStandaloneExtraCounterReference(string? reference)
+        {
+            return !string.IsNullOrWhiteSpace(reference)
+                && reference.StartsWith("PF-EXC-", StringComparison.OrdinalIgnoreCase);
         }
 
         private static ClientPostFormationListingViewModel? BuildClientPostFormationListing(

@@ -27,6 +27,27 @@
             _ => "bg-secondary-subtle text-secondary"
         };
     }
+
+    string GetPostFormationStatusText(LLB.Models.ViewModel.SecretaryDashboardPostFormationItemViewModel postFormation)
+    {
+        if (string.Equals(postFormation.Service, "Extra Counter", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(postFormation.Status, "submitted", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Initialised";
+        }
+
+        return postFormation.Status;
+    }
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
 }
 
 <div class="row g-4 mb-4">
@@ -260,7 +281,7 @@
                                 <td>@postFormation.RegionName</td>
                                 <td>
                                     <span class="badge rounded-pill @GetStatusClass(postFormation.Status)">
-                                        @postFormation.Status
+                                        @GetPostFormationStatusText(postFormation)
                                     </span>
                                 </td>
                                 <td class="text-end">
