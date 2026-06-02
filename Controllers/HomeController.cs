@@ -81,7 +81,7 @@ namespace LLB.Controllers
             }
             else if (process == "GDP")
             {
-                return RedirectToAction("Governmentpermit", "Postprocess", new { param1 = id, param2 = id });
+                return RedirectToAction("Apply", "GovernmentPermit", new { applicationId = id });
 
             }
             else if (process == "INP")
@@ -126,6 +126,15 @@ namespace LLB.Controllers
             else if (process == "EXC")
             {
                 return RedirectToAction("Extracounter", "Extracounter", new { id = id, process = process });
+
+            }
+            else if (process == "AGL")
+            {
+                var sourceApplication = _db.ApplicationInfo.FirstOrDefault(a => a.Id == id);
+                return RedirectToAction(
+                    "Apply",
+                    "AgentLicense",
+                    new { llbNumber = sourceApplication?.LLBNum, fromPostFormation = true });
 
             }
             else { }
@@ -263,6 +272,18 @@ namespace LLB.Controllers
         public async Task<IActionResult> ExtraCounterListings()
         {
             return await RenderClientListingViewAsync("ExtraCounterListings");
+        }
+
+        [HttpGet("AgentLicenseListings")]
+        public async Task<IActionResult> AgentLicenseListings()
+        {
+            return await RenderClientListingViewAsync("AgentLicenseListings");
+        }
+
+        [HttpGet("GovernmentPermitListings")]
+        public async Task<IActionResult> GovernmentPermitListings()
+        {
+            return await RenderClientListingViewAsync("GovernmentPermitListings");
         }
 
         private void GetUserId()
@@ -576,6 +597,29 @@ namespace LLB.Controllers
                 .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
                 .ToList();
 
+            var agentLicenseListings = allApplications
+                .Where(a => AgentLicenseHelper.IsAgentLicenseApplication(a))
+                .Select(a => BuildAgentLicenseListing(
+                    a,
+                    applicationLookup,
+                    outletLookup,
+                    licenseLookup,
+                    regionLookup))
+                .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
+                .ToList();
+
+            var governmentPermitListings = _db.GovernmentPermit
+                .Where(a => a.UserId == userId)
+                .ToList()
+                .Select(a => BuildGovernmentPermitListing(
+                    a,
+                    applicationLookup,
+                    outletLookup,
+                    licenseLookup,
+                    regionLookup))
+                .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
+                .ToList();
+
             ViewBag.Inspections = renewalinspectiontasks;
             ViewBag.ActiveDashboardTab = NormalizeDashboardTab(tab);
             ViewBag.RenewalTasks = renewaltasks;
@@ -583,6 +627,8 @@ namespace LLB.Controllers
             ViewBag.ExtendedHourListings = extendedHourListings;
             ViewBag.TemporaryRetailListings = temporaryRetailListings;
             ViewBag.ExtraCounterListings = extraCounterListings;
+            ViewBag.AgentLicenseListings = agentLicenseListings;
+            ViewBag.GovernmentPermitListings = governmentPermitListings;
             ViewBag.Renewals = renewals;
             ViewBag.User = user;
             ViewBag.OutletInfo = outletinfo;
@@ -677,6 +723,101 @@ namespace LLB.Controllers
                 EventDate = eventDate,
                 ActionUrl = actionUrl,
                 ActionLabel = actionLabel
+            };
+        }
+
+        private static ClientPostFormationListingViewModel BuildAgentLicenseListing(
+            ApplicationInfo agentApplication,
+            IReadOnlyDictionary<string, ApplicationInfo> applicationLookup,
+            IReadOnlyDictionary<string, OutletInfo> outletLookup,
+            IReadOnlyDictionary<string, LicenseTypes> licenseLookup,
+            IReadOnlyDictionary<string, LicenseRegion> regionLookup)
+        {
+            outletLookup.TryGetValue(agentApplication.Id, out var agentOutlet);
+
+            ApplicationInfo? wholesaleApplication = null;
+            if (!string.IsNullOrWhiteSpace(agentApplication.CompanyNumber))
+            {
+                applicationLookup.TryGetValue(agentApplication.CompanyNumber, out wholesaleApplication);
+            }
+
+            LicenseTypes? licenseType = null;
+            if (!string.IsNullOrWhiteSpace(agentApplication.LicenseTypeID))
+            {
+                licenseLookup.TryGetValue(agentApplication.LicenseTypeID, out licenseType);
+            }
+
+            LicenseRegion? region = null;
+            if (!string.IsNullOrWhiteSpace(agentApplication.ApplicationType))
+            {
+                regionLookup.TryGetValue(agentApplication.ApplicationType, out region);
+            }
+
+            return new ClientPostFormationListingViewModel
+            {
+                RecordId = agentApplication.Id,
+                Reference = agentApplication.RefNum ?? string.Empty,
+                ApplicationId = agentApplication.Id,
+                TradingName = agentOutlet?.TradingName ?? agentApplication.BusinessName ?? "N/A",
+                LLBNumber = agentApplication.LLBNum ?? wholesaleApplication?.LLBNum ?? "N/A",
+                LicenseName = licenseType?.LicenseName ?? AgentLicenseHelper.ServiceName,
+                RegionName = region?.RegionName ?? "N/A",
+                ServiceName = AgentLicenseHelper.ServiceName,
+                Status = agentApplication.Status ?? "Unknown",
+                SubmittedDate = agentApplication.DateUpdated == default ? agentApplication.ApplicationDate : agentApplication.DateUpdated,
+                ActionUrl = $"/AgentLicense/Apply?id={agentApplication.Id}&fromPostFormation=true",
+                ActionLabel = "Open Agent License"
+            };
+        }
+
+        private static ClientPostFormationListingViewModel BuildGovernmentPermitListing(
+            GovernmentPermit permit,
+            IReadOnlyDictionary<string, ApplicationInfo> applicationLookup,
+            IReadOnlyDictionary<string, OutletInfo> outletLookup,
+            IReadOnlyDictionary<string, LicenseTypes> licenseLookup,
+            IReadOnlyDictionary<string, LicenseRegion> regionLookup)
+        {
+            ApplicationInfo? application = null;
+            if (!string.IsNullOrWhiteSpace(permit.ApplicationId))
+            {
+                applicationLookup.TryGetValue(permit.ApplicationId, out application);
+            }
+
+            OutletInfo? outlet = null;
+            if (!string.IsNullOrWhiteSpace(application?.Id))
+            {
+                outletLookup.TryGetValue(application.Id, out outlet);
+            }
+
+            LicenseTypes? licenseType = null;
+            if (!string.IsNullOrWhiteSpace(application?.LicenseTypeID))
+            {
+                licenseLookup.TryGetValue(application.LicenseTypeID, out licenseType);
+            }
+
+            LicenseRegion? region = null;
+            if (!string.IsNullOrWhiteSpace(application?.ApplicationType))
+            {
+                regionLookup.TryGetValue(application.ApplicationType, out region);
+            }
+
+            var isApproved = string.Equals(permit.Status, "Approved", StringComparison.OrdinalIgnoreCase);
+            return new ClientPostFormationListingViewModel
+            {
+                RecordId = permit.Id,
+                Reference = permit.Reference ?? permit.Id ?? string.Empty,
+                ApplicationId = application?.Id ?? permit.Id ?? string.Empty,
+                TradingName = permit.LocationName ?? outlet?.TradingName ?? "N/A",
+                LLBNumber = application?.LLBNum ?? "N/A",
+                LicenseName = GovernmentPermitHelper.ServiceName,
+                RegionName = region?.RegionName ?? permit.Ministry ?? "N/A",
+                ServiceName = GovernmentPermitHelper.ServiceName,
+                Status = permit.Status ?? "Unknown",
+                SubmittedDate = permit.DateUpdated == default ? permit.DateAdded : permit.DateUpdated,
+                ActionUrl = isApproved
+                    ? $"/GovernmentPermit/Document?id={permit.Id}"
+                    : $"/GovernmentPermit/Apply?id={permit.Id}",
+                ActionLabel = isApproved ? "Download Permit" : "Open Government Permit"
             };
         }
 

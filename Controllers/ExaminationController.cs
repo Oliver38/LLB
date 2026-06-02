@@ -4,6 +4,7 @@ using System.Diagnostics;
 using LLB.Models;
 using Microsoft.AspNetCore.Identity;
 using LLB.Data;
+using LLB.Helpers;
 using DNTCaptcha.Core;
 using Microsoft.AspNetCore.Identity;
 using Webdev.Payments;
@@ -181,7 +182,7 @@ namespace LLB.Controllers
             if (gateway == "paynow")
             {
                 var paymentTrans = _db.Payments.Where(s => s.ApplicationId == Id).FirstOrDefault();
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                var paynow = PaynowCurrencyHelper.CreatePaynow(paymentTrans);
 
                 var status = paynow.PollTransaction(paymentTrans.PollUrl);
 
@@ -304,14 +305,24 @@ namespace LLB.Controllers
 
 
         [HttpGet("PaynowPayment")]
-        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount)
+        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount, string? currency = null)
         {
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
-            amount = 55.7;
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, (decimal)amount, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("Finalising", "License", new { Id });
+            }
 
-            paynow.ResultUrl = "https://localhost:7237/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "https://localhost:7237/License/Finalising?Id=" + Id + "&gateway=paynow";
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
+
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Submit?gateway=paynow");
+            paynow.ReturnUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Finalising?Id=" + Id + "&gateway=paynow");
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
 
@@ -323,7 +334,7 @@ namespace LLB.Controllers
             var licenseType = _db.LicenseTypes.Where(s => s.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
 
             // Add items to the payment
-            payment.Add(licenseType.LicenseName, (decimal)amount);
+            payment.Add(licenseType.LicenseName, paymentCurrency.PaynowAmount);
 
             // Send payment to paynow
             var response = paynow.Send(payment);
@@ -338,11 +349,11 @@ namespace LLB.Controllers
                 var userId = await userManager.FindByEmailAsync(User.Identity.Name);
                 string id = userId.Id;
                 transaction.UserId = id;
-                transaction.Amount = payment.Total;
+                PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
                 transaction.ApplicationId = Id;
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
-                transaction.PopDoc = "";
+
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
                 transaction.DateUpdated = DateTime.Now;

@@ -303,7 +303,10 @@
                     <div class="text-muted mb-3">Each new temporary retail application requires its own Paynow payment.</div>
                     @if (!isTemporaryRetailPaid)
                     {
-                        <a class="btn btn-primary" href="/Postprocess/TemporaryRetailsPayment?id=@applicationId&temporaryRetailId=@currentTemporaryRetailId&amount=@ViewBag.TotalFee&service=temporaryretails&process=@process">
+                        <a class="btn btn-primary"
+                           href="/Postprocess/TemporaryRetailsPayment?id=@applicationId&temporaryRetailId=@currentTemporaryRetailId&amount=@ViewBag.TotalFee&service=temporaryretails&process=@process"
+                           data-currency-payment="true"
+                           data-payment-usd-amount="@Convert.ToString(ViewBag.TotalFee, System.Globalization.CultureInfo.InvariantCulture)">
                             Make Payment
                         </a>
                     }

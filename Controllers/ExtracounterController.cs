@@ -20,7 +20,9 @@ namespace LLB.Controllers
         {
             "Local Authority Letter of approval",
             "Tie Affidavit",
-            "Lease/Deed documents"
+            "Lease/Deed documents",
+            "Inspection report",
+            "Plan"
         };
 
         private readonly UserManager<ApplicationUser> _userManager;
@@ -349,7 +351,7 @@ namespace LLB.Controllers
         }
 
         [HttpGet("PermissionToAlterPayment")]
-        public IActionResult PermissionToAlterPayment(string id, string process, string ecId)
+        public IActionResult PermissionToAlterPayment(string id, string process, string ecId, string? currency = null)
         {
             var processCode = NormalizeProcessCode(process);
             var serviceName = GetServiceNameForProcess(processCode);
@@ -420,8 +422,19 @@ namespace LLB.Controllers
                 return RedirectToAction("Extracounter", new { id, process = processCode, ecId });
             }
 
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
-            var callbackUrl = Url.Action("Extracounter", "Extracounter", new { id, process = processCode, ecId }, Request.Scheme);
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, (decimal)fee.Value, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("Extracounter", new { id, process = processCode, ecId });
+            }
+
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Extracounter/Extracounter?id=" + id + "&process=" + processCode + "&ecId=" + ecId);
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
                 paynow.ResultUrl = callbackUrl;
@@ -429,7 +442,7 @@ namespace LLB.Controllers
             }
 
             var payment = paynow.CreatePayment("12345");
-            payment.Add(serviceName, (decimal)fee.Value);
+            payment.Add(serviceName, paymentCurrency.PaynowAmount);
 
             var response = paynow.Send(payment);
             if (!response.Success())
@@ -442,7 +455,6 @@ namespace LLB.Controllers
             {
                 Id = Guid.NewGuid().ToString(),
                 UserId = currentUserId,
-                Amount = payment.Total,
                 ApplicationId = permissionApplication.Id,
                 Service = serviceName,
                 PollUrl = response.PollUrl(),
@@ -452,6 +464,7 @@ namespace LLB.Controllers
                 DateAdded = DateTime.Now,
                 DateUpdated = DateTime.Now
             };
+            PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
 
             var status = paynow.PollTransaction(transaction.PollUrl);
             var statusData = status.GetData();
@@ -878,7 +891,7 @@ namespace LLB.Controllers
 
             if (!string.IsNullOrWhiteSpace(payment.PollUrl))
             {
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                var paynow = PaynowCurrencyHelper.CreatePaynow(payment);
                 var status = paynow.PollTransaction(payment.PollUrl);
                 var statusData = status.GetData();
                 payment.PaynowRef = statusData["paynowreference"];
@@ -912,8 +925,10 @@ namespace LLB.Controllers
         {
             return !HasPaymentStatus(payment, "Paid")
                 && !HasPaymentStatus(payment, "Cancelled")
+                && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
-                && !HasPaymentStatus(payment, "Expired");
+                && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
     }
 }

@@ -656,6 +656,7 @@ namespace LLB.Controllers
                 "extra counter" => _db.ExtraCounter.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault()
                     ?? _db.ExtendedHours.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault(),
                 "permission to alter" => _db.ExtraCounter.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault(),
+                "government permit" => _db.GovernmentPermit.Where(x => x.Id == task.ApplicationId).Select(x => x.ApplicationId).FirstOrDefault(),
                 "temporary transfer" => _db.ApplicationInfo
                     .Where(x => x.Id == task.ApplicationId && x.ExaminationStatus == TemporaryTransferHelper.ServiceName)
                     .Select(x => x.CompanyNumber)
@@ -724,6 +725,10 @@ namespace LLB.Controllers
                         .Select(x => x.Reference)
                         .FirstOrDefault(),
                 "permission to alter" => _db.ExtraCounter
+                    .Where(x => x.Id == task.ApplicationId)
+                    .Select(x => x.Reference)
+                    .FirstOrDefault(),
+                "government permit" => _db.GovernmentPermit
                     .Where(x => x.Id == task.ApplicationId)
                     .Select(x => x.Reference)
                     .FirstOrDefault(),

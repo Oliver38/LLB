@@ -263,7 +263,7 @@ namespace LLB.Controllers
             if (gateway == "paynow")
             {
                 var paymentTrans = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                var paynow = PaynowCurrencyHelper.CreatePaynow(paymentTrans);
 
                 var status = paynow.PollTransaction(paymentTrans.PollUrl);
 
@@ -297,7 +297,7 @@ namespace LLB.Controllers
                 }
                 else
                 {
-                    var paynowb = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                    var paynowb = PaynowCurrencyHelper.CreatePaynow(paymentTransb);
 
                     var statusb = paynowb.PollTransaction(paymentTransb.PollUrl);
 
@@ -436,14 +436,25 @@ namespace LLB.Controllers
 
 
         [HttpGet("PaynowPayment")]
-        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount)
+        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount, string? currency = null)
         {
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
             //amount = 55.7;
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, (decimal)amount, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("Finalising", "License", new { Id });
+            }
+
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
         
-            paynow.ResultUrl = "https://llb.pfms.gov.zw/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "https://llb.pfms.gov.zw/License/Finalising?Id=" + Id + "&gateway=paynow";
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Submit?gateway=paynow");
+            paynow.ReturnUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Finalising?Id=" + Id + "&gateway=paynow");
             //paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
             //paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
 
@@ -458,7 +469,7 @@ namespace LLB.Controllers
             var licenseType = _db.LicenseTypes.Where(s => s.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
 
             // Add items to the payment
-            payment.Add(licenseType.LicenseName, (decimal)amount);
+            payment.Add(licenseType.LicenseName, paymentCurrency.PaynowAmount);
 
             // Send payment to paynow
             var response = paynow.Send(payment);
@@ -473,11 +484,10 @@ namespace LLB.Controllers
                 var userId = await userManager.FindByEmailAsync(User.Identity.Name);
                 string id = userId.Id;
                 transaction.UserId = id;
-                transaction.Amount = payment.Total;
+                PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
                 transaction.ApplicationId = Id;
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
-                transaction.PopDoc = "";
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
                 transaction.DateUpdated = DateTime.Now;
@@ -937,7 +947,7 @@ namespace LLB.Controllers
 
         private async Task<SecretaryDashboardViewModel> BuildSecretaryDashboardViewModelAsync(string approverId)
         {
-            var postFormationServices = new[] { "Extended Hours", "Temporary Retails", "Manager Change", "Permission to Alter", "Extra Counter", TemporaryTransferHelper.ServiceName, TemporaryRemovalHelper.ServiceName, AgentLicenseHelper.ServiceName };
+            var postFormationServices = new[] { "Extended Hours", "Temporary Retails", "Manager Change", "Permission to Alter", "Extra Counter", GovernmentPermitHelper.ServiceName, TemporaryTransferHelper.ServiceName, TemporaryRemovalHelper.ServiceName, AgentLicenseHelper.ServiceName };
 
             var applicationTasks = await _db.Tasks
                 .Where(task => task.ApproverId == approverId
@@ -986,6 +996,13 @@ namespace LLB.Controllers
                 .Distinct()
                 .ToList();
 
+            var governmentPermitIds = postFormationTasks
+                .Where(task => task.Service == GovernmentPermitHelper.ServiceName
+                    && !string.IsNullOrWhiteSpace(task.ApplicationId))
+                .Select(task => task.ApplicationId!)
+                .Distinct()
+                .ToList();
+
             var temporaryTransferIds = postFormationTasks
                 .Where(task => task.Service == TemporaryTransferHelper.ServiceName
                     && !string.IsNullOrWhiteSpace(task.ApplicationId))
@@ -1021,6 +1038,10 @@ namespace LLB.Controllers
 
             var permissionToAlterRecords = await _db.ExtraCounter
                 .Where(record => record.Id != null && permissionToAlterIds.Contains(record.Id))
+                .ToListAsync();
+
+            var governmentPermitRecords = await _db.GovernmentPermit
+                .Where(record => record.Id != null && governmentPermitIds.Contains(record.Id))
                 .ToListAsync();
 
             var temporaryTransferRecords = await _db.ApplicationInfo
@@ -1068,6 +1089,9 @@ namespace LLB.Controllers
                     .Where(record => !string.IsNullOrWhiteSpace(record.ApplicationId))
                     .Select(record => record.ApplicationId!))
                 .Concat(permissionToAlterRecords
+                    .Where(record => !string.IsNullOrWhiteSpace(record.ApplicationId))
+                    .Select(record => record.ApplicationId!))
+                .Concat(governmentPermitRecords
                     .Where(record => !string.IsNullOrWhiteSpace(record.ApplicationId))
                     .Select(record => record.ApplicationId!))
                 .Concat(temporaryTransferRecords
@@ -1126,6 +1150,9 @@ namespace LLB.Controllers
                 .ToDictionary(record => record.Id!, record => record);
 
             var permissionToAlterLookup = permissionToAlterRecords
+                .ToDictionary(record => record.Id!, record => record);
+
+            var governmentPermitLookup = governmentPermitRecords
                 .ToDictionary(record => record.Id!, record => record);
 
             var temporaryTransferLookup = temporaryTransferRecords
@@ -1304,6 +1331,42 @@ namespace LLB.Controllers
                     status = permissionToAlter.Status ?? task.Status ?? "Unknown";
                     reviewUrl = $"/Extracounter/ViewApplications?Id={permissionToAlter.Id}";
                 }
+                else if (task.Service == GovernmentPermitHelper.ServiceName)
+                {
+                    if (!governmentPermitLookup.TryGetValue(task.ApplicationId, out var governmentPermit))
+                    {
+                        continue;
+                    }
+
+                    rootApplicationId = governmentPermit.ApplicationId ?? string.Empty;
+                    submittedDate = governmentPermit.DateUpdated;
+                    status = governmentPermit.Status ?? task.Status ?? "Unknown";
+                    reviewUrl = $"/GovernmentPermit/ViewApplications?id={governmentPermit.Id}";
+
+                    if (string.IsNullOrWhiteSpace(rootApplicationId)
+                        || !applicationLookup.TryGetValue(rootApplicationId, out _))
+                    {
+                        var regionParts = new[] { governmentPermit.Province, governmentPermit.District, governmentPermit.Council }
+                            .Where(part => !string.IsNullOrWhiteSpace(part));
+                        var regionName = string.Join(", ", regionParts);
+
+                        model.PostFormations.Add(new SecretaryDashboardPostFormationItemViewModel
+                        {
+                            RecordId = task.ApplicationId,
+                            Reference = governmentPermit.Reference ?? string.Empty,
+                            ApplicationId = governmentPermit.Id ?? string.Empty,
+                            Service = GovernmentPermitHelper.ServiceName,
+                            TradingName = governmentPermit.Ministry ?? "N/A",
+                            OperatingAddress = governmentPermit.Address ?? "N/A",
+                            SubmittedDate = submittedDate,
+                            LicenseName = "Government Permit",
+                            RegionName = string.IsNullOrWhiteSpace(regionName) ? "N/A" : regionName,
+                            Status = status,
+                            ReviewUrl = reviewUrl
+                        });
+                        continue;
+                    }
+                }
                 else
                 {
                     continue;
@@ -1331,6 +1394,8 @@ namespace LLB.Controllers
                                         ? temporaryRemovalLookup.GetValueOrDefault(task.ApplicationId)?.RefNum ?? string.Empty
                                     : task.Service == AgentLicenseHelper.ServiceName
                                         ? agentLicenseLookup.GetValueOrDefault(task.ApplicationId)?.RefNum ?? string.Empty
+                                    : task.Service == GovernmentPermitHelper.ServiceName
+                                        ? governmentPermitLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty
                                     : permissionToAlterLookup.GetValueOrDefault(task.ApplicationId)?.Reference ?? string.Empty,
                     ApplicationId = rootApplicationId,
                     Service = task.Service == TemporaryTransferHelper.ServiceName

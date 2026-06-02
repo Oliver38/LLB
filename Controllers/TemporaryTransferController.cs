@@ -750,7 +750,7 @@ namespace LLB.Controllers
         }
 
         [HttpGet("Payment")]
-        public async Task<IActionResult> PaymentAsync(string id)
+        public async Task<IActionResult> PaymentAsync(string id, string? currency = null)
         {
             var currentUserId = _userManager.GetUserId(User);
             if (string.IsNullOrWhiteSpace(currentUserId))
@@ -841,8 +841,19 @@ namespace LLB.Controllers
                 return RedirectToAction("Apply", new { id = transferApplication.Id });
             }
 
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
-            var callbackUrl = Url.Action("Apply", "TemporaryTransfer", new { id = transferApplication.Id }, Request.Scheme);
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, pricing.TotalFee.Value, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("Apply", new { id = transferApplication.Id });
+            }
+
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/TemporaryTransfer/Apply?id=" + transferApplication.Id);
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
                 paynow.ResultUrl = callbackUrl;
@@ -857,7 +868,7 @@ namespace LLB.Controllers
                 ? null
                 : await _db.LicenseTypes.FirstOrDefaultAsync(item => item.Id == sourceApplication.LicenseTypeID);
 
-            payment.Add(licenseType?.LicenseName ?? TemporaryTransferHelper.ServiceName, pricing.TotalFee.Value);
+            payment.Add(licenseType?.LicenseName ?? TemporaryTransferHelper.ServiceName, paymentCurrency.PaynowAmount);
 
             var response = paynow.Send(payment);
             if (!response.Success())
@@ -870,7 +881,6 @@ namespace LLB.Controllers
             {
                 Id = Guid.NewGuid().ToString(),
                 UserId = currentUserId,
-                Amount = payment.Total,
                 ApplicationId = transferApplication.Id,
                 Service = TemporaryTransferHelper.ServiceName,
                 PollUrl = response.PollUrl(),
@@ -880,6 +890,7 @@ namespace LLB.Controllers
                 DateAdded = DateTime.Now,
                 DateUpdated = DateTime.Now
             };
+            PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
 
             var status = paynow.PollTransaction(transaction.PollUrl);
             var statusData = status.GetData();
@@ -1426,7 +1437,7 @@ namespace LLB.Controllers
             {
                 try
                 {
-                    var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                    var paynow = PaynowCurrencyHelper.CreatePaynow(payment);
                     var status = paynow.PollTransaction(payment.PollUrl);
                     var statusData = status.GetData();
                     payment.PaynowRef = statusData["paynowreference"];
@@ -2114,8 +2125,10 @@ namespace LLB.Controllers
         {
             return !HasPaymentStatus(payment, "Paid")
                 && !HasPaymentStatus(payment, "Cancelled")
+                && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
-                && !HasPaymentStatus(payment, "Expired");
+                && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
     }
 }

@@ -25,6 +25,7 @@ using QRCoder;
 using System.Drawing.Imaging;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using System.Text;
+using LLB.Helpers;
 
 namespace LLB.Controllers
 {
@@ -62,8 +63,12 @@ namespace LLB.Controllers
 
 
 
-            var pdf = PdfDocument.FromFile(pdfFilePath);
             var applications = _db.ApplicationInfo.Where(a => a.Id == searchref).FirstOrDefault();
+            if (applications == null)
+            {
+                return NotFound("The licence could not be found.");
+            }
+
             var managers = _db.ManagersParticulars
                 .Where(b => b.ApplicationId == searchref
                     && (b.Status == "active"
@@ -72,6 +77,12 @@ namespace LLB.Controllers
                 .ToList();
             var outletinfo = _db.OutletInfo.Where(c => c.ApplicationId == searchref).FirstOrDefault();
             var licenses = _db.LicenseTypes.Where(b => b.Id == applications.LicenseTypeID).FirstOrDefault();
+            if (AgentLicenseHelper.IsAgentLicenseApplication(applications))
+            {
+                return GenerateAgentLicensePdf(applications, outletinfo, licenses);
+            }
+
+            var pdf = PdfDocument.FromFile(pdfFilePath);
             //var outletinfo = _db.OutletInfo.ToList();
             var license = _db.LicenseTypes.ToList();
             var regions = _db.LicenseRegions.ToList();
@@ -239,6 +250,22 @@ namespace LLB.Controllers
                 VerticalOffset = new Length(40),
             };
 
+            var isHotelLicense = licenses?.LicenseName?.IndexOf("hotel", StringComparison.OrdinalIgnoreCase) >= 0;
+            var hotelRoomContent = $@"
+                <div style='font-family: Times New Roman; font-size: 14px;'>
+                    Number of bedrooms to be maintained:
+                    <strong>Double:</strong> {FormatRoomCount(outletinfo?.HotelDoubleRooms)}
+                    <strong>Single:</strong> {FormatRoomCount(outletinfo?.HotelSingleRooms)}
+                </div>";
+            HtmlStamper hotelRoomInfo = new HtmlStamper()
+            {
+                Html = hotelRoomContent,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalOffset = new Length(13),
+                VerticalOffset = new Length(38),
+            };
+
             string renconditions = "<ul style='font-family: Times New Roman; font-size: 13px;'> " +
                 "<li>RENEWAL PERIOD IS FROM NOV. TO JAN. YEARLY.</li> " +
                 "<li>ATTACH COPY OF CURRENT LiCENCE</li> " +
@@ -255,7 +282,7 @@ namespace LLB.Controllers
                 HorizontalOffset = new Length(13),
                 VerticalOffset = new Length(47.5),
             };
-            var payload = $"https://https://llb.pfms.gov.zw/Home/CheckLicense?LLBNUMBER={applications.LLBNum}";
+            var payload = VerificationLinkHelper.BuildLiveUrl($"Home/CheckLicense?LLBNUMBER={Uri.EscapeDataString(applications.LLBNum ?? string.Empty)}");
 
             try
             {
@@ -306,10 +333,13 @@ namespace LLB.Controllers
             };
 
 
+            var stampersToApply = new List<Stamper> { licensee, tradingname, location, managerscount, managerslist, qrcode, signature, expirydate, grantdate, expirydateuthority, llbnum, conditions, council, licenseName };
+            if (isHotelLicense)
+            {
+                stampersToApply.Add(hotelRoomInfo);
+            }
 
-
-            Stamper[] stampersToApply = { licensee, tradingname, location, managerscount, managerslist, qrcode, signature, expirydate, grantdate, expirydateuthority, llbnum, conditions, council, licenseName };
-            pdf.ApplyMultipleStamps(stampersToApply);
+            pdf.ApplyMultipleStamps(stampersToApply.ToArray());
             // pdf.ApplyStamp(stamper2);
 
             string savePath = Path.Combine(webRootPath, "HtmlToPDFRAW.pdf");
@@ -322,6 +352,391 @@ namespace LLB.Controllers
             // return new FileContentResult(byteArray, "application/pdf");
             return File(pdf.BinaryData, "application/pdf;");
 
+        }
+
+        private FileContentResult GenerateAgentLicensePdf(ApplicationInfo application, OutletInfo? outlet, LicenseTypes? license)
+        {
+            var sourceApplication = string.IsNullOrWhiteSpace(application.CompanyNumber)
+                ? null
+                : _db.ApplicationInfo.FirstOrDefault(record => record.Id == application.CompanyNumber);
+            var sourceOutlet = sourceApplication == null
+                ? null
+                : _db.OutletInfo.FirstOrDefault(record => record.ApplicationId == sourceApplication.Id);
+
+            var agentName = BuildAgentLicenseeName(application);
+            var businessAddress = FirstNonEmpty(outlet?.Address, application.OperationAddress, "N/A");
+            var expiryDate = FormatAgentLicenseDate(application.ExpiryDate);
+            var holderName = BuildWholesaleHolderName(sourceApplication, sourceOutlet);
+            var holderLlbNumber = FirstNonEmpty(sourceApplication?.LLBNum, "N/A");
+            var fileName = SanitizeFileName(FirstNonEmpty(application.LLBNum, agentName, "agent-liquor-licence"));
+            var verificationReference = FirstNonEmpty(application.LLBNum, application.Id, agentName);
+            var verificationUrl = VerificationLinkHelper.BuildLiveUrl($"Documents/AgentLicenseVerification?searchref={Uri.EscapeDataString(verificationReference)}");
+            var qrCodeDataUri = GenerateQrCodeDataUri(verificationUrl);
+            var coatOfArmsDataUri = GetImageDataUri(Path.Combine(_env.WebRootPath, "front", "img", "IMG", "Coat_of_arms_of_ZimbabweB.png"));
+            var coatOfArmsMarkup = string.IsNullOrWhiteSpace(coatOfArmsDataUri)
+                ? string.Empty
+                : $"<img src='{coatOfArmsDataUri}' alt='Zimbabwe Coat of Arms' />";
+            var qrCodeMarkup = string.IsNullOrWhiteSpace(qrCodeDataUri)
+                ? string.Empty
+                : $@"
+      <div class='qr-card'>
+        <div class='qr-title'>Scan To Verify</div>
+        <div class='qr-wrap'>
+          <img class='qr-code' src='{qrCodeDataUri}' alt='Licence verification QR code' />
+          <div class='qr-crest'>{coatOfArmsMarkup}</div>
+        </div>
+      </div>";
+
+            var html = $@"
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8' />
+  <style>
+    @page {{ size: A4 portrait; margin: 0; }}
+    html, body {{
+      margin: 0;
+      padding: 0;
+      background: #f4f0dc;
+      color: #1b1b1b;
+      font-family: ""Times New Roman"", Times, serif;
+    }}
+
+    .page {{
+      position: relative;
+      width: 210mm;
+      height: 297mm;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 16% 12%, rgba(244, 196, 48, 0.34), transparent 34mm),
+        radial-gradient(circle at 92% 10%, rgba(0, 122, 61, 0.22), transparent 44mm),
+        radial-gradient(circle at 88% 88%, rgba(190, 32, 46, 0.18), transparent 48mm),
+        linear-gradient(135deg, #fffdf2 0%, #ffffff 43%, #f5fff8 100%);
+      box-sizing: border-box;
+    }}
+
+    .page::before {{
+      content: """";
+      position: absolute;
+      inset: 10mm;
+      border: 2px solid #0f5f36;
+      box-shadow: inset 0 0 0 1.5mm #f4c430, inset 0 0 0 2.2mm #b61f2c;
+    }}
+
+    .page::after {{
+      content: """";
+      position: absolute;
+      inset: 17mm;
+      border: 1px solid rgba(15, 95, 54, 0.35);
+      pointer-events: none;
+    }}
+
+    .watermark {{
+      position: absolute;
+      top: 102mm;
+      left: 63mm;
+      width: 84mm;
+      opacity: 0.055;
+    }}
+
+    .watermark img {{
+      width: 100%;
+    }}
+
+    .crest-top {{
+      position: absolute;
+      top: 22mm;
+      left: 0;
+      width: 100%;
+      text-align: center;
+    }}
+
+    .crest-top img {{
+      height: 31mm;
+    }}
+
+    .title {{
+      position: absolute;
+      top: 58mm;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: 0;
+      color: #0f3f28;
+    }}
+
+    .subtitle {{
+      position: absolute;
+      top: 69mm;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 10.5px;
+      color: #6c4f00;
+      text-transform: uppercase;
+    }}
+
+    .content {{
+      position: absolute;
+      top: 83mm;
+      left: 22mm;
+      width: 118mm;
+      font-size: 11px;
+      line-height: 1.5;
+      z-index: 1;
+    }}
+
+    .line {{
+      margin: 3mm 0 0;
+    }}
+
+    .label {{
+      display: inline-block;
+      min-width: 42mm;
+      color: #313131;
+    }}
+
+    .value {{
+      font-weight: 700;
+      font-size: 12.5px;
+      color: #000;
+    }}
+
+    .condition {{
+      margin-top: 8mm;
+      color: #6c4f00;
+      font-weight: 700;
+    }}
+
+    .holder {{
+      margin-top: 3mm;
+      font-weight: 700;
+      font-size: 13.5px;
+      line-height: 1.35;
+      color: #0f3f28;
+    }}
+
+    .renewal {{
+      position: absolute;
+      top: 181mm;
+      left: 22mm;
+      font-size: 10.5px;
+      white-space: nowrap;
+      z-index: 1;
+    }}
+
+    .renewal .value {{
+      margin-left: 10mm;
+      font-size: 13px;
+      letter-spacing: 0;
+      color: #b61f2c;
+    }}
+
+    .delete-note {{
+      position: absolute;
+      top: 193mm;
+      left: 22mm;
+      font-size: 9.5px;
+      z-index: 1;
+    }}
+
+    .side-panel {{
+      position: absolute;
+      top: 83mm;
+      right: 21mm;
+      width: 43mm;
+      z-index: 1;
+    }}
+
+    .qr-card {{
+      border: 1px solid rgba(15, 95, 54, 0.6);
+      background: rgba(255, 255, 255, 0.88);
+      padding: 5mm 4mm 4mm;
+      text-align: center;
+    }}
+
+    .qr-title {{
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #0f3f28;
+      text-transform: uppercase;
+      margin-bottom: 2.5mm;
+    }}
+
+    .qr-wrap {{
+      position: relative;
+      width: 31mm;
+      height: 31mm;
+      margin: 0 auto;
+    }}
+
+    .qr-code {{
+      width: 31mm;
+      height: 31mm;
+      display: block;
+    }}
+
+    .qr-crest {{
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 8.5mm;
+      height: 8.5mm;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1mm;
+    }}
+
+    .qr-crest img {{
+      max-width: 7mm;
+      max-height: 7mm;
+    }}
+
+    .signature-block {{
+      position: absolute;
+      right: 21mm;
+      top: 165mm;
+      width: 48mm;
+      text-align: center;
+      font-size: 10px;
+      z-index: 1;
+    }}
+
+    .signature-mark {{
+      height: 22mm;
+      font-family: ""Brush Script MT"", ""Segoe Script"", cursive;
+      font-size: 27px;
+      font-style: italic;
+      transform: rotate(-6deg);
+      transform-origin: center;
+      color: #1b1b1b;
+    }}
+
+    .signature-line {{
+      border-bottom: 1px dotted #000;
+      height: 1px;
+      margin-bottom: 1.5mm;
+    }}
+
+    .secretary {{
+      font-weight: 700;
+    }}
+  </style>
+</head>
+<body>
+  <div class='page'>
+    <div class='watermark'>{coatOfArmsMarkup}</div>
+    <div class='crest-top'>{coatOfArmsMarkup}</div>
+    <div class='title'>AGENT LIQUOR LICENCE</div>
+    <div class='subtitle'>Liquor Licensing Board</div>
+
+    <div class='content'>
+      <div>Subject to the provisions of the act and the conditions specified herein</div>
+      <div class='line'><span class='label'>Licensee:</span><span class='value'>{EncodeHtml(agentName)}</span></div>
+      <div class='line'><span class='label'>Business Address:</span><span class='value'>{EncodeHtml(businessAddress.ToUpperInvariant())}</span></div>
+      <div class='line'><span class='label'>Date of expiry of licence:</span><span class='value'>{EncodeHtml(expiryDate)}</span></div>
+
+      <div class='condition'>Conditions of licence imposed by the Board</div>
+      <div>Licence is employed by the following holder of an agent's liquor licence</div>
+      <div class='holder'>{EncodeHtml(holderName.ToUpperInvariant())}</div>
+      <div class='holder'>{EncodeHtml(holderLlbNumber)}</div>
+    </div>
+
+    <div class='side-panel'>
+      {qrCodeMarkup}
+    </div>
+
+    <div class='renewal'>
+      <span>Date of issue/renewal* of licence</span>
+      <span class='value'>NOVEMBER TO JANUARY YEARLY</span>
+    </div>
+
+    <div class='delete-note'>*Delete the inapplicable</div>
+
+    <div class='signature-block'>
+      <div class='signature-mark'>Secretary</div>
+      <div class='signature-line'></div>
+      <div class='secretary'>Secretary Liquor Licensing Board</div>
+    </div>
+  </div>
+</body>
+</html>";
+
+            var renderer = new HtmlToPdf();
+            renderer.PrintOptions.PaperSize = PdfPrintOptions.PdfPaperSize.A4;
+            renderer.PrintOptions.MarginTop = 0;
+            renderer.PrintOptions.MarginBottom = 0;
+            renderer.PrintOptions.MarginLeft = 0;
+            renderer.PrintOptions.MarginRight = 0;
+            var pdf = renderer.RenderHtmlAsPdf(html);
+
+            return File(pdf.BinaryData, "application/pdf", $"{fileName}.pdf");
+        }
+
+        [AllowAnonymous]
+        [HttpGet("AgentLicenseVerification")]
+        public IActionResult AgentLicenseVerification(string searchref)
+        {
+            if (string.IsNullOrWhiteSpace(searchref))
+            {
+                return Content(BuildAgentLicenseVerificationHtml(
+                    false,
+                    "No licence reference was supplied.",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null), "text/html");
+            }
+
+            var normalizedReference = searchref.Trim();
+            var application = _db.ApplicationInfo.FirstOrDefault(record =>
+                record.Id == normalizedReference || record.LLBNum == normalizedReference);
+
+            if (application == null || !AgentLicenseHelper.IsAgentLicenseApplication(application))
+            {
+                return Content(BuildAgentLicenseVerificationHtml(
+                    false,
+                    "The agent liquor licence could not be verified from the supplied reference.",
+                    null,
+                    null,
+                    null,
+                    null,
+                    normalizedReference), "text/html");
+            }
+
+            var outlet = _db.OutletInfo.FirstOrDefault(record => record.ApplicationId == application.Id);
+            var sourceApplication = string.IsNullOrWhiteSpace(application.CompanyNumber)
+                ? null
+                : _db.ApplicationInfo.FirstOrDefault(record => record.Id == application.CompanyNumber);
+            var sourceOutlet = sourceApplication == null
+                ? null
+                : _db.OutletInfo.FirstOrDefault(record => record.ApplicationId == sourceApplication.Id);
+
+            var isApproved = string.Equals(application.Status, "approved", StringComparison.OrdinalIgnoreCase);
+            var isExpired = application.ExpiryDate != default && application.ExpiryDate.Date < DateTime.Today;
+            var isValid = isApproved && !isExpired;
+            var message = isValid
+                ? "This agent liquor licence is valid and matches an approved record in the system."
+                : isExpired
+                    ? "This agent liquor licence was found, but it has expired."
+                    : $"This agent liquor licence was found, but its current status is '{application.Status ?? "Unknown"}'.";
+
+            return Content(BuildAgentLicenseVerificationHtml(
+                isValid,
+                message,
+                application,
+                outlet,
+                sourceApplication,
+                sourceOutlet,
+                normalizedReference), "text/html");
         }
 
         [Route("D")]
@@ -456,7 +871,7 @@ namespace LLB.Controllers
                 ? string.Empty
                 : $"<div class='crest'><img src='{coatOfArmsDataUri}' alt='Zimbabwe Coat of Arms' /></div>";
             var verificationReference = extendedHours.Reference ?? extendedHours.Id;
-            var verificationUrl = $"{Request.Scheme}://{Request.Host}/Documents/ExtendedHoursLicenseVerification?searchref={Uri.EscapeDataString(verificationReference)}";
+            var verificationUrl = VerificationLinkHelper.BuildLiveUrl($"Documents/ExtendedHoursLicenseVerification?searchref={Uri.EscapeDataString(verificationReference)}");
             var qrCodeDataUri = GenerateQrCodeDataUri(verificationUrl);
             var qrLogoMarkup = string.IsNullOrWhiteSpace(coatOfArmsDataUri)
                 ? string.Empty
@@ -905,7 +1320,7 @@ namespace LLB.Controllers
                 ? string.Empty
                 : $"<div class='crest'><img src='{coatOfArmsDataUri}' alt='Zimbabwe Coat of Arms' /></div>";
             var verificationReference = temporaryRetail.Reference ?? temporaryRetail.Id;
-            var verificationUrl = $"{Request.Scheme}://{Request.Host}/Documents/TemporaryRetailLicenseVerification?searchref={Uri.EscapeDataString(verificationReference)}";
+            var verificationUrl = VerificationLinkHelper.BuildLiveUrl($"Documents/TemporaryRetailLicenseVerification?searchref={Uri.EscapeDataString(verificationReference)}");
             var qrCodeDataUri = GenerateQrCodeDataUri(verificationUrl);
             var qrLogoMarkup = string.IsNullOrWhiteSpace(coatOfArmsDataUri)
                 ? string.Empty
@@ -1590,6 +2005,187 @@ namespace LLB.Controllers
             return new FileContentResult(byteArray, "application/pdf");
         }
 
+        private static string BuildAgentLicenseeName(ApplicationInfo application)
+        {
+            var title = FormatAgentTitle(application.Title);
+            var names = new[] { title, application.PlaceOfBirth, application.PlaceOfEntry }
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => value!.Trim());
+
+            var fullName = string.Join(" ", names);
+            return string.IsNullOrWhiteSpace(fullName)
+                ? FirstNonEmpty(application.BusinessName, "N/A")
+                : fullName;
+        }
+
+        private static string FormatAgentTitle(string? title)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return string.Empty;
+            }
+
+            var normalizedTitle = title.Trim();
+            if (normalizedTitle.EndsWith(".", StringComparison.Ordinal))
+            {
+                return normalizedTitle;
+            }
+
+            var titlesWithFullStop = new[] { "Mr", "Mrs", "Ms", "Dr", "Prof" };
+            return titlesWithFullStop.Any(value => string.Equals(value, normalizedTitle, StringComparison.OrdinalIgnoreCase))
+                ? $"{normalizedTitle}."
+                : normalizedTitle;
+        }
+
+        private static string BuildAgentLicenseVerificationHtml(
+            bool isValid,
+            string message,
+            ApplicationInfo? application,
+            OutletInfo? outlet,
+            ApplicationInfo? sourceApplication,
+            OutletInfo? sourceOutlet,
+            string? suppliedReference)
+        {
+            var licensee = application == null ? "N/A" : BuildAgentLicenseeName(application);
+            var address = application == null ? "N/A" : FirstNonEmpty(outlet?.Address, application.OperationAddress, "N/A");
+            var holderName = BuildWholesaleHolderName(sourceApplication, sourceOutlet);
+            var status = application?.Status ?? "Unknown";
+            var llbNumber = FirstNonEmpty(application?.LLBNum, suppliedReference, "N/A");
+            var expiry = application == null ? "N/A" : FormatAgentLicenseDate(application.ExpiryDate);
+            var approved = application == null ? "N/A" : FormatAgentLicenseDate(application.ApprovedDate);
+            var outcomeClass = isValid ? "valid" : "invalid";
+            var outcomeText = isValid ? "VALID" : "NOT VALID";
+
+            return $@"
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1' />
+  <title>Agent Liquor Licence Verification</title>
+  <style>
+    body {{
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f2;
+      color: #1c2520;
+    }}
+
+    .wrap {{
+      max-width: 760px;
+      margin: 32px auto;
+      background: #fff;
+      border: 1px solid #d8dfd5;
+      border-top: 6px solid #0f5f36;
+      padding: 28px;
+      box-sizing: border-box;
+    }}
+
+    h1 {{
+      margin: 0 0 6px;
+      font-size: 24px;
+      color: #0f3f28;
+    }}
+
+    .badge {{
+      display: inline-block;
+      margin: 14px 0;
+      padding: 8px 12px;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0;
+    }}
+
+    .valid {{
+      background: #0f5f36;
+    }}
+
+    .invalid {{
+      background: #b61f2c;
+    }}
+
+    .message {{
+      margin: 0 0 20px;
+      line-height: 1.45;
+    }}
+
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+    }}
+
+    th, td {{
+      border: 1px solid #e0e5dc;
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }}
+
+    th {{
+      width: 32%;
+      background: #f4f7f1;
+      color: #34433a;
+    }}
+  </style>
+</head>
+<body>
+  <main class='wrap'>
+    <h1>Agent Liquor Licence Verification</h1>
+    <div class='badge {outcomeClass}'>{outcomeText}</div>
+    <p class='message'>{EncodeHtml(message)}</p>
+
+    <table>
+      <tbody>
+        <tr><th>LLB Number</th><td>{EncodeHtml(llbNumber)}</td></tr>
+        <tr><th>Licensee</th><td>{EncodeHtml(licensee)}</td></tr>
+        <tr><th>Business Address</th><td>{EncodeHtml(address)}</td></tr>
+        <tr><th>Wholesale Holder</th><td>{EncodeHtml(holderName)}</td></tr>
+        <tr><th>Status</th><td>{EncodeHtml(status)}</td></tr>
+        <tr><th>Approved Date</th><td>{EncodeHtml(approved)}</td></tr>
+        <tr><th>Expiry Date</th><td>{EncodeHtml(expiry)}</td></tr>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>";
+        }
+
+        private static string BuildWholesaleHolderName(ApplicationInfo? sourceApplication, OutletInfo? sourceOutlet)
+        {
+            var businessName = sourceApplication?.BusinessName?.Trim();
+            var tradingName = sourceOutlet?.TradingName?.Trim();
+
+            if (!string.IsNullOrWhiteSpace(businessName)
+                && !string.IsNullOrWhiteSpace(tradingName)
+                && !string.Equals(businessName, tradingName, StringComparison.OrdinalIgnoreCase))
+            {
+                return $"{businessName} - {tradingName}";
+            }
+
+            return FirstNonEmpty(businessName, tradingName, "N/A");
+        }
+
+        private static string FormatAgentLicenseDate(DateTime value)
+        {
+            return value == default
+                ? "N/A"
+                : value.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+        }
+
+        private static string FirstNonEmpty(params string?[] values)
+        {
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value.Trim();
+                }
+            }
+
+            return string.Empty;
+        }
+
         private static string EncodeHtml(string? value)
         {
             return WebUtility.HtmlEncode(value ?? string.Empty);
@@ -1645,6 +2241,11 @@ namespace LLB.Controllers
         private static string InspectionOutcomeCssClass(string? value)
         {
             return IsPassed(value) ? "pass" : "fail";
+        }
+
+        private static string FormatRoomCount(int? value)
+        {
+            return value.HasValue ? value.Value.ToString(CultureInfo.InvariantCulture) : "0";
         }
 
         private static string BuildInspectionCriteriaRows(Inspection inspection)

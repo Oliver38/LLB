@@ -95,7 +95,7 @@ namespace LLB.Controllers
             var fee = _db.PostFormationFees.Where(a => a.Code == "DPL").FirstOrDefault();
             if (paymentTrans != null && !string.IsNullOrWhiteSpace(paymentTrans.PollUrl))
             {
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                var paynow = PaynowCurrencyHelper.CreatePaynow(paymentTrans);
 
                 var status = paynow.PollTransaction(paymentTrans.PollUrl);
 
@@ -174,7 +174,7 @@ namespace LLB.Controllers
 
 
         [HttpGet("DownloadPayment")]
-        public IActionResult DownloadPayment(string downloadId, double fee, string applicationId)
+        public IActionResult DownloadPayment(string downloadId, double fee, string applicationId, string? currency = null)
         {
             var appinfo = _db.ApplicationInfo.Where(a => a.Id == applicationId).FirstOrDefault();
             var downloadinfo = _db.Downloads.Where(a => a.Id == downloadId).FirstOrDefault();
@@ -200,8 +200,19 @@ namespace LLB.Controllers
                 return RedirectToAction("GetDuplicate", new { searchref = applicationId });
             }
 
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
-            var duplicateUrl = $"{Request.Scheme}://{Request.Host}/Downloads/GetDuplicate?searchref={applicationId}";
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, (decimal)fee, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["result"] = ex.Message;
+                return RedirectToAction("GetDuplicate", new { searchref = applicationId });
+            }
+
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
+            var duplicateUrl = PaynowCurrencyHelper.BuildReturnUrl("/Downloads/GetDuplicate?searchref=" + applicationId);
 
             paynow.ResultUrl = duplicateUrl;
             paynow.ReturnUrl = duplicateUrl;
@@ -218,7 +229,7 @@ namespace LLB.Controllers
           //  var licenseType = _db.LicenseTypes.Where(s => s.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
 
             // Add items to the payment
-            payment.Add("Duplicate", (decimal)fee);
+            payment.Add("Duplicate", paymentCurrency.PaynowAmount);
 
             // Send payment to paynow
             var response = paynow.Send(payment);
@@ -233,12 +244,13 @@ namespace LLB.Controllers
                 var userId = userManager.GetUserId(User);
                 string id = userId;
                 transaction.UserId = id;
-                transaction.Amount = payment.Total;
+                PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
                 transaction.ApplicationId = downloadId;
                 transaction.Service = DownloadStatusHelper.DuplicatePaymentService;
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
-                transaction.PopDoc = "";
+
+                transaction.SystemRef = response.RedirectLink();
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
                 transaction.DateUpdated = DateTime.Now;

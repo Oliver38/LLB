@@ -120,6 +120,9 @@ namespace LLB.Migrations
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UserID")
                         .HasColumnType("nvarchar(max)");
 
@@ -657,6 +660,86 @@ namespace LLB.Migrations
                     b.ToTable("ExtraCounter");
                 });
 
+            modelBuilder.Entity("LLB.Models.GovernmentPermit", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ApplicationId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ApproverId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Council")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateAdded")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateOfApproval")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateRecommended")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateVerified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("District")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LG30")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LetterFromTheSuperior")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Letter_from_the_superior");
+
+                    b.Property<string>("LocationName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Ministry")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Payment")
+                        .HasColumnType("float");
+
+                    b.Property<string>("PaymentStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Province")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecommenderId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TitleOfAuthority")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VerifierId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GovernmentPermit");
+                });
+
             modelBuilder.Entity("LLB.Models.Inspection", b =>
                 {
                     b.Property<string>("Id")
@@ -904,6 +987,12 @@ namespace LLB.Migrations
 
                     b.Property<string>("DirectorNames")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("HotelDoubleRooms")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("HotelSingleRooms")
+                        .HasColumnType("int");
 
                     b.Property<string>("Latitude")
                         .HasColumnType("nvarchar(max)");

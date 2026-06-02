@@ -99,7 +99,10 @@
                             <tr>
                                 <th>Action</th>
                                 <td>
-                                    <a href="/Downloads/DownloadPayment?downloadId=@ViewBag.Download.Id&fee=@ViewBag.Fee.Fee&applicationId=@ViewBag.AppInfo.Id" class="btn btn-primary">
+                                    <a href="/Downloads/DownloadPayment?downloadId=@ViewBag.Download.Id&fee=@ViewBag.Fee.Fee&applicationId=@ViewBag.AppInfo.Id"
+                                       class="btn btn-primary"
+                                       data-currency-payment="true"
+                                       data-payment-usd-amount="@Convert.ToString(ViewBag.Fee.Fee, System.Globalization.CultureInfo.InvariantCulture)">
                                         Pay For Duplicate
                                     </a>
                                 </td>

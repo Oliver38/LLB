@@ -9,9 +9,12 @@
     var agentLicense = ViewBag.AgentLicense as LicenseTypes;
     var wholesaleLicense = ViewBag.WholesaleLicense as LicenseTypes;
     var wholesaleOutlet = ViewBag.WholesaleOutlet as OutletInfo;
-    var publicationProof = ViewBag.PublicationProof as AttachmentInfo;
     var tieAffidavit = ViewBag.TieAffidavit as AttachmentInfo;
     var wholesaleLicenseAttachment = ViewBag.WholesaleLicenseAttachment as AttachmentInfo;
+    var reviewStageLabel = ViewBag.ReviewStageLabel as string ?? "Secretary approval";
+    var approveButtonLabel = ViewBag.ApproveButtonLabel as string ?? "Approve";
+    var rejectButtonLabel = ViewBag.RejectButtonLabel as string ?? "Reject";
+    var canReviewAction = ViewBag.CanReviewAction as bool? ?? false;
 
     string DisplayValue(string? value)
     {
@@ -24,6 +27,9 @@
         {
             "approved" => "bg-success",
             "awaiting approval" => "bg-info text-dark",
+            "awaiting verification" => "bg-warning text-dark",
+            "verified" => "bg-info text-dark",
+            "recommended" => "bg-primary",
             "rejected" => "bg-danger",
             _ => "bg-secondary"
         };
@@ -44,7 +50,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <div>
             <h5 class="card-title mb-1">Agent License Review</h5>
-            <p class="text-muted mb-0">Secretary examination of the agent license application.</p>
+            <p class="text-muted mb-0">@reviewStageLabel of the agent license application.</p>
         </div>
         <span class="badge rounded-pill @StatusBadgeClass(agentApplication?.Status)">@(agentApplication?.Status ?? "Unknown")</span>
     </div>
@@ -55,6 +61,10 @@
                 <div class="d-flex justify-content-between border-bottom py-2">
                     <span class="text-muted">Reference</span>
                     <span class="fw-semibold text-end">@DisplayValue(agentApplication?.RefNum)</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span class="text-muted">Title</span>
+                    <span class="fw-semibold text-end">@DisplayValue(agentApplication?.Title)</span>
                 </div>
                 <div class="d-flex justify-content-between border-bottom py-2">
                     <span class="text-muted">Name</span>
@@ -128,20 +138,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Advert and Proof of publication in the government gazette and local paper.{L.G 2}</td>
-                        <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(publicationProof?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(publicationProof?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
-                        <td>
-                            @if (!string.IsNullOrWhiteSpace(publicationProof?.DocumentLocation))
-                            {
-                                <a href="~/@publicationProof.DocumentLocation" target="_blank">View Attachment</a>
-                            }
-                            else
-                            {
-                                <span class="text-danger">No file uploaded</span>
-                            }
-                        </td>
-                    </tr>
                     <tr>
                         <td>Tie Affidavit</td>
                         <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
@@ -219,6 +215,7 @@
 </div>
 
 @if (agentApplication != null
+    && canReviewAction
     && !string.Equals(agentApplication.Status, "approved", StringComparison.OrdinalIgnoreCase)
     && !string.Equals(agentApplication.Status, "rejected", StringComparison.OrdinalIgnoreCase))
 {
@@ -226,12 +223,12 @@
         <form method="post" action="/AgentLicense/Reject" class="mb-0">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@agentApplication.Id" />
-            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Reject this agent license application?');">Reject</button>
+            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Reject this agent license application?');">@rejectButtonLabel</button>
         </form>
         <form method="post" action="/AgentLicense/Approve" class="mb-0">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@agentApplication.Id" />
-            <button type="submit" class="btn btn-success" onclick="return confirm('Approve this agent license application?');">Approve</button>
+            <button type="submit" class="btn btn-success" onclick="return confirm('@approveButtonLabel this agent license application?');">@approveButtonLabel</button>
         </form>
     </div>
 }

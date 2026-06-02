@@ -276,7 +276,10 @@ else if (!string.IsNullOrWhiteSpace(currentExtendedHoursId))
             <div class="text-muted mb-3">Each new extended hours application requires its own Paynow payment.</div>
             @if (!isExtendedHoursPaid)
             {
-                <a class="btn btn-primary" href="/Postprocess/ExtendedHoursPayment?id=@applicationId&extId=@currentExtendedHoursId&amount=@ViewBag.TotalFee&service=extendedhours&process=@process">
+                <a class="btn btn-primary"
+                   href="/Postprocess/ExtendedHoursPayment?id=@applicationId&extId=@currentExtendedHoursId&amount=@ViewBag.TotalFee&service=extendedhours&process=@process"
+                   data-currency-payment="true"
+                   data-payment-usd-amount="@Convert.ToString(ViewBag.TotalFee, System.Globalization.CultureInfo.InvariantCulture)">
                     Make Payment
                 </a>
             }

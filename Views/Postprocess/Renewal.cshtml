@@ -408,12 +408,17 @@ else
                                                 {
                                                     @if (ViewBag.Payment == null)
                                                     {
-                                                        <a class="btn btn-primary" href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id">
+                                                        <a class="btn btn-primary"
+                                                           href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id"
+                                                           data-currency-payment="true"
+                                                           data-payment-usd-amount="@Convert.ToString(ViewBag.TotalFee, System.Globalization.CultureInfo.InvariantCulture)">
                                                             Make Payment
                                                         </a>
                                                     }
                                                     else
-                                                    { <a class="btn btn-primary" href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id">
+                                                    { <a class="btn btn-primary"
+                                                         href="/Postprocess/PaynowRenewal?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=renewal&process=@ViewBag.Process&renid=@ViewBag.Renewaldata.Id"
+                                                         data-skip-currency-modal>
                                                             Continue Payment
                                                         </a>
                                                     }

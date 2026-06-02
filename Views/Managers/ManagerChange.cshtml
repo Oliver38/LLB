@@ -415,7 +415,10 @@ else if (string.Equals(currentStatus, "Rejected", StringComparison.OrdinalIgnore
                 }
                 else if (Model.CanMakePayment)
                 {
-                    <a class="btn btn-primary" href="/Managers/ManagerChangePayment?id=@applicationId&changeId=@changeId&process=@Model.Process">Make Payment</a>
+                    <a class="btn btn-primary"
+                       href="/Managers/ManagerChangePayment?id=@applicationId&changeId=@changeId&process=@Model.Process"
+                       data-currency-payment="true"
+                       data-payment-usd-amount="@Model.TotalFee.ToString(System.Globalization.CultureInfo.InvariantCulture)">Make Payment</a>
                 }
                 else if (paymentReceived)
                 {

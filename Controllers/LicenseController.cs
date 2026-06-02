@@ -457,6 +457,11 @@ namespace LLB.Controllers
                 outletInfo.DirectorNames = "";
                 outletInfo.DateAdded = DateTime.Now;
                 outletInfo.DateUpdated = DateTime.Now;
+                if (!IsHotelLicense(outletInfo.LicenseTypeID))
+                {
+                    outletInfo.HotelDoubleRooms = null;
+                    outletInfo.HotelSingleRooms = null;
+                }
 
                 _db.Add(outletInfo);
                 _db.SaveChanges();
@@ -511,6 +516,16 @@ namespace LLB.Controllers
                 updateOutletInfo.City = outletInfo.City;
                 updateOutletInfo.ApplicationType = outletInfo.ApplicationType;
                 updateOutletInfo.LicenseTypeID = outletInfo.LicenseTypeID;
+                if (IsHotelLicense(outletInfo.LicenseTypeID))
+                {
+                    updateOutletInfo.HotelDoubleRooms = outletInfo.HotelDoubleRooms;
+                    updateOutletInfo.HotelSingleRooms = outletInfo.HotelSingleRooms;
+                }
+                else
+                {
+                    updateOutletInfo.HotelDoubleRooms = null;
+                    updateOutletInfo.HotelSingleRooms = null;
+                }
 
                 updateOutletInfo.DateUpdated = DateTime.Now;
                 _db.Update(updateOutletInfo);
@@ -559,6 +574,21 @@ namespace LLB.Controllers
             //ViewBag.User = user;
 
 
+        }
+
+        private bool IsHotelLicense(string? licenseTypeId)
+        {
+            if (string.IsNullOrWhiteSpace(licenseTypeId))
+            {
+                return false;
+            }
+
+            var licenseName = _db.LicenseTypes
+                .Where(item => item.Id == licenseTypeId)
+                .Select(item => item.LicenseName)
+                .FirstOrDefault();
+
+            return licenseName?.IndexOf("hotel", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         [HttpPost(("Director"))]
@@ -979,23 +1009,35 @@ namespace LLB.Controllers
             if (gateway == "paynow")
             {
                 var paymentTrans = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
-                
-                var status = paynow.PollTransaction(paymentTrans.PollUrl);
+                if (paymentTrans == null)
+                {
+                    TempData["result"] = "The Paynow payment was created in a different environment and cannot be verified here. Start the payment again from the live site.";
+                }
+                else
+                {
+                    try
+                    {
+                        var status = PaynowCurrencyHelper.PollTransaction(paymentTrans);
 
-                var statusdata = status.GetData();
-                paymentTrans.PaynowRef = statusdata["paynowreference"];
-                paymentTrans.PaymentStatus = statusdata["status"];
-                paymentTrans.Status = statusdata["status"];
-                paymentTrans.DateUpdated = DateTime.Now;
+                        var statusdata = status.GetData();
+                        paymentTrans.PaynowRef = statusdata["paynowreference"];
+                        paymentTrans.PaymentStatus = statusdata["status"];
+                        paymentTrans.Status = statusdata["status"];
+                        paymentTrans.DateUpdated = DateTime.Now;
 
-                _db.Update(paymentTrans);
-                _db.SaveChanges();
-                // applicationInfo.PaymentFee = paymentTrans.Amount;
-                applicationInfo.PaymentId = paymentTrans.Id;
-                applicationInfo.PaymentStatus = statusdata["status"];
-                _db.Update(applicationInfo);
-                _db.SaveChanges();
+                        _db.Update(paymentTrans);
+                        _db.SaveChanges();
+                        // applicationInfo.PaymentFee = paymentTrans.Amount;
+                        applicationInfo.PaymentId = paymentTrans.Id;
+                        applicationInfo.PaymentStatus = statusdata["status"];
+                        _db.Update(applicationInfo);
+                        _db.SaveChanges();
+                    }
+                    catch (Exception ex) when (PaynowCurrencyHelper.IsHashMismatchException(ex) || ex is InvalidOperationException)
+                    {
+                        TempData["result"] = "The Paynow payment could not be verified. If this was started from localhost, start the payment again from the live site.";
+                    }
+                }
             }
 
 
@@ -1017,24 +1059,29 @@ namespace LLB.Controllers
                 {
 
                 }
-                else { 
-                var paynowb = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                else {
+                    try
+                    {
+                        var statusb = PaynowCurrencyHelper.PollTransaction(paymentTransb);
 
-                    var statusb = paynowb.PollTransaction(paymentTransb.PollUrl);
+                        var statusdatab = statusb.GetData();
+                        paymentTransb.PaynowRef = statusdatab["paynowreference"];
+                        paymentTransb.PaymentStatus = statusdatab["status"];
+                        paymentTransb.Status = statusdatab["status"];
+                        paymentTransb.DateUpdated = DateTime.Now;
 
-                    var statusdatab = statusb.GetData();
-                    paymentTransb.PaynowRef = statusdatab["paynowreference"];
-                    paymentTransb.PaymentStatus = statusdatab["status"];
-                    paymentTransb.Status = statusdatab["status"];
-                    paymentTransb.DateUpdated = DateTime.Now;
-
-                    _db.Update(paymentTransb);
-                    _db.SaveChanges();
-                    // applicationInfo.PaymentFee = paymentTrans.Amount;
-                    applicationInfo.PaymentId = paymentTransb.Id;
-                    applicationInfo.PaymentStatus = statusdatab["status"];
-                    _db.Update(applicationInfo);
-                    _db.SaveChanges();
+                        _db.Update(paymentTransb);
+                        _db.SaveChanges();
+                        // applicationInfo.PaymentFee = paymentTrans.Amount;
+                        applicationInfo.PaymentId = paymentTransb.Id;
+                        applicationInfo.PaymentStatus = statusdatab["status"];
+                        _db.Update(applicationInfo);
+                        _db.SaveChanges();
+                    }
+                    catch (Exception ex) when (PaynowCurrencyHelper.IsHashMismatchException(ex) || ex is InvalidOperationException)
+                    {
+                        TempData["result"] = "The Paynow payment could not be verified. If this was started from localhost, start the payment again from the live site.";
+                    }
                 }
             }
             Finalising finaldata = new Finalising();
@@ -1145,6 +1192,12 @@ namespace LLB.Controllers
             ViewBag.ApplicationInfo = applicationInfob;
             ViewBag.FinalData = finaldata;
             ViewBag.Payment = payment;
+            ViewBag.LatestZwgExchangeRate = await _db.ExchangeRate
+                .Where(rate => rate.ZWGrate.HasValue && rate.ZWGrate.Value > 0)
+                .OrderByDescending(rate => rate.DateUpdated)
+                .ThenByDescending(rate => rate.DateAdded)
+                .Select(rate => rate.ZWGrate)
+                .FirstOrDefaultAsync();
 
 
             return View();
@@ -1152,14 +1205,25 @@ namespace LLB.Controllers
 
 
         [HttpGet("PaynowPayment")]
-        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount)
+        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount, string? currency = null)
         {
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
             //amount = 55.7;
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, (decimal)amount, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("Finalising", new { Id });
+            }
 
-            paynow.ResultUrl = "https://llb.pfms.gov.zw/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "https://llb.pfms.gov.zw/License/Finalising?Id=" + Id+"&gateway=paynow";
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
+
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Submit?gateway=paynow");
+            paynow.ReturnUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Finalising?Id=" + Id + "&gateway=paynow");
            // paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
             //paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
 
@@ -1174,7 +1238,7 @@ namespace LLB.Controllers
             var licenseType = _db.LicenseTypes.Where(s => s.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
 
             // Add items to the payment
-            payment.Add(licenseType.LicenseName, (decimal)amount);
+            payment.Add(licenseType.LicenseName, paymentCurrency.PaynowAmount);
             
             // Send payment to paynow
             var response = paynow.Send(payment);
@@ -1189,12 +1253,11 @@ namespace LLB.Controllers
                 var userId = await userManager.FindByEmailAsync(User.Identity.Name);
                 string id = userId.Id;
                 transaction.UserId = id;
-                transaction.Amount = payment.Total;
+                PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
                 transaction.ApplicationId = Id;
                 transaction.Service = "new application";
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
-                transaction.PopDoc = "";
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
                 transaction.DateUpdated= DateTime.Now;

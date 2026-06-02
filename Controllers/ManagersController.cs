@@ -409,7 +409,7 @@ namespace LLB.Controllers
         }
 
         [HttpGet("ManagerChangePayment")]
-        public async Task<IActionResult> ManagerChangePaymentAsync(string id, string process = "APM", string? changeId = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> ManagerChangePaymentAsync(string id, string process = "APM", string? changeId = null, string? currency = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -467,12 +467,19 @@ namespace LLB.Controllers
                 return RedirectToAction("ManagerChange", new { id, process, changeId = changeApplication.Id });
             }
 
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
-            var callbackUrl = Url.Action(
-                "ManagerChange",
-                "Managers",
-                new { id, process, changeId = changeApplication.Id },
-                Request.Scheme);
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, Convert.ToDecimal(totalFee), currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("ManagerChange", new { id, process, changeId = changeApplication.Id });
+            }
+
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Managers/ManagerChange?id=" + id + "&process=" + process + "&changeId=" + changeApplication.Id);
 
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
@@ -490,7 +497,7 @@ namespace LLB.Controllers
                     .FirstOrDefaultAsync(item => item.Id == applicationInfo.LicenseTypeID, cancellationToken);
 
             var payment = paynow.CreatePayment(changeApplication.Reference ?? changeApplication.Id ?? Guid.NewGuid().ToString());
-            payment.Add(licenseType?.LicenseName ?? "Manager Change", Convert.ToDecimal(totalFee));
+            payment.Add(licenseType?.LicenseName ?? "Manager Change", paymentCurrency.PaynowAmount);
 
             var response = paynow.Send(payment);
             if (!response.Success())
@@ -503,7 +510,6 @@ namespace LLB.Controllers
             {
                 Id = Guid.NewGuid().ToString(),
                 UserId = currentUserId,
-                Amount = payment.Total,
                 ApplicationId = changeApplication.Id,
                 Service = "changemanager",
                 PollUrl = response.PollUrl(),
@@ -513,6 +519,7 @@ namespace LLB.Controllers
                 DateAdded = DateTime.Now,
                 DateUpdated = DateTime.Now
             };
+            PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
 
             var status = paynow.PollTransaction(transaction.PollUrl);
             var statusData = status.GetData();
@@ -1191,7 +1198,7 @@ namespace LLB.Controllers
 
             if (!string.IsNullOrWhiteSpace(payment.PollUrl))
             {
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                var paynow = PaynowCurrencyHelper.CreatePaynow(payment);
                 var status = paynow.PollTransaction(payment.PollUrl);
                 var statusData = status.GetData();
                 payment.PaynowRef = statusData["paynowreference"];
@@ -1219,8 +1226,10 @@ namespace LLB.Controllers
         {
             return !HasPaymentStatus(payment, "Paid")
                 && !HasPaymentStatus(payment, "Cancelled")
+                && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
-                && !HasPaymentStatus(payment, "Expired");
+                && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
 
         private static bool IsManagerChangePaymentSatisfied(ChangeManaager changeApplication, Payments? payment)

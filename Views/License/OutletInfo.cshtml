@@ -1,7 +1,20 @@
 ﻿@{
     Layout = "_LayoutMain";
 
+    string currentLicenseName = string.Empty;
+    if (ViewBag.Application != null && ViewBag.License != null)
+    {
+        foreach (var license in ViewBag.License)
+        {
+            if (license.Id == ViewBag.Application.LicenseTypeID)
+            {
+                currentLicenseName = license.LicenseName ?? string.Empty;
+                break;
+            }
+        }
+    }
 
+    var showHotelRooms = currentLicenseName.IndexOf("hotel", StringComparison.OrdinalIgnoreCase) >= 0;
 }
 
 
@@ -37,7 +50,7 @@
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
-                        <select type="text" required name="LicenseTypeID" value="" class="form-control" id="inputName5">
+                        <select type="text" required name="LicenseTypeID" value="" class="form-control license-type-select" id="LicenseTypeID">
                             <option value=""> --Select License-- </option>
 
                             @foreach (var licensetype in ViewBag.License)
@@ -45,7 +58,7 @@
                                 @if (licensetype.LicenseName == "Managers Fees") { }
                                 else
                                 {
-                                    <option value="@licensetype.Id">@licensetype.LicenseName </option>
+                                    <option value="@licensetype.Id" data-license-name="@licensetype.LicenseName">@licensetype.LicenseName </option>
 
                                 }
                             }
@@ -60,6 +73,21 @@
                         <input type="hidden" name="ApplicationType" id="ApplicationType" />
                     </div>
 
+                    <div class="col-12 hotel-room-section d-none">
+                        <div class="border rounded p-3">
+                            <h6 class="mb-3">Number of bedrooms to be maintained</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Double</label>
+                                    <input type="number" min="0" step="1" name="HotelDoubleRooms" class="form-control hotel-room-input" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Single</label>
+                                    <input type="number" min="0" step="1" name="HotelSingleRooms" class="form-control hotel-room-input" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
 
                     <div class="col-12">
@@ -230,7 +258,7 @@ else
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licence Type</label>
-                        <select type="text" required required name="LicenseTypeID" value="" class="form-control" id="inputName5">
+                        <select type="text" required required name="LicenseTypeID" value="" class="form-control license-type-select" id="LicenseTypeID">
                             @foreach (var licensetype in ViewBag.License)
                             {
                                 @if (licensetype.LicenseName == "Managers Fees")
@@ -241,13 +269,13 @@ else
                                 {
                                     @if (licensetype.Id == ViewBag.Application.LicenseTypeID)
                                     {
-                                        <option selected value="@licensetype.Id">@licensetype.LicenseName </option>
+                                        <option selected value="@licensetype.Id" data-license-name="@licensetype.LicenseName">@licensetype.LicenseName </option>
 
 
                                     }
                                     else
                                     {
-                                        <option value="@licensetype.Id">@licensetype.LicenseName </option>
+                                        <option value="@licensetype.Id" data-license-name="@licensetype.LicenseName">@licensetype.LicenseName </option>
                                     }
                                 }
                             }
@@ -260,6 +288,21 @@ else
                         <input type="text" required name="ApplicationTypePlaceholder" value="@ViewBag.Region" class="form-control" id="ApplicationTypePlaceholder">
                         <input type="hidden" name="ApplicationType" value="@ViewBag.Application.ApplicationType" class="form-control" id="ApplicationTypeID">
 
+                    </div>
+                    <div class="col-12 hotel-room-section @(showHotelRooms ? "" : "d-none")">
+                        <div class="border rounded p-3">
+                            <h6 class="mb-3">Number of bedrooms to be maintained</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Double</label>
+                                    <input type="number" min="0" step="1" name="HotelDoubleRooms" value="@ViewBag.OutletInfo.HotelDoubleRooms" class="form-control hotel-room-input">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Single</label>
+                                    <input type="number" min="0" step="1" name="HotelSingleRooms" value="@ViewBag.OutletInfo.HotelSingleRooms" class="form-control hotel-room-input">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     @*<div class="col-md-6">
                             <label for="inputName5" class="form-label">Location of Premises</label>
@@ -518,6 +561,36 @@ else
         var html = '<select type="text" name="city" value="" class="form-control" id="districtSelect"></select>';
         $('#citychange').html(html);
     }</script>
+
+<script>
+    (function () {
+        function syncHotelRoomFields() {
+            var licenseSelect = document.querySelector(".license-type-select");
+            var selectedOption = licenseSelect ? licenseSelect.options[licenseSelect.selectedIndex] : null;
+            var licenseName = selectedOption ? (selectedOption.getAttribute("data-license-name") || selectedOption.text || "") : "";
+            var isHotel = licenseName.toLowerCase().indexOf("hotel") >= 0;
+
+            document.querySelectorAll(".hotel-room-section").forEach(function (section) {
+                section.classList.toggle("d-none", !isHotel);
+            });
+
+            document.querySelectorAll(".hotel-room-input").forEach(function (input) {
+                input.disabled = !isHotel;
+                if (!isHotel) {
+                    input.value = "";
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            var licenseSelect = document.querySelector(".license-type-select");
+            if (licenseSelect) {
+                licenseSelect.addEventListener("change", syncHotelRoomFields);
+                syncHotelRoomFields();
+            }
+        });
+    })();
+</script>
 
 
 <script>function GetDistCounc() {

@@ -318,7 +318,10 @@
 
             @if (canMakePayment && record != null)
             {
-                <a class="btn btn-success" href="/Extracounter/PermissionToAlterPayment?id=@application?.Id&process=@processCode&ecId=@record.Id">
+                <a class="btn btn-success"
+                   href="/Extracounter/PermissionToAlterPayment?id=@application?.Id&process=@processCode&ecId=@record.Id"
+                   data-currency-payment="true"
+                   data-payment-usd-amount="@fee.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                     Make Payment
                 </a>
             }

@@ -339,7 +339,7 @@ namespace LLB.Controllers
         }
 
         [HttpGet("Payment")]
-        public async Task<IActionResult> PaymentAsync(string recordId)
+        public async Task<IActionResult> PaymentAsync(string recordId, string? currency = null)
         {
             var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
@@ -412,8 +412,19 @@ namespace LLB.Controllers
                 return RedirectToAction("Apply", new { recordId = removalApplication.Id });
             }
 
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
-            var callbackUrl = Url.Action("Apply", "TemporaryRemoval", new { recordId = removalApplication.Id }, Request.Scheme);
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, fee.Value, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("Apply", new { recordId = removalApplication.Id });
+            }
+
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/TemporaryRemoval/Apply?recordId=" + removalApplication.Id);
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
                 paynow.ResultUrl = callbackUrl;
@@ -430,7 +441,7 @@ namespace LLB.Controllers
                 ? null
                 : await _db.LicenseTypes.FirstOrDefaultAsync(item => item.Id == sourceApplication.LicenseTypeID);
 
-            payment.Add(licenseType?.LicenseName ?? TemporaryRemovalHelper.ServiceName, fee.Value);
+            payment.Add(licenseType?.LicenseName ?? TemporaryRemovalHelper.ServiceName, paymentCurrency.PaynowAmount);
 
             var response = paynow.Send(payment);
             if (!response.Success())
@@ -443,7 +454,6 @@ namespace LLB.Controllers
             {
                 Id = Guid.NewGuid().ToString(),
                 UserId = currentUser.Id,
-                Amount = payment.Total,
                 ApplicationId = removalApplication.Id,
                 Service = TemporaryRemovalHelper.ServiceName,
                 PollUrl = response.PollUrl(),
@@ -453,6 +463,7 @@ namespace LLB.Controllers
                 DateAdded = DateTime.Now,
                 DateUpdated = DateTime.Now
             };
+            PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
 
             var status = paynow.PollTransaction(transaction.PollUrl);
             var statusData = status.GetData();
@@ -1114,7 +1125,7 @@ namespace LLB.Controllers
             {
                 try
                 {
-                    var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                    var paynow = PaynowCurrencyHelper.CreatePaynow(payment);
                     var status = paynow.PollTransaction(payment.PollUrl);
                     var statusData = status.GetData();
                     payment.PaynowRef = statusData["paynowreference"];
@@ -1216,8 +1227,10 @@ namespace LLB.Controllers
         {
             return !HasPaymentStatus(payment, "Paid")
                 && !HasPaymentStatus(payment, "Cancelled")
+                && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
-                && !HasPaymentStatus(payment, "Expired");
+                && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
     }
 }

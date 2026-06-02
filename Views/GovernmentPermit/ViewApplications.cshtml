@@ -1,0 +1,103 @@
+@model LLB.Models.ViewModel.GovernmentPermitReviewViewModel
+
+@{
+    Layout = "_LayoutMain";
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">@Model.ReviewStageLabel - Government Permit</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <tbody>
+                        <tr>
+                            <th>Reference</th>
+                            <td>@Model.Reference</td>
+                        </tr>
+                        <tr>
+                            <th>Title of Authority</th>
+                            <td>@Model.TitleOfAuthority</td>
+                        </tr>
+                        <tr>
+                            <th>Ministry</th>
+                            <td>@Model.Ministry</td>
+                        </tr>
+                        <tr>
+                            <th>Location Name</th>
+                            <td>@Model.LocationName</td>
+                        </tr>
+                        <tr>
+                            <th>Address</th>
+                            <td>@Model.Address</td>
+                        </tr>
+                        <tr>
+                            <th>Province</th>
+                            <td>@Model.Province</td>
+                        </tr>
+                        <tr>
+                            <th>District</th>
+                            <td>@Model.District</td>
+                        </tr>
+                        <tr>
+                            <th>Council</th>
+                            <td>@Model.Council</td>
+                        </tr>
+                        <tr>
+                            <th>Authorisation letter</th>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(Model.LetterFromTheSuperior))
+                                {
+                                    <a href="/@Model.LetterFromTheSuperior" target="_blank">View Authorisation Letter</a>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Payment</th>
+                            <td>@((Model.Payment ?? 0).ToString("0.00")) (@Model.PaymentStatus)</td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td>@Model.Status</td>
+                        </tr>
+                        <tr>
+                            <th>Requested On</th>
+                            <td>@Model.RequestedOn</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.CanReviewAction)
+            {
+                <div class="d-flex gap-2">
+                    <form method="post" action="/GovernmentPermit/Reject">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Reject this government permit application?');">Reject</button>
+                    </form>
+                    <form method="post" action="/GovernmentPermit/Approve">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id">
+                        <button type="submit" class="btn btn-success" onclick="return confirm('@Model.ApproveButtonLabel this government permit application?');">@Model.ApproveButtonLabel</button>
+                    </form>
+                </div>
+            }
+            else if (string.Equals(Model.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+            {
+                <a href="/GovernmentPermit/Document?id=@Model.Id" target="_blank" class="btn btn-primary">Download Permit</a>
+            }
+        </div>
+    </div>
+</div>

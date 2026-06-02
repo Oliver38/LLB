@@ -37,7 +37,7 @@ namespace LLB.Controllers
 
 
         [HttpGet("Paynow")]
-        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount,string  service ,string process)
+        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount,string  service ,string process, string? currency = null)
         {
             if (IsPostFormationInspectionPayment(service))
             {
@@ -72,14 +72,21 @@ namespace LLB.Controllers
                 }
             }
 
-            //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
-            //amount = 55.7;
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, (decimal)amount, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction(service, "Postprocess", new { id = Id, process });
+            }
+
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
         
-            //paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service+"?id="+Id+"&process="+process;
-           // paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + Id + "&process=" + process;
-            paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
-            paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/" + service + "?id=" + Id + "&process=" + process);
+            paynow.ReturnUrl = paynow.ResultUrl;
 
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
 
@@ -92,7 +99,7 @@ namespace LLB.Controllers
             var licenseType = _db.LicenseTypes.Where(s => s.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
 
             // Add items to the payment
-            payment.Add(licenseType.LicenseName, (decimal)amount);
+            payment.Add(licenseType.LicenseName, paymentCurrency.PaynowAmount);
 
             // Send payment to paynow
             var response = paynow.Send(payment);
@@ -107,12 +114,12 @@ namespace LLB.Controllers
                 var userId = await userManager.FindByEmailAsync(User.Identity.Name);
                 string id = userId.Id;
                 transaction.UserId = id;
-                transaction.Amount = payment.Total;
+                PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
                 transaction.ApplicationId = Id;
                 transaction.Service = service;
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
-                transaction.PopDoc = "";
+
                 transaction.SystemRef = response.RedirectLink();
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
@@ -147,7 +154,7 @@ namespace LLB.Controllers
 
 
         [HttpGet("InspectionPaynow")]
-        public async Task<IActionResult> InspectionPaynow(string Id, double amount, string service, string process)
+        public async Task<IActionResult> InspectionPaynow(string Id, double amount, string service, string process, string? currency = null)
         {
             if (IsPostFormationInspectionPayment(service))
             {
@@ -182,12 +189,21 @@ namespace LLB.Controllers
                 }
             }
 
-            //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
-            //amount = 55.7;
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, (decimal)amount, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction(service, "Postprocess", new { id = Id, process });
+            }
+
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
         
-            paynow.ResultUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + Id + "&process=" + process;
-            paynow.ReturnUrl = "https://llb.pfms.gov.zw/Postprocess/" + service + "?id=" + Id + "&process=" + process;
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/" + service + "?id=" + Id + "&process=" + process);
+            paynow.ReturnUrl = paynow.ResultUrl;
             //paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
             //paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
 
@@ -202,7 +218,7 @@ namespace LLB.Controllers
             var licenseType = _db.LicenseTypes.Where(s => s.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
 
             // Add items to the payment
-            payment.Add(licenseType.LicenseName, (decimal)amount);
+            payment.Add(licenseType.LicenseName, paymentCurrency.PaynowAmount);
 
             // Send payment to paynow
             var response = paynow.Send(payment);
@@ -217,12 +233,12 @@ namespace LLB.Controllers
                 var userId = await userManager.FindByEmailAsync(User.Identity.Name);
                 string id = userId.Id;
                 transaction.UserId = id;
-                transaction.Amount = payment.Total;
+                PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
                 transaction.ApplicationId = Id;
                 transaction.Service = service;
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
-                transaction.PopDoc = "";
+
                 transaction.SystemRef = response.RedirectLink();
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
@@ -269,8 +285,10 @@ namespace LLB.Controllers
         {
             return !HasPaymentStatus(payment, "Paid")
                 && !HasPaymentStatus(payment, "Cancelled")
+                && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
-                && !HasPaymentStatus(payment, "Expired");
+                && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
 
         private Inspection GetLatestPostFormationInspection(string applicationId)
@@ -305,7 +323,7 @@ namespace LLB.Controllers
                 return payment;
             }
 
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+            var paynow = PaynowCurrencyHelper.CreatePaynow(payment);
             var status = paynow.PollTransaction(payment.PollUrl);
             var statusdata = status.GetData();
             payment.PaynowRef = statusdata["paynowreference"];

@@ -1,4 +1,5 @@
-﻿
+﻿@using LLB.Helpers
+
 
 @{
     Layout = "_LayoutMain";
@@ -107,10 +108,16 @@
                                         { <span class="text-success">@application.Status</span>}
                                     else if (application.Status == "verified")
                                     { <span class="text-success">@application.Status</span>}
+                                    else if (application.Status == "awaiting verification")
+                                    { <span class="text-warning">@application.Status</span>}
                                     </td>
 
                                     <td>
-                                        @if (application.Status == "verified")
+                                        @if (AgentLicenseHelper.IsAgentLicenseApplication(application))
+                                        {
+                                            <a href="/AgentLicense/ViewApplications?id=@application.Id" class="btn btn-primary">View</a>
+                                        }
+                                        else if (application.Status == "verified")
                                         { }
                                         else if (application.Status == "payment verification")
                                         { }
@@ -615,6 +622,46 @@
                                     <td>@temporaryRetail.LicenseRegion</td>
                                     <td>
                                         <a class="btn btn-primary" href="/Verify/TemporaryRetails?id=@temporaryRetail.Id&taskId=@temporaryRetail.TaskId">Review Application</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="card">
+            <div class="card-body" id="_step1">
+                <div class="card-header">
+                    <h5 class="card-title">Government Permit Applications</h5>
+                </div>
+
+                <div class="row">
+                    <table class="table table-responsiveß table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Title of Authority</th>
+                                <th>Ministry</th>
+                                <th>Location Name</th>
+                                <th>Application Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var permit in ViewBag.GovernmentPermitTasks)
+                            {
+                                <tr>
+                                    <td>@permit.Reference</td>
+                                    <td>@permit.TitleOfAuthority</td>
+                                    <td>@permit.Ministry</td>
+                                    <td>@permit.LocationName</td>
+                                    <td>@permit.RequestedOn</td>
+                                    <td>
+                                        <a class="btn btn-primary" href="/GovernmentPermit/ViewApplications?id=@permit.Id">Review Application</a>
                                     </td>
                                 </tr>
                             }

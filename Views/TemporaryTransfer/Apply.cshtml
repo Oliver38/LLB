@@ -910,7 +910,10 @@
 
                     @if (canMakePayment)
                     {
-                        <a class="btn btn-success" href="/TemporaryTransfer/Payment?id=@transferApplication.Id">Make Payment</a>
+                        <a class="btn btn-success"
+                           href="/TemporaryTransfer/Payment?id=@transferApplication.Id"
+                           data-currency-payment="true"
+                           data-payment-usd-amount="@((totalFee ?? 0).ToString(CultureInfo.InvariantCulture))">Make Payment</a>
                     }
 
                     @if (canContinue)

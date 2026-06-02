@@ -11,10 +11,11 @@
     var wholesaleLicense = ViewBag.WholesaleLicense as LicenseTypes;
     var agentLicense = ViewBag.AgentLicense as LicenseTypes;
     var wholesaleOutlet = ViewBag.WholesaleOutlet as OutletInfo;
-    var publicationProof = ViewBag.PublicationProof as AttachmentInfo;
     var tieAffidavit = ViewBag.TieAffidavit as AttachmentInfo;
     var wholesaleLicenseAttachment = ViewBag.WholesaleLicenseAttachment as AttachmentInfo;
+    var payment = ViewBag.Payment as Payments;
     var searchValue = ViewBag.SearchValue as string ?? string.Empty;
+    var fromPostFormation = ViewBag.FromPostFormation is bool openedFromPostFormation && openedFromPostFormation;
 
     string DisplayValue(string? value)
     {
@@ -26,8 +27,26 @@
         return status?.Trim().ToLowerInvariant() switch
         {
             "approved" => "bg-success",
+            "paid" => "bg-success",
             "awaiting approval" => "bg-info text-dark",
+            "awaiting verification" => "bg-info text-dark",
+            "awaiting payment" => "bg-warning text-dark",
+            "payment not required" => "bg-info text-dark",
             "rejected" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    string PaymentBadgeClass(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "paid" => "bg-success",
+            "awaiting delivery" => "bg-warning text-dark",
+            "sent" => "bg-warning text-dark",
+            "created" => "bg-warning text-dark",
+            "not paid" => "bg-secondary",
+            "not required" => "bg-info text-dark",
             _ => "bg-secondary"
         };
     }
@@ -39,6 +58,59 @@
     var nationalityValue = agentApplication?.OperationAddress ?? user?.Nationality ?? string.Empty;
     var idPassValue = agentApplication?.IdPass ?? user?.NatID ?? string.Empty;
     var businessNameValue = agentApplication?.BusinessName ?? $"{user?.Name} {user?.LastName}".Trim();
+    var agentStatus = agentApplication?.Status?.Trim().ToLowerInvariant();
+    var paymentStatus = payment?.PaymentStatus ?? payment?.Status ?? agentApplication?.PaymentStatus ?? "Not Paid";
+    var paymentRequired = (agentApplication?.PaymentFee ?? 0) > 0;
+    var paymentComplete = !paymentRequired
+        || string.Equals(payment?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(payment?.Status, "Paid", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(agentApplication?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
+    var titleValue = agentApplication?.Title ?? string.Empty;
+    var isPaymentStage = agentStatus == "awaiting payment"
+        || agentStatus == "payment pending"
+        || agentStatus == "paid"
+        || agentStatus == "payment not required";
+    var hasActivePayment = payment != null
+        && !paymentComplete
+        && !string.Equals(payment.PaymentStatus, "Cancelled", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.PaymentStatus, "Canceled", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Canceled", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.PaymentStatus, "Rejected", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Rejected", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.PaymentStatus, "Expired", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Expired", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.PaymentStatus, "Awaiting Delivery", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Awaiting Delivery", StringComparison.OrdinalIgnoreCase);
+    var allRequiredDocumentsUploaded = agentApplication != null
+        && !string.IsNullOrWhiteSpace(agentApplication.IdCopy)
+        && !string.IsNullOrWhiteSpace(agentApplication.Fingerprints)
+        && !string.IsNullOrWhiteSpace(agentApplication.FormFF)
+        && !string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation)
+        && !string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation);
+    var canUploadDocuments = agentApplication != null
+        && isPaymentStage
+        && !hasActivePayment
+        && !string.Equals(agentApplication.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment?.Status, "Paid", StringComparison.OrdinalIgnoreCase);
+    var canMakePayment = agentApplication != null && isPaymentStage && allRequiredDocumentsUploaded && paymentRequired && !paymentComplete && !hasActivePayment;
+    var canContinue = agentApplication != null && isPaymentStage && allRequiredDocumentsUploaded && paymentComplete;
+    var canEditSubmittedApplicantDetails = fromPostFormation
+        && agentApplication != null
+        && isPaymentStage
+        && !string.Equals(agentApplication.Status, "approved", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(agentApplication.Status, "rejected", StringComparison.OrdinalIgnoreCase);
+    var latestZwgExchangeRate = Convert.ToDouble(ViewBag.LatestZwgExchangeRate ?? 0);
+    var agentPaymentUsdAmount = agentApplication?.PaymentFee ?? 0;
+    var agentPaymentZwgAmount = latestZwgExchangeRate > 0
+        ? agentPaymentUsdAmount * (decimal)latestZwgExchangeRate
+        : 0;
+
+    string FormatPaymentAmount(string currency, decimal amount)
+    {
+        return $"{currency} {amount:N2}";
+    }
 }
 
 @if (TempData["error"] != null)
@@ -58,6 +130,7 @@
     </div>
     <div class="card-body">
         <form method="get" action="/AgentLicense/Apply" class="row g-3 align-items-end">
+            <input type="hidden" name="fromPostFormation" value="@fromPostFormation.ToString().ToLowerInvariant()" />
             <div class="col-md-8">
                 <label class="form-label" for="llbNumber">Wholesale LLB Number</label>
                 <input type="text" id="llbNumber" name="llbNumber" value="@searchValue" class="form-control" required />
@@ -118,18 +191,31 @@
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-1">Agent Information</h5>
-                <p class="text-muted mb-0">Review and edit the agent details, then attach the required documents.</p>
+                <p class="text-muted mb-0">Review and edit the agent details. Required documents are uploaded one by one after saving.</p>
             </div>
             <div class="card-body">
                 <form method="post" action="/AgentLicense/Submit" enctype="multipart/form-data" class="row g-3">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="llbNumber" value="@wholesaleApplication.LLBNum" />
+                    <input type="hidden" name="fromPostFormation" value="@fromPostFormation.ToString().ToLowerInvariant()" />
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <label class="form-label">Title</label>
+                        <select name="title" class="form-select" required>
+                            <option value="">Select title</option>
+                            <option value="Mr" selected="@(string.Equals(titleValue, "Mr", StringComparison.OrdinalIgnoreCase))">Mr</option>
+                            <option value="Mrs" selected="@(string.Equals(titleValue, "Mrs", StringComparison.OrdinalIgnoreCase))">Mrs</option>
+                            <option value="Miss" selected="@(string.Equals(titleValue, "Miss", StringComparison.OrdinalIgnoreCase))">Miss</option>
+                            <option value="Ms" selected="@(string.Equals(titleValue, "Ms", StringComparison.OrdinalIgnoreCase))">Ms</option>
+                            <option value="Dr" selected="@(string.Equals(titleValue, "Dr", StringComparison.OrdinalIgnoreCase))">Dr</option>
+                            <option value="Prof" selected="@(string.Equals(titleValue, "Prof", StringComparison.OrdinalIgnoreCase))">Prof</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
                         <label class="form-label">Name</label>
                         <input type="text" name="name" value="@nameValue" class="form-control" id="agentName" required />
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label">Surname</label>
                         <input type="text" name="surname" value="@surnameValue" class="form-control" id="agentSurname" required />
                     </div>
@@ -158,37 +244,8 @@
                         <input type="text" name="businessName" value="@businessNameValue" class="form-control" id="agentBusinessName" readonly required />
                     </div>
 
-                    <div class="col-12">
-                        <hr />
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Advert and Proof of publication in the government gazette and local paper.{L.G 2}</label>
-                        <input type="file" name="publicationProof" class="form-control" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Tie Affidavit</label>
-                        <input type="file" name="tieAffidavit" class="form-control" required />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Fingerprint</label>
-                        <input type="file" name="fingerprints" class="form-control" required />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Form 55</label>
-                        <input type="file" name="form55" class="form-control" required />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">ID</label>
-                        <input type="file" name="idCopy" class="form-control" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Wholesale license</label>
-                        <input type="file" name="wholesaleLicense" class="form-control" required />
-                    </div>
-
                     <div class="col-12 d-flex justify-content-end">
-                        <button type="submit" class="btn btn-primary">Submit Agent License Application</button>
+                        <button type="submit" class="btn btn-primary">Save Agent Information</button>
                     </div>
                 </form>
             </div>
@@ -219,86 +276,216 @@
 
 @if (agentApplication != null)
 {
+    var currentAgentApplication = agentApplication;
+
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <div>
                 <h5 class="card-title mb-1">Agent License Application</h5>
                 <p class="text-muted mb-0">Submitted agent details and required attachments.</p>
             </div>
-            <span class="badge rounded-pill @StatusBadgeClass(agentApplication.Status)">@(agentApplication.Status ?? "Unknown")</span>
+            <span class="badge rounded-pill @StatusBadgeClass(currentAgentApplication.Status)">@(currentAgentApplication.Status ?? "Unknown")</span>
         </div>
         <div class="card-body">
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-muted">Reference</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.RefNum)</span>
-                    </div>
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-muted">Name</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.PlaceOfBirth)</span>
-                    </div>
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-muted">Surname</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.PlaceOfEntry)</span>
-                    </div>
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-muted">DOB</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.DateofEntryIntoZimbabwe)</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2">
-                        <span class="text-muted">Gender</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.RenewalStatus)</span>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small text-uppercase fw-semibold">Payment Fee</div>
+                        <div class="fs-6 fw-semibold">@(currentAgentApplication.PaymentFee ?? 0)</div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-muted">Nationality</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.OperationAddress)</span>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small text-uppercase fw-semibold">Payment Status</div>
+                        <span class="badge rounded-pill @PaymentBadgeClass(paymentStatus)">@paymentStatus</span>
                     </div>
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-muted">ID or Passport</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.IdPass)</span>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small text-uppercase fw-semibold">Paynow Ref</div>
+                        <div class="fw-semibold">@(payment?.PaynowRef ?? "N/A")</div>
                     </div>
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-muted">Applicant Type</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.ApplicantType)</span>
-                    </div>
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-muted">Licensee Name</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentApplication.BusinessName)</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2">
-                        <span class="text-muted">Agent Licence</span>
-                        <span class="fw-semibold text-end">@DisplayValue(agentLicense?.LicenseName)</span>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small text-uppercase fw-semibold">Verification</div>
+                        <div class="fw-semibold">@(isPaymentStage ? "Not submitted" : "Submitted")</div>
                     </div>
                 </div>
             </div>
+
+            @if (isPaymentStage)
+            {
+                <div class="alert alert-info">
+                    @(allRequiredDocumentsUploaded
+                        ? "Complete payment, then continue to submit this agent license application for verification."
+                        : "Upload all required documents before payment or verification.")
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    @if (canMakePayment)
+                    {
+                        <button type="button"
+                                class="btn btn-success"
+                                data-bs-toggle="modal"
+                                data-bs-target="#agentLicenseCurrencyPaymentModal"
+                                data-toggle="modal"
+                                data-target="#agentLicenseCurrencyPaymentModal"
+                                data-allow-multiple-click="true">
+                            Make Payment
+                        </button>
+                    }
+                    @if (hasActivePayment && !string.IsNullOrWhiteSpace(payment?.SystemRef))
+                    {
+                        <a class="btn btn-outline-primary" href="@payment.SystemRef">Resume Payment</a>
+                    }
+                    @if (canContinue)
+                    {
+                        <form method="post" action="/AgentLicense/Continue" class="mb-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@currentAgentApplication.Id" />
+                            <button type="submit" class="btn btn-primary">Submit For Verification</button>
+                        </form>
+                    }
+                </div>
+            }
+
+            @if (canEditSubmittedApplicantDetails)
+            {
+                <form method="post" action="/AgentLicense/UpdateApplicantDetails" class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@currentAgentApplication.Id" />
+                    <div class="col-md-6">
+                        <label class="form-label">Reference</label>
+                        <input type="text" value="@DisplayValue(currentAgentApplication.RefNum)" class="form-control" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Agent Licence</label>
+                        <input type="text" value="@DisplayValue(agentLicense?.LicenseName)" class="form-control" readonly />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Title</label>
+                        <select name="title" class="form-select" required>
+                            <option value="">Select title</option>
+                            <option value="Mr" selected="@(string.Equals(titleValue, "Mr", StringComparison.OrdinalIgnoreCase))">Mr</option>
+                            <option value="Mrs" selected="@(string.Equals(titleValue, "Mrs", StringComparison.OrdinalIgnoreCase))">Mrs</option>
+                            <option value="Miss" selected="@(string.Equals(titleValue, "Miss", StringComparison.OrdinalIgnoreCase))">Miss</option>
+                            <option value="Ms" selected="@(string.Equals(titleValue, "Ms", StringComparison.OrdinalIgnoreCase))">Ms</option>
+                            <option value="Dr" selected="@(string.Equals(titleValue, "Dr", StringComparison.OrdinalIgnoreCase))">Dr</option>
+                            <option value="Prof" selected="@(string.Equals(titleValue, "Prof", StringComparison.OrdinalIgnoreCase))">Prof</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" value="@nameValue" class="form-control" id="agentEditName" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Surname</label>
+                        <input type="text" name="surname" value="@surnameValue" class="form-control" id="agentEditSurname" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">DOB</label>
+                        <input type="text" name="dob" value="@dobValue" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Gender</label>
+                        <input type="text" name="gender" value="@genderValue" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nationality</label>
+                        <input type="text" name="nationality" value="@nationalityValue" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">ID or Passport Number</label>
+                        <input type="text" name="idPass" value="@idPassValue" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Applicant Type</label>
+                        <input type="text" name="applicantType" value="@(string.IsNullOrWhiteSpace(currentAgentApplication.ApplicantType) ? "Individual" : currentAgentApplication.ApplicantType)" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Licensee Name</label>
+                        <input type="text" value="@businessNameValue" class="form-control" id="agentEditBusinessName" readonly />
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">Save Applicant Details</button>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span class="text-muted">Reference</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.RefNum)</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span class="text-muted">Title</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.Title)</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span class="text-muted">Name</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.PlaceOfBirth)</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span class="text-muted">Surname</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.PlaceOfEntry)</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span class="text-muted">DOB</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.DateofEntryIntoZimbabwe)</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-2">
+                            <span class="text-muted">Gender</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.RenewalStatus)</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span class="text-muted">Nationality</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.OperationAddress)</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span class="text-muted">ID or Passport</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.IdPass)</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span class="text-muted">Applicant Type</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.ApplicantType)</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <span class="text-muted">Licensee Name</span>
+                            <span class="fw-semibold text-end">@DisplayValue(currentAgentApplication.BusinessName)</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-2">
+                            <span class="text-muted">Agent Licence</span>
+                            <span class="fw-semibold text-end">@DisplayValue(agentLicense?.LicenseName)</span>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (isPaymentStage && !allRequiredDocumentsUploaded)
+            {
+                <div class="alert alert-warning mt-4">
+                    Upload each required document before making payment or submitting for verification.
+                </div>
+            }
 
             <div class="table-responsive mt-4">
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
                             <th>Document</th>
+                            <th>Status</th>
                             <th>File</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Advert and Proof of publication in the government gazette and local paper.{L.G 2}</td>
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(publicationProof?.DocumentLocation))
-                                {
-                                    <a href="~/@publicationProof.DocumentLocation" target="_blank">View Attachment</a>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">Missing</span>
-                                }
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Tie Affidavit</td>
+                            <td class="fw-semibold">Tie Affidavit</td>
+                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation))
                                 {
@@ -309,48 +496,116 @@
                                     <span class="text-muted">Missing</span>
                                 }
                             </td>
+                            <td>
+                                @if (canUploadDocuments)
+                                {
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@currentAgentApplication.Id" />
+                                        <input type="hidden" name="documentType" value="tieAffidavit" />
+                                        <input type="file" name="file" class="form-control form-control-sm" required />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "Upload" : "Replace")</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Locked</span>
+                                }
+                            </td>
                         </tr>
                         <tr>
-                            <td>Fingerprint</td>
+                            <td class="fw-semibold">Fingerprint</td>
+                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints) ? "Missing" : "Uploaded")</span></td>
                             <td>
-                                @if (!string.IsNullOrWhiteSpace(agentApplication.Fingerprints))
+                                @if (!string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints))
                                 {
-                                    <a href="~/@agentApplication.Fingerprints" target="_blank">View Attachment</a>
+                                    <a href="~/@currentAgentApplication.Fingerprints" target="_blank">View Attachment</a>
                                 }
                                 else
                                 {
                                     <span class="text-muted">Missing</span>
                                 }
                             </td>
+                            <td>
+                                @if (canUploadDocuments)
+                                {
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@currentAgentApplication.Id" />
+                                        <input type="hidden" name="documentType" value="fingerprints" />
+                                        <input type="file" name="file" class="form-control form-control-sm" required />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints) ? "Upload" : "Replace")</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Locked</span>
+                                }
+                            </td>
                         </tr>
                         <tr>
-                            <td>Form 55</td>
+                            <td class="fw-semibold">Form 55</td>
+                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(currentAgentApplication.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(currentAgentApplication.FormFF) ? "Missing" : "Uploaded")</span></td>
                             <td>
-                                @if (!string.IsNullOrWhiteSpace(agentApplication.FormFF))
+                                @if (!string.IsNullOrWhiteSpace(currentAgentApplication.FormFF))
                                 {
-                                    <a href="~/@agentApplication.FormFF" target="_blank">View Attachment</a>
+                                    <a href="~/@currentAgentApplication.FormFF" target="_blank">View Attachment</a>
                                 }
                                 else
                                 {
                                     <span class="text-muted">Missing</span>
                                 }
                             </td>
+                            <td>
+                                @if (canUploadDocuments)
+                                {
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@currentAgentApplication.Id" />
+                                        <input type="hidden" name="documentType" value="form55" />
+                                        <input type="file" name="file" class="form-control form-control-sm" required />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(currentAgentApplication.FormFF) ? "Upload" : "Replace")</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Locked</span>
+                                }
+                            </td>
                         </tr>
                         <tr>
-                            <td>ID</td>
+                            <td class="fw-semibold">ID</td>
+                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy) ? "Missing" : "Uploaded")</span></td>
                             <td>
-                                @if (!string.IsNullOrWhiteSpace(agentApplication.IdCopy))
+                                @if (!string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy))
                                 {
-                                    <a href="~/@agentApplication.IdCopy" target="_blank">View Attachment</a>
+                                    <a href="~/@currentAgentApplication.IdCopy" target="_blank">View Attachment</a>
                                 }
                                 else
                                 {
                                     <span class="text-muted">Missing</span>
                                 }
                             </td>
+                            <td>
+                                @if (canUploadDocuments)
+                                {
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@currentAgentApplication.Id" />
+                                        <input type="hidden" name="documentType" value="idCopy" />
+                                        <input type="file" name="file" class="form-control form-control-sm" required />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy) ? "Upload" : "Replace")</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Locked</span>
+                                }
+                            </td>
                         </tr>
                         <tr>
-                            <td>Wholesale license</td>
+                            <td class="fw-semibold">Wholesale license</td>
+                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation))
                                 {
@@ -361,15 +616,158 @@
                                     <span class="text-muted">Missing</span>
                                 }
                             </td>
+                            <td>
+                                @if (canUploadDocuments)
+                                {
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@currentAgentApplication.Id" />
+                                        <input type="hidden" name="documentType" value="wholesaleLicense" />
+                                        <input type="file" name="file" class="form-control form-control-sm" required />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "Upload" : "Replace")</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Locked</span>
+                                }
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            @if (string.Equals(agentApplication.Status, "approved", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(agentApplication.LLBNum))
+            @if (string.Equals(currentAgentApplication.Status, "approved", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(currentAgentApplication.LLBNum))
             {
-                <a class="btn btn-success" href="/Downloads/CheckDownload?LLBNUM=@agentApplication.LLBNum&DocumentType=License">Download Agent Licence</a>
+                <a class="btn btn-success" href="/Downloads/CheckDownload?LLBNUM=@currentAgentApplication.LLBNum&DocumentType=License">Download Agent Licence</a>
             }
         </div>
     </div>
+
+    @if (canMakePayment)
+    {
+        <div class="modal fade" id="agentLicenseCurrencyPaymentModal" tabindex="-1" aria-labelledby="agentLicenseCurrencyPaymentModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form method="get" action="/AgentLicense/Payment" class="modal-content" id="agentLicenseCurrencyPaymentForm">
+                    <input type="hidden" name="id" value="@currentAgentApplication.Id" />
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="agentLicenseCurrencyPaymentModalLabel">Select Payment Currency</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="llb-payment-price mb-3">
+                            <div class="d-flex justify-content-between gap-3">
+                                <span class="text-muted">USD Amount</span>
+                                <strong>@FormatPaymentAmount("USD", agentPaymentUsdAmount)</strong>
+                            </div>
+                            <div class="d-flex justify-content-between gap-3 mt-2">
+                                <span class="text-muted">ZWG Amount</span>
+                                <strong>@(latestZwgExchangeRate > 0 ? FormatPaymentAmount("ZWG", agentPaymentZwgAmount) : "Rate not configured")</strong>
+                            </div>
+                            <div class="small text-muted mt-2">
+                                @(latestZwgExchangeRate > 0
+                                    ? $"Exchange rate: 1 USD = {latestZwgExchangeRate:N4} ZWG"
+                                    : "No saved USD/ZWG exchange rate is available.")
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-3">
+                            <label class="llb-currency-option active" data-agent-license-currency-option="USD">
+                                <span class="d-flex align-items-center justify-content-between gap-3">
+                                    <span class="d-flex align-items-center gap-3">
+                                        <input class="form-check-input m-0" type="radio" name="currency" value="USD" checked>
+                                        <span>
+                                            <span class="fw-semibold d-block">USD</span>
+                                            <span class="text-muted small">Pay using the USD price configured in the system.</span>
+                                        </span>
+                                    </span>
+                                    <span class="fw-semibold text-nowrap">@FormatPaymentAmount("USD", agentPaymentUsdAmount)</span>
+                                </span>
+                            </label>
+
+                            <label class="llb-currency-option" data-agent-license-currency-option="ZWG">
+                                <span class="d-flex align-items-center justify-content-between gap-3">
+                                    <span class="d-flex align-items-center gap-3">
+                                        <input class="form-check-input m-0" type="radio" name="currency" value="ZWG">
+                                        <span>
+                                            <span class="fw-semibold d-block">ZWG</span>
+                                            <span class="text-muted small">Pay using the latest saved USD/ZWG exchange rate.</span>
+                                        </span>
+                                    </span>
+                                    <span class="fw-semibold text-nowrap">@(latestZwgExchangeRate > 0 ? FormatPaymentAmount("ZWG", agentPaymentZwgAmount) : "Rate not configured")</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Make Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+}
+
+<script>
+    (function () {
+        const nameInput = document.getElementById("agentEditName");
+        const surnameInput = document.getElementById("agentEditSurname");
+        const businessNameInput = document.getElementById("agentEditBusinessName");
+        if (!nameInput || !surnameInput || !businessNameInput) {
+            return;
+        }
+
+        function syncBusinessName() {
+            businessNameInput.value = [nameInput.value, surnameInput.value]
+                .map(function (value) { return value.trim(); })
+                .filter(Boolean)
+                .join(" ");
+        }
+
+        nameInput.addEventListener("input", syncBusinessName);
+        surnameInput.addEventListener("input", syncBusinessName);
+    })();
+</script>
+
+@section Scripts {
+    <script>
+        (function () {
+            const modalElement = document.getElementById("agentLicenseCurrencyPaymentModal");
+            const modalButton = document.querySelector('[data-bs-target="#agentLicenseCurrencyPaymentModal"], [data-target="#agentLicenseCurrencyPaymentModal"]');
+            const options = Array.from(document.querySelectorAll("[data-agent-license-currency-option]"));
+
+            options.forEach(function (option) {
+                option.addEventListener("click", function () {
+                    const currency = option.getAttribute("data-agent-license-currency-option");
+                    const input = option.querySelector('input[type="radio"]');
+                    if (input) {
+                        input.checked = true;
+                    }
+
+                    options.forEach(function (item) {
+                        item.classList.toggle("active", item.getAttribute("data-agent-license-currency-option") === currency);
+                    });
+                });
+            });
+
+            if (modalElement && modalButton) {
+                modalButton.addEventListener("click", function () {
+                    if (window.bootstrap && window.bootstrap.Modal) {
+                        window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                        return;
+                    }
+
+                    if (window.jQuery) {
+                        window.jQuery(modalElement).modal("show");
+                        return;
+                    }
+
+                    modalElement.classList.add("show");
+                    modalElement.style.display = "block";
+                    modalElement.removeAttribute("aria-hidden");
+                });
+            }
+        })();
+    </script>
 }

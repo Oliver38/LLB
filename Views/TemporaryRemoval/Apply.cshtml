@@ -499,7 +499,10 @@
 
                     @if (canMakePayment && removalApplication != null)
                     {
-                        <a class="btn btn-success" href="/TemporaryRemoval/Payment?recordId=@removalApplication.Id">Make Payment</a>
+                        <a class="btn btn-success"
+                           href="/TemporaryRemoval/Payment?recordId=@removalApplication.Id"
+                           data-currency-payment="true"
+                           data-payment-usd-amount="@((totalFee ?? 0).ToString(CultureInfo.InvariantCulture))">Make Payment</a>
                     }
 
                     @if (canContinue && removalApplication != null)

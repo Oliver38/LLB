@@ -23,6 +23,8 @@ namespace LLB.Models
         //public string BusinessName { get; set; }
         public string? LicenseTypeID { get; set; }
         public string? Council { get; set; }
+        public int? HotelDoubleRooms { get; set; }
+        public int? HotelSingleRooms { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DateUpdated { get; set; }
 

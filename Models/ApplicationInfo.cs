@@ -26,6 +26,7 @@ namespace LLB.Models
         public string? LLBNum { get; set; }//Place of operation
         public string? ApplicantType { get; set; }
         public string? BusinessName { get; set; }//Place of operation
+        public string? Title { get; set; }
 
         public string? IdCopy { get; set; }
         //public string? Pclearance { get; set; }

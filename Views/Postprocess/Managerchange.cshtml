@@ -230,12 +230,18 @@
                                             <td>
                                                 @if (ViewBag.Payment == null)
                                                 {
-                                                    <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process">
+                                                    <a class="btn btn-primary"
+                                                       href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process"
+                                                       data-currency-payment="true"
+                                                       data-payment-usd-amount="@Convert.ToString(ViewBag.TotalFee, System.Globalization.CultureInfo.InvariantCulture)">
                                                         Make Payment
                                                     </a>
                                                 }
                                                 else
-                                                { <a class="btn btn-primary" href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process">
+                                                { <a class="btn btn-primary"
+                                                     href="/Postpayments/Paynow?id=@ViewBag.Appinfo.Id&amount=@ViewBag.TotalFee&service=inspection&process=@ViewBag.Process"
+                                                     data-currency-payment="true"
+                                                     data-payment-usd-amount="@Convert.ToString(ViewBag.TotalFee, System.Globalization.CultureInfo.InvariantCulture)">
                                                         Make Payment
                                                     </a>
                                                 }

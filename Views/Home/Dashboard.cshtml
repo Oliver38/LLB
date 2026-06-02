@@ -14,13 +14,21 @@
     var extendedHourListings = ViewBag.ExtendedHourListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
     var temporaryRetailListings = ViewBag.TemporaryRetailListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
     var extraCounterListings = ViewBag.ExtraCounterListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+    var agentLicenseListings = ViewBag.AgentLicenseListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+    var governmentPermitListings = ViewBag.GovernmentPermitListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+    var approvedGovernmentPermitLicenses = governmentPermitListings
+        .Where(listing => string.Equals(listing.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+        .ToList();
 
     Func<string?, string> statusClass = status => status?.ToLowerInvariant() switch
     {
         "approved" => "llb-status-success",
         "submitted" => "llb-status-info",
         "awaiting approval" => "llb-status-info",
+        "awaiting payment" => "llb-status-warning",
         "payment verification" => "llb-status-info",
+        "payment not required" => "llb-status-info",
+        "paid" => "llb-status-success",
         "verified" => "llb-status-success",
         "inprogress" => "llb-status-warning",
         "has query" => "llb-status-warning",
@@ -77,7 +85,7 @@
             <div class="llb-stat-head">
                 <div>
                     <p class="mb-1">Approved Licences</p>
-                    <h3>@ViewBag.ApprovedApplications.Count</h3>
+                    <h3>@(ViewBag.ApprovedApplications.Count + approvedGovernmentPermitLicenses.Count)</h3>
                 </div>
                 <span class="llb-stat-icon"><i class="bi bi-patch-check"></i></span>
             </div>
@@ -238,7 +246,7 @@
             </div>
 
             <div class="@tabPaneClass("licences-pane")" id="licences-pane" role="tabpanel">
-                @if (ViewBag.ApprovedApplications.Count == 0)
+                @if (ViewBag.ApprovedApplications.Count == 0 && !approvedGovernmentPermitLicenses.Any())
                 {
                     <div class="llb-empty-state">
                         <i class="bi bi-patch-check"></i>
@@ -317,6 +325,24 @@
                                                     }
                                                 }
                                             </div>
+                                        </td>
+                                    </tr>
+                                }
+                                @foreach (var permit in approvedGovernmentPermitLicenses)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@permit.Reference</td>
+                                        <td>@permit.LLBNumber</td>
+                                        <td>@permit.TradingName</td>
+                                        <td>N/A</td>
+                                        <td>@permit.LicenseName</td>
+                                        <td>
+                                            <span class="llb-status-pill @statusClass(permit.Status)">@permit.Status</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="@permit.ActionUrl" class="btn btn-sm btn-primary">
+                                                Download Permit
+                                            </a>
                                         </td>
                                     </tr>
                                 }
@@ -683,6 +709,118 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-12">
+                        <div class="card llb-panel-card" id="agent-license-listings">
+                            <div class="card-header">
+                                <h5 class="card-title">Agent License Listings</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (!agentLicenseListings.Any())
+                                {
+                                    <div class="llb-empty-state">
+                                        <i class="bi bi-person-vcard"></i>
+                                        <h5 class="fw-bold">No agent license records</h5>
+                                        <p class="text-muted mb-0">Agent license applications will appear here after you start one from an approved wholesale licence.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>Reference</th>
+                                                    <th>Licensee Name</th>
+                                                    <th>LLB Number</th>
+                                                    <th>Submitted</th>
+                                                    <th>Licence</th>
+                                                    <th>For</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var listing in agentLicenseListings)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-semibold">@listing.Reference</td>
+                                                        <td class="fw-semibold">@listing.TradingName</td>
+                                                        <td>@listing.LLBNumber</td>
+                                                        <td>@(listing.SubmittedDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                                        <td>@listing.LicenseName</td>
+                                                        <td>@listing.RegionName</td>
+                                                        <td>
+                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card llb-panel-card" id="government-permit-listings">
+                            <div class="card-header">
+                                <h5 class="card-title">Government Permit Listings</h5>
+                            </div>
+                            <div class="card-body">
+                                @if (!governmentPermitListings.Any())
+                                {
+                                    <div class="llb-empty-state">
+                                        <i class="bi bi-building-check"></i>
+                                        <h5 class="fw-bold">No government permit records</h5>
+                                        <p class="text-muted mb-0">Government permit applications will appear here after you submit one.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>Reference</th>
+                                                    <th>Location</th>
+                                                    <th>LLB Number</th>
+                                                    <th>Submitted</th>
+                                                    <th>Permit</th>
+                                                    <th>For</th>
+                                                    <th>Status</th>
+                                                    <th class="text-end">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var listing in governmentPermitListings)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-semibold">@listing.Reference</td>
+                                                        <td class="fw-semibold">@listing.TradingName</td>
+                                                        <td>@listing.LLBNumber</td>
+                                                        <td>@(listing.SubmittedDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
+                                                        <td>@listing.LicenseName</td>
+                                                        <td>@listing.RegionName</td>
+                                                        <td>
+                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -714,6 +852,7 @@
                         <option value="TRL">Temporary retail liquor licence</option>
                         <option value="ECF">Permission to alter</option>
                         <option value="EXC">Extra counter</option>
+                        <option value="AGL">Agent license</option>
                     </select>
                     <div class="alert alert-warning d-none mt-3 mb-0" id="renewalEligibilityWarning" role="alert"></div>
                 </div>

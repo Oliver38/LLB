@@ -46,12 +46,21 @@ namespace LLB.Controllers
 
 
             List<ApplicationInfo> appinfo = new List<ApplicationInfo>();
-            var tasks = _db.Tasks.Where(f => f.RecommenderId == id && f.Status == "assigned" && f.Service == "new application").ToList();
+            var tasks = _db.Tasks
+                .Where(f => f.RecommenderId == id
+                    && f.Status == "assigned"
+                    && (f.Service == "new application" || f.Service == AgentLicenseHelper.ServiceName))
+                .ToList();
             foreach(var task in tasks)
             {
                 ApplicationInfo getinfo = new ApplicationInfo();
 	
                 var applications = _db.ApplicationInfo.Where(a => a.Id == task.ApplicationId).FirstOrDefault();
+
+                if (applications == null)
+                {
+                    continue;
+                }
 	
                 getinfo = applications;
                 appinfo.Add(getinfo);
@@ -103,6 +112,48 @@ namespace LLB.Controllers
                 completeappinfo.Add(getcomplinfo);
             }
 
+            List<GovernmentPermitReviewViewModel> governmentPermitTasks = new List<GovernmentPermitReviewViewModel>();
+            var assignedGovernmentPermitTasks = _db.Tasks
+                .Where(task => task.RecommenderId == id
+                    && task.Service == GovernmentPermitHelper.ServiceName
+                    && task.Status == "assigned")
+                .OrderByDescending(task => task.DateAdded)
+                .ToList();
+            foreach (var governmentPermitTask in assignedGovernmentPermitTasks)
+            {
+                var permit = _db.GovernmentPermit.Where(application => application.Id == governmentPermitTask.ApplicationId).FirstOrDefault();
+                if (permit == null)
+                {
+                    continue;
+                }
+
+                var application = string.IsNullOrWhiteSpace(permit.ApplicationId)
+                    ? null
+                    : _db.ApplicationInfo.Where(info => info.Id == permit.ApplicationId).FirstOrDefault();
+                var licenseType = application == null
+                    ? null
+                    : _db.LicenseTypes.Where(licenseRecord => licenseRecord.Id == application.LicenseTypeID).FirstOrDefault();
+                var licenseRegion = application == null
+                    ? null
+                    : _db.LicenseRegions.Where(region => region.Id == application.ApplicationType).FirstOrDefault();
+
+                governmentPermitTasks.Add(new GovernmentPermitReviewViewModel
+                {
+                    Id = permit.Id ?? string.Empty,
+                    TaskId = governmentPermitTask.Id ?? string.Empty,
+                    ApplicationId = application?.Id ?? permit.Id ?? string.Empty,
+                    Reference = permit.Reference ?? string.Empty,
+                    LLBNumber = application?.LLBNum ?? "N/A",
+                    LicenseType = licenseType?.LicenseName,
+                    LicenseRegion = licenseRegion?.RegionName,
+                    Status = permit.Status,
+                    TitleOfAuthority = permit.TitleOfAuthority,
+                    Ministry = permit.Ministry,
+                    LocationName = permit.LocationName,
+                    RequestedOn = permit.DateAdded
+                });
+            }
+
             //var applications = _db.ApplicationInfo.Where(a => a.UserID == id).ToList();
             var outletinfo = _db.OutletInfo.ToList();
             var license = _db.LicenseTypes.ToList();
@@ -116,6 +167,7 @@ namespace LLB.Controllers
             ViewBag.Applications = appinfo;
             ViewBag.Renewals = renewaltasks;
             ViewBag.Completed = completeappinfo;
+            ViewBag.GovernmentPermitTasks = governmentPermitTasks;
             return View();
         }
 
@@ -281,7 +333,7 @@ namespace LLB.Controllers
             if (gateway == "paynow")
             {
                 var paymentTrans = _db.Payments.Where(s => s.ApplicationId == Id).OrderByDescending(x => x.DateAdded).FirstOrDefault();
-                var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                var paynow = PaynowCurrencyHelper.CreatePaynow(paymentTrans);
 
                 var status = paynow.PollTransaction(paymentTrans.PollUrl);
 
@@ -315,7 +367,7 @@ namespace LLB.Controllers
                 }
                 else
                 {
-                    var paynowb = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
+                    var paynowb = PaynowCurrencyHelper.CreatePaynow(paymentTransb);
 
                     var statusb = paynowb.PollTransaction(paymentTransb.PollUrl);
 
@@ -457,14 +509,25 @@ namespace LLB.Controllers
 
 
         [HttpGet("PaynowPayment")]
-        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount)
+        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount, string? currency = null)
         {
             //Id = "84aecb8d-4ec2-4ad5-86e8-971070a66b00";
             //amount = 55.7;
-            var paynow = new Paynow("7175", "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0");
-        
-            paynow.ResultUrl = "https://llb.pfms.gov.zw/License/Submit?gateway=paynow";
-            paynow.ReturnUrl = "https://llb.pfms.gov.zw/License/Finalising?Id=" + Id + "&gateway=paynow";
+            PaynowCurrencyContext paymentCurrency;
+            try
+            {
+                paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, (decimal)amount, currency);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("Finalising", "License", new { Id });
+            }
+
+            var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
+
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Submit?gateway=paynow");
+            paynow.ReturnUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Finalising?Id=" + Id + "&gateway=paynow");
             //paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
             //paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
 
@@ -479,7 +542,7 @@ namespace LLB.Controllers
             var licenseType = _db.LicenseTypes.Where(s => s.Id == applicationInfo.LicenseTypeID).FirstOrDefault();
 
             // Add items to the payment
-            payment.Add(licenseType.LicenseName, (decimal)amount);
+            payment.Add(licenseType.LicenseName, paymentCurrency.PaynowAmount);
 
             // Send payment to paynow
             var response = paynow.Send(payment);
@@ -494,11 +557,10 @@ namespace LLB.Controllers
                 var userId = await userManager.FindByEmailAsync(User.Identity.Name);
                 string id = userId.Id;
                 transaction.UserId = id;
-                transaction.Amount = payment.Total;
+                PaynowCurrencyHelper.ApplyCurrency(transaction, paymentCurrency);
                 transaction.ApplicationId = Id;
                 //   transaction.PaynowRef = payment.Reference;
                 transaction.PollUrl = response.PollUrl();
-                transaction.PopDoc = "";
                 transaction.Status = "not paid";
                 transaction.DateAdded = DateTime.Now;
                 transaction.DateUpdated = DateTime.Now;

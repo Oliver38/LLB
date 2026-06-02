@@ -1,0 +1,296 @@
+@using LLB.Models
+
+@{
+    Layout = "_LayoutMain";
+    var application = ViewBag.Application as ApplicationInfo;
+    var permit = ViewBag.Permit as GovernmentPermit;
+    var payment = ViewBag.Payment as Payments;
+    var outlet = ViewBag.Outlet as OutletInfo;
+    var provinces = ViewBag.Provinces as IEnumerable<Province> ?? Enumerable.Empty<Province>();
+    var ministries = ViewBag.Ministries as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var selectedProvince = outlet?.Province ?? string.Empty;
+    var selectedDistrict = outlet?.City ?? string.Empty;
+    var selectedCouncil = outlet?.Council ?? string.Empty;
+    var paymentStatus = payment?.PaymentStatus ?? payment?.Status ?? permit?.PaymentStatus ?? "Not Paid";
+    var paymentRequired = (permit?.Payment ?? 0) > 0;
+    var paymentComplete = !paymentRequired
+        || string.Equals(payment?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(payment?.Status, "Paid", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(permit?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(permit?.PaymentStatus, "Not Required", StringComparison.OrdinalIgnoreCase);
+    var permitStatus = permit?.Status?.Trim().ToLowerInvariant();
+    var isPaymentStage = permitStatus == "awaiting payment"
+        || permitStatus == "payment pending"
+        || permitStatus == "paid"
+        || permitStatus == "payment not required";
+    var hasActivePayment = payment != null
+        && !paymentComplete
+        && !string.Equals(payment.PaymentStatus, "Cancelled", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.PaymentStatus, "Canceled", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Canceled", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.PaymentStatus, "Rejected", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Rejected", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.PaymentStatus, "Expired", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Expired", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.PaymentStatus, "Awaiting Delivery", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Awaiting Delivery", StringComparison.OrdinalIgnoreCase);
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success">@TempData["success"]</div>
+}
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger">@TempData["error"]</div>
+}
+
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Government Permit Application</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Current Status</label>
+                    <input class="form-control" value="@(permit?.Status ?? "New application")" readonly>
+                </div>
+                @if (permit != null)
+                {
+                    <div class="col-md-3">
+                        <label class="form-label">Payment Fee</label>
+                        <input class="form-control" value="@((permit.Payment ?? 0).ToString("0.00"))" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Payment Status</label>
+                        <input class="form-control" value="@paymentStatus" readonly>
+                    </div>
+                }
+            </div>
+
+            @if (permit == null)
+            {
+                <form method="post" enctype="multipart/form-data" action="/GovernmentPermit/Submit">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="applicationId" value="@application?.Id">
+                    <input type="hidden" id="selectedProvince" value="@selectedProvince">
+                    <input type="hidden" id="selectedDistrict" value="@selectedDistrict">
+                    <input type="hidden" id="selectedCouncil" value="@selectedCouncil">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Title of Authority</label>
+                            <input name="titleOfAuthority" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ministry</label>
+                            <select name="ministry" class="form-control" required>
+                                <option value="">--Select Ministry--</option>
+                                @foreach (var ministryItem in ministries)
+                                {
+                                    <option value="@ministryItem">@ministryItem</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Location Name</label>
+                            <input name="locationName" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Province</label>
+                            <select required id="provinceSelect" onchange="GetDistCounc()" name="province" class="form-control">
+                                <option value="">--Select Province--</option>
+                                @foreach (var provinceItem in provinces)
+                                {
+                                    if (provinceItem.Name == selectedProvince)
+                                    {
+                                        <option selected value="@provinceItem.Name">@provinceItem.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@provinceItem.Name">@provinceItem.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Address</label>
+                            <input name="address" class="form-control" value="@(outlet?.Address ?? application?.OperationAddress ?? string.Empty)" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">District</label>
+                            <select required name="district" class="form-control" id="districtSelect">
+                                @if (string.IsNullOrWhiteSpace(selectedDistrict))
+                                {
+                                    <option value="">Select District</option>
+                                }
+                                else
+                                {
+                                    <option selected value="@selectedDistrict">@selectedDistrict</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Council</label>
+                            <select id="councilSelect" required name="council" class="form-control">
+                                @if (string.IsNullOrWhiteSpace(selectedCouncil))
+                                {
+                                    <option value="">Select Council</option>
+                                }
+                                else
+                                {
+                                    <option selected value="@selectedCouncil">@selectedCouncil</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Authorisation letter</label>
+                            <input type="file" name="letterFromTheSuperior" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Submit Government Permit</button>
+                            <a href="/Home/Dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+                        </div>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th>Reference</th>
+                                <td>@permit.Reference</td>
+                            </tr>
+                            <tr>
+                                <th>Title of Authority</th>
+                                <td>@permit.TitleOfAuthority</td>
+                            </tr>
+                            <tr>
+                                <th>Ministry</th>
+                                <td>@permit.Ministry</td>
+                            </tr>
+                            <tr>
+                                <th>Location Name</th>
+                                <td>@permit.LocationName</td>
+                            </tr>
+                            <tr>
+                                <th>Address</th>
+                                <td>@permit.Address</td>
+                            </tr>
+                            <tr>
+                                <th>Province</th>
+                                <td>@permit.Province</td>
+                            </tr>
+                            <tr>
+                                <th>District</th>
+                                <td>@permit.District</td>
+                            </tr>
+                            <tr>
+                                <th>Council</th>
+                                <td>@permit.Council</td>
+                            </tr>
+                            <tr>
+                                <th>Authorisation letter</th>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(permit.LetterFromTheSuperior))
+                                    {
+                                        <a href="/@permit.LetterFromTheSuperior" target="_blank">View Authorisation Letter</a>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                @if (string.Equals(permit.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+                {
+                    <a href="/GovernmentPermit/Document?id=@permit.Id" target="_blank" class="btn btn-primary">Download Permit</a>
+                }
+                else if (isPaymentStage && paymentRequired && !paymentComplete)
+                {
+                    if (hasActivePayment && !string.IsNullOrWhiteSpace(payment?.SystemRef))
+                    {
+                        <a href="@payment.SystemRef" class="btn btn-primary">Resume Payment</a>
+                    }
+                    else
+                    {
+                        <a href="/GovernmentPermit/Payment?id=@permit.Id"
+                           class="btn btn-primary"
+                           data-currency-payment="true"
+                           data-payment-usd-amount="@((permit.Payment ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture))">Make Payment</a>
+                    }
+                }
+                <a href="/Home/Dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function populateSelect(elementId, items, selectedValue, placeholder) {
+            var select = $("#" + elementId);
+            select.empty();
+            select.append('<option value="">' + placeholder + '</option>');
+
+            $.each(items || [], function (index, item) {
+                var name = item.name || item.Name || "";
+                if (!name) {
+                    return;
+                }
+
+                var selected = name === selectedValue ? " selected" : "";
+                select.append('<option value="' + name + '"' + selected + '>' + name + '</option>');
+            });
+        }
+
+        function GetDistCounc() {
+            var province = $("#provinceSelect").val();
+            var savedProvince = $("#selectedProvince").val();
+
+            if (!province) {
+                $("#selectedProvince").val("");
+                $("#selectedDistrict").val("");
+                $("#selectedCouncil").val("");
+                populateSelect("districtSelect", [], "", "Select District");
+                populateSelect("councilSelect", [], "", "Select Council");
+                return;
+            }
+
+            if (savedProvince !== province) {
+                $("#selectedDistrict").val("");
+                $("#selectedCouncil").val("");
+            }
+
+            $("#selectedProvince").val(province);
+
+            $.ajax({
+                type: "GET",
+                url: "/License/GetDistCounc",
+                contentType: "application/json; charset=utf-8",
+                data: { Province: province },
+                success: function (data) {
+                    populateSelect("districtSelect", data.districts, $("#selectedDistrict").val(), "Select District");
+                    populateSelect("councilSelect", data.councils, $("#selectedCouncil").val(), "Select Council");
+                }
+            });
+        }
+
+        $(function () {
+            $("#districtSelect").on("change", function () {
+                $("#selectedDistrict").val($(this).val() || "");
+            });
+
+            $("#councilSelect").on("change", function () {
+                $("#selectedCouncil").val($(this).val() || "");
+            });
+
+            if ($("#provinceSelect").val()) {
+                GetDistCounc();
+            }
+        });
+    </script>
+}

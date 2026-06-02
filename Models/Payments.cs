@@ -1,6 +1,7 @@
 ﻿using Humanizer;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LLB.Models
 {
@@ -16,6 +17,14 @@ namespace LLB.Models
         public string? PollUrl { get; set; }
         public string? PaymentStatus { get; set; }
         public decimal? Amount { get; set; }
+        [NotMapped]
+        public decimal? UsdAmount { get; set; }
+        [NotMapped]
+        public decimal? ExchangeRate { get; set; }
+        [NotMapped]
+        public string? Currency { get; set; }
+        [NotMapped]
+        public string? IntegrationId { get; set; }
         public string? Status { get; set; }
         public string? PopDoc { get; set; }
         public string? Service { get; set; }

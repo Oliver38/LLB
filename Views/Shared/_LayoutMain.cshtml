@@ -1,7 +1,9 @@
 ﻿@using System
 @using Microsoft.AspNetCore.Identity
 @using System.Linq
+@using LLB.Data
 @inject UserManager<ApplicationUser> userManager
+@inject AppDbContext db
 
 @{
     var currentUser = User?.Identity?.IsAuthenticated == true
@@ -22,6 +24,12 @@
     }
 
     var pageSubtitle = ViewData["Subtitle"]?.ToString() ?? $"Working as {primaryRole}";
+    var latestZwgExchangeRate = db.ExchangeRate
+        .Where(rate => rate.ZWGrate.HasValue && rate.ZWGrate.Value > 0)
+        .OrderByDescending(rate => rate.DateUpdated)
+        .ThenByDescending(rate => rate.DateAdded)
+        .Select(rate => rate.ZWGrate)
+        .FirstOrDefault();
 }
 
 <!DOCTYPE html>
@@ -48,6 +56,28 @@
     <link href="~/NiceAdmin/assets/vendor/simple-datatables/style.css" rel="stylesheet">
     <link href="~/NiceAdmin/assets/css/style.css" rel="stylesheet">
     <link href="~/NiceAdmin/assets/css/llb-theme.css" rel="stylesheet">
+    <style>
+        .llb-currency-option {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 1rem;
+            transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+        }
+
+        .llb-currency-option.active {
+            background-color: #eef7ff;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 .2rem rgba(13, 110, 253, .12);
+        }
+
+        .llb-payment-price {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: .75rem 1rem;
+        }
+    </style>
 </head>
 
 <body class="llb-admin-shell">
@@ -151,6 +181,11 @@
                                 <i class="bi bi-circle"></i><span>Agent License</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="/GovernmentPermit/Apply">
+                                <i class="bi bi-circle"></i><span>Government Permit</span>
+                            </a>
+                        </li>
 
 
                     </ul>
@@ -212,6 +247,16 @@
                         <li>
                             <a href="/Home/ExtraCounterListings">
                                 <i class="bi bi-circle"></i><span>Permission / Extra Counter Listings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Home/AgentLicenseListings">
+                                <i class="bi bi-circle"></i><span>Agent License Listings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Home/GovernmentPermitListings">
+                                <i class="bi bi-circle"></i><span>Government Permit Listings</span>
                             </a>
                         </li>
                     </ul>
@@ -857,6 +902,60 @@
 
     <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
+    <div class="modal fade" id="currencyPaymentModal" tabindex="-1" aria-labelledby="currencyPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="currencyPaymentModalLabel">Select Payment Currency</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="llb-payment-price mb-3">
+                        <div class="d-flex justify-content-between gap-3">
+                            <span class="text-muted">USD Amount</span>
+                            <strong id="currencyPaymentUsdAmount">USD 0.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between gap-3 mt-2">
+                            <span class="text-muted">ZWG Amount</span>
+                            <strong id="currencyPaymentZwgAmount">ZWG 0.00</strong>
+                        </div>
+                        <div class="small text-muted mt-2" id="currencyPaymentRateText"></div>
+                    </div>
+                    <div class="d-grid gap-3">
+                        <label class="llb-currency-option active" data-currency-option="USD">
+                            <span class="d-flex align-items-center justify-content-between gap-3">
+                                <span class="d-flex align-items-center gap-3">
+                                    <input class="form-check-input m-0" type="radio" name="paymentCurrency" value="USD" checked>
+                                    <span>
+                                        <span class="fw-semibold d-block">USD</span>
+                                        <span class="text-muted small">Pay using the USD amount configured in the system.</span>
+                                    </span>
+                                </span>
+                                <span class="fw-semibold text-nowrap" data-currency-amount-label="USD">USD 0.00</span>
+                            </span>
+                        </label>
+                        <label class="llb-currency-option" data-currency-option="ZWG">
+                            <span class="d-flex align-items-center justify-content-between gap-3">
+                                <span class="d-flex align-items-center gap-3">
+                                    <input class="form-check-input m-0" type="radio" name="paymentCurrency" value="ZWG">
+                                    <span>
+                                        <span class="fw-semibold d-block">ZWG</span>
+                                        <span class="text-muted small">Convert the USD price using the latest saved USD/ZWG exchange rate.</span>
+                                    </span>
+                                </span>
+                                <span class="fw-semibold text-nowrap" data-currency-amount-label="ZWG">ZWG 0.00</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="currencyPaymentContinue">Make Payment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Vendor JS Files -->
     <script src="~/NiceAdmin/assets/vendor/apexcharts/apexcharts.min.js"></script>
     <script src="~/NiceAdmin/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -873,6 +972,126 @@
     <script src="~/NiceAdmin/assets/js/llb-double-submit.js"></script>
 
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        (function () {
+            const paymentRoutes = [
+                /\/(?:License|Approval|Recommend|Viewing|Verify|Examination)\/PaynowPayment/i,
+                /\/Postpayments\/(?:Paynow|InspectionPaynow)/i,
+                /\/Postprocess\/(?:PaynowRenewal|ExtendedHoursPayment|TemporaryRetailsPayment)/i,
+                /\/TemporaryTransfer\/Payment/i,
+                /\/TemporaryRemoval\/Payment/i,
+                /\/AgentLicense\/Payment/i,
+                /\/GovernmentPermit\/Payment/i,
+                /\/Managers\/ManagerChangePayment/i,
+                /\/Extracounter\/PermissionToAlterPayment/i,
+                /\/Downloads\/DownloadPayment/i
+            ];
+
+            const latestZwgExchangeRate = Number('@((latestZwgExchangeRate ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture))');
+            let pendingPaymentUrl = null;
+            const modalElement = document.getElementById('currencyPaymentModal');
+            const continueButton = document.getElementById('currencyPaymentContinue');
+            const options = Array.from(document.querySelectorAll('[data-currency-option]'));
+            const usdAmountElement = document.getElementById('currencyPaymentUsdAmount');
+            const zwgAmountElement = document.getElementById('currencyPaymentZwgAmount');
+            const rateTextElement = document.getElementById('currencyPaymentRateText');
+            const currencyAmountLabels = {
+                USD: document.querySelector('[data-currency-amount-label="USD"]'),
+                ZWG: document.querySelector('[data-currency-amount-label="ZWG"]')
+            };
+
+            function isPaymentUrl(url) {
+                return paymentRoutes.some(route => route.test(url.pathname));
+            }
+
+            function parsePaymentAmount(link, url) {
+                const dataAmount = link.getAttribute('data-payment-usd-amount') || link.getAttribute('data-payment-amount');
+                const queryAmount = url.searchParams.get('amount') || url.searchParams.get('fee');
+                const amount = Number(dataAmount || queryAmount || 0);
+                return Number.isFinite(amount) ? amount : 0;
+            }
+
+            function formatCurrency(currency, amount) {
+                return currency + ' ' + amount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+
+            function updatePaymentPrices(link, url) {
+                const usdAmount = parsePaymentAmount(link, url);
+                const zwgAmount = latestZwgExchangeRate > 0 ? usdAmount * latestZwgExchangeRate : 0;
+
+                usdAmountElement.textContent = formatCurrency('USD', usdAmount);
+                zwgAmountElement.textContent = latestZwgExchangeRate > 0 ? formatCurrency('ZWG', zwgAmount) : 'Rate not configured';
+                currencyAmountLabels.USD.textContent = formatCurrency('USD', usdAmount);
+                currencyAmountLabels.ZWG.textContent = latestZwgExchangeRate > 0 ? formatCurrency('ZWG', zwgAmount) : 'Rate not configured';
+                rateTextElement.textContent = latestZwgExchangeRate > 0
+                    ? 'Exchange rate: 1 USD = ' + latestZwgExchangeRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + ' ZWG'
+                    : 'No saved USD/ZWG exchange rate is available. ZWG payment will be blocked until the rate is updated.';
+            }
+
+            function selectedCurrency() {
+                const selected = document.querySelector('input[name="paymentCurrency"]:checked');
+                return selected ? selected.value : 'USD';
+            }
+
+            function showCurrencyModal() {
+                if (window.bootstrap && window.bootstrap.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                    return;
+                }
+
+                if (window.jQuery) {
+                    window.jQuery(modalElement).modal('show');
+                    return;
+                }
+
+                modalElement.classList.add('show');
+                modalElement.style.display = 'block';
+                modalElement.removeAttribute('aria-hidden');
+            }
+
+            options.forEach(option => {
+                option.addEventListener('click', function () {
+                    const currency = this.getAttribute('data-currency-option');
+                    const input = this.querySelector('input[type="radio"]');
+                    if (input) {
+                        input.checked = true;
+                    }
+
+                    options.forEach(item => item.classList.toggle('active', item.getAttribute('data-currency-option') === currency));
+                });
+            });
+
+            document.addEventListener('click', function (event) {
+                const link = event.target.closest('a[href]');
+                if (!link || link.hasAttribute('data-skip-currency-modal')) {
+                    return;
+                }
+
+                const url = new URL(link.getAttribute('href'), window.location.origin);
+                if (link.getAttribute('data-currency-payment') !== 'true' && !isPaymentUrl(url)) {
+                    return;
+                }
+
+                event.preventDefault();
+                pendingPaymentUrl = url;
+                updatePaymentPrices(link, url);
+                showCurrencyModal();
+            });
+
+            continueButton.addEventListener('click', function () {
+                if (!pendingPaymentUrl) {
+                    return;
+                }
+
+                pendingPaymentUrl.searchParams.set('currency', selectedCurrency());
+                window.location.href = pendingPaymentUrl.pathname + pendingPaymentUrl.search + pendingPaymentUrl.hash;
+            });
+        })();
+    </script>
 
 
     <!-- Country Province selector -->
