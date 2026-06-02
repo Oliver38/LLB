@@ -985,6 +985,7 @@
                 /\/GovernmentPermit\/Payment/i,
                 /\/Managers\/ManagerChangePayment/i,
                 /\/Extracounter\/PermissionToAlterPayment/i,
+                /\/Extracounter\/ExtendedHoursPayment/i,
                 /\/Downloads\/DownloadPayment/i
             ];
 
@@ -1037,21 +1038,102 @@
                 return selected ? selected.value : 'USD';
             }
 
-            function showCurrencyModal() {
-                if (window.bootstrap && window.bootstrap.Modal) {
-                    window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
-                    return;
+            function ensureModalBackdrop() {
+                let backdrop = document.querySelector('[data-currency-payment-backdrop="true"]');
+                if (!backdrop) {
+                    backdrop = document.createElement('div');
+                    backdrop.className = 'modal-backdrop fade show';
+                    backdrop.setAttribute('data-currency-payment-backdrop', 'true');
+                    document.body.appendChild(backdrop);
                 }
+            }
 
-                if (window.jQuery) {
-                    window.jQuery(modalElement).modal('show');
+            function forceShowCurrencyModal() {
+                if (!modalElement) {
                     return;
                 }
 
                 modalElement.classList.add('show');
                 modalElement.style.display = 'block';
+                modalElement.style.zIndex = '1055';
                 modalElement.removeAttribute('aria-hidden');
+                modalElement.setAttribute('aria-modal', 'true');
+                modalElement.setAttribute('role', 'dialog');
+                document.body.classList.add('modal-open');
+                ensureModalBackdrop();
             }
+
+            function forceHideCurrencyModal() {
+                if (!modalElement) {
+                    return;
+                }
+
+                modalElement.classList.remove('show');
+                modalElement.style.display = 'none';
+                modalElement.removeAttribute('aria-modal');
+                modalElement.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('modal-open');
+
+                document.querySelectorAll('[data-currency-payment-backdrop="true"]').forEach(backdrop => backdrop.remove());
+            }
+
+            function showCurrencyModal() {
+                try {
+                    if (window.bootstrap && window.bootstrap.Modal) {
+                        window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                        window.setTimeout(function () {
+                            if (!modalElement.classList.contains('show') || modalElement.style.display === 'none') {
+                                forceShowCurrencyModal();
+                            }
+                        }, 50);
+                        return;
+                    }
+
+                    if (window.jQuery) {
+                        window.jQuery(modalElement).modal('show');
+                        window.setTimeout(function () {
+                            if (!modalElement.classList.contains('show') || modalElement.style.display === 'none') {
+                                forceShowCurrencyModal();
+                            }
+                        }, 50);
+                        return;
+                    }
+                } catch {
+                    forceShowCurrencyModal();
+                    return;
+                }
+
+                forceShowCurrencyModal();
+            }
+
+            function openCurrencyPaymentForLink(link, event) {
+                if (!link || link.hasAttribute('data-skip-currency-modal')) {
+                    return true;
+                }
+
+                let url;
+                try {
+                    url = new URL(link.getAttribute('href'), window.location.origin);
+                } catch {
+                    return true;
+                }
+
+                if (link.getAttribute('data-currency-payment') !== 'true' && !isPaymentUrl(url)) {
+                    return true;
+                }
+
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                pendingPaymentUrl = url;
+                updatePaymentPrices(link, url);
+                showCurrencyModal();
+                return false;
+            }
+
+            window.openPaymentCurrencyModalFromLink = openCurrencyPaymentForLink;
 
             options.forEach(option => {
                 option.addEventListener('click', function () {
@@ -1065,21 +1147,21 @@
                 });
             });
 
+            modalElement.querySelectorAll('[data-bs-dismiss="modal"], [data-dismiss="modal"]').forEach(button => {
+                button.addEventListener('click', function () {
+                    forceHideCurrencyModal();
+                });
+            });
+
+            modalElement.addEventListener('click', function (event) {
+                if (event.target === modalElement) {
+                    forceHideCurrencyModal();
+                }
+            });
+
             document.addEventListener('click', function (event) {
                 const link = event.target.closest('a[href]');
-                if (!link || link.hasAttribute('data-skip-currency-modal')) {
-                    return;
-                }
-
-                const url = new URL(link.getAttribute('href'), window.location.origin);
-                if (link.getAttribute('data-currency-payment') !== 'true' && !isPaymentUrl(url)) {
-                    return;
-                }
-
-                event.preventDefault();
-                pendingPaymentUrl = url;
-                updatePaymentPrices(link, url);
-                showCurrencyModal();
+                openCurrencyPaymentForLink(link, event);
             });
 
             continueButton.addEventListener('click', function () {

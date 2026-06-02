@@ -279,7 +279,8 @@ else if (!string.IsNullOrWhiteSpace(currentExtendedHoursId))
                 <a class="btn btn-primary"
                    href="/Postprocess/ExtendedHoursPayment?id=@applicationId&extId=@currentExtendedHoursId&amount=@ViewBag.TotalFee&service=extendedhours&process=@process"
                    data-currency-payment="true"
-                   data-payment-usd-amount="@Convert.ToString(ViewBag.TotalFee, System.Globalization.CultureInfo.InvariantCulture)">
+                   data-payment-usd-amount="@Convert.ToString(ViewBag.TotalFee, System.Globalization.CultureInfo.InvariantCulture)"
+                   onclick="return window.openPaymentCurrencyModalFromLink ? window.openPaymentCurrencyModalFromLink(this, event) : true;">
                     Make Payment
                 </a>
             }
