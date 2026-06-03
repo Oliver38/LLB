@@ -68,6 +68,17 @@
             : "N/A";
     }
 
+    string FormatDateTimeInput(string? value)
+    {
+        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var parsed)
+            || DateTime.TryParse(value, out parsed))
+        {
+            return parsed.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+        }
+
+        return string.Empty;
+    }
+
     string StatusBadgeClass(string? status)
     {
         return status?.Trim().ToLowerInvariant() switch
@@ -94,6 +105,9 @@
             _ => "bg-secondary"
         };
     }
+
+    var applicantDobInputValue = FormatDateTimeInput(applicantUser?.DOB);
+    var applicantGender = applicantUser?.Gender ?? string.Empty;
 }
 
 @if (TempData["error"] != null)
@@ -221,21 +235,22 @@
                             <input type="hidden" name="llbNumber" value="@sourceApplication.LLBNum" />
                             <input type="hidden" name="managerDraftJson" id="managerDraftJson" value="[]" />
 
-                            <div class="col-md-6">
-                                <label class="form-label">Name</label>
-                                <input type="text" class="form-control" value="@(applicantUser?.Name ?? string.Empty)" readonly />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Surname</label>
-                                <input type="text" class="form-control" value="@(applicantUser?.LastName ?? string.Empty)" readonly />
+                            <div class="col-12">
+                                <label class="form-label">Applicant Name / Licensee Name</label>
+                                <input type="text" name="businessName" class="form-control" required />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Date of Birth</label>
-                                <input type="text" class="form-control" value="@(applicantUser?.DOB ?? string.Empty)" readonly />
+                                <input type="datetime-local" name="dateOfBirth" class="form-control" value="@applicantDobInputValue" required />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Gender</label>
-                                <input type="text" class="form-control" value="@(applicantUser?.Gender ?? string.Empty)" readonly />
+                                <select name="gender" class="form-select" required>
+                                    <option value="">Choose gender</option>
+                                    <option value="Male" selected="@(string.Equals(applicantGender, "Male", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Male</option>
+                                    <option value="Female" selected="@(string.Equals(applicantGender, "Female", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Female</option>
+                                    <option value="Other" selected="@(string.Equals(applicantGender, "Other", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Other</option>
+                                </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nationality</label>
@@ -277,10 +292,6 @@
                                     <option value="Partnership">Partnership</option>
                                     <option value="Organisation">Organisation</option>
                                 </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Applicant Name / Licensee Name</label>
-                                <input type="text" name="businessName" class="form-control" required />
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Licensee Address</label>
@@ -478,6 +489,11 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@transferApplication.Id" />
 
+                        <div class="col-12">
+                            <label class="form-label">Applicant Name / Licensee Name</label>
+                            <input type="text" name="businessName" class="form-control" value="@transferApplication.BusinessName" required />
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label">Transfer Type</label>
                             <select name="transferType" class="form-select" required>
@@ -534,8 +550,17 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Applicant Name / Licensee Name</label>
-                            <input type="text" name="businessName" class="form-control" value="@transferApplication.BusinessName" required />
+                            <label class="form-label">Date of Birth</label>
+                            <input type="datetime-local" name="dateOfBirth" class="form-control" value="@applicantDobInputValue" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Gender</label>
+                            <select name="gender" class="form-select" required>
+                                <option value="">Choose gender</option>
+                                <option value="Male" selected="@(string.Equals(applicantGender, "Male", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Male</option>
+                                <option value="Female" selected="@(string.Equals(applicantGender, "Female", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Female</option>
+                                <option value="Other" selected="@(string.Equals(applicantGender, "Other", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Other</option>
+                            </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Licensee Address</label>

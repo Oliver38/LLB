@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Net;
 using System.Net.Mail;
+using System.Globalization;
 using LLB.Data;
 using LLB.Helpers;
 using LLB.Models;
@@ -208,6 +209,8 @@ namespace LLB.Controllers
             string applicantType,
             string businessName,
             string operationAddress,
+            string? gender,
+            string? dateOfBirth,
             string? placeOfEntry,
             string? dateofEntryIntoZimbabwe,
             string? managerDraftJson)
@@ -241,9 +244,18 @@ namespace LLB.Controllers
 
             if (string.IsNullOrWhiteSpace(applicantType)
                 || string.IsNullOrWhiteSpace(businessName)
-                || string.IsNullOrWhiteSpace(operationAddress))
+                || string.IsNullOrWhiteSpace(operationAddress)
+                || string.IsNullOrWhiteSpace(gender)
+                || string.IsNullOrWhiteSpace(dateOfBirth))
             {
                 TempData["error"] = "Complete all applicant information fields before submitting the transfer application.";
+                return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum, transferType = normalizedTransferType });
+            }
+
+            var applicantProfileUpdate = await UpdateApplicantProfileAsync(currentUser, gender, dateOfBirth);
+            if (!applicantProfileUpdate.Succeeded)
+            {
+                TempData["error"] = "The applicant date of birth and gender could not be saved.";
                 return RedirectToAction("Apply", new { llbNumber = sourceApplication.LLBNum, transferType = normalizedTransferType });
             }
 
@@ -574,6 +586,8 @@ namespace LLB.Controllers
             string applicantType,
             string businessName,
             string operationAddress,
+            string? gender,
+            string? dateOfBirth,
             string? placeOfEntry,
             string? dateofEntryIntoZimbabwe)
         {
@@ -621,9 +635,18 @@ namespace LLB.Controllers
 
             if (string.IsNullOrWhiteSpace(applicantType)
                 || string.IsNullOrWhiteSpace(businessName)
-                || string.IsNullOrWhiteSpace(operationAddress))
+                || string.IsNullOrWhiteSpace(operationAddress)
+                || string.IsNullOrWhiteSpace(gender)
+                || string.IsNullOrWhiteSpace(dateOfBirth))
             {
                 TempData["error"] = "Complete all applicant information fields before saving the changes.";
+                return RedirectToAction("Apply", new { id = transferApplication.Id, edit = true });
+            }
+
+            var applicantProfileUpdate = await UpdateApplicantProfileAsync(currentUser, gender, dateOfBirth);
+            if (!applicantProfileUpdate.Succeeded)
+            {
+                TempData["error"] = "The applicant date of birth and gender could not be saved.";
                 return RedirectToAction("Apply", new { id = transferApplication.Id, edit = true });
             }
 
@@ -1952,6 +1975,24 @@ namespace LLB.Controllers
         private static bool IsZimbabweanApplicant(ApplicationUser? applicantUser)
         {
             return string.Equals(applicantUser?.Nationality, "Zimbabwe", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private async Task<IdentityResult> UpdateApplicantProfileAsync(ApplicationUser applicantUser, string? gender, string? dateOfBirth)
+        {
+            applicantUser.Gender = gender?.Trim();
+            applicantUser.DOB = NormalizeDateOfBirth(dateOfBirth);
+            return await _userManager.UpdateAsync(applicantUser);
+        }
+
+        private static string NormalizeDateOfBirth(string? value)
+        {
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var parsed)
+                || DateTime.TryParse(value, out parsed))
+            {
+                return parsed.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+            }
+
+            return value?.Trim() ?? string.Empty;
         }
 
         private static string NormalizeDocumentType(string? documentType)
