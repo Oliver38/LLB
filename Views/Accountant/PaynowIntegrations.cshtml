@@ -1,0 +1,124 @@
+@model LLB.Models.ViewModel.PaynowIntegrationSettingsViewModel
+
+@{
+    Layout = "_LayoutMain";
+}
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+            <div>
+                <h5 class="card-title mb-1">Paynow Integrations</h5>
+                <p class="text-muted mb-0">Review the Paynow integration credentials available for each currency and environment.</p>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col">Currency</th>
+                        <th scope="col">Integration</th>
+                        <th scope="col">Integration ID</th>
+                        <th scope="col">Integration Key</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var integration in Model.Integrations)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@integration.Currency</td>
+                            <td>@(integration.Mode == "TEST" ? "Test" : "Live")</td>
+                            <td>@integration.IntegrationId</td>
+                            <td>@integration.MaskedIntegrationKey</td>
+                            <td>
+                                @if (integration.IsConfigured)
+                                {
+                                    <span class="badge bg-success">Configured</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Missing</span>
+                                }
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-primary edit-integration-btn" data-bs-toggle="modal" data-bs-target="#editIntegrationModal"
+                                        data-currency="@integration.Currency" data-mode="@integration.Mode" data-id="@(integration.IntegrationId == "Not configured" ? "" : integration.IntegrationId)">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Integration Modal -->
+<div class="modal fade" id="editIntegrationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Paynow Integration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/Accountant/UpdatePaynowIntegration">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label">Currency</label>
+                            <input type="text" id="modalCurrency" name="currency" class="form-control" readonly />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Mode</label>
+                            <input type="text" id="modalMode" name="mode" class="form-control" readonly />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Integration ID</label>
+                            <input type="text" id="modalIntegrationId" name="integrationId" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Integration Key</label>
+                            <input type="password" id="modalIntegrationKey" name="integrationKey" class="form-control" placeholder="Enter integration key (leave blank to clear)" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Return URL (for this mode)</label>
+                            <input type="text" id="modalReturnUrl" class="form-control" readonly />
+                            <div class="form-text">Use this return URL when configuring Paynow credentials for the selected environment.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var modal = document.getElementById('editIntegrationModal');
+            modal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                var currency = button.getAttribute('data-currency');
+                var mode = button.getAttribute('data-mode');
+                var id = button.getAttribute('data-id') || '';
+
+                document.getElementById('modalCurrency').value = currency;
+                document.getElementById('modalMode').value = mode;
+                document.getElementById('modalIntegrationId').value = id;
+                document.getElementById('modalIntegrationKey').value = '';
+
+                var base = (mode === 'TEST') ? 'http://localhost:5046' : 'https://llb.pfms.gov.zw';
+                document.getElementById('modalReturnUrl').value = base + '/Payments/PaynowReturn';
+            });
+        });
+    </script>
+}

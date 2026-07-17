@@ -453,8 +453,8 @@ namespace LLB.Controllers
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
         
-            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Submit?gateway=paynow");
-            paynow.ReturnUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Finalising?Id=" + Id + "&gateway=paynow");
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Submit?gateway=paynow", paymentCurrency.PaymentMode);
+            paynow.ReturnUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Finalising?Id=" + Id + "&gateway=paynow", paymentCurrency.PaymentMode);
             //paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
             //paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
 
@@ -1183,6 +1183,7 @@ namespace LLB.Controllers
                 model.Applications.Add(new SecretaryDashboardApplicationItemViewModel
                 {
                     ApplicationId = application.Id ?? string.Empty,
+                    Reference = application.RefNum ?? string.Empty,
                     TradingName = outlet?.TradingName ?? application.BusinessName ?? "N/A",
                     OperatingAddress = outlet?.Address ?? application.OperationAddress ?? "N/A",
                     ApplicationDate = application.ApplicationDate,
@@ -1400,6 +1401,8 @@ namespace LLB.Controllers
                     ApplicationId = rootApplicationId,
                     Service = task.Service == TemporaryTransferHelper.ServiceName
                         ? TemporaryTransferHelper.GetTransferType(temporaryTransferLookup.GetValueOrDefault(task.ApplicationId))
+                        : task.Service == TemporaryRemovalHelper.ServiceName
+                            ? TemporaryRemovalHelper.GetRemovalType(temporaryRemovalLookup.GetValueOrDefault(task.ApplicationId))
                         : task.Service == AgentLicenseHelper.ServiceName
                             ? AgentLicenseHelper.ServiceName
                         : task.Service ?? "Post Formation",

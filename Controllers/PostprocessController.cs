@@ -442,7 +442,7 @@ namespace LLB.Controllers
 
 
         [HttpGet("PaynowRenewal")]
-        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount, string service, string process, string renid, string? currency = null )
+        public async Task<IActionResult> PaynowPaymentAsync(string Id, double amount, string service, string process, string renid, string? currency = null)
         {
             var renewalEligibility = GetRenewalEligibility(Id);
             if (!renewalEligibility.IsEligible)
@@ -500,7 +500,7 @@ namespace LLB.Controllers
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
 
-            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/Renewal?id=" + Id + "&process=" + process + "&renid=" + renid);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/Renewal?id=" + Id + "&process=" + process + "&renid=" + renid, paymentCurrency.PaymentMode);
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
                 paynow.ResultUrl = callbackUrl;
@@ -577,6 +577,7 @@ namespace LLB.Controllers
                 && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
                 && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Created")
                 && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
 
@@ -1499,7 +1500,7 @@ namespace LLB.Controllers
             }
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
-            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/ExtendedHours?id=" + id + "&process=EXH&extId=" + extendedHours.Id);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/ExtendedHours?id=" + id + "&process=EXH&extId=" + extendedHours.Id, paymentCurrency.PaymentMode);
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
                 paynow.ResultUrl = callbackUrl;
@@ -1938,7 +1939,7 @@ namespace LLB.Controllers
             }
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
-            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/TemporaryRetails?id=" + id + "&process=TRL&temporaryRetailId=" + temporaryRetail.Id);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/TemporaryRetails?id=" + id + "&process=TRL&temporaryRetailId=" + temporaryRetail.Id, paymentCurrency.PaymentMode);
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
                 paynow.ResultUrl = callbackUrl;

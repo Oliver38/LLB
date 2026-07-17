@@ -9,13 +9,19 @@ using LLB.Models;
 using LLB.Extensions;
 using Microsoft.AspNetCore.Builder;
 using LLB.Helpers;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
+PaynowCurrencyHelper.Configure(builder.Configuration.GetSection("PaynowIntegrations"));
+PaynowCurrencyHelper.SetCurrentPaymentMode(builder.Configuration["PaymentSettings:CurrentMode"]);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-string dbconnection = @"Server=localhost,1433;Database=llb;;User Id=sa;Password=Password123;MultipleActiveResultSets=true;Initial Catalog=llb; Integrated Security=False  ;  TrustServerCertificate=True";
-builder.Services.AddDbContextPool<AppDbContext>(options => options.UseSqlServer(dbconnection));
+var dbConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Missing database connection string: ConnectionStrings:DefaultConnection");
+var dbConnectionBuilder = new SqlConnectionStringBuilder(dbConnection);
+
+builder.Services.AddDbContextPool<AppDbContext>(options => options.UseSqlServer(dbConnectionBuilder.ConnectionString));
 builder.Services.AddScoped<TaskAllocationHelper>();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 
@@ -33,7 +39,7 @@ builder.Services.AddDNTCaptcha(options =>
     options.WithEncryptionKey("MzAyMjc1QDMxMzgyZTMxMmUzMG51ZitKTHRHc2Z4aFY0U3NGelJGRk5jYWxnZzN0QXRJYjZaclZ0dktmdFE9");
 }
        );
-       
+
        IronPdf.License.LicenseKey = "IRONSUITE.NEWDAWNSOLAR3.GMAIL.COM.23297-7A33D32845-AIWX5EJ-WAIESQQ5GC64-44RDJ3754SQO-XQF7ZDX7FQNJ-D4NSOC6C57W7-V6WLRJ5EVP4B-VSX7UX7D4ZP6-XLI46J-T4WGPKEGASCREA-DEPLOYMENT.TRIAL-VUWO67.TRIAL.EXPIRES.04.JUL.2026";
        //"IRONSUITE.UENERGYZIM.GMAIL.COM.18341-B96BE9DD54-DSH4G-IMLVFZT7LUVR-HZ3R4XN32X3V-5GVVKEBITGZG-DZB4FMBJ42KK-HIXSYLRTHBWK-AXWPFVVKV4LK-BJRWEW-TJDUVBDV7MCREA-DEPLOYMENT.TRIAL-UJFMPO.TRIAL.EXPIRES.10.JUN.2026";
 //IronPdf.License.LicenseKey = "IRONSUITE.CHIMUKAOLIVER.GMAIL.COM.12332-DB80BC55B8-AGWBH5YLDYE3UIWH-XRXOF7T7CXIV-W6MVY6EUSDXV-DCTN5IBDAPJ4-SGYMBWOJ2DON-JFYJUW6SCCUR-EQGFQJ-TJPJM47EDAOREA-DEPLOYMENT.TRIAL-IQRDZ7.TRIAL.EXPIRES.24.APR.2026";
@@ -86,11 +92,24 @@ var app = builder.Build();
 
 var commandLine = string.Join(" ", Environment.GetCommandLineArgs()).ToLowerInvariant();
 var isEfTooling = commandLine.Contains("dotnet-ef") || commandLine.Contains("ef.dll");
+var runDatabaseStartupTasks = builder.Configuration.GetValue("Database:RunStartupTasks", true);
 
-if (!isEfTooling)
+if (!isEfTooling && runDatabaseStartupTasks)
 {
-    app.InitialiseDatabase();
-    await app.InitialiseRoles();
+    try
+    {
+        app.InitialiseDatabase();
+        await app.InitialiseRoles();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogCritical(ex, "Database startup tasks failed. Check ConnectionStrings:DefaultConnection and SQL Server availability.");
+        throw;
+    }
+}
+else if (!isEfTooling)
+{
+    app.Logger.LogWarning("Database startup tasks were skipped because Database:RunStartupTasks is false.");
 }
 
 

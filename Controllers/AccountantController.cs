@@ -21,6 +21,9 @@ using IronPdf;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Hosting;
 
 namespace LLB.Controllers
 {
@@ -34,8 +37,10 @@ namespace LLB.Controllers
         private readonly IDNTCaptchaValidatorService _validatorService;
         private readonly TaskAllocationHelper _taskAllocationHelper;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
 
-        public AccountantController(TaskAllocationHelper taskAllocationHelper, AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService, IHttpClientFactory httpClientFactory)
+        public AccountantController(TaskAllocationHelper taskAllocationHelper, AppDbContext db, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IDNTCaptchaValidatorService validatorService, IHttpClientFactory httpClientFactory, IConfiguration configuration, IWebHostEnvironment env)
         {
             _db = db;
             this.userManager = userManager;
@@ -43,6 +48,8 @@ namespace LLB.Controllers
             _validatorService = validatorService;
             _taskAllocationHelper = taskAllocationHelper;
             _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
+            _env = env;
         }
 
         [HttpGet("Dashboard")]
@@ -101,6 +108,38 @@ namespace LLB.Controllers
         }
 
         [Authorize(Roles = "accountant,chief accountant")]
+        [HttpGet("PaynowIntegrations")]
+        public IActionResult PaynowIntegrations()
+        {
+            var model = new PaynowIntegrationSettingsViewModel();
+            var currencies = new[] { PaynowCurrencyHelper.UsdCurrency, PaynowCurrencyHelper.ZwgCurrency };
+            var modes = new[] { PaynowCurrencyHelper.LiveMode, PaynowCurrencyHelper.TestMode };
+
+            foreach (var currency in currencies)
+            {
+                foreach (var mode in modes)
+                {
+                    var section = _configuration.GetSection($"PaynowIntegrations:Currencies:{currency}:{mode}");
+                    var integrationId = section["IntegrationId"] ?? string.Empty;
+                    var integrationKey = section["IntegrationKey"] ?? string.Empty;
+
+                    model.Integrations.Add(new PaynowIntegrationSettingItemViewModel
+                    {
+                        Currency = currency,
+                        Mode = mode,
+                        IntegrationId = string.IsNullOrWhiteSpace(integrationId) ? "Not configured" : integrationId,
+                        MaskedIntegrationKey = MaskIntegrationKey(integrationKey),
+                        IsConfigured = !string.IsNullOrWhiteSpace(integrationId) && !string.IsNullOrWhiteSpace(integrationKey)
+                    });
+                }
+            }
+
+            ViewData["Title"] = "Paynow Integrations";
+            ViewData["Subtitle"] = "Configured Paynow integration IDs and keys by currency and environment";
+            return View(model);
+        }
+
+        [Authorize(Roles = "accountant,chief accountant")]
         [HttpPost("UpdateExchangeRate")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateExchangeRateAsync(decimal? exchangeRate, CancellationToken cancellationToken)
@@ -154,6 +193,211 @@ namespace LLB.Controllers
 
             await _db.SaveChangesAsync(cancellationToken);
             return RedirectToAction("ExchangeRate");
+        }
+
+        private static string MaskIntegrationKey(string integrationKey)
+        {
+            if (string.IsNullOrWhiteSpace(integrationKey))
+            {
+                return "Not configured";
+            }
+
+            return integrationKey.Length <= 8
+                ? "********"
+                : integrationKey[..4] + "..." + integrationKey[^4..];
+        }
+
+        [Authorize(Roles = "accountant,chief accountant")]
+        [HttpPost("UpdatePaynowIntegration")]
+        [ValidateAntiForgeryToken]
+        public IActionResult UpdatePaynowIntegration(string currency, string mode, string integrationId, string integrationKey)
+        {
+            var normalizedCurrency = NormalizePaynowIntegrationCurrency(currency);
+            var normalizedMode = NormalizePaynowIntegrationMode(mode);
+
+            if (normalizedCurrency == null || normalizedMode == null)
+            {
+                TempData["error"] = "Invalid currency or mode.";
+                return RedirectToAction("PaynowIntegrations");
+            }
+
+            try
+            {
+                var appSettingsPath = Path.Combine(_env.ContentRootPath, "appsettings.json");
+                if (!System.IO.File.Exists(appSettingsPath))
+                {
+                    TempData["error"] = "appsettings.json not found.";
+                    return RedirectToAction("PaynowIntegrations");
+                }
+
+                var json = System.IO.File.ReadAllText(appSettingsPath);
+                var root = JsonNode.Parse(json) ?? new JsonObject();
+
+                var paynowNode = GetOrCreateJsonObject(root.AsObject(), "PaynowIntegrations");
+                var currenciesNode = GetOrCreateJsonObject(paynowNode, "Currencies");
+                var currencyNode = GetOrCreateCanonicalJsonObject(currenciesNode, normalizedCurrency);
+                var modeNode = GetOrCreateCanonicalJsonObject(currencyNode, normalizedMode);
+
+                modeNode["IntegrationId"] = integrationId ?? string.Empty;
+                modeNode["IntegrationKey"] = integrationKey ?? string.Empty;
+
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                System.IO.File.WriteAllText(appSettingsPath, root.ToJsonString(options));
+
+                try
+                {
+                    _configuration[$"PaynowIntegrations:Currencies:{normalizedCurrency}:{normalizedMode}:IntegrationId"] = integrationId ?? string.Empty;
+                    _configuration[$"PaynowIntegrations:Currencies:{normalizedCurrency}:{normalizedMode}:IntegrationKey"] = integrationKey ?? string.Empty;
+                    PaynowCurrencyHelper.UpdateCredentials(normalizedCurrency, normalizedMode, integrationId, integrationKey);
+                }
+                catch { }
+
+                TempData["success"] = $"{normalizedCurrency} {normalizedMode.ToLowerInvariant()} integration settings updated.";
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = $"Failed to update integration: {ex.Message}";
+            }
+
+            return RedirectToAction("PaynowIntegrations");
+        }
+
+        private static string? NormalizePaynowIntegrationCurrency(string? currency)
+        {
+            if (string.Equals(currency, PaynowCurrencyHelper.UsdCurrency, StringComparison.OrdinalIgnoreCase))
+            {
+                return PaynowCurrencyHelper.UsdCurrency;
+            }
+
+            if (string.Equals(currency, PaynowCurrencyHelper.ZwgCurrency, StringComparison.OrdinalIgnoreCase))
+            {
+                return PaynowCurrencyHelper.ZwgCurrency;
+            }
+
+            return null;
+        }
+
+        private static string? NormalizePaynowIntegrationMode(string? mode)
+        {
+            if (string.Equals(mode, PaynowCurrencyHelper.LiveMode, StringComparison.OrdinalIgnoreCase))
+            {
+                return PaynowCurrencyHelper.LiveMode;
+            }
+
+            if (string.Equals(mode, PaynowCurrencyHelper.TestMode, StringComparison.OrdinalIgnoreCase))
+            {
+                return PaynowCurrencyHelper.TestMode;
+            }
+
+            return null;
+        }
+
+        private static JsonObject GetOrCreateJsonObject(JsonObject parent, string propertyName)
+        {
+            if (parent[propertyName] is JsonObject existingObject)
+            {
+                return existingObject;
+            }
+
+            var newObject = new JsonObject();
+            parent[propertyName] = newObject;
+            return newObject;
+        }
+
+        private static JsonObject GetOrCreateCanonicalJsonObject(JsonObject parent, string canonicalName)
+        {
+            JsonObject? matchingObject = null;
+            foreach (var property in parent.ToList())
+            {
+                if (!string.Equals(property.Key, canonicalName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (matchingObject == null && property.Value is JsonObject jsonObject)
+                {
+                    matchingObject = jsonObject;
+                }
+
+                parent.Remove(property.Key);
+            }
+
+            matchingObject ??= new JsonObject();
+            parent[canonicalName] = matchingObject;
+            return matchingObject;
+        }
+
+        [Authorize(Roles = "accountant,chief accountant")]
+        [HttpGet("PaymentIntegrationMode")]
+        public IActionResult PaymentIntegrationMode()
+        {
+            var model = new PaymentIntegrationModeViewModel();
+            var currencies = new[] { PaynowCurrencyHelper.UsdCurrency, PaynowCurrencyHelper.ZwgCurrency };
+
+            // Check which mode is currently being used by looking at configuration
+            var currentMode = _configuration.GetSection("PaymentSettings:CurrentMode").Value ?? PaynowCurrencyHelper.LiveMode;
+            model.CurrentMode = currentMode;
+
+            foreach (var currency in currencies)
+            {
+                var testSection = _configuration.GetSection($"PaynowIntegrations:Currencies:{currency}:{PaynowCurrencyHelper.TestMode}");
+                var liveSection = _configuration.GetSection($"PaynowIntegrations:Currencies:{currency}:{PaynowCurrencyHelper.LiveMode}");
+
+                var testId = testSection["IntegrationId"] ?? string.Empty;
+                var testKey = testSection["IntegrationKey"] ?? string.Empty;
+                var liveId = liveSection["IntegrationId"] ?? string.Empty;
+                var liveKey = liveSection["IntegrationKey"] ?? string.Empty;
+
+                model.ModeStatus.Add(new PaymentModeStatusViewModel
+                {
+                    Currency = currency,
+                    IsTestModeConfigured = !string.IsNullOrWhiteSpace(testId) && !string.IsNullOrWhiteSpace(testKey),
+                    IsLiveModeConfigured = !string.IsNullOrWhiteSpace(liveId) && !string.IsNullOrWhiteSpace(liveKey),
+                    CurrentMode = currentMode
+                });
+            }
+
+            ViewData["Title"] = "Payment Integration Mode";
+            ViewData["Subtitle"] = "Manage and switch between Test and Live payment processing modes";
+            return View(model);
+        }
+
+        [Authorize(Roles = "accountant,chief accountant")]
+        [HttpPost("PaymentIntegrationMode")]
+        [ValidateAntiForgeryToken]
+        public IActionResult PaymentIntegrationMode(string selectedMode)
+        {
+            if (string.IsNullOrWhiteSpace(selectedMode) || (selectedMode != PaynowCurrencyHelper.TestMode && selectedMode != PaynowCurrencyHelper.LiveMode))
+            {
+                TempData["error"] = "Invalid payment mode selected.";
+                return RedirectToAction("PaymentIntegrationMode");
+            }
+
+            try
+            {
+                var appSettingsPath = Path.Combine(_env.ContentRootPath, "appsettings.json");
+                if (System.IO.File.Exists(appSettingsPath))
+                {
+                    var json = System.IO.File.ReadAllText(appSettingsPath);
+                    var root = JsonNode.Parse(json) ?? new JsonObject();
+                    var paymentSettingsNode = GetOrCreateJsonObject(root.AsObject(), "PaymentSettings");
+                    paymentSettingsNode["CurrentMode"] = selectedMode;
+
+                    var options = new JsonSerializerOptions { WriteIndented = true };
+                    System.IO.File.WriteAllText(appSettingsPath, root.ToJsonString(options));
+                }
+
+                _configuration["PaymentSettings:CurrentMode"] = selectedMode;
+                PaynowCurrencyHelper.SetCurrentPaymentMode(selectedMode);
+
+                TempData["success"] = $"Payment integration mode has been switched to {(selectedMode == PaynowCurrencyHelper.TestMode ? "Test" : "Live")} mode.";
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = $"Failed to update payment mode: {ex.Message}";
+            }
+
+            return RedirectToAction("PaymentIntegrationMode");
         }
 
         [HttpGet("VerifyPayments")]
@@ -463,8 +707,10 @@ namespace LLB.Controllers
             {
                 PaynowDetails detail =new PaynowDetails();
                 var application = _db.ApplicationInfo.Where(s => s.Id == tran.ApplicationId).FirstOrDefault();
+                if (application == null) continue;
                 detail.ApplicationRef = application.RefNum;
                 var userDetail = await userManager.FindByIdAsync(application.UserID);
+                if (userDetail == null) continue;
                 detail.Payer = userDetail.Name + " " + userDetail.LastName;
                 detail.PollUrl = tran.PollUrl;
                 detail.PaynowRef = tran.PaynowRef;
@@ -488,8 +734,10 @@ namespace LLB.Controllers
             {
                 PaynowDetails detail = new PaynowDetails();
                 var application = _db.ApplicationInfo.Where(s => s.Id == tran.ApplicationId).FirstOrDefault();
+                if (application == null) continue;
                 detail.ApplicationRef = application.RefNum;
                 var userDetail = await userManager.FindByIdAsync(application.UserID);
+                if (userDetail == null) continue;
                 detail.Payer = userDetail.Name + " " + userDetail.LastName;
                 detail.PollUrl = tran.PollUrl;
                 detail.PaynowRef = tran.PaynowRef;

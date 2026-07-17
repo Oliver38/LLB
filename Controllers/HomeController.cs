@@ -30,6 +30,7 @@ namespace LLB.Controllers
             _validatorService = validatorService;
         }
 
+        [HttpGet("Index")]
         public IActionResult Index()
         {
             return View();
@@ -94,9 +95,18 @@ namespace LLB.Controllers
                 return RedirectToAction("Duplication", "Postprocess", new { param1 = id, param2 = id });
 
             }
-            else if (process == "TRM")
+            else if (process == "TRM" || process == "PRM")
             {
-                return RedirectToAction("Apply", "TemporaryRemoval", new { applicationId = id });
+                return RedirectToAction(
+                    "Apply",
+                    "TemporaryRemoval",
+                    new
+                    {
+                        applicationId = id,
+                        removalType = process == "PRM"
+                            ? TemporaryRemovalHelper.PermanentRemovalType
+                            : TemporaryRemovalHelper.TemporaryRemovalType
+                    });
 
             }
             else if (process == "TTR")
@@ -254,6 +264,12 @@ namespace LLB.Controllers
         public async Task<IActionResult> ManagerChangeListings()
         {
             return await RenderClientListingViewAsync("ManagerChangeListings");
+        }
+
+        [HttpGet("RemovalListings")]
+        public async Task<IActionResult> RemovalListings()
+        {
+            return await RenderClientListingViewAsync("RemovalListings");
         }
 
         [HttpGet("ExtendedHoursListings")]
@@ -491,6 +507,16 @@ namespace LLB.Controllers
                 .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
                 .ToList();
 
+            var removalListings = allApplications
+                .Where(a => TemporaryRemovalHelper.IsTemporaryRemovalApplication(a))
+                .Select(a => BuildRemovalListing(
+                    a,
+                    outletLookup,
+                    licenseLookup,
+                    regionLookup))
+                .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
+                .ToList();
+
             var extendedHoursRecords = _db.ExtendedHours
                 .Where(a => a.UserId == userId)
                 .ToList();
@@ -624,6 +650,7 @@ namespace LLB.Controllers
             ViewBag.ActiveDashboardTab = NormalizeDashboardTab(tab);
             ViewBag.RenewalTasks = renewaltasks;
             ViewBag.ManagerChangeListings = managerChangeListings;
+            ViewBag.RemovalListings = removalListings;
             ViewBag.ExtendedHourListings = extendedHourListings;
             ViewBag.TemporaryRetailListings = temporaryRetailListings;
             ViewBag.ExtraCounterListings = extraCounterListings;
@@ -770,6 +797,44 @@ namespace LLB.Controllers
             };
         }
 
+        private static ClientPostFormationListingViewModel BuildRemovalListing(
+            ApplicationInfo removalApplication,
+            IReadOnlyDictionary<string, OutletInfo> outletLookup,
+            IReadOnlyDictionary<string, LicenseTypes> licenseLookup,
+            IReadOnlyDictionary<string, LicenseRegion> regionLookup)
+        {
+            outletLookup.TryGetValue(removalApplication.Id ?? string.Empty, out var outlet);
+
+            LicenseTypes? licenseType = null;
+            if (!string.IsNullOrWhiteSpace(removalApplication.LicenseTypeID))
+            {
+                licenseLookup.TryGetValue(removalApplication.LicenseTypeID, out licenseType);
+            }
+
+            LicenseRegion? region = null;
+            if (!string.IsNullOrWhiteSpace(removalApplication.ApplicationType))
+            {
+                regionLookup.TryGetValue(removalApplication.ApplicationType, out region);
+            }
+
+            var removalType = TemporaryRemovalHelper.GetRemovalType(removalApplication);
+            return new ClientPostFormationListingViewModel
+            {
+                RecordId = removalApplication.Id ?? string.Empty,
+                Reference = removalApplication.RefNum ?? removalApplication.Id ?? string.Empty,
+                ApplicationId = removalApplication.Id ?? string.Empty,
+                TradingName = outlet?.TradingName ?? removalApplication.BusinessName ?? "N/A",
+                LLBNumber = removalApplication.LLBNum ?? "N/A",
+                LicenseName = licenseType?.LicenseName ?? "N/A",
+                RegionName = region?.RegionName ?? "N/A",
+                ServiceName = removalType,
+                Status = removalApplication.Status ?? "Unknown",
+                SubmittedDate = removalApplication.DateUpdated == default ? removalApplication.ApplicationDate : removalApplication.DateUpdated,
+                ActionUrl = $"/TemporaryRemoval/Apply?recordId={removalApplication.Id}",
+                ActionLabel = "Open Removal"
+            };
+        }
+
         private static ClientPostFormationListingViewModel BuildGovernmentPermitListing(
             GovernmentPermit permit,
             IReadOnlyDictionary<string, ApplicationInfo> applicationLookup,
@@ -822,6 +887,7 @@ namespace LLB.Controllers
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        [HttpGet("Error")]
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });

@@ -28,7 +28,7 @@ namespace LLB.Controllers
         }
 
         [HttpGet("Apply")]
-        public async Task<IActionResult> ApplyAsync(string? applicationId, string? recordId, string? id)
+        public async Task<IActionResult> ApplyAsync(string? applicationId, string? recordId, string? id, string? removalType)
         {
             applicationId ??= id;
 
@@ -40,6 +40,7 @@ namespace LLB.Controllers
 
             ApplicationInfo? sourceApplication;
             ApplicationInfo? removalApplication;
+            var selectedRemovalType = TemporaryRemovalHelper.NormalizeRemovalType(removalType);
 
             if (!string.IsNullOrWhiteSpace(recordId))
             {
@@ -57,20 +58,25 @@ namespace LLB.Controllers
                 }
 
                 sourceApplication = await GetSourceApplicationAsync(removalApplication.CompanyNumber);
+                selectedRemovalType = TemporaryRemovalHelper.GetRemovalType(removalApplication);
             }
             else
             {
+                selectedRemovalType = string.IsNullOrWhiteSpace(selectedRemovalType)
+                    ? TemporaryRemovalHelper.TemporaryRemovalType
+                    : selectedRemovalType;
+
                 sourceApplication = await GetSourceApplicationAsync(applicationId, currentUser.Id, requireApproved: true);
                 if (sourceApplication == null)
                 {
-                    TempData["error"] = "The selected licence could not be found or is not approved for temporary removal.";
+                    TempData["error"] = "The selected licence could not be found or is not approved for removal.";
                     return RedirectToAction("Dashboard", "Home");
                 }
 
-                removalApplication = await GetOpenTemporaryRemovalApplicationAsync(currentUser.Id, sourceApplication.Id);
+                removalApplication = await GetOpenTemporaryRemovalApplicationAsync(currentUser.Id, sourceApplication.Id, selectedRemovalType);
                 if (removalApplication == null)
                 {
-                    removalApplication = await CreateDraftTemporaryRemovalAsync(currentUser, sourceApplication);
+                    removalApplication = await CreateDraftTemporaryRemovalAsync(currentUser, sourceApplication, selectedRemovalType);
                     return RedirectToAction("Apply", new { recordId = removalApplication.Id });
                 }
             }
@@ -81,7 +87,7 @@ namespace LLB.Controllers
                 return RedirectToAction("Dashboard", "Home");
             }
 
-            await PopulateApplyViewAsync(currentUser, sourceApplication, removalApplication);
+            await PopulateApplyViewAsync(currentUser, sourceApplication, removalApplication, selectedRemovalType);
             return View();
         }
 
@@ -95,6 +101,7 @@ namespace LLB.Controllers
             string council,
             [FromForm(Name = "LicenseTypeID")] string licenseTypeId,
             [FromForm(Name = "ApplicationType")] string applicationType,
+            string? removalType,
             string? latitude,
             string? longitude)
         {
@@ -113,7 +120,25 @@ namespace LLB.Controllers
 
             if (!CanEditTemporaryRemoval(removalApplication))
             {
-                TempData["error"] = "The new outlet details can only be edited before the temporary removal application is submitted.";
+                TempData["error"] = "The new outlet details can only be edited before the removal application is submitted.";
+                return RedirectToAction("Apply", new { recordId = removalApplication.Id });
+            }
+
+            var normalizedRemovalType = TemporaryRemovalHelper.NormalizeRemovalType(removalType);
+            if (string.IsNullOrWhiteSpace(normalizedRemovalType))
+            {
+                TempData["error"] = "Select whether this is a permanent removal or a temporary removal.";
+                return RedirectToAction("Apply", new { recordId = removalApplication.Id });
+            }
+
+            var existingOpenApplication = await GetOpenTemporaryRemovalApplicationAsync(
+                currentUser.Id,
+                removalApplication.CompanyNumber,
+                normalizedRemovalType);
+            if (existingOpenApplication != null
+                && !string.Equals(existingOpenApplication.Id, removalApplication.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["error"] = $"A {normalizedRemovalType.ToLowerInvariant()} application for this liquor licence is already in progress.";
                 return RedirectToAction("Apply", new { recordId = removalApplication.Id });
             }
 
@@ -186,6 +211,7 @@ namespace LLB.Controllers
             removalApplication.ApplicantType = sourceApplication.ApplicantType;
             removalApplication.LicenseTypeID = proposedOutlet.LicenseTypeID;
             removalApplication.ApplicationType = proposedOutlet.ApplicationType;
+            removalApplication.PlaceOfBirth = normalizedRemovalType;
             removalApplication.PaymentFee = await GetTemporaryRemovalFeeAsync(removalApplication);
             removalApplication.DateUpdated = now;
 
@@ -334,7 +360,7 @@ namespace LLB.Controllers
             _db.Update(removalApplication);
             await _db.SaveChangesAsync();
 
-            TempData["success"] = "Temporary removal application submitted. Payment is now the next step.";
+            TempData["success"] = $"{TemporaryRemovalHelper.GetRemovalType(removalApplication)} application submitted. Payment is now the next step.";
             return RedirectToAction("Apply", new { recordId = removalApplication.Id });
         }
 
@@ -397,7 +423,7 @@ namespace LLB.Controllers
                 _db.Update(removalApplication);
                 await _db.SaveChangesAsync();
 
-                TempData["success"] = "This temporary removal application has already been paid for.";
+                TempData["success"] = $"This {TemporaryRemovalHelper.GetRemovalType(removalApplication).ToLowerInvariant()} application has already been paid for.";
                 return RedirectToAction("Apply", new { recordId = removalApplication.Id });
             }
 
@@ -424,7 +450,7 @@ namespace LLB.Controllers
             }
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
-            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/TemporaryRemoval/Apply?recordId=" + removalApplication.Id);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/TemporaryRemoval/Apply?recordId=" + removalApplication.Id, paymentCurrency.PaymentMode);
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
                 paynow.ResultUrl = callbackUrl;
@@ -441,7 +467,7 @@ namespace LLB.Controllers
                 ? null
                 : await _db.LicenseTypes.FirstOrDefaultAsync(item => item.Id == sourceApplication.LicenseTypeID);
 
-            payment.Add(licenseType?.LicenseName ?? TemporaryRemovalHelper.ServiceName, paymentCurrency.PaynowAmount);
+            payment.Add(licenseType?.LicenseName ?? TemporaryRemovalHelper.GetRemovalType(removalApplication), paymentCurrency.PaynowAmount);
 
             var response = paynow.Send(payment);
             if (!response.Success())
@@ -548,7 +574,7 @@ namespace LLB.Controllers
             _db.Update(removalApplication);
             await _db.SaveChangesAsync();
 
-            TempData["success"] = "Temporary removal application sent to the secretary for approval.";
+            TempData["success"] = $"{TemporaryRemovalHelper.GetRemovalType(removalApplication)} application sent to the secretary for approval.";
             return RedirectToAction("Apply", new { recordId = removalApplication.Id });
         }
 
@@ -658,7 +684,7 @@ namespace LLB.Controllers
             _db.Update(assignedTask);
             await _db.SaveChangesAsync();
 
-            TempData["success"] = "Temporary removal application approved successfully.";
+            TempData["success"] = $"{TemporaryRemovalHelper.GetRemovalType(removalApplication)} application approved successfully.";
             return RedirectToAction("ViewApplications", new { recordId });
         }
 
@@ -712,14 +738,15 @@ namespace LLB.Controllers
             _db.Update(assignedTask);
             await _db.SaveChangesAsync();
 
-            TempData["success"] = "Temporary removal application rejected.";
+            TempData["success"] = $"{TemporaryRemovalHelper.GetRemovalType(removalApplication)} application rejected.";
             return RedirectToAction("ViewApplications", new { recordId });
         }
 
         private async Task PopulateApplyViewAsync(
             ApplicationUser applicantUser,
             ApplicationInfo sourceApplication,
-            ApplicationInfo removalApplication)
+            ApplicationInfo removalApplication,
+            string? selectedRemovalType = null)
         {
             var originalOutlet = await GetPreferredOutletAsync(sourceApplication.Id, asNoTracking: true);
             var proposedOutlet = await GetProposedOutletAsync(removalApplication.Id, asNoTracking: true);
@@ -741,9 +768,14 @@ namespace LLB.Controllers
             var canContinue = string.Equals(removalApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase)
                 && paymentReceived;
             var awaitingSecretary = string.Equals(removalApplication.Status, "awaiting approval", StringComparison.OrdinalIgnoreCase);
+            var displayRemovalType = TemporaryRemovalHelper.GetRemovalType(removalApplication);
 
-            ViewData["Title"] = "Temporary Removal";
+            ViewData["Title"] = displayRemovalType;
             ViewData["Subtitle"] = "Move the bar to a new outlet, upload the required approvals, submit, pay, and continue to the secretary.";
+            ViewBag.SelectedRemovalType = string.IsNullOrWhiteSpace(selectedRemovalType)
+                ? displayRemovalType
+                : TemporaryRemovalHelper.GetRemovalTypeDisplayName(selectedRemovalType);
+            ViewBag.RemovalTypeDisplay = displayRemovalType;
             ViewBag.SourceApplication = sourceApplication;
             ViewBag.RemovalApplication = removalApplication;
             ViewBag.OriginalOutlet = originalOutlet;
@@ -800,9 +832,11 @@ namespace LLB.Controllers
             var payment = await RefreshTemporaryRemovalPaymentStatusAsync(removalApplication.Id);
             var proposedLicenseId = proposedOutlet?.LicenseTypeID ?? removalApplication.LicenseTypeID;
             var proposedRegionId = proposedOutlet?.ApplicationType ?? removalApplication.ApplicationType;
+            var displayRemovalType = TemporaryRemovalHelper.GetRemovalType(removalApplication);
 
-            ViewData["Title"] = "Temporary Removal Review";
+            ViewData["Title"] = $"{displayRemovalType} Review";
             ViewData["Subtitle"] = "Secretary examination and approval.";
+            ViewBag.RemovalTypeDisplay = displayRemovalType;
             ViewBag.SourceApplication = sourceApplication;
             ViewBag.RemovalApplication = removalApplication;
             ViewBag.OriginalOutlet = originalOutlet;
@@ -868,12 +902,14 @@ namespace LLB.Controllers
             return await query.FirstOrDefaultAsync();
         }
 
-        private async Task<ApplicationInfo?> GetOpenTemporaryRemovalApplicationAsync(string applicantUserId, string? sourceApplicationId)
+        private async Task<ApplicationInfo?> GetOpenTemporaryRemovalApplicationAsync(string applicantUserId, string? sourceApplicationId, string? removalType = null)
         {
             if (string.IsNullOrWhiteSpace(applicantUserId) || string.IsNullOrWhiteSpace(sourceApplicationId))
             {
                 return null;
             }
+
+            var normalizedRemovalType = TemporaryRemovalHelper.NormalizeRemovalType(removalType);
 
             return await _db.ApplicationInfo
                 .AsNoTracking()
@@ -881,6 +917,10 @@ namespace LLB.Controllers
                     item.UserID == applicantUserId
                     && item.CompanyNumber == sourceApplicationId
                     && item.ExaminationStatus == TemporaryRemovalHelper.ServiceName
+                    && (string.IsNullOrWhiteSpace(normalizedRemovalType)
+                        || item.PlaceOfBirth == normalizedRemovalType
+                        || (normalizedRemovalType == TemporaryRemovalHelper.TemporaryRemovalType
+                            && (item.PlaceOfBirth == null || item.PlaceOfBirth == string.Empty)))
                     && (item.Status == null
                         || (item.Status != "Approved" && item.Status != "Rejected")))
                 .OrderByDescending(item => item.DateUpdated)
@@ -901,11 +941,16 @@ namespace LLB.Controllers
                 && item.ExaminationStatus == TemporaryRemovalHelper.ServiceName);
         }
 
-        private async Task<ApplicationInfo> CreateDraftTemporaryRemovalAsync(ApplicationUser applicantUser, ApplicationInfo sourceApplication)
+        private async Task<ApplicationInfo> CreateDraftTemporaryRemovalAsync(ApplicationUser applicantUser, ApplicationInfo sourceApplication, string removalType)
         {
             var fee = await GetTemporaryRemovalFeeAsync(sourceApplication);
             var originalOutlet = await GetPreferredOutletAsync(sourceApplication.Id);
             var now = DateTime.Now;
+            var normalizedRemovalType = TemporaryRemovalHelper.NormalizeRemovalType(removalType);
+            if (string.IsNullOrWhiteSpace(normalizedRemovalType))
+            {
+                normalizedRemovalType = TemporaryRemovalHelper.TemporaryRemovalType;
+            }
 
             var draft = new ApplicationInfo
             {
@@ -923,6 +968,7 @@ namespace LLB.Controllers
                 ApplicantType = sourceApplication.ApplicantType,
                 BusinessName = originalOutlet?.TradingName ?? sourceApplication.BusinessName ?? string.Empty,
                 IdPass = applicantUser.NatID ?? string.Empty,
+                PlaceOfBirth = normalizedRemovalType,
                 Status = "inprogress",
                 ApplicationDate = now,
                 DateUpdated = now,
@@ -1230,6 +1276,7 @@ namespace LLB.Controllers
                 && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
                 && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Created")
                 && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
     }

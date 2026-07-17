@@ -5,7 +5,10 @@ namespace LLB.Helpers
     public static class TemporaryRemovalHelper
     {
         public const string ServiceName = "Temporary Removal";
+        public const string DisplayServiceName = "Removal";
         public const string ServiceCode = "TRM";
+        public const string PermanentRemovalType = "Permanent Removal";
+        public const string TemporaryRemovalType = "Temporary Removal";
 
         public static readonly string[] RequiredDocumentTitles =
         {
@@ -19,6 +22,40 @@ namespace LLB.Helpers
         public static bool IsTemporaryRemovalApplication(ApplicationInfo? application)
         {
             return string.Equals(application?.ExaminationStatus, ServiceName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static string NormalizeRemovalType(string? removalType)
+        {
+            if (string.IsNullOrWhiteSpace(removalType))
+            {
+                return string.Empty;
+            }
+
+            var normalized = removalType.Trim().ToLowerInvariant();
+            return normalized switch
+            {
+                "permanent" => PermanentRemovalType,
+                "permanent removal" => PermanentRemovalType,
+                "temporary" => TemporaryRemovalType,
+                "temporary removal" => TemporaryRemovalType,
+                _ => string.Empty
+            };
+        }
+
+        public static string GetRemovalType(ApplicationInfo? application)
+        {
+            var removalType = NormalizeRemovalType(application?.PlaceOfBirth);
+            return string.IsNullOrWhiteSpace(removalType)
+                ? TemporaryRemovalType
+                : removalType;
+        }
+
+        public static string GetRemovalTypeDisplayName(string? removalType)
+        {
+            var normalized = NormalizeRemovalType(removalType);
+            return string.IsNullOrWhiteSpace(normalized)
+                ? TemporaryRemovalType
+                : normalized;
         }
 
         public static bool IsFinalStatus(string? status)

@@ -212,7 +212,7 @@ namespace LLB.Controllers
             }
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
-            var duplicateUrl = PaynowCurrencyHelper.BuildReturnUrl("/Downloads/GetDuplicate?searchref=" + applicationId);
+            var duplicateUrl = PaynowCurrencyHelper.BuildReturnUrl("/Downloads/GetDuplicate?searchref=" + applicationId, paymentCurrency.PaymentMode);
 
             paynow.ResultUrl = duplicateUrl;
             paynow.ReturnUrl = duplicateUrl;

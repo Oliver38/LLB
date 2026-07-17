@@ -1,4 +1,5 @@
 @using System.Globalization
+@using LLB.Helpers
 @using LLB.Models
 
 @{
@@ -16,6 +17,9 @@
     var attachments = ViewBag.Attachments as IEnumerable<AttachmentInfo> ?? Enumerable.Empty<AttachmentInfo>();
     var totalFee = ViewBag.TotalFee is decimal feeValue ? feeValue : (decimal?)null;
     var canAct = ViewBag.CanAct is bool ready && ready;
+    var displayRemovalType = removalApplication != null
+        ? TemporaryRemovalHelper.GetRemovalType(removalApplication)
+        : TemporaryRemovalHelper.GetRemovalTypeDisplayName(ViewBag.RemovalTypeDisplay as string);
 
     string DisplayValue(string? value)
     {
@@ -71,8 +75,8 @@
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <div>
-            <h5 class="card-title mb-1">Temporary Removal Review</h5>
-            <p class="text-muted mb-0">Review the current outlet against the proposed new outlet before approving or rejecting the temporary removal application.</p>
+            <h5 class="card-title mb-1">@displayRemovalType Review</h5>
+            <p class="text-muted mb-0">Review the current outlet against the proposed new outlet before approving or rejecting the removal application.</p>
         </div>
         <span class="badge rounded-pill @StatusBadgeClass(removalApplication?.Status)">@(removalApplication?.Status ?? "Unknown")</span>
     </div>
@@ -81,6 +85,10 @@
             <div class="col-md-6">
                 <div class="border rounded-3 p-3 h-100 bg-light-subtle">
                     <h6 class="text-uppercase text-muted mb-3">Application Information</h6>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Removal Type</span>
+                        <span class="fw-semibold text-end">@displayRemovalType</span>
+                    </div>
                     <div class="d-flex justify-content-between gap-3 border-bottom py-2">
                         <span class="text-muted">Reference</span>
                         <span class="fw-semibold text-end">@(removalApplication?.RefNum ?? "N/A")</span>
@@ -161,7 +169,7 @@
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="card-title mb-1">Outlet Comparison</h5>
-        <p class="text-muted mb-0">Compare the existing licensed outlet information with the new outlet information submitted for the temporary removal.</p>
+        <p class="text-muted mb-0">Compare the existing licensed outlet information with the new outlet information submitted for the removal.</p>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -228,7 +236,7 @@
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="card-title mb-1">Submitted Attachments</h5>
-        <p class="text-muted mb-0">Review the supporting approvals and plans that were submitted with the temporary removal application.</p>
+        <p class="text-muted mb-0">Review the supporting approvals and plans that were submitted with the removal application.</p>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -281,7 +289,7 @@
             {
                 <button type="submit"
                         class="btn btn-outline-danger"
-                        onclick="return confirm('Reject this temporary removal application?');">
+                        onclick="return confirm('Reject this removal application?');">
                     Reject
                 </button>
             }
@@ -297,7 +305,7 @@
             {
                 <button type="submit"
                         class="btn btn-success"
-                        onclick="return confirm('Approve this temporary removal application?');">
+                        onclick="return confirm('Approve this removal application?');">
                     Approve
                 </button>
             }

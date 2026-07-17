@@ -31,6 +31,7 @@
                        
                         <thead>
                             <tr>
+                                <th>Ref#</th>
                                 <th>Trading Name </th>
                                 <th>Operating Address </th>
                                 <th>Application Date </th>
@@ -45,6 +46,7 @@
                             {
 
                                 <tr>
+                                    <td>@application.RefNum</td>
                                     <td>
                                         @foreach (var outlet in ViewBag.OutletInfo)
                                         {
@@ -140,9 +142,10 @@
 
 	                    <table class="table table-responsiveß table-hover table-striped">
 	                        <thead>
-	                            <tr>
-	                                <th>Trading Name </th>
-	                                <th>LLB Number </th>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Trading Name </th>
+                                <th>LLB Number </th>
 	                                <th>Expiry Date </th>
 	                                <th>License </th>
 	                                <th>For </th>
@@ -152,10 +155,11 @@
 	                        </thead>
 	                        <tbody>
 	                            @foreach (var renewal in ViewBag.Renewals)
-	                            {
-	                                <tr>
-	                                    <td>@renewal.TradingName</td>
-	                                    <td>@renewal.LLBNumber</td>
+                            {
+                                <tr>
+                                    <td>@renewal.Reference</td>
+                                    <td>@renewal.TradingName</td>
+                                    <td>@renewal.LLBNumber</td>
 	                                    <td>@renewal.PreviousExpiry</td>
 	                                    <td>@renewal.Licensetype</td>
 	                                    <td>@renewal.LicenseRegion</td>
@@ -206,6 +210,7 @@
                         
                         <thead>
                             <tr>
+                                <th>Ref#</th>
                                 <th>Trading Name </th>
                                 <th>Operating Address </th>
                                 <th>Application Date </th>
@@ -221,6 +226,7 @@
                             {
 
                                 <tr>
+                                    <td>@application.RefNum</td>
                                     <td>
                                         @foreach (var outlet in ViewBag.OutletInfo)
                                         {

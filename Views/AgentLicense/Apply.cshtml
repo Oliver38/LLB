@@ -80,6 +80,8 @@
         && !string.Equals(payment.Status, "Rejected", StringComparison.OrdinalIgnoreCase)
         && !string.Equals(payment.PaymentStatus, "Expired", StringComparison.OrdinalIgnoreCase)
         && !string.Equals(payment.Status, "Expired", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.PaymentStatus, "Created", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(payment.Status, "Created", StringComparison.OrdinalIgnoreCase)
         && !string.Equals(payment.PaymentStatus, "Awaiting Delivery", StringComparison.OrdinalIgnoreCase)
         && !string.Equals(payment.Status, "Awaiting Delivery", StringComparison.OrdinalIgnoreCase);
     var allRequiredDocumentsUploaded = agentApplication != null

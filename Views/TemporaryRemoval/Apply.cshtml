@@ -1,5 +1,6 @@
 @using System.Globalization
 @using System.Linq
+@using LLB.Helpers
 @using LLB.Models
 
 @{
@@ -38,6 +39,10 @@
     var selectedLatitude = proposedOutlet?.Latitude ?? string.Empty;
     var selectedLongitude = proposedOutlet?.Longitude ?? string.Empty;
     var selectedAddress = proposedOutlet?.Address ?? string.Empty;
+    var selectedRemovalType = TemporaryRemovalHelper.NormalizeRemovalType(ViewBag.SelectedRemovalType as string ?? removalApplication?.PlaceOfBirth);
+    var displayRemovalType = removalApplication != null
+        ? TemporaryRemovalHelper.GetRemovalType(removalApplication)
+        : TemporaryRemovalHelper.GetRemovalTypeDisplayName(selectedRemovalType);
     var showProposedOutletSummary = removalApplication != null
         && !string.Equals(removalApplication.Status, "inprogress", StringComparison.OrdinalIgnoreCase);
 
@@ -95,12 +100,13 @@
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center gap-3">
         <div>
-            <h5 class="card-title mb-1">Temporary Removal Application</h5>
+            <h5 class="card-title mb-1">@displayRemovalType Application</h5>
             <p class="text-muted mb-0">Move the bar from the current outlet to a new outlet, upload the required documents, submit the application, pay, and continue to the secretary.</p>
         </div>
         @if (removalApplication != null)
         {
             <div class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill bg-secondary">@displayRemovalType</span>
                 <span class="badge rounded-pill bg-dark">@(removalApplication.RefNum ?? "Pending")</span>
                 <span class="badge rounded-pill @StatusBadgeClass(removalApplication.Status)">@(removalApplication.Status ?? "Unknown")</span>
             </div>
@@ -219,6 +225,14 @@
                         <input type="hidden" id="selectedCouncil" value="@selectedCouncil" />
                         <input type="hidden" id="locationName" value="@selectedAddress" />
 
+                        <div class="col-md-6">
+                            <label class="form-label">Removal Type</label>
+                            <select name="removalType" class="form-select" required>
+                                <option value="">Choose removal type</option>
+                                <option value="@TemporaryRemovalHelper.PermanentRemovalType" selected="@(string.Equals(displayRemovalType, TemporaryRemovalHelper.PermanentRemovalType, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Permanent Removal</option>
+                                <option value="@TemporaryRemovalHelper.TemporaryRemovalType" selected="@(string.Equals(displayRemovalType, TemporaryRemovalHelper.TemporaryRemovalType, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Temporary Removal</option>
+                            </select>
+                        </div>
                         <div class="col-md-12">
                             <label class="form-label">Trading Name</label>
                             <input type="text" id="tradingName" name="tradingName" class="form-control" value="@selectedTradingName" readonly required />
@@ -365,15 +379,15 @@
                                             <div class="d-flex justify-content-end">
                                                 @if (uploaded)
                                                 {
-                                                    <form method="post" action="/TemporaryRemoval/RemoveAttachment" class="mb-0">
+                                                    <form method="post"
+                                                          enctype="multipart/form-data"
+                                                          action="/TemporaryRemoval/UploadAttachment"
+                                                          class="d-flex flex-column flex-md-row gap-2 mb-0">
                                                         @Html.AntiForgeryToken()
                                                         <input type="hidden" name="recordId" value="@removalApplication.Id" />
                                                         <input type="hidden" name="attachmentId" value="@attachment.Id" />
-                                                        <button type="submit"
-                                                                class="btn btn-sm btn-outline-danger"
-                                                                onclick="return confirm('Remove this attachment?');">
-                                                            Remove
-                                                        </button>
+                                                        <input type="file" name="file" class="form-control form-control-sm" required />
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">Replace</button>
                                                     </form>
                                                 }
                                                 else
@@ -412,6 +426,10 @@
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                    <span class="text-muted">Removal Type</span>
+                    <span class="fw-semibold text-end">@displayRemovalType</span>
+                </div>
+                <div class="d-flex justify-content-between gap-3 border-bottom py-2">
                     <span class="text-muted">Status</span>
                     <span class="badge rounded-pill @StatusBadgeClass(removalApplication?.Status)">@(removalApplication?.Status ?? "Unknown")</span>
                 </div>
@@ -439,84 +457,84 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-1">Next Step</h5>
-                <p class="text-muted mb-0">The flow is save the new outlet, upload all five attachments, submit, make payment, then continue to the secretary.</p>
-            </div>
-            <div class="card-body">
-                @if (removalApplication != null && string.Equals(removalApplication.Status, "Approved", StringComparison.OrdinalIgnoreCase))
-                {
-                    <div class="alert alert-success mb-3">This temporary removal application has been approved by the secretary.</div>
-                }
-                else if (removalApplication != null && string.Equals(removalApplication.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
-                {
-                    <div class="alert alert-danger mb-3">This temporary removal application has been rejected.</div>
-                }
-                else if (awaitingSecretary)
-                {
-                    <div class="alert alert-info mb-3">The application has been assigned to the secretary and is now awaiting approval.</div>
-                }
-                else if (canContinue)
-                {
-                    <div class="alert alert-success mb-3">Payment was received successfully. Click continue to send the application to the secretary.</div>
-                }
-                else if (hasActivePayment)
-                {
-                    <div class="alert alert-warning mb-3">A payment attempt is already in progress for this application. Complete it or wait for it to expire before trying again.</div>
-                }
-                else if (canMakePayment)
-                {
-                    <div class="alert alert-primary mb-3">The application has been submitted. You can now complete payment.</div>
-                }
-                else if (canSubmit)
-                {
-                    <div class="alert alert-success mb-3">The outlet details and all required attachments are complete. Submit the application to unlock payment.</div>
-                }
-                else if (!outletComplete)
-                {
-                    <div class="alert alert-warning mb-3">Save the full new outlet information before the application can be submitted.</div>
-                }
-                else if (!attachmentsComplete)
-                {
-                    <div class="alert alert-warning mb-3">Upload all five required temporary removal attachments before the application can be submitted.</div>
-                }
-                else if (removalApplication != null && string.Equals(removalApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase) && !paymentReceived)
-                {
-                    <div class="alert alert-secondary mb-3">This application is submitted and waiting for payment confirmation.</div>
-                }
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Steps</h5>
+        <p class="text-muted mb-0">The flow is save the new outlet, upload all five attachments, submit, make payment, then continue to the secretary.</p>
+    </div>
+    <div class="card-body">
+        @if (removalApplication != null && string.Equals(removalApplication.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="alert alert-success mb-3">This @(displayRemovalType.ToLowerInvariant()) application has been approved by the secretary.</div>
+        }
+        else if (removalApplication != null && string.Equals(removalApplication.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="alert alert-danger mb-3">This @(displayRemovalType.ToLowerInvariant()) application has been rejected.</div>
+        }
+        else if (awaitingSecretary)
+        {
+            <div class="alert alert-info mb-3">The application has been assigned to the secretary and is now awaiting approval.</div>
+        }
+        else if (canContinue)
+        {
+            <div class="alert alert-success mb-3">Payment was received successfully. Click continue to send the application to the secretary.</div>
+        }
+        else if (hasActivePayment)
+        {
+            <div class="alert alert-warning mb-3">A payment attempt is already in progress for this application. Complete it or wait for it to expire before trying again.</div>
+        }
+        else if (canMakePayment)
+        {
+            <div class="alert alert-primary mb-3">The application has been submitted. You can now complete payment.</div>
+        }
+        else if (canSubmit)
+        {
+            <div class="alert alert-success mb-3">The outlet details and all required attachments are complete. Submit the application to unlock payment.</div>
+        }
+        else if (!outletComplete)
+        {
+            <div class="alert alert-warning mb-3">Save the full new outlet information before the application can be submitted.</div>
+        }
+        else if (!attachmentsComplete)
+        {
+            <div class="alert alert-warning mb-3">Upload all five required removal attachments before the application can be submitted.</div>
+        }
+        else if (removalApplication != null && string.Equals(removalApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase) && !paymentReceived)
+        {
+            <div class="alert alert-secondary mb-3">This application is submitted and waiting for payment confirmation.</div>
+        }
 
-                <div class="d-flex flex-wrap gap-2">
-                    @if (canSubmit && removalApplication != null)
-                    {
-                        <form method="post" action="/TemporaryRemoval/Submit" class="mb-0">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="recordId" value="@removalApplication.Id" />
-                            <button type="submit" class="btn btn-primary">Submit Application</button>
-                        </form>
-                    }
+        <div class="d-flex flex-wrap gap-2">
+            @if (canSubmit && removalApplication != null)
+            {
+                <form method="post" action="/TemporaryRemoval/Submit" class="mb-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="recordId" value="@removalApplication.Id" />
+                    <button type="submit" class="btn btn-primary">Submit Application</button>
+                </form>
+            }
 
-                    @if (canMakePayment && removalApplication != null)
-                    {
-                        <a class="btn btn-success"
-                           href="/TemporaryRemoval/Payment?recordId=@removalApplication.Id"
-                           data-currency-payment="true"
-                           data-payment-usd-amount="@((totalFee ?? 0).ToString(CultureInfo.InvariantCulture))">Make Payment</a>
-                    }
+            @if (canMakePayment && removalApplication != null)
+            {
+                <a class="btn btn-success"
+                   href="/TemporaryRemoval/Payment?recordId=@removalApplication.Id"
+                   data-currency-payment="true"
+                   data-payment-usd-amount="@((totalFee ?? 0).ToString(CultureInfo.InvariantCulture))">Make Payment</a>
+            }
 
-                    @if (canContinue && removalApplication != null)
-                    {
-                        <form method="post" action="/TemporaryRemoval/Continue" class="mb-0">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="recordId" value="@removalApplication.Id" />
-                            <button type="submit" class="btn btn-primary">Continue</button>
-                        </form>
-                    }
+            @if (canContinue && removalApplication != null)
+            {
+                <form method="post" action="/TemporaryRemoval/Continue" class="mb-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="recordId" value="@removalApplication.Id" />
+                    <button type="submit" class="btn btn-primary">Continue</button>
+                </form>
+            }
 
-                    <a class="btn btn-light border" href="/Home/Dashboard">Back To Dashboard</a>
-                </div>
-            </div>
+            <a class="btn btn-light border" href="/Home/Dashboard">Back To Dashboard</a>
         </div>
     </div>
 </div>

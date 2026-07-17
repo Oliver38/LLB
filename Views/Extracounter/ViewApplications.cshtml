@@ -119,28 +119,14 @@
 
 @if (!isExtraCounter)
 {
-    var planUploaded = !string.IsNullOrWhiteSpace(record?.NewPlanPath);
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="card-title mb-1">Alteration Details</h5>
-            <p class="text-muted mb-0">Review the submitted plan and reason for alterations.</p>
+            <p class="text-muted mb-0">Review the submitted reason for alterations.</p>
         </div>
         <div class="card-body">
             <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="border rounded-3 p-3 h-100 bg-light-subtle">
-                        <h6 class="text-uppercase text-muted mb-3">Alteration Plan</h6>
-                        @if (planUploaded)
-                        {
-                            <a href="~/@record?.NewPlanPath" target="_blank">View Alteration Plan</a>
-                        }
-                        else
-                        {
-                            <span class="text-danger">No plan uploaded</span>
-                        }
-                    </div>
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="border rounded-3 p-3 h-100 bg-light-subtle">
                         <h6 class="text-uppercase text-muted mb-3">Reason For Alterations</h6>
                         <p class="mb-0">@(string.IsNullOrWhiteSpace(record?.ExtracounterReason) ? "N/A" : record.ExtracounterReason)</p>
@@ -151,52 +137,49 @@
     </div>
 }
 
-@if (isExtraCounter)
-{
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="card-title mb-1">Attached Documents</h5>
-            <p class="text-muted mb-0">Review every uploaded document before approving the application.</p>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead>
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Inspection Report</h5>
+        <p class="text-muted mb-0">Review the uploaded inspection report before approving the application.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Status</th>
+                        <th>File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var attachment in attachments)
+                    {
+                        var uploaded = !string.IsNullOrWhiteSpace(attachment.DocumentLocation);
                         <tr>
-                            <th>Document</th>
-                            <th>Status</th>
-                            <th>File</th>
+                            <td class="fw-semibold">@attachment.DocumentTitle</td>
+                            <td>
+                                <span class="badge rounded-pill @(uploaded ? "bg-success" : "bg-secondary")">
+                                    @(uploaded ? "Uploaded" : "Missing")
+                                </span>
+                            </td>
+                            <td>
+                                @if (uploaded)
+                                {
+                                    <a href="~/@attachment.DocumentLocation" target="_blank">View Attachment</a>
+                                }
+                                else
+                                {
+                                    <span class="text-danger">No file uploaded</span>
+                                }
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var attachment in attachments)
-                        {
-                            var uploaded = !string.IsNullOrWhiteSpace(attachment.DocumentLocation);
-                            <tr>
-                                <td class="fw-semibold">@attachment.DocumentTitle</td>
-                                <td>
-                                    <span class="badge rounded-pill @(uploaded ? "bg-success" : "bg-secondary")">
-                                        @(uploaded ? "Uploaded" : "Missing")
-                                    </span>
-                                </td>
-                                <td>
-                                    @if (uploaded)
-                                    {
-                                        <a href="~/@attachment.DocumentLocation" target="_blank">View Attachment</a>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-danger">No file uploaded</span>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
-}
+</div>
 
 @if (record != null && !string.Equals(record.Status, "Approved", StringComparison.OrdinalIgnoreCase) && !string.Equals(record.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
 {

@@ -85,7 +85,7 @@ namespace LLB.Controllers
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
         
-            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/" + service + "?id=" + Id + "&process=" + process);
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/" + service + "?id=" + Id + "&process=" + process, paymentCurrency.PaymentMode);
             paynow.ReturnUrl = paynow.ResultUrl;
 
             // The return url can be set at later stages. You might want to do this if you want to pass data to the return url (like the reference of the transaction)
@@ -202,7 +202,7 @@ namespace LLB.Controllers
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
         
-            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/" + service + "?id=" + Id + "&process=" + process);
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/Postprocess/" + service + "?id=" + Id + "&process=" + process, paymentCurrency.PaymentMode);
             paynow.ReturnUrl = paynow.ResultUrl;
             //paynow.ResultUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
             //paynow.ReturnUrl = "https://localhost:41018/Postprocess/" + service + "?id=" + Id + "&process=" + process;
@@ -288,6 +288,7 @@ namespace LLB.Controllers
                 && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
                 && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Created")
                 && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
 

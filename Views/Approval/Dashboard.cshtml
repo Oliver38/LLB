@@ -141,6 +141,7 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
+                            <th>Reference</th>
                             <th>Trading Name</th>
                             <th>Operating Address</th>
                             <th>Application Date</th>
@@ -154,6 +155,7 @@
                         @foreach (var application in Model.Applications)
                         {
                             <tr>
+                                <td>@(string.IsNullOrWhiteSpace(application.Reference) ? "N/A" : application.Reference)</td>
                                 <td class="fw-semibold">@application.TradingName</td>
                                 <td>@application.OperatingAddress</td>
                                 <td>@application.ApplicationDate.ToString("dd MMM yyyy")</td>
@@ -197,6 +199,7 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
+                            <th>Reference</th>
                             <th>Trading Name</th>
                             <th>Operating Address</th>
                             <th>Submitted</th>
@@ -211,6 +214,7 @@
                         @foreach (var renewal in Model.Renewals)
                         {
                             <tr>
+                                <td>@(string.IsNullOrWhiteSpace(renewal.Reference) ? "N/A" : renewal.Reference)</td>
                                 <td class="fw-semibold">@renewal.TradingName</td>
                                 <td>@renewal.OperatingAddress</td>
                                 <td>@renewal.SubmittedDate.ToString("dd MMM yyyy")</td>
@@ -255,6 +259,7 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
+                            <th>Reference</th>
                             <th>Service</th>
                             <th>Trading Name</th>
                             <th>Operating Address</th>
@@ -269,6 +274,7 @@
                         @foreach (var postFormation in Model.PostFormations)
                         {
                             <tr>
+                                <td>@(string.IsNullOrWhiteSpace(postFormation.Reference) ? "N/A" : postFormation.Reference)</td>
                                 <td>
                                     <span class="badge rounded-pill @GetServiceClass(postFormation.Service)">
                                         @postFormation.Service

@@ -43,6 +43,7 @@ namespace LLB.Controllers
         [HttpGet("AdminDashboard")]
         public async Task<IActionResult> AdminDashboardAsync()
         {
+            EnsureSubmittedPaidPostFormationTasks();
 
             var unassignedtasks = _db.Tasks.Where(a => a.Status == "unassigned").ToList();
             //var assignedtasks = _db.Tasks.Where(a => a.Status == "assigned" || a.Status == "reassigned").ToList();
@@ -323,6 +324,8 @@ namespace LLB.Controllers
         [HttpGet("BulkReassignment")]
         public async Task<IActionResult> BulkReassignment(string stage)
         {
+            EnsureSubmittedPaidPostFormationTasks();
+
             //var assignedtasks = _db.Tasks.Where(a => a.Status == "assigned" || a.Status == "reassigned").ToList();
             var assignedtasks = _db.Tasks.Where(a => a.Status == "assigned").ToList();
 
@@ -417,6 +420,8 @@ namespace LLB.Controllers
             [HttpPost("BulkReassignment")]
         public async Task<IActionResult> BulkReassignmentAsync(string stage )
         {
+            EnsureSubmittedPaidPostFormationTasks();
+
             //var assignedtasks = _db.Tasks.Where(a => a.Status == "assigned" || a.Status == "reassigned").ToList();
             var assignedtasks = _db.Tasks.Where(a => a.Status == "assigned").ToList();
 
@@ -627,6 +632,151 @@ namespace LLB.Controllers
             }
 
             return new List<ApplicationUser>();
+        }
+
+        private void EnsureSubmittedPaidPostFormationTasks()
+        {
+            var now = DateTime.Now;
+
+            foreach (var renewal in _db.Renewals.Where(item => item.Status == "submitted").ToList())
+            {
+                if (IsPaid(renewal.PaymentStatus, renewal.ApplicationId, "renewal"))
+                {
+                    EnsureAssignedPostFormationTask(renewal.ApplicationId, "renewal", "verification", renewal.DateApplied, now);
+                }
+            }
+
+            foreach (var inspection in _db.Inspection.Where(item => item.Status == "submitted").ToList())
+            {
+                if (IsPaid(inspection.PaymentStatus, inspection.ApplicationId, inspection.Service))
+                {
+                    var stage = string.Equals(inspection.Service, "Inspection", StringComparison.OrdinalIgnoreCase)
+                        ? "inspection"
+                        : "verification";
+                    EnsureAssignedPostFormationTask(inspection.ApplicationId, inspection.Service ?? "Inspection", stage, inspection.DateApplied, now);
+                }
+            }
+
+            foreach (var record in _db.ExtendedHours.Where(item => item.Status == "submitted").ToList())
+            {
+                if (IsPaid(record.PaymentStatus, record.Id, "extended hours"))
+                {
+                    EnsureAssignedPostFormationTask(record.Id, "Extended Hours", "approval", record.DateUpdated, now);
+                }
+            }
+
+            foreach (var record in _db.TemporaryRetails.Where(item => item.Status == "submitted").ToList())
+            {
+                if (IsPaid(record.PaymentStatus, record.Id, "temporary retails"))
+                {
+                    EnsureAssignedPostFormationTask(record.Id, "Temporary Retails", "approval", record.DateUpdated, now);
+                }
+            }
+
+            foreach (var record in _db.ExtraCounter.Where(item => item.Status == "submitted").ToList())
+            {
+                var service = IsStandaloneExtraCounterReference(record.Reference) ? "Extra Counter" : "Permission to Alter";
+                if (IsPaid(record.PaymentStatus, record.Id, service))
+                {
+                    EnsureAssignedPostFormationTask(record.Id, service, "approval", record.DateUpdated, now);
+                }
+            }
+
+            foreach (var record in _db.ChangeManaager.Where(item => item.Status == "submitted").ToList())
+            {
+                if (IsPaid(record.PaymentStatus, record.Id, "Manager Change") || IsPaid(record.PaymentStatus, record.Id, "changemanager"))
+                {
+                    EnsureAssignedPostFormationTask(record.Id, "Manager Change", "approval", ParseTaskDate(record.DateUpdated) ?? ParseTaskDate(record.DateApplied) ?? now, now);
+                }
+            }
+
+            foreach (var record in _db.GovernmentPermit.Where(item => item.Status == "submitted").ToList())
+            {
+                if (IsPaid(record.PaymentStatus, record.Id, GovernmentPermitHelper.ServiceName))
+                {
+                    EnsureAssignedPostFormationTask(record.Id, GovernmentPermitHelper.ServiceName, "verification", record.DateUpdated, now);
+                }
+            }
+
+            foreach (var record in _db.ApplicationInfo.Where(item =>
+                item.Status == "submitted"
+                && (item.ExaminationStatus == TemporaryTransferHelper.ServiceName
+                    || item.ExaminationStatus == TemporaryRemovalHelper.ServiceName
+                    || item.ExaminationStatus == AgentLicenseHelper.ServiceName)).ToList())
+            {
+                if (!IsPaid(record.PaymentStatus, record.Id, record.ExaminationStatus))
+                {
+                    continue;
+                }
+
+                var stage = string.Equals(record.ExaminationStatus, AgentLicenseHelper.ServiceName, StringComparison.OrdinalIgnoreCase)
+                    ? "verification"
+                    : "approval";
+                EnsureAssignedPostFormationTask(record.Id, record.ExaminationStatus, stage, record.DateUpdated == default ? record.ApplicationDate : record.DateUpdated, now);
+            }
+
+            _db.SaveChanges();
+        }
+
+        private void EnsureAssignedPostFormationTask(string? applicationId, string? service, string stage, DateTime dateAdded, DateTime now)
+        {
+            if (string.IsNullOrWhiteSpace(applicationId) || string.IsNullOrWhiteSpace(service))
+            {
+                return;
+            }
+
+            var activeTaskExists = _db.Tasks.Any(task =>
+                task.ApplicationId == applicationId
+                && task.Service == service
+                && task.Status == "assigned");
+
+            if (activeTaskExists)
+            {
+                return;
+            }
+
+            _db.Tasks.Add(new Tasks
+            {
+                Id = Guid.NewGuid().ToString(),
+                ApplicationId = applicationId,
+                AssignerId = "system",
+                Service = service,
+                ExaminationStatus = stage,
+                Status = "assigned",
+                DateAdded = dateAdded == default ? now : dateAdded,
+                DateUpdated = now
+            });
+        }
+
+        private bool IsPaid(string? status, string? applicationId, string? service)
+        {
+            if (string.Equals(status, "Paid", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(applicationId))
+            {
+                return false;
+            }
+
+            return _db.Payments.Any(payment =>
+                payment.ApplicationId == applicationId
+                && (string.IsNullOrWhiteSpace(service) || payment.Service == service || payment.Service == service.ToLowerInvariant())
+                && (payment.Status == "Paid" || payment.PaymentStatus == "Paid"));
+        }
+
+        private static bool IsStandaloneExtraCounterReference(string? reference)
+        {
+            return !string.IsNullOrWhiteSpace(reference)
+                && reference.StartsWith("PF-EXC-", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static DateTime? ParseTaskDate(string? value)
+        {
+            return DateTime.TryParse(value, out var parsedValue)
+                ? parsedValue
+                : null;
         }
 
         private ApplicationInfo? ResolveTaskApplication(Tasks task)

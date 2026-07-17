@@ -13,6 +13,7 @@ namespace LLB.Models.ViewModel
     public class SecretaryDashboardApplicationItemViewModel
     {
         public string ApplicationId { get; set; } = string.Empty;
+        public string Reference { get; set; } = string.Empty;
         public string TradingName { get; set; } = "N/A";
         public string OperatingAddress { get; set; } = "N/A";
         public DateTime ApplicationDate { get; set; }

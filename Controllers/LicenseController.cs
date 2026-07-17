@@ -1212,6 +1212,7 @@ namespace LLB.Controllers
             PaynowCurrencyContext paymentCurrency;
             try
             {
+                // The payment environment is controlled centrally by the accountant.
                 paymentCurrency = PaynowCurrencyHelper.BuildPaymentContext(_db, (decimal)amount, currency);
             }
             catch (InvalidOperationException ex)
@@ -1222,8 +1223,8 @@ namespace LLB.Controllers
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
 
-            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Submit?gateway=paynow");
-            paynow.ReturnUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Finalising?Id=" + Id + "&gateway=paynow");
+            paynow.ResultUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Submit?gateway=paynow", paymentCurrency.PaymentMode);
+            paynow.ReturnUrl = PaynowCurrencyHelper.BuildReturnUrl("/License/Finalising?Id=" + Id + "&gateway=paynow", paymentCurrency.PaymentMode);
            // paynow.ResultUrl = "https://localhost:41018/License/Submit?gateway=paynow";
             //paynow.ReturnUrl = "https://localhost:41018/License/Finalising?Id=" + Id + "&gateway=paynow";
 

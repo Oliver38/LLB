@@ -15,14 +15,11 @@ namespace LLB.Controllers
         private const string ExtraCounterService = "Extra Counter";
         private const string PermissionToAlterProcessCode = "ECF";
         private const string ExtraCounterProcessCode = "EXC";
+        private const string InspectionReportDocumentTitle = "Inspection report";
 
         private static readonly string[] RequiredPermissionToAlterDocuments =
         {
-            "Local Authority Letter of approval",
-            "Tie Affidavit",
-            "Lease/Deed documents",
-            "Inspection report",
-            "Plan"
+            InspectionReportDocumentTitle
         };
 
         private readonly UserManager<ApplicationUser> _userManager;
@@ -79,12 +76,10 @@ namespace LLB.Controllers
             }
 
             var requiresAlterationDetails = !IsExtraCounterRecord(selectedApplication);
-            var attachments = requiresAlterationDetails
-                ? new List<AttachmentInfo>()
-                : EnsureRequiredPermissionToAlterAttachments(selectedApplication.Id, currentUserId);
+            var attachments = EnsureRequiredPermissionToAlterAttachments(selectedApplication.Id, currentUserId);
             var payment = RefreshPermissionToAlterPaymentStatus(selectedApplication);
             var paymentReceived = payment != null && HasPaymentStatus(payment, "Paid");
-            var attachmentsComplete = requiresAlterationDetails || AreAllRequiredDocumentsUploaded(attachments);
+            var attachmentsComplete = AreAllRequiredDocumentsUploaded(attachments);
             var alterationDetailsComplete = !requiresAlterationDetails || IsAlterationDetailsComplete(selectedApplication);
             var canUploadAttachments = string.Equals(selectedApplication.Status, "inprogress", StringComparison.OrdinalIgnoreCase);
             var canSubmit = canUploadAttachments && attachmentsComplete && alterationDetailsComplete;
@@ -242,7 +237,7 @@ namespace LLB.Controllers
         }
 
         [HttpPost("SavePermissionToAlterDetails")]
-        public async Task<IActionResult> SavePermissionToAlterDetailsAsync(string applicationId, string ecId, string alterationReason, IFormFile? planFile)
+        public IActionResult SavePermissionToAlterDetails(string applicationId, string ecId, string alterationReason)
         {
             var currentUserId = _userManager.GetUserId(User);
             if (string.IsNullOrWhiteSpace(currentUserId))
@@ -280,23 +275,12 @@ namespace LLB.Controllers
                 return RedirectToAction("Extracounter", new { id = applicationId, process = processCode, ecId });
             }
 
-            if ((planFile == null || planFile.Length <= 0) && string.IsNullOrWhiteSpace(permissionApplication.NewPlanPath))
-            {
-                TempData["error"] = "Attach the alteration plan.";
-                return RedirectToAction("Extracounter", new { id = applicationId, process = processCode, ecId });
-            }
-
-            if (planFile != null && planFile.Length > 0)
-            {
-                permissionApplication.NewPlanPath = await SaveApplicationAttachmentAsync(planFile);
-            }
-
             permissionApplication.ExtracounterReason = alterationReason.Trim();
             permissionApplication.DateUpdated = DateTime.Now;
             _db.Update(permissionApplication);
             _db.SaveChanges();
 
-            TempData["success"] = "Alteration details saved successfully.";
+            TempData["success"] = "Alteration reason saved successfully.";
             return RedirectToAction("Extracounter", new { id = applicationId, process = processCode, ecId });
         }
 
@@ -328,16 +312,15 @@ namespace LLB.Controllers
                 return RedirectToAction("Extracounter", new { id = permissionApplication.ApplicationId, process = processCode, ecId = permissionApplication.Id });
             }
 
-            if (IsExtraCounterRecord(permissionApplication)
-                && !AreAllRequiredDocumentsUploaded(EnsureRequiredPermissionToAlterAttachments(permissionApplication.Id, currentUserId)))
+            if (!AreAllRequiredDocumentsUploaded(EnsureRequiredPermissionToAlterAttachments(permissionApplication.Id, currentUserId)))
             {
-                TempData["error"] = $"Upload all required attachments before {actionGerund} the {serviceLower} application.";
+                TempData["error"] = $"Upload the inspection report before {actionGerund} the {serviceLower} application.";
                 return RedirectToAction("Extracounter", new { id = permissionApplication.ApplicationId, process = processCode, ecId = permissionApplication.Id });
             }
 
             if (!IsExtraCounterRecord(permissionApplication) && !IsAlterationDetailsComplete(permissionApplication))
             {
-                TempData["error"] = "Attach the alteration plan and enter the reason for the alterations before submitting the permission to alter application.";
+                TempData["error"] = "Enter the reason for the alterations before submitting the permission to alter application.";
                 return RedirectToAction("Extracounter", new { id = permissionApplication.ApplicationId, process = processCode, ecId = permissionApplication.Id });
             }
 
@@ -391,10 +374,9 @@ namespace LLB.Controllers
                 return RedirectToAction("Extracounter", new { id, process = processCode, ecId });
             }
 
-            if (IsExtraCounterRecord(permissionApplication)
-                && !AreAllRequiredDocumentsUploaded(EnsureRequiredPermissionToAlterAttachments(permissionApplication.Id, currentUserId)))
+            if (!AreAllRequiredDocumentsUploaded(EnsureRequiredPermissionToAlterAttachments(permissionApplication.Id, currentUserId)))
             {
-                TempData["error"] = "Upload all required attachments before proceeding to payment.";
+                TempData["error"] = "Upload the inspection report before proceeding to payment.";
                 return RedirectToAction("Extracounter", new { id, process = processCode, ecId });
             }
 
@@ -434,7 +416,7 @@ namespace LLB.Controllers
             }
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
-            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Extracounter/Extracounter?id=" + id + "&process=" + processCode + "&ecId=" + ecId);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/Extracounter/Extracounter?id=" + id + "&process=" + processCode + "&ecId=" + ecId, paymentCurrency.PaymentMode);
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
                 paynow.ResultUrl = callbackUrl;
@@ -515,6 +497,12 @@ namespace LLB.Controllers
                 return RedirectToAction("Extracounter", new { id = permissionApplication.ApplicationId, process = processCode, ecId = permissionApplication.Id });
             }
 
+            if (!AreAllRequiredDocumentsUploaded(EnsureRequiredPermissionToAlterAttachments(permissionApplication.Id, currentUserId)))
+            {
+                TempData["error"] = "Upload the inspection report before sending the application to the secretary.";
+                return RedirectToAction("Extracounter", new { id = permissionApplication.ApplicationId, process = processCode, ecId = permissionApplication.Id });
+            }
+
             var existingTask = _db.Tasks.FirstOrDefault(task =>
                 task.ApplicationId == permissionApplication.Id
                 && task.Status == "assigned"
@@ -567,9 +555,10 @@ namespace LLB.Controllers
 
             var serviceName = GetServiceNameForRecord(permissionApplication);
             var application = _db.ApplicationInfo.FirstOrDefault(item => item.Id == permissionApplication.ApplicationId);
-            var attachments = IsExtraCounterRecord(permissionApplication)
-                ? OrderRequiredPermissionToAlterAttachments(_db.AttachmentInfo.Where(item => item.ApplicationId == permissionApplication.Id).ToList())
-                : new List<AttachmentInfo>();
+            var attachmentUserId = !string.IsNullOrWhiteSpace(permissionApplication.UserId)
+                ? permissionApplication.UserId
+                : _userManager.GetUserId(User) ?? string.Empty;
+            var attachments = EnsureRequiredPermissionToAlterAttachments(permissionApplication.Id, attachmentUserId);
             var task = _db.Tasks
                 .Where(item => item.ApplicationId == Id && item.Status == "assigned")
                 .OrderByDescending(item => item.DateAdded)
@@ -598,6 +587,13 @@ namespace LLB.Controllers
             }
 
             var serviceName = GetServiceNameForRecord(permissionApplication);
+            var attachments = OrderRequiredPermissionToAlterAttachments(_db.AttachmentInfo.Where(item => item.ApplicationId == Id).ToList());
+            if (!AreAllRequiredDocumentsUploaded(attachments))
+            {
+                TempData["error"] = "The inspection report must be uploaded before this application can be approved.";
+                return RedirectToAction("ViewApplications", new { Id });
+            }
+
             permissionApplication.ApproverId = _userManager.GetUserId(User);
             permissionApplication.DateOfApproval = DateTime.Now;
             permissionApplication.Status = "Approved";
@@ -711,10 +707,7 @@ namespace LLB.Controllers
             _db.Add(draft);
             _db.SaveChanges();
 
-            if (NormalizeProcessCode(processCode) == ExtraCounterProcessCode)
-            {
-                EnsureRequiredPermissionToAlterAttachments(draft.Id, userId);
-            }
+            EnsureRequiredPermissionToAlterAttachments(draft.Id, userId);
 
             return draft;
         }
@@ -778,7 +771,6 @@ namespace LLB.Controllers
         private static bool IsAlterationDetailsComplete(ExtraCounter? record)
         {
             return record != null
-                && !string.IsNullOrWhiteSpace(record.NewPlanPath)
                 && !string.IsNullOrWhiteSpace(record.ExtracounterReason);
         }
 
@@ -806,6 +798,21 @@ namespace LLB.Controllers
                 .ToList();
 
             var hasChanges = false;
+            var requiredTitles = new HashSet<string>(RequiredPermissionToAlterDocuments, StringComparer.OrdinalIgnoreCase);
+            var obsoleteAttachments = attachments
+                .Where(item => string.IsNullOrWhiteSpace(item.DocumentTitle) || !requiredTitles.Contains(item.DocumentTitle))
+                .ToList();
+
+            if (obsoleteAttachments.Any())
+            {
+                _db.AttachmentInfo.RemoveRange(obsoleteAttachments);
+                foreach (var obsoleteAttachment in obsoleteAttachments)
+                {
+                    attachments.Remove(obsoleteAttachment);
+                }
+                hasChanges = true;
+            }
+
             foreach (var documentTitle in RequiredPermissionToAlterDocuments)
             {
                 if (attachments.Any(item => string.Equals(item.DocumentTitle, documentTitle, StringComparison.OrdinalIgnoreCase)))
@@ -841,9 +848,24 @@ namespace LLB.Controllers
         private static List<AttachmentInfo> OrderRequiredPermissionToAlterAttachments(IEnumerable<AttachmentInfo> attachments)
         {
             return attachments
-                .OrderBy(item => Array.IndexOf(RequiredPermissionToAlterDocuments, item.DocumentTitle ?? string.Empty))
+                .Where(item => RequiredPermissionToAlterDocuments.Any(documentTitle =>
+                    string.Equals(documentTitle, item.DocumentTitle, StringComparison.OrdinalIgnoreCase)))
+                .OrderBy(item => GetRequiredPermissionToAlterDocumentOrder(item.DocumentTitle))
                 .ThenBy(item => item.DocumentTitle)
                 .ToList();
+        }
+
+        private static int GetRequiredPermissionToAlterDocumentOrder(string? documentTitle)
+        {
+            for (var index = 0; index < RequiredPermissionToAlterDocuments.Length; index++)
+            {
+                if (string.Equals(RequiredPermissionToAlterDocuments[index], documentTitle, StringComparison.OrdinalIgnoreCase))
+                {
+                    return index;
+                }
+            }
+
+            return int.MaxValue;
         }
 
         private static bool AreAllRequiredDocumentsUploaded(IEnumerable<AttachmentInfo> attachments)
@@ -928,6 +950,7 @@ namespace LLB.Controllers
                 && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
                 && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Created")
                 && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
     }

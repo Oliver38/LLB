@@ -876,7 +876,7 @@ namespace LLB.Controllers
             }
 
             var paynow = PaynowCurrencyHelper.CreatePaynow(paymentCurrency);
-            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/TemporaryTransfer/Apply?id=" + transferApplication.Id);
+            var callbackUrl = PaynowCurrencyHelper.BuildReturnUrl("/TemporaryTransfer/Apply?id=" + transferApplication.Id, paymentCurrency.PaymentMode);
             if (!string.IsNullOrWhiteSpace(callbackUrl))
             {
                 paynow.ResultUrl = callbackUrl;
@@ -2169,6 +2169,7 @@ namespace LLB.Controllers
                 && !HasPaymentStatus(payment, "Canceled")
                 && !HasPaymentStatus(payment, "Rejected")
                 && !HasPaymentStatus(payment, "Expired")
+                && !HasPaymentStatus(payment, "Created")
                 && !HasPaymentStatus(payment, "Awaiting Delivery");
         }
     }

@@ -1,5 +1,6 @@
 using LLB.Data;
 using LLB.Models;
+using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using Webdev.Payments;
 
@@ -9,7 +10,11 @@ namespace LLB.Helpers
     {
         public const string UsdCurrency = "USD";
         public const string ZwgCurrency = "ZWG";
+        public const string LiveMode = "LIVE";
+        public const string TestMode = "TEST";
         public const string ReturnBaseUrl = "https://llb.pfms.gov.zw";
+        public const string LiveReturnBaseUrl = "https://llb.pfms.gov.zw";
+        public const string TestReturnBaseUrl = "http://localhost:5046";
 
         private const string LegacyIntegrationId = "7175";
         private const string LegacyIntegrationKey = "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0";
@@ -18,10 +23,59 @@ namespace LLB.Helpers
         private const string ZwgIntegrationId = "24195";
         private const string ZwgIntegrationKey = "7c72bdc4-f068-48f2-acf4-cfb60b4e6bf3";
         private const string MetadataPrefix = "PAYNOW_CURRENCY|";
+        private static string CurrentPaymentMode = LiveMode;
+        private static readonly Dictionary<string, PaynowIntegrationCredentials> IntegrationCredentials = new(StringComparer.OrdinalIgnoreCase)
+        {
+            [BuildCredentialKey(UsdCurrency, LiveMode)] = new PaynowIntegrationCredentials(UsdIntegrationId, UsdIntegrationKey),
+            [BuildCredentialKey(ZwgCurrency, LiveMode)] = new PaynowIntegrationCredentials(ZwgIntegrationId, ZwgIntegrationKey)
+        };
 
-        public static PaynowCurrencyContext BuildPaymentContext(AppDbContext db, decimal usdAmount, string? currency)
+        public static void Configure(IConfigurationSection configuration)
+        {
+            foreach (var currencySection in configuration.GetSection("Currencies").GetChildren())
+            {
+                var currency = NormalizeCurrency(currencySection.Key);
+                foreach (var modeSection in currencySection.GetChildren())
+                {
+                    var mode = NormalizePaymentMode(modeSection.Key);
+                    var integrationId = modeSection["IntegrationId"];
+                    var integrationKey = modeSection["IntegrationKey"];
+
+                    if (!string.IsNullOrWhiteSpace(integrationId) && !string.IsNullOrWhiteSpace(integrationKey))
+                    {
+                        IntegrationCredentials[BuildCredentialKey(currency, mode)] = new PaynowIntegrationCredentials(integrationId, integrationKey);
+                    }
+                }
+            }
+        }
+
+        public static void SetCurrentPaymentMode(string? paymentMode)
+        {
+            CurrentPaymentMode = string.Equals(paymentMode, TestMode, StringComparison.OrdinalIgnoreCase)
+                ? TestMode
+                : LiveMode;
+        }
+
+        public static void UpdateCredentials(string? currency, string? paymentMode, string? integrationId, string? integrationKey)
         {
             var normalizedCurrency = NormalizeCurrency(currency);
+            var normalizedPaymentMode = NormalizePaymentMode(paymentMode);
+            var credentialKey = BuildCredentialKey(normalizedCurrency, normalizedPaymentMode);
+
+            if (string.IsNullOrWhiteSpace(integrationId) || string.IsNullOrWhiteSpace(integrationKey))
+            {
+                IntegrationCredentials.Remove(credentialKey);
+                return;
+            }
+
+            IntegrationCredentials[credentialKey] = new PaynowIntegrationCredentials(integrationId, integrationKey);
+        }
+
+        public static PaynowCurrencyContext BuildPaymentContext(AppDbContext db, decimal usdAmount, string? currency, string? paymentMode = null)
+        {
+            var normalizedCurrency = NormalizeCurrency(currency);
+            var normalizedPaymentMode = NormalizePaymentMode(paymentMode);
+            var credentials = GetCredentials(normalizedCurrency, normalizedPaymentMode);
             if (normalizedCurrency == ZwgCurrency)
             {
                 var latestRate = db.ExchangeRate
@@ -41,7 +95,8 @@ namespace LLB.Helpers
                     Math.Round(usdAmount * exchangeRate, 2, MidpointRounding.AwayFromZero),
                     usdAmount,
                     exchangeRate,
-                    ZwgIntegrationId);
+                    credentials.IntegrationId,
+                    normalizedPaymentMode);
             }
 
             return new PaynowCurrencyContext(
@@ -49,27 +104,30 @@ namespace LLB.Helpers
                 Math.Round(usdAmount, 2, MidpointRounding.AwayFromZero),
                 usdAmount,
                 null,
-                UsdIntegrationId);
+                credentials.IntegrationId,
+                normalizedPaymentMode);
         }
 
         public static Paynow CreatePaynow(PaynowCurrencyContext context)
         {
-            return CreatePaynow(context.Currency);
+            return CreatePaynow(context.Currency, context.PaymentMode);
         }
 
         public static Paynow CreatePaynow(Payments? payment)
         {
             var currency = GetStoredCurrency(payment);
+            var paymentMode = GetStoredPaymentMode(payment);
             return string.IsNullOrWhiteSpace(currency)
                 ? CreateLegacyPaynow()
-                : CreatePaynow(currency);
+                : CreatePaynow(currency, paymentMode);
         }
 
-        public static Paynow CreatePaynow(string? currency)
+        public static Paynow CreatePaynow(string? currency, string? paymentMode = null)
         {
-            return NormalizeCurrency(currency) == ZwgCurrency
-                ? new Paynow(ZwgIntegrationId, ZwgIntegrationKey)
-                : new Paynow(UsdIntegrationId, UsdIntegrationKey);
+            var normalizedCurrency = NormalizeCurrency(currency);
+            var normalizedPaymentMode = NormalizePaymentMode(paymentMode);
+            var credentials = GetCredentials(normalizedCurrency, normalizedPaymentMode);
+            return new Paynow(credentials.IntegrationId, credentials.IntegrationKey);
         }
 
         public static string NormalizeCurrency(string? currency)
@@ -79,10 +137,35 @@ namespace LLB.Helpers
                 : UsdCurrency;
         }
 
+        public static string NormalizePaymentMode(string? paymentMode)
+        {
+            if (string.IsNullOrWhiteSpace(paymentMode))
+            {
+                return CurrentPaymentMode;
+            }
+
+            return string.Equals(paymentMode, TestMode, StringComparison.OrdinalIgnoreCase)
+                ? TestMode
+                : LiveMode;
+        }
+
+        public static bool IsPaymentModeConfigured(string? paymentMode)
+        {
+            var normalizedPaymentMode = NormalizePaymentMode(paymentMode);
+            return HasCredentials(UsdCurrency, normalizedPaymentMode)
+                && HasCredentials(ZwgCurrency, normalizedPaymentMode);
+        }
+
         public static string BuildReturnUrl(string pathAndQuery)
         {
+            return BuildReturnUrl(pathAndQuery, CurrentPaymentMode);
+        }
+
+        public static string BuildReturnUrl(string pathAndQuery, string? paymentMode)
+        {
             var path = string.IsNullOrWhiteSpace(pathAndQuery) ? "/" : pathAndQuery;
-            if (path.StartsWith(ReturnBaseUrl, StringComparison.OrdinalIgnoreCase))
+            if (path.StartsWith(LiveReturnBaseUrl, StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith(TestReturnBaseUrl, StringComparison.OrdinalIgnoreCase))
             {
                 return path;
             }
@@ -92,7 +175,14 @@ namespace LLB.Helpers
                 path = "/" + path;
             }
 
-            return ReturnBaseUrl.TrimEnd('/') + path;
+            return GetReturnBaseUrl(paymentMode).TrimEnd('/') + path;
+        }
+
+        public static string GetReturnBaseUrl(string? paymentMode)
+        {
+            return string.Equals(NormalizePaymentMode(paymentMode), TestMode, StringComparison.OrdinalIgnoreCase)
+                ? TestReturnBaseUrl
+                : LiveReturnBaseUrl;
         }
 
         public static void ApplyCurrency(Payments transaction, PaynowCurrencyContext context)
@@ -147,25 +237,43 @@ namespace LLB.Helpers
         {
             var storedCurrency = GetStoredCurrency(payment);
             var labels = new List<string>();
+            string primaryLabel;
 
             if (string.IsNullOrWhiteSpace(storedCurrency))
             {
-                labels.Add("LEGACY");
+                primaryLabel = "LEGACY";
             }
             else
             {
-                labels.Add(storedCurrency);
+                primaryLabel = BuildCredentialLabel(storedCurrency, GetStoredPaymentMode(payment));
             }
 
-            labels.Add(UsdCurrency);
-            labels.Add(ZwgCurrency);
+            labels.Add(primaryLabel);
+            labels.Add(BuildCredentialLabel(UsdCurrency, LiveMode));
+            labels.Add(BuildCredentialLabel(ZwgCurrency, LiveMode));
+            labels.Add(BuildCredentialLabel(UsdCurrency, TestMode));
+            labels.Add(BuildCredentialLabel(ZwgCurrency, TestMode));
             labels.Add("LEGACY");
 
             foreach (var label in labels.Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                yield return string.Equals(label, "LEGACY", StringComparison.OrdinalIgnoreCase)
-                    ? CreateLegacyPaynow()
-                    : CreatePaynow(label);
+                if (string.Equals(label, "LEGACY", StringComparison.OrdinalIgnoreCase))
+                {
+                    yield return CreateLegacyPaynow();
+                    continue;
+                }
+
+                Paynow paynow;
+                try
+                {
+                    paynow = CreatePaynow(ParseCurrencyLabel(label), ParseModeLabel(label));
+                }
+                catch (InvalidOperationException) when (!string.Equals(label, primaryLabel, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                yield return paynow;
             }
         }
 
@@ -181,10 +289,25 @@ namespace LLB.Helpers
                 return payment.Currency;
             }
 
+            return TryGetMetadataValue(payment, "currency", out var currency)
+                ? NormalizeCurrency(currency)
+                : null;
+        }
+
+        private static string GetStoredPaymentMode(Payments? payment)
+        {
+            return TryGetMetadataValue(payment, "paymentMode", out var paymentMode)
+                ? NormalizePaymentMode(paymentMode)
+                : LiveMode;
+        }
+
+        private static bool TryGetMetadataValue(Payments? payment, string key, out string value)
+        {
+            value = string.Empty;
             if (string.IsNullOrWhiteSpace(payment?.PopDoc)
                 || !payment.PopDoc.StartsWith(MetadataPrefix, StringComparison.OrdinalIgnoreCase))
             {
-                return null;
+                return false;
             }
 
             var metadata = payment.PopDoc.Substring(MetadataPrefix.Length)
@@ -193,22 +316,62 @@ namespace LLB.Helpers
             foreach (var item in metadata)
             {
                 var parts = item.Split('=', 2);
-                if (parts.Length == 2 && string.Equals(parts[0], "currency", StringComparison.OrdinalIgnoreCase))
+                if (parts.Length == 2 && string.Equals(parts[0], key, StringComparison.OrdinalIgnoreCase))
                 {
-                    return NormalizeCurrency(parts[1]);
+                    value = parts[1];
+                    return true;
                 }
             }
 
-            return null;
+            return false;
         }
 
         private static string BuildMetadata(PaynowCurrencyContext context)
         {
             return MetadataPrefix
                 + "currency=" + context.Currency
+                + ";paymentMode=" + context.PaymentMode
                 + ";usdAmount=" + context.UsdAmount.ToString("0.00", CultureInfo.InvariantCulture)
                 + ";exchangeRate=" + (context.ExchangeRate?.ToString("0.00", CultureInfo.InvariantCulture) ?? string.Empty)
                 + ";integrationId=" + context.IntegrationId;
+        }
+
+        private static PaynowIntegrationCredentials GetCredentials(string currency, string paymentMode)
+        {
+            var normalizedCurrency = NormalizeCurrency(currency);
+            var normalizedPaymentMode = NormalizePaymentMode(paymentMode);
+            if (IntegrationCredentials.TryGetValue(BuildCredentialKey(normalizedCurrency, normalizedPaymentMode), out var credentials))
+            {
+                return credentials;
+            }
+
+            throw new InvalidOperationException($"Paynow {normalizedPaymentMode.ToLowerInvariant()} credentials for {normalizedCurrency} have not been configured.");
+        }
+
+        private static bool HasCredentials(string currency, string paymentMode)
+        {
+            return IntegrationCredentials.ContainsKey(BuildCredentialKey(currency, paymentMode));
+        }
+
+        private static string BuildCredentialKey(string currency, string paymentMode)
+        {
+            return NormalizeCurrency(currency) + ":" + NormalizePaymentMode(paymentMode);
+        }
+
+        private static string BuildCredentialLabel(string currency, string paymentMode)
+        {
+            return BuildCredentialKey(currency, paymentMode);
+        }
+
+        private static string ParseCurrencyLabel(string label)
+        {
+            return label.Split(':', 2)[0];
+        }
+
+        private static string ParseModeLabel(string label)
+        {
+            var parts = label.Split(':', 2);
+            return parts.Length == 2 ? parts[1] : LiveMode;
         }
     }
 
@@ -217,5 +380,8 @@ namespace LLB.Helpers
         decimal PaynowAmount,
         decimal UsdAmount,
         decimal? ExchangeRate,
-        string IntegrationId);
+        string IntegrationId,
+        string PaymentMode);
+
+    public record PaynowIntegrationCredentials(string IntegrationId, string IntegrationKey);
 }

@@ -183,6 +183,7 @@
                                     getreninfo.LicenseRegion = licenseReg.RegionName;*@
 
                                 <th>Trading Name </th>
+                                <th>Reference</th>
                                 <th>LLB Number </th>
                                 <th>Expiry Date </th>
                                 <th>License </th>
@@ -198,6 +199,7 @@
 
                                 <tr>
                                     <td>@renewal.TradingName</td>
+                                    <td>@renewal.Reference</td>
                                     <td>@renewal.LLBNumber</td>
                                     <td>@renewal.PreviousExpiry</td>
                                     <td>@renewal.Licensetype </td>
@@ -266,6 +268,7 @@
                                     renewalinspectiontask.LicenseRegion = licenseregion.RegionName;*@
 
                                 <th>Trading Name </th>
+                                <th>Reference</th>
                                 <th>LLB Number </th>
                                 <th>Application Date </th>
                                 <th>Status </th>
@@ -283,6 +286,7 @@
 
                                 <tr>
                                     <td>@inspect.TradingName</td>
+                                    <td>@inspect.Reference</td>
                                     <td>@inspect.LLBNumber</td>
                                     <td>@inspect.DateApplied</td>
                                     <td>@inspect.Status </td>
@@ -417,6 +421,8 @@
 
 
                                     <th>Trading Name </th>
+                                    <th>Reference</th>
+                                    <th>LLB Number </th>
                                     <th>Inspection Date </th>
                                     <th>Application Date </th>
                                     <th>Status </th>
@@ -435,6 +441,8 @@
 
                                     <tr>
                                         <td>@inspecta.TradingName</td>
+                                        <td>@inspecta.Reference</td>
+                                        <td>@inspecta.LLBNumber</td>
                                         <td>
                                             @(inspecta.InspectionSchedule == DateTime.MinValue
     ? "N/A"
@@ -481,6 +489,8 @@
 
 
                                     <th>Trading Name </th>
+                                    <th>Reference</th>
+                                    <th>LLB Number </th>
                                     <th>Inspection Date </th>
                                     <th>Application Date </th>
                                     <th>Status </th>
@@ -499,6 +509,8 @@
 
                                     <tr>
                                         <td>@inspecta.TradingName</td>
+                                        <td>@inspecta.Reference</td>
+                                        <td>@inspecta.LLBNumber</td>
                                         <td>
                                             @(inspecta.InspectionSchedule == DateTime.MinValue
     ? "N/A"

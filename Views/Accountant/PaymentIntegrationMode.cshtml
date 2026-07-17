@@ -1,0 +1,192 @@
+@model LLB.Models.ViewModel.PaymentIntegrationModeViewModel
+
+@{
+    Layout = "_LayoutMain";
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+                    <div>
+                        <h5 class="card-title mb-1">Payment Integration Mode</h5>
+                        <p class="text-muted mb-0">Switch between Test and Live payment processing environments</p>
+                    </div>
+                </div>
+
+                <!-- Current Mode Alert -->
+                <div class="alert @(Model.CurrentMode == "TEST" ? "alert-warning" : "alert-info") alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                    <i class="bi @(Model.CurrentMode == "TEST" ? "bi-exclamation-triangle-fill" : "bi-info-circle-fill")"></i>
+                    <div>
+                        <strong>Current Mode:</strong> 
+                        @if (Model.CurrentMode == "TEST")
+                        {
+                            <span>You are currently in <strong>TEST</strong> mode. All payments will be processed through test credentials.</span>
+                        }
+                        else
+                        {
+                            <span>You are currently in <strong>LIVE</strong> mode. All payments will be processed through live credentials.</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Mode Selector Form -->
+                <form method="post" asp-action="PaymentIntegrationMode" class="mb-4">
+                    <div class="mb-3">
+                        <label for="modeSelector" class="form-label fw-semibold">Select Payment Mode</label>
+                        <div class="input-group">
+                            <select id="modeSelector" name="selectedMode" class="form-select form-select-lg" required>
+                                <option value="">-- Choose a mode --</option>
+                                <option value="TEST" selected="@(Model.CurrentMode == "TEST" ? "selected" : "")">
+                                    🧪 Test Mode (For Development & Testing)
+                                </option>
+                                <option value="LIVE" selected="@(Model.CurrentMode == "LIVE" ? "selected" : "")">
+                                    🚀 Live Mode (For Production Payments)
+                                </option>
+                            </select>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-arrow-repeat"></i> Update Mode
+                            </button>
+                        </div>
+                        <small class="form-text text-muted d-block mt-2">
+                            ⚠️ Changing this setting will affect all new payment transactions immediately.
+                        </small>
+                    </div>
+                </form>
+
+                <!-- Integration Status Table -->
+                <h6 class="mt-4 mb-3 fw-semibold">Integration Status by Currency</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">Currency</th>
+                                <th scope="col">Test Mode</th>
+                                <th scope="col">Live Mode</th>
+                                <th scope="col">Current</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var status in Model.ModeStatus)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@status.Currency</td>
+                                    <td>
+                                        @if (status.IsTestModeConfigured)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle"></i> Configured
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle"></i> Not Configured
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (status.IsLiveModeConfigured)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle"></i> Configured
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle"></i> Not Configured
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (status.CurrentMode == "TEST")
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-gear"></i> Using Test
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-gear"></i> Using Live
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Information Panel -->
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="card-title fw-semibold mb-3">
+                    <i class="bi bi-info-circle me-2"></i> Test vs Live
+                </h6>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item px-0">
+                        <small class="text-muted">Test Mode</small>
+                        <p class="mb-1 small">Use for development and testing. Transactions are simulated and no real money is transferred.</p>
+                    </div>
+                    <div class="list-group-item px-0">
+                        <small class="text-muted">Live Mode</small>
+                        <p class="mb-1 small">Use for production. Real money transactions are processed. Use with caution.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title fw-semibold mb-3">
+                    <i class="bi bi-shield-check me-2"></i> Important Notes
+                </h6>
+                <ul class="small list-unstyled">
+                    <li class="mb-2">
+                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                        Only switch to Live mode after thorough testing
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check text-success me-2"></i>
+                        Ensure all integrations are properly configured
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-shield text-info me-2"></i>
+                        Monitor payment transactions after mode changes
+                    </li>
+                    <li>
+                        <i class="bi bi-question-circle text-primary me-2"></i>
+                        Review Paynow Integrations page for configuration details
+                    </li>
+                </ul>
+                <a href="/Accountant/PaynowIntegrations" class="btn btn-outline-primary btn-sm w-100 mt-3">
+                    <i class="bi bi-arrow-right"></i> View Integration Details
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modeSelector = document.getElementById('modeSelector');
+            if (modeSelector) {
+                modeSelector.addEventListener('change', function() {
+                    if (this.value === 'LIVE') {
+                        if (!confirm('⚠️ WARNING: You are about to switch to LIVE mode. Real payments will be processed.\n\nAre you sure you want to continue?')) {
+                            this.value = '@Model.CurrentMode';
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

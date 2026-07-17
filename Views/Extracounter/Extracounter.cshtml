@@ -72,7 +72,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <div>
             <h5 class="card-title mb-1">@serviceName Application</h5>
-            <p class="text-muted mb-0">Attach the required approval documents, @actionLower the application, complete payment, and continue to secretary review.</p>
+            <p class="text-muted mb-0">Upload the inspection report, @actionLower the application, complete payment, and continue to secretary review.</p>
         </div>
         @if (record != null)
         {
@@ -125,13 +125,10 @@
                         <span class="text-muted">Fee</span>
                         <span class="fw-semibold text-end">@fee.ToString("N2")</span>
                     </div>
-                    @if (!requiresAlterationDetails)
-                    {
-                        <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                            <span class="text-muted">Attachments Complete</span>
-                            <span class="fw-semibold text-end">@(attachmentsComplete ? "Yes" : "No")</span>
-                        </div>
-                    }
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
+                        <span class="text-muted">Inspection Report Complete</span>
+                        <span class="fw-semibold text-end">@(attachmentsComplete ? "Yes" : "No")</span>
+                    </div>
                     @if (requiresAlterationDetails)
                     {
                         <div class="d-flex justify-content-between gap-3 border-bottom py-2">
@@ -151,36 +148,16 @@
 
 @if (requiresAlterationDetails)
 {
-    var planUploaded = !string.IsNullOrWhiteSpace(record?.NewPlanPath);
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="card-title mb-1">Alteration Details</h5>
-            <p class="text-muted mb-0">Attach the alteration plan and enter the reason for the alterations before submitting.</p>
+            <p class="text-muted mb-0">Enter the reason for the alterations before submitting.</p>
         </div>
         <div class="card-body">
-            <form method="post" enctype="multipart/form-data" action="/Extracounter/SavePermissionToAlterDetails">
+            <form method="post" action="/Extracounter/SavePermissionToAlterDetails">
                 <input type="hidden" name="applicationId" value="@application?.Id" />
                 <input type="hidden" name="ecId" value="@record?.Id" />
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Alteration Plan</label>
-                        @if (planUploaded)
-                        {
-                            <div class="mb-2">
-                                <a href="~/@record?.NewPlanPath" target="_blank">View Current Plan</a>
-                            </div>
-                        }
-                        @if (canUploadAttachments)
-                        {
-                            <input type="file" name="planFile" class="form-control" required="@(!planUploaded)" />
-                        }
-                        else if (!planUploaded)
-                        {
-                            <span class="text-danger">No plan uploaded</span>
-                        }
-                    </div>
-                    <div class="col-md-6">
-                    </div>
                     <div class="col-md-12">
                         <label class="form-label fw-semibold">Reason For Alterations</label>
                         <textarea name="alterationReason" class="form-control" rows="5" required readonly="@(!canUploadAttachments)">@(record?.ExtracounterReason ?? string.Empty)</textarea>
@@ -197,78 +174,75 @@
     </div>
 }
 
-@if (!requiresAlterationDetails)
-{
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="card-title mb-1">Required Attachments</h5>
-            <p class="text-muted mb-0">Upload each document individually. The @actionLower button only appears after all required documents are uploaded.</p>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead>
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-1">Required Attachment</h5>
+        <p class="text-muted mb-0">Upload the inspection report. The @actionLower button only appears after the inspection report is uploaded.</p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Status</th>
+                        <th>File</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var attachment in attachments)
+                    {
+                        var uploaded = !string.IsNullOrWhiteSpace(attachment.DocumentLocation);
                         <tr>
-                            <th>Document</th>
-                            <th>Status</th>
-                            <th>File</th>
-                            <th class="text-end">Action</th>
+                            <td class="fw-semibold">@attachment.DocumentTitle</td>
+                            <td>
+                                <span class="badge rounded-pill @(uploaded ? "bg-success" : "bg-secondary")">
+                                    @(uploaded ? "Uploaded" : "Pending")
+                                </span>
+                            </td>
+                            <td>
+                                @if (uploaded)
+                                {
+                                    <a href="~/@attachment.DocumentLocation" target="_blank">View Attachment</a>
+                                }
+                                else if (canUploadAttachments)
+                                {
+                                    <form method="post" enctype="multipart/form-data" action="/Extracounter/UploadPermissionToAlterAttachment" class="d-flex flex-column flex-md-row gap-2">
+                                        <input type="hidden" name="attachmentId" value="@attachment.Id" />
+                                        <input type="hidden" name="applicationId" value="@application?.Id" />
+                                        <input type="hidden" name="ecId" value="@record?.Id" />
+                                        <input type="file" name="file" class="form-control" required />
+                                        <button type="submit" class="btn btn-primary btn-sm">Upload</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No file uploaded</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (uploaded && canUploadAttachments)
+                                {
+                                    <a href="/Extracounter/RemovePermissionToAlterAttachment?attachmentId=@attachment.Id&applicationId=@application?.Id&ecId=@record?.Id"
+                                       class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('Remove this attachment?');">
+                                        Remove
+                                    </a>
+                                }
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var attachment in attachments)
-                        {
-                            var uploaded = !string.IsNullOrWhiteSpace(attachment.DocumentLocation);
-                            <tr>
-                                <td class="fw-semibold">@attachment.DocumentTitle</td>
-                                <td>
-                                    <span class="badge rounded-pill @(uploaded ? "bg-success" : "bg-secondary")">
-                                        @(uploaded ? "Uploaded" : "Pending")
-                                    </span>
-                                </td>
-                                <td>
-                                    @if (uploaded)
-                                    {
-                                        <a href="~/@attachment.DocumentLocation" target="_blank">View Attachment</a>
-                                    }
-                                    else if (canUploadAttachments)
-                                    {
-                                        <form method="post" enctype="multipart/form-data" action="/Extracounter/UploadPermissionToAlterAttachment" class="d-flex flex-column flex-md-row gap-2">
-                                            <input type="hidden" name="attachmentId" value="@attachment.Id" />
-                                            <input type="hidden" name="applicationId" value="@application?.Id" />
-                                            <input type="hidden" name="ecId" value="@record?.Id" />
-                                            <input type="file" name="file" class="form-control" required />
-                                            <button type="submit" class="btn btn-primary btn-sm">Upload</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">No file uploaded</span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    @if (uploaded && canUploadAttachments)
-                                    {
-                                        <a href="/Extracounter/RemovePermissionToAlterAttachment?attachmentId=@attachment.Id&applicationId=@application?.Id&ecId=@record?.Id"
-                                           class="btn btn-sm btn-outline-danger"
-                                           onclick="return confirm('Remove this attachment?');">
-                                            Remove
-                                        </a>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
-}
+</div>
 
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="card-title mb-1">Next Step</h5>
-        <p class="text-muted mb-0">The workflow is @(requiresAlterationDetails ? "alteration plan and reason" : "attachments"), @actionLower, payment, then continue to secretary.</p>
+        <p class="text-muted mb-0">The workflow is @(requiresAlterationDetails ? "alteration reason and inspection report" : "inspection report"), @actionLower, payment, then continue to secretary.</p>
     </div>
     <div class="card-body">
         @if (record != null && string.Equals(record.Status, "Approved", StringComparison.OrdinalIgnoreCase))
@@ -299,11 +273,11 @@
         {
             @if (requiresAlterationDetails && !alterationDetailsComplete)
             {
-                <div class="alert alert-warning mb-3">Attach the alteration plan and enter the reason for the alterations first. The @actionLower button will appear once those details are complete.</div>
+                <div class="alert alert-warning mb-3">Enter the reason for the alterations first. The @actionLower button will appear once the reason and inspection report are complete.</div>
             }
             else
             {
-                <div class="alert alert-warning mb-3">Upload every required attachment first. The @actionLower button will appear once the checklist is complete.</div>
+                <div class="alert alert-warning mb-3">Upload the inspection report first. The @actionLower button will appear once the checklist is complete.</div>
             }
         }
 
