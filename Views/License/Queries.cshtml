@@ -1,0 +1,174 @@
+@model LLB.Models.ViewModel.ApplicationQueriesViewModel
+
+@{
+    Layout = "_LayoutMain";
+    ViewData["Title"] = "Application Queries";
+    ViewData["Subtitle"] = "Review and resolve each queried application stage";
+    var completedPercent = Model.TotalQueries == 0
+        ? 0
+        : (int)Math.Round((double)Model.ResolvedQueries / Model.TotalQueries * 100);
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success d-flex align-items-center gap-2" role="status">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>@TempData["success"]</span>
+    </div>
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-exclamation-octagon-fill"></i>
+        <span>@TempData["error"]</span>
+    </div>
+}
+
+<div class="llb-query-workspace">
+    <section class="llb-query-hero">
+        <div>
+            <a asp-controller="Home" asp-action="Dashboard" class="llb-back-link">
+                <i class="bi bi-arrow-left"></i> Dashboard
+            </a>
+            <div class="llb-section-kicker mt-3">Application @Model.Reference</div>
+            <h1 class="mb-2">Queries for @Model.TradingName</h1>
+            <p class="mb-0">Open each stage, complete the requested corrections, then mark that stage resolved.</p>
+        </div>
+        <div class="llb-query-progress-card">
+            <div class="d-flex justify-content-between align-items-end mb-2">
+                <div>
+                    <span class="d-block small text-muted">Resolution progress</span>
+                    <strong class="fs-4">@Model.ResolvedQueries of @Model.TotalQueries</strong>
+                </div>
+                <span class="fw-semibold">@completedPercent%</span>
+            </div>
+            <div class="progress" role="progressbar" aria-label="Query resolution progress" aria-valuenow="@completedPercent" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar" style="width: @completedPercent%"></div>
+            </div>
+            <div class="mt-3">
+                @if (Model.OpenQueries > 0)
+                {
+                    <span class="llb-status-pill llb-status-warning">@Model.OpenQueries open</span>
+                }
+                else
+                {
+                    <span class="llb-status-pill llb-status-success">All stages resolved</span>
+                }
+            </div>
+        </div>
+    </section>
+
+    @if (Model.TotalQueries == 0)
+    {
+        <section class="llb-empty-state card">
+            <i class="bi bi-chat-square-check"></i>
+            <h2 class="h5 fw-bold">No queries for this application</h2>
+            <p class="text-muted mb-3">There are no examiner queries requiring your attention.</p>
+            <a asp-controller="Home" asp-action="Dashboard" class="btn btn-primary">Return to dashboard</a>
+        </section>
+    }
+    else
+    {
+        <div class="llb-query-stage-list" aria-label="Application query stages">
+            @for (var index = 0; index < Model.Stages.Count; index++)
+            {
+                var stage = Model.Stages[index];
+                <article class="llb-query-stage-card @(stage.IsResolved ? "is-resolved" : "is-open")">
+                    <div class="llb-query-stage-number">@(index + 1)</div>
+                    <div class="llb-query-stage-icon"><i class="bi @stage.Icon"></i></div>
+                    <div class="llb-query-stage-main">
+                        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                            <div>
+                                <h2 class="h5 mb-1">@stage.Title</h2>
+                                <p class="text-muted mb-0">@stage.Description</p>
+                            </div>
+                            @if (stage.IsResolved)
+                            {
+                                <span class="llb-status-pill llb-status-success align-self-start">Resolved</span>
+                            }
+                            else
+                            {
+                                <span class="llb-status-pill llb-status-warning align-self-start">@stage.OpenQueries open</span>
+                            }
+                        </div>
+
+                        <div class="llb-query-message-list">
+                            @foreach (var query in stage.Queries.OrderByDescending(query => query.DateRaised))
+                            {
+                                <div class="llb-query-message @(query.IsResolved ? "is-resolved" : string.Empty)">
+                                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                                        <div>
+                                            <span class="fw-semibold">@query.ReviewerStage</span>
+                                            <p class="mb-1 mt-1">@query.Message</p>
+                                            <small class="text-muted">Raised @query.DateRaised.ToString("dd MMM yyyy, HH:mm")</small>
+                                        </div>
+                                        <span class="small fw-semibold @(query.IsResolved ? "text-success" : "text-warning")">
+                                            <i class="bi @(query.IsResolved ? "bi-check-circle-fill" : "bi-clock-fill") me-1"></i>
+                                            @(query.IsResolved ? "Resolved" : "Awaiting correction")
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @if (!stage.IsResolved)
+                        {
+                            <a asp-controller="License"
+                               asp-action="@stage.Action"
+                               asp-route-Id="@Model.ApplicationId"
+                               asp-route-queryMode="true"
+                               class="btn btn-primary">
+                                Review stage query <i class="bi bi-arrow-right ms-2"></i>
+                            </a>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+
+        <section class="llb-resubmit-panel @(Model.CanResubmit ? "is-ready" : string.Empty)">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-4">
+                <div class="d-flex align-items-start gap-3">
+                    <span class="llb-resubmit-panel__icon">
+                        <i class="bi @(Model.CanResubmit ? "bi-send-check" : "bi-lock")"></i>
+                    </span>
+                    <div>
+                        <h2 class="h5 mb-1">
+                            @(Model.CanResubmit
+                                ? Model.IsVerificationInspectionQuery ? "Ready for reinspection" : "Ready to resubmit"
+                                : "Complete every open stage")
+                        </h2>
+                        <p class="mb-0 text-muted">
+                            @(Model.CanResubmit
+                                ? Model.IsVerificationInspectionQuery
+                                    ? "Your premises corrections are complete. Continue to request another verification inspection."
+                                    : "Your corrections are complete. Resubmit the application for verification by an available examiner."
+                                : Model.IsVerificationInspectionQuery
+                                    ? "The continue button will become available after the inspection query is resolved."
+                                    : "The resubmit button will become available after all stage queries are resolved.")
+                        </p>
+                    </div>
+                </div>
+
+                @if (Model.CanResubmit)
+                {
+                    <form asp-controller="License" asp-action="ResubmitQueriedApplication" method="post" class="m-0">
+                        <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
+                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                            <i class="bi @(Model.IsVerificationInspectionQuery ? "bi-arrow-repeat" : "bi-send") me-2"></i>
+                            @(Model.IsVerificationInspectionQuery ? "Continue to reinspection" : "Resubmit application")
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-secondary btn-lg px-4" disabled>
+                        <i class="bi bi-lock me-2"></i>
+                        @(Model.IsVerificationInspectionQuery ? "Continue to reinspection" : "Resubmit application")
+                    </button>
+                }
+            </div>
+        </section>
+    }
+</div>

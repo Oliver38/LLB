@@ -622,64 +622,82 @@ namespace LLB.Controllers
         }
 
         [HttpPost("Query")]
-        public IActionResult Query(Queries queries)
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "recommender")]
+        public IActionResult Query(string applicationId, string stage, string query, string? taskId)
         {
-           
-            /*  [Key]
-        // Liquor Outlet Info
-        public string? Id { get; set; }
-        public string? ApplicationId { get; set; }
-        public string? InspectorId { get; set; }
-        public string? Stage { get; set; }
-        public string? Query { get; set; }
-        public string? Status { get; set; }
-        public DateTime DateAdded { get; set; }
-        public DateTime DateUpdated { get; set; }
+            var stageKey = ApplicationQueryWorkflow.NormalizeStageKey(stage);
+            if (!ApplicationQueryWorkflow.IsKnownStage(stageKey)
+                || string.IsNullOrWhiteSpace(query)
+                || query.Trim().Length > 2000)
+            {
+                return BadRequest();
+            }
 
-*/
-            queries.Id = Guid.NewGuid().ToString();
-            queries.InspectorId = userManager.GetUserId(User);
-            queries.DateAdded = DateTime.Now;
-            queries.Status = "Has Query";
-            _db.Add(queries);
+            var currentUserId = userManager.GetUserId(User);
+            var task = _db.Tasks
+                .Where(item => item.ApplicationId == applicationId
+                    && item.RecommenderId == currentUserId
+                    && item.Status == "assigned")
+                .OrderByDescending(item => item.DateAdded)
+                .FirstOrDefault();
+            if (task == null)
+            {
+                TempData["error"] = "This application is no longer assigned to you.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var now = DateTime.Now;
+            _db.Queries.Add(new Queries
+            {
+                Id = Guid.NewGuid().ToString(),
+                ApplicationId = applicationId,
+                InspectorId = currentUserId,
+                TaskId = task.Id,
+                Stage = ApplicationQueryWorkflow.BuildStageValue("recommendation", stageKey),
+                Query = query.Trim(),
+                Status = ApplicationQueryWorkflow.OpenStatus,
+                DateAdded = now,
+                DateUpdated = now
+            });
             _db.SaveChanges();
-            string error = "Query has been raised successfully";
-            if (queries.Stage == "Recommend Application")
-            {
-                return RedirectToAction("Apply", new { Id = queries.ApplicationId, error = error });
 
-            }else if (queries.Stage == "Recommend Outlet")
-            {
-                return RedirectToAction("OutletInfo", new { Id = queries.ApplicationId, error = error });
-
-            }
-            else if (queries.Stage == "Recommend Managers")
-            {
-                return RedirectToAction("ManagersInfo", new { Id = queries.ApplicationId, error = error });
-
-            }
-            else if (queries.Stage == "Recommend Attachments")
-            {
-                return RedirectToAction("Attachments", new { Id = queries.ApplicationId, error = error });
-
-            }
-            else
-            {
-               
-            }
-            return RedirectToAction("Apply", new { Id = queries.ApplicationId, error = error });
-
+            return RedirectToAction(
+                ApplicationQueryWorkflow.GetStageAction(stageKey),
+                new { Id = applicationId, error = "Stage query added. You can continue reviewing the application." });
         }
 
-        [HttpGet("HasQuery")]
+        [HttpPost("HasQuery")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "recommender")]
         public IActionResult HasQuery(string Id, string taskid)
         {
-            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var currentUserId = userManager.GetUserId(User);
+            var applicationInfo = _db.ApplicationInfo.FirstOrDefault(a => a.Id == Id);
+            var task = _db.Tasks
+                .Where(item => item.ApplicationId == Id
+                && item.RecommenderId == currentUserId
+                && item.Status == "assigned")
+                .OrderByDescending(item => item.DateAdded)
+                .FirstOrDefault();
+            if (applicationInfo == null || task == null)
+            {
+                return NotFound();
+            }
+
+            var hasOpenQueries = _db.Queries.Any(query => query.ApplicationId == Id
+                && query.Status == ApplicationQueryWorkflow.OpenStatus);
+            if (!hasOpenQueries)
+            {
+                TempData["error"] = "Add at least one stage query before sending the application back.";
+                return RedirectToAction("Finalising", new { Id });
+            }
+
             applicationInfo.Status = "Has Query";
+            applicationInfo.DateUpdated = DateTime.Now;
             _db.Update(applicationInfo);
-            _db.SaveChanges();
-            var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
             task.Status = "completed";
+            task.DateUpdated = DateTime.Now;
             _db.Update(task);
             _db.SaveChanges();
             return RedirectToAction("Dashboard", "Recommend");

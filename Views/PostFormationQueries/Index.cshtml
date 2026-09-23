@@ -1,0 +1,137 @@
+@model LLB.Models.ViewModel.PostFormationQueriesViewModel
+
+@{
+    Layout = "_LayoutMain";
+    ViewData["Title"] = "Post-formation Query";
+    ViewData["Subtitle"] = "Update, resolve, and resubmit your application";
+    var resolvedCount = Model.Queries.Count - Model.OpenQueries;
+    var progress = Model.Queries.Count == 0
+        ? 0
+        : (int)Math.Round((double)resolvedCount / Model.Queries.Count * 100);
+}
+
+@if (TempData["success"] != null)
+{
+    <div class="alert alert-success d-flex align-items-center gap-2" role="status">
+        <i class="bi bi-check-circle-fill"></i><span>@TempData["success"]</span>
+    </div>
+}
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-exclamation-octagon-fill"></i><span>@TempData["error"]</span>
+    </div>
+}
+
+<div class="llb-query-workspace">
+    <section class="llb-query-hero">
+        <div>
+            <a asp-controller="Home" asp-action="Dashboard" asp-route-tab="services-pane" class="llb-back-link">
+                <i class="bi bi-arrow-left"></i> Post-formation services
+            </a>
+            <div class="llb-section-kicker mt-3">@Model.ServiceName · @Model.Reference</div>
+            <h1 class="mb-2">Application query for @Model.TradingName</h1>
+            <p class="mb-0">Update the application, resolve the query, then resubmit it to the examiner.</p>
+        </div>
+        <div class="llb-query-progress-card">
+            <div class="d-flex justify-content-between align-items-end mb-2">
+                <div>
+                    <span class="d-block small text-muted">Query progress</span>
+                    <strong class="fs-4">@resolvedCount of @Model.Queries.Count</strong>
+                </div>
+                <span class="fw-semibold">@progress%</span>
+            </div>
+            <div class="progress" role="progressbar" aria-label="Query resolution progress" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar" style="width: @progress%"></div>
+            </div>
+            <div class="mt-3">
+                <span class="llb-status-pill @(Model.OpenQueries > 0 ? "llb-status-warning" : "llb-status-success")">
+                    @(Model.OpenQueries > 0 ? $"{Model.OpenQueries} open" : "Resolved")
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <section class="llb-postformation-query-layout">
+        <article class="llb-inspection-findings">
+            <div class="llb-inspection-section-heading">
+                <span class="llb-query-stage-icon"><i class="bi bi-chat-square-text"></i></span>
+                <div>
+                    <span class="llb-section-kicker">Examiner instructions</span>
+                    <h2 class="h4 mb-1">Corrections required</h2>
+                    <p class="text-muted mb-0">Review every message before updating the application.</p>
+                </div>
+            </div>
+
+            <div class="llb-query-message-list">
+                @foreach (var query in Model.Queries.OrderByDescending(item => item.DateRaised))
+                {
+                    <div class="llb-query-message @(query.IsResolved ? "is-resolved" : string.Empty)">
+                        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                            <div>
+                                <span class="fw-semibold">@query.ReviewerStage</span>
+                                <p class="mb-1 mt-1">@query.Message</p>
+                                <small class="text-muted">Raised @query.DateRaised.ToString("dd MMM yyyy, HH:mm")</small>
+                            </div>
+                            <span class="small fw-semibold @(query.IsResolved ? "text-success" : "text-warning") text-nowrap">
+                                <i class="bi @(query.IsResolved ? "bi-check-circle-fill" : "bi-clock-fill") me-1"></i>
+                                @(query.IsResolved ? "Resolved" : "Awaiting correction")
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </article>
+
+        <aside class="llb-inspection-next-step">
+            <span class="llb-section-kicker">Required sequence</span>
+            <h2 class="h4 mb-3">Continue this application</h2>
+            <ol class="llb-inspection-steps">
+                <li class="@(Model.IsCorrectionMode || Model.OpenQueries == 0 ? "is-complete" : string.Empty)">
+                    <span>1</span>
+                    <div><strong>Update application</strong><small>Open the original post-formation form and correct the queried details.</small></div>
+                </li>
+                <li class="@(Model.OpenQueries == 0 ? "is-complete" : string.Empty)">
+                    <span>2</span>
+                    <div><strong>Resolve query</strong><small>Confirm that all requested corrections have been completed.</small></div>
+                </li>
+                <li>
+                    <span>3</span>
+                    <div><strong>Resubmit for examination</strong><small>The application returns to the stage that raised the query.</small></div>
+                </li>
+            </ol>
+
+            @if (Model.OpenQueries > 0 && !Model.IsCorrectionMode)
+            {
+                <form asp-action="BeginCorrection" method="post" class="mt-4">
+                    <input type="hidden" name="recordId" value="@Model.RecordId" />
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-pencil-square me-2"></i>Update application
+                    </button>
+                </form>
+            }
+            else if (Model.CanResolve)
+            {
+                <div class="llb-inspection-confirmation mt-4">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <p class="mb-0">Only resolve the query after saving the requested changes in the application.</p>
+                </div>
+                <form asp-action="Resolve" method="post" class="mt-3">
+                    <input type="hidden" name="recordId" value="@Model.RecordId" />
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-check2-circle me-2"></i>Resolve query
+                    </button>
+                </form>
+            }
+            else if (Model.CanResubmit)
+            {
+                <form asp-action="Resubmit" method="post" class="mt-4">
+                    <input type="hidden" name="recordId" value="@Model.RecordId" />
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-send-check me-2"></i>Resubmit for examination
+                    </button>
+                </form>
+            }
+        </aside>
+    </section>
+</div>

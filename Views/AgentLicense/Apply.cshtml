@@ -16,6 +16,7 @@
     var payment = ViewBag.Payment as Payments;
     var searchValue = ViewBag.SearchValue as string ?? string.Empty;
     var fromPostFormation = ViewBag.FromPostFormation is bool openedFromPostFormation && openedFromPostFormation;
+    var hasOpenPostFormationQuery = ViewBag.HasOpenPostFormationQuery is bool hasQuery && hasQuery;
 
     string DisplayValue(string? value)
     {
@@ -66,7 +67,8 @@
         || string.Equals(payment?.Status, "Paid", StringComparison.OrdinalIgnoreCase)
         || string.Equals(agentApplication?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
     var titleValue = agentApplication?.Title ?? string.Empty;
-    var isPaymentStage = agentStatus == "awaiting payment"
+    var isPaymentStage = hasOpenPostFormationQuery
+        || agentStatus == "awaiting payment"
         || agentStatus == "payment pending"
         || agentStatus == "paid"
         || agentStatus == "payment not required";
@@ -92,13 +94,14 @@
         && !string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation);
     var canUploadDocuments = agentApplication != null
         && isPaymentStage
-        && !hasActivePayment
-        && !string.Equals(agentApplication.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)
-        && !string.Equals(payment?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)
-        && !string.Equals(payment?.Status, "Paid", StringComparison.OrdinalIgnoreCase);
-    var canMakePayment = agentApplication != null && isPaymentStage && allRequiredDocumentsUploaded && paymentRequired && !paymentComplete && !hasActivePayment;
-    var canContinue = agentApplication != null && isPaymentStage && allRequiredDocumentsUploaded && paymentComplete;
-    var canEditSubmittedApplicantDetails = fromPostFormation
+        && (hasOpenPostFormationQuery
+            || (!hasActivePayment
+                && !string.Equals(agentApplication.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(payment?.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(payment?.Status, "Paid", StringComparison.OrdinalIgnoreCase)));
+    var canMakePayment = !hasOpenPostFormationQuery && agentApplication != null && isPaymentStage && allRequiredDocumentsUploaded && paymentRequired && !paymentComplete && !hasActivePayment;
+    var canContinue = !hasOpenPostFormationQuery && agentApplication != null && isPaymentStage && allRequiredDocumentsUploaded && paymentComplete;
+    var canEditSubmittedApplicantDetails = (fromPostFormation || hasOpenPostFormationQuery)
         && agentApplication != null
         && isPaymentStage
         && !string.Equals(agentApplication.Status, "approved", StringComparison.OrdinalIgnoreCase)
@@ -123,6 +126,14 @@
 @if (TempData["success"] != null)
 {
     <div class="alert alert-success">@TempData["success"]</div>
+}
+
+@if (hasOpenPostFormationQuery && agentApplication != null)
+{
+    <div class="alert alert-warning d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <span><i class="bi bi-chat-left-dots me-2"></i>Update the applicant details or documents, then return to resolve the query.</span>
+        <a class="btn btn-warning" href="/PostFormationQueries?recordId=@agentApplication.Id">Return to query</a>
+    </div>
 }
 
 <div class="card mb-4">
@@ -474,6 +485,8 @@
                 </div>
             }
 
+            <div id="agentDocumentUploadFeedback" class="alert d-none mt-4 mb-0" role="alert" aria-live="polite"></div>
+
             <div class="table-responsive mt-4">
                 <table class="table table-hover align-middle">
                     <thead>
@@ -485,10 +498,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
+                        <tr data-agent-document-row="tieaffidavit">
                             <td class="fw-semibold">Tie Affidavit</td>
-                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
-                            <td>
+                            <td><span class="agent-document-status badge rounded-pill @(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                            <td class="agent-document-file">
                                 @if (!string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation))
                                 {
                                     <a href="~/@tieAffidavit.DocumentLocation" target="_blank">View Attachment</a>
@@ -501,12 +514,15 @@
                             <td>
                                 @if (canUploadDocuments)
                                 {
-                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="agent-document-upload-form d-flex flex-column flex-md-row gap-2 mb-0">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@currentAgentApplication.Id" />
                                         <input type="hidden" name="documentType" value="tieAffidavit" />
                                         <input type="file" name="file" class="form-control form-control-sm" required />
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "Upload" : "Replace")</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
+                                            <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+                                            <span class="agent-upload-button-text">@(string.IsNullOrWhiteSpace(tieAffidavit?.DocumentLocation) ? "Upload" : "Replace")</span>
+                                        </button>
                                     </form>
                                 }
                                 else
@@ -515,10 +531,10 @@
                                 }
                             </td>
                         </tr>
-                        <tr>
+                        <tr data-agent-document-row="fingerprints">
                             <td class="fw-semibold">Fingerprint</td>
-                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints) ? "Missing" : "Uploaded")</span></td>
-                            <td>
+                            <td><span class="agent-document-status badge rounded-pill @(string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints) ? "Missing" : "Uploaded")</span></td>
+                            <td class="agent-document-file">
                                 @if (!string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints))
                                 {
                                     <a href="~/@currentAgentApplication.Fingerprints" target="_blank">View Attachment</a>
@@ -531,12 +547,15 @@
                             <td>
                                 @if (canUploadDocuments)
                                 {
-                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="agent-document-upload-form d-flex flex-column flex-md-row gap-2 mb-0">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@currentAgentApplication.Id" />
                                         <input type="hidden" name="documentType" value="fingerprints" />
                                         <input type="file" name="file" class="form-control form-control-sm" required />
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints) ? "Upload" : "Replace")</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
+                                            <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+                                            <span class="agent-upload-button-text">@(string.IsNullOrWhiteSpace(currentAgentApplication.Fingerprints) ? "Upload" : "Replace")</span>
+                                        </button>
                                     </form>
                                 }
                                 else
@@ -545,10 +564,10 @@
                                 }
                             </td>
                         </tr>
-                        <tr>
+                        <tr data-agent-document-row="form55">
                             <td class="fw-semibold">Form 55</td>
-                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(currentAgentApplication.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(currentAgentApplication.FormFF) ? "Missing" : "Uploaded")</span></td>
-                            <td>
+                            <td><span class="agent-document-status badge rounded-pill @(string.IsNullOrWhiteSpace(currentAgentApplication.FormFF) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(currentAgentApplication.FormFF) ? "Missing" : "Uploaded")</span></td>
+                            <td class="agent-document-file">
                                 @if (!string.IsNullOrWhiteSpace(currentAgentApplication.FormFF))
                                 {
                                     <a href="~/@currentAgentApplication.FormFF" target="_blank">View Attachment</a>
@@ -561,12 +580,15 @@
                             <td>
                                 @if (canUploadDocuments)
                                 {
-                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="agent-document-upload-form d-flex flex-column flex-md-row gap-2 mb-0">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@currentAgentApplication.Id" />
                                         <input type="hidden" name="documentType" value="form55" />
                                         <input type="file" name="file" class="form-control form-control-sm" required />
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(currentAgentApplication.FormFF) ? "Upload" : "Replace")</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
+                                            <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+                                            <span class="agent-upload-button-text">@(string.IsNullOrWhiteSpace(currentAgentApplication.FormFF) ? "Upload" : "Replace")</span>
+                                        </button>
                                     </form>
                                 }
                                 else
@@ -575,10 +597,10 @@
                                 }
                             </td>
                         </tr>
-                        <tr>
+                        <tr data-agent-document-row="idcopy">
                             <td class="fw-semibold">ID</td>
-                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy) ? "Missing" : "Uploaded")</span></td>
-                            <td>
+                            <td><span class="agent-document-status badge rounded-pill @(string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy) ? "Missing" : "Uploaded")</span></td>
+                            <td class="agent-document-file">
                                 @if (!string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy))
                                 {
                                     <a href="~/@currentAgentApplication.IdCopy" target="_blank">View Attachment</a>
@@ -591,12 +613,15 @@
                             <td>
                                 @if (canUploadDocuments)
                                 {
-                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="agent-document-upload-form d-flex flex-column flex-md-row gap-2 mb-0">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@currentAgentApplication.Id" />
                                         <input type="hidden" name="documentType" value="idCopy" />
                                         <input type="file" name="file" class="form-control form-control-sm" required />
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy) ? "Upload" : "Replace")</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
+                                            <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+                                            <span class="agent-upload-button-text">@(string.IsNullOrWhiteSpace(currentAgentApplication.IdCopy) ? "Upload" : "Replace")</span>
+                                        </button>
                                     </form>
                                 }
                                 else
@@ -605,10 +630,10 @@
                                 }
                             </td>
                         </tr>
-                        <tr>
+                        <tr data-agent-document-row="wholesalelicense">
                             <td class="fw-semibold">Wholesale license</td>
-                            <td><span class="badge rounded-pill @(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
-                            <td>
+                            <td><span class="agent-document-status badge rounded-pill @(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "bg-secondary" : "bg-success")">@(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "Missing" : "Uploaded")</span></td>
+                            <td class="agent-document-file">
                                 @if (!string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation))
                                 {
                                     <a href="~/@wholesaleLicenseAttachment.DocumentLocation" target="_blank">View Attachment</a>
@@ -621,12 +646,15 @@
                             <td>
                                 @if (canUploadDocuments)
                                 {
-                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 mb-0">
+                                    <form method="post" action="/AgentLicense/UploadAttachment" enctype="multipart/form-data" class="agent-document-upload-form d-flex flex-column flex-md-row gap-2 mb-0">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@currentAgentApplication.Id" />
                                         <input type="hidden" name="documentType" value="wholesaleLicense" />
                                         <input type="file" name="file" class="form-control form-control-sm" required />
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">@(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "Upload" : "Replace")</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
+                                            <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+                                            <span class="agent-upload-button-text">@(string.IsNullOrWhiteSpace(wholesaleLicenseAttachment?.DocumentLocation) ? "Upload" : "Replace")</span>
+                                        </button>
                                     </form>
                                 }
                                 else
@@ -733,6 +761,96 @@
 </script>
 
 @section Scripts {
+    <script>
+        $(function () {
+            var $feedback = $("#agentDocumentUploadFeedback");
+
+            function showUploadFeedback(message, isSuccess) {
+                $feedback
+                    .removeClass("d-none alert-success alert-danger")
+                    .addClass(isSuccess ? "alert-success" : "alert-danger")
+                    .text(message);
+            }
+
+            $(".agent-document-upload-form").on("submit", function (event) {
+                event.preventDefault();
+
+                var form = this;
+                var $form = $(form);
+                var $fileInput = $form.find('input[type="file"]');
+                var $button = $form.find('button[type="submit"]');
+                var $spinner = $button.find(".spinner-border");
+                var $buttonText = $button.find(".agent-upload-button-text");
+                var originalButtonText = $buttonText.text();
+
+                if (!$fileInput[0] || !$fileInput[0].files.length) {
+                    showUploadFeedback("Choose a file to upload.", false);
+                    return;
+                }
+
+                var formData = new FormData(form);
+                $form.attr("aria-busy", "true");
+                $fileInput.prop("disabled", true);
+                $button.prop("disabled", true);
+                $spinner.removeClass("d-none");
+                $buttonText.text("Uploading...");
+
+                $.ajax({
+                    url: $form.attr("action"),
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: "json"
+                }).done(function (response) {
+                    if (!response || response.success !== true) {
+                        showUploadFeedback(response && response.message
+                            ? response.message
+                            : "The document could not be uploaded. Try again.", false);
+                        return;
+                    }
+
+                    var $row = $form.closest("tr");
+                    $row.find(".agent-document-status")
+                        .removeClass("bg-secondary")
+                        .addClass("bg-success")
+                        .text("Uploaded");
+
+                    if (response.fileUrl) {
+                        var $link = $("<a></a>")
+                            .attr("href", response.fileUrl)
+                            .attr("target", "_blank")
+                            .attr("rel", "noopener")
+                            .text("View Attachment");
+                        $row.find(".agent-document-file").empty().append($link);
+                    }
+
+                    $fileInput.val("");
+                    originalButtonText = "Replace";
+                    showUploadFeedback(response.message, true);
+
+                    if (response.allRequiredDocumentsUploaded === true) {
+                        $buttonText.text("Uploaded");
+                        window.setTimeout(function () {
+                            window.location.reload();
+                        }, 700);
+                    }
+                }).fail(function (xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : "The document could not be uploaded. Check the file and try again.";
+                    showUploadFeedback(message, false);
+                }).always(function () {
+                    $form.removeAttr("aria-busy");
+                    $fileInput.prop("disabled", false);
+                    $button.prop("disabled", false);
+                    $spinner.addClass("d-none");
+                    $buttonText.text(originalButtonText);
+                });
+            });
+        });
+    </script>
+
     <script>
         (function () {
             const modalElement = document.getElementById("agentLicenseCurrencyPaymentModal");

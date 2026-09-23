@@ -81,10 +81,11 @@ namespace LLB.Controllers
             var paymentReceived = payment != null && HasPaymentStatus(payment, "Paid");
             var attachmentsComplete = AreAllRequiredDocumentsUploaded(attachments);
             var alterationDetailsComplete = !requiresAlterationDetails || IsAlterationDetailsComplete(selectedApplication);
+            var hasOpenQuery = PostFormationQueryWorkflow.HasOpenQueries(_db, selectedApplication.Id);
             var canUploadAttachments = string.Equals(selectedApplication.Status, "inprogress", StringComparison.OrdinalIgnoreCase);
-            var canSubmit = canUploadAttachments && attachmentsComplete && alterationDetailsComplete;
-            var canMakePayment = string.Equals(selectedApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase) && !paymentReceived;
-            var canContinue = string.Equals(selectedApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase) && paymentReceived;
+            var canSubmit = !hasOpenQuery && canUploadAttachments && attachmentsComplete && alterationDetailsComplete;
+            var canMakePayment = !hasOpenQuery && string.Equals(selectedApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase) && !paymentReceived;
+            var canContinue = !hasOpenQuery && string.Equals(selectedApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase) && paymentReceived;
             var awaitingSecretary = string.Equals(selectedApplication.Status, "awaiting approval", StringComparison.OrdinalIgnoreCase);
 
             selectedApplication.PaidFee = fee.Value;
@@ -114,6 +115,7 @@ namespace LLB.Controllers
             ViewBag.CanContinue = canContinue;
             ViewBag.AwaitingSecretary = awaitingSecretary;
             ViewBag.PaymentReceived = paymentReceived;
+            ViewBag.HasOpenPostFormationQuery = hasOpenQuery;
 
             return View();
         }
@@ -300,6 +302,12 @@ namespace LLB.Controllers
                 return RedirectToAction("Dashboard", "Home");
             }
 
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, permissionApplication.Id))
+            {
+                TempData["error"] = "Save the requested corrections, then resolve and resubmit from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = permissionApplication.Id });
+            }
+
             var processCode = GetProcessCodeForRecord(permissionApplication);
             var serviceName = GetServiceNameForRecord(permissionApplication);
             var serviceLower = serviceName.ToLowerInvariant();
@@ -478,6 +486,12 @@ namespace LLB.Controllers
             {
                 TempData["error"] = "The permission to alter application could not be found.";
                 return RedirectToAction("Dashboard", "Home");
+            }
+
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, permissionApplication.Id))
+            {
+                TempData["error"] = "Resolve every query, then resubmit from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = permissionApplication.Id });
             }
 
             var processCode = GetProcessCodeForRecord(permissionApplication);

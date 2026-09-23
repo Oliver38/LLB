@@ -15,6 +15,16 @@ namespace LLB.Models
         public string? DirectorsInfo { get; set; }
         public string? OutletInfo { get; set; }
         public string? DocumentInfo { get; set; }
+        public string? ApplicantInfo { get; set; }
+        public bool IsApplicantInformationComplete { get; set; }
+        public bool IsOutletInformationComplete { get; set; }
+        public bool IsManagerInformationComplete { get; set; }
+        public bool IsDocumentInformationComplete { get; set; }
+        public bool AllRequiredSectionsComplete =>
+            IsApplicantInformationComplete
+            && IsOutletInformationComplete
+            && IsManagerInformationComplete
+            && IsDocumentInformationComplete;
         public double? ManagersPrice { get; set; }
         public double? LicencePrice { get; set; }
         public double? Total { get; set; }

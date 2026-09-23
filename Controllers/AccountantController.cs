@@ -122,6 +122,8 @@ namespace LLB.Controllers
                     var section = _configuration.GetSection($"PaynowIntegrations:Currencies:{currency}:{mode}");
                     var integrationId = section["IntegrationId"] ?? string.Empty;
                     var integrationKey = section["IntegrationKey"] ?? string.Empty;
+                    var returnUrl = section["ReturnUrl"]
+                        ?? PaynowCurrencyHelper.GetReturnBaseUrl(mode).TrimEnd('/') + "/Payments/PaynowReturn";
 
                     model.Integrations.Add(new PaynowIntegrationSettingItemViewModel
                     {
@@ -129,6 +131,7 @@ namespace LLB.Controllers
                         Mode = mode,
                         IntegrationId = string.IsNullOrWhiteSpace(integrationId) ? "Not configured" : integrationId,
                         MaskedIntegrationKey = MaskIntegrationKey(integrationKey),
+                        ReturnUrl = returnUrl,
                         IsConfigured = !string.IsNullOrWhiteSpace(integrationId) && !string.IsNullOrWhiteSpace(integrationKey)
                     });
                 }
@@ -210,7 +213,7 @@ namespace LLB.Controllers
         [Authorize(Roles = "accountant,chief accountant")]
         [HttpPost("UpdatePaynowIntegration")]
         [ValidateAntiForgeryToken]
-        public IActionResult UpdatePaynowIntegration(string currency, string mode, string integrationId, string integrationKey)
+        public IActionResult UpdatePaynowIntegration(string currency, string mode, string integrationId, string integrationKey, string returnUrl)
         {
             var normalizedCurrency = NormalizePaynowIntegrationCurrency(currency);
             var normalizedMode = NormalizePaynowIntegrationMode(mode);
@@ -218,6 +221,13 @@ namespace LLB.Controllers
             if (normalizedCurrency == null || normalizedMode == null)
             {
                 TempData["error"] = "Invalid currency or mode.";
+                return RedirectToAction("PaynowIntegrations");
+            }
+
+            if (!Uri.TryCreate(returnUrl, UriKind.Absolute, out var parsedReturnUrl)
+                || (parsedReturnUrl.Scheme != Uri.UriSchemeHttp && parsedReturnUrl.Scheme != Uri.UriSchemeHttps))
+            {
+                TempData["error"] = "Provide a valid absolute HTTP or HTTPS return URL.";
                 return RedirectToAction("PaynowIntegrations");
             }
 
@@ -240,6 +250,15 @@ namespace LLB.Controllers
 
                 modeNode["IntegrationId"] = integrationId ?? string.Empty;
                 modeNode["IntegrationKey"] = integrationKey ?? string.Empty;
+                modeNode["ReturnUrl"] = returnUrl.Trim();
+
+                // A return URL belongs to the environment, so keep it consistent for every currency.
+                foreach (var configuredCurrency in new[] { PaynowCurrencyHelper.UsdCurrency, PaynowCurrencyHelper.ZwgCurrency })
+                {
+                    var configuredCurrencyNode = GetOrCreateCanonicalJsonObject(currenciesNode, configuredCurrency);
+                    var configuredModeNode = GetOrCreateCanonicalJsonObject(configuredCurrencyNode, normalizedMode);
+                    configuredModeNode["ReturnUrl"] = returnUrl.Trim();
+                }
 
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 System.IO.File.WriteAllText(appSettingsPath, root.ToJsonString(options));
@@ -248,7 +267,12 @@ namespace LLB.Controllers
                 {
                     _configuration[$"PaynowIntegrations:Currencies:{normalizedCurrency}:{normalizedMode}:IntegrationId"] = integrationId ?? string.Empty;
                     _configuration[$"PaynowIntegrations:Currencies:{normalizedCurrency}:{normalizedMode}:IntegrationKey"] = integrationKey ?? string.Empty;
+                    foreach (var configuredCurrency in new[] { PaynowCurrencyHelper.UsdCurrency, PaynowCurrencyHelper.ZwgCurrency })
+                    {
+                        _configuration[$"PaynowIntegrations:Currencies:{configuredCurrency}:{normalizedMode}:ReturnUrl"] = returnUrl.Trim();
+                    }
                     PaynowCurrencyHelper.UpdateCredentials(normalizedCurrency, normalizedMode, integrationId, integrationKey);
+                    PaynowCurrencyHelper.UpdateReturnUrl(normalizedMode, returnUrl);
                 }
                 catch { }
 

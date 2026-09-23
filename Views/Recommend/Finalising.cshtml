@@ -107,7 +107,14 @@
                         }
                         else
                         {
-                            <a href="/Recommend/HasQuery?Id=@ViewBag.ApplicationInfo.Id&taskid=@ViewBag.Task.Id" class="btn btn-primary">Submit Query</a>
+                            <form action="/Recommend/HasQuery" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="Id" value="@ViewBag.ApplicationInfo.Id" />
+                                <input type="hidden" name="taskid" value="@(ViewBag.Task?.Id ?? string.Empty)" />
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-send me-2"></i>Send queries to applicant
+                                </button>
+                            </form>
 
                         }
                     }

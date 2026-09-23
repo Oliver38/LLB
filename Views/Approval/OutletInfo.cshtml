@@ -264,24 +264,19 @@ else
                     <div class="text-center">
                         <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>
-                    <h5 class="card-title">Verify Outlet Information</h5>
+                    <h5 class="card-title">Secretary Review — Outlet Information</h5>
                 </div>
 
 
-                <form action="/Approval/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
-                    <div class="row">
-                        <input type="hidden" name="applicationId" value="@ViewBag.Application.Id" />
-                        <input type="hidden" name="stage" value="Approve Outlet" />
-
-                        <textarea class="form-control" name="query"></textarea>
-                    </div>
-
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                        <button type="reset" class="btn btn-secondary">Reset</button>
-                    </div>
-
-                </form>
+                @await Html.PartialAsync("_ExaminerQueryPanel", new LLB.Models.ViewModel.ExaminerQueryPanelViewModel
+                {
+                    ControllerName = "Approval",
+                    ApplicationId = ViewBag.Application.Id,
+                    TaskId = ViewBag.Task?.Id ?? string.Empty,
+                    StageKey = "outlet",
+                    Heading = "Secretary Review — Outlet Information",
+                    SupportingText = "Identify the premises, location, licence category or director information that must be corrected."
+                })
             </div>
         </div>
         <div class="card-footer">

@@ -22,6 +22,8 @@ namespace LLB.Models.ViewModel
         public string? LicenseType { get; set; }
         public string? LicenseRegion { get; set; }
         public string? TaskId { get; set; }
+        public int OpenQueryCount { get; set; }
+        public bool HasQueryHistory { get; set; }
         public string? Comments { get; set; }
         public string? Ventilation { get; set; }
         public string? Lighting { get; set; }

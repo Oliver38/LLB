@@ -75,7 +75,20 @@
                                 <td>@(listing.SubmittedDate?.ToString("dd MMM yyyy") ?? "N/A")</td>
                                 <td>@listing.LicenseName</td>
                                 <td>@listing.RegionName</td>
-                                <td><span class="llb-status-pill @StatusClass(listing.Status)">@listing.Status</span></td>
+                                <td>
+                                    @if (listing.HasOpenQuery)
+                                    {
+                                        <span class="llb-status-pill llb-status-warning">Query requires attention</span>
+                                    }
+                                    else if (listing.HasQueryHistory && string.Equals(listing.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="llb-status-pill llb-status-info">Ready to resubmit</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="llb-status-pill @StatusClass(listing.Status)">@listing.Status</span>
+                                    }
+                                </td>
                                 <td class="text-end">
                                     <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
                                 </td>

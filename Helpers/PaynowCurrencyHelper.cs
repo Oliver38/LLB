@@ -1,6 +1,7 @@
 using LLB.Data;
 using LLB.Models;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Concurrent;
 using System.Globalization;
 using Webdev.Payments;
 
@@ -14,7 +15,7 @@ namespace LLB.Helpers
         public const string TestMode = "TEST";
         public const string ReturnBaseUrl = "https://llb.pfms.gov.zw";
         public const string LiveReturnBaseUrl = "https://llb.pfms.gov.zw";
-        public const string TestReturnBaseUrl = "http://localhost:5046";
+        public const string TestReturnBaseUrl = "http://localhost:7237";
 
         private const string LegacyIntegrationId = "7175";
         private const string LegacyIntegrationKey = "62d86b2a-9f71-40e2-8b52-b9f1cd327cf0";
@@ -24,6 +25,11 @@ namespace LLB.Helpers
         private const string ZwgIntegrationKey = "7c72bdc4-f068-48f2-acf4-cfb60b4e6bf3";
         private const string MetadataPrefix = "PAYNOW_CURRENCY|";
         private static string CurrentPaymentMode = LiveMode;
+        private static readonly ConcurrentDictionary<string, string> ReturnBaseUrls = new(StringComparer.OrdinalIgnoreCase)
+        {
+            [LiveMode] = LiveReturnBaseUrl,
+            [TestMode] = TestReturnBaseUrl
+        };
         private static readonly Dictionary<string, PaynowIntegrationCredentials> IntegrationCredentials = new(StringComparer.OrdinalIgnoreCase)
         {
             [BuildCredentialKey(UsdCurrency, LiveMode)] = new PaynowIntegrationCredentials(UsdIntegrationId, UsdIntegrationKey),
@@ -40,10 +46,16 @@ namespace LLB.Helpers
                     var mode = NormalizePaymentMode(modeSection.Key);
                     var integrationId = modeSection["IntegrationId"];
                     var integrationKey = modeSection["IntegrationKey"];
+                    var returnUrl = modeSection["ReturnUrl"];
 
                     if (!string.IsNullOrWhiteSpace(integrationId) && !string.IsNullOrWhiteSpace(integrationKey))
                     {
                         IntegrationCredentials[BuildCredentialKey(currency, mode)] = new PaynowIntegrationCredentials(integrationId, integrationKey);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(returnUrl))
+                    {
+                        UpdateReturnUrl(mode, returnUrl);
                     }
                 }
             }
@@ -69,6 +81,23 @@ namespace LLB.Helpers
             }
 
             IntegrationCredentials[credentialKey] = new PaynowIntegrationCredentials(integrationId, integrationKey);
+        }
+
+        public static void UpdateReturnUrl(string? paymentMode, string returnUrl)
+        {
+            if (!Uri.TryCreate(returnUrl, UriKind.Absolute, out var parsedUrl)
+                || (parsedUrl.Scheme != Uri.UriSchemeHttp && parsedUrl.Scheme != Uri.UriSchemeHttps))
+            {
+                throw new ArgumentException("The Paynow return URL must be an absolute HTTP or HTTPS URL.", nameof(returnUrl));
+            }
+
+            var normalizedReturnUrl = returnUrl.Trim().TrimEnd('/');
+            const string callbackPath = "/Payments/PaynowReturn";
+            var returnBaseUrl = normalizedReturnUrl.EndsWith(callbackPath, StringComparison.OrdinalIgnoreCase)
+                ? normalizedReturnUrl[..^callbackPath.Length]
+                : parsedUrl.GetLeftPart(UriPartial.Authority);
+
+            ReturnBaseUrls[NormalizePaymentMode(paymentMode)] = returnBaseUrl.TrimEnd('/');
         }
 
         public static PaynowCurrencyContext BuildPaymentContext(AppDbContext db, decimal usdAmount, string? currency, string? paymentMode = null)
@@ -164,8 +193,8 @@ namespace LLB.Helpers
         public static string BuildReturnUrl(string pathAndQuery, string? paymentMode)
         {
             var path = string.IsNullOrWhiteSpace(pathAndQuery) ? "/" : pathAndQuery;
-            if (path.StartsWith(LiveReturnBaseUrl, StringComparison.OrdinalIgnoreCase)
-                || path.StartsWith(TestReturnBaseUrl, StringComparison.OrdinalIgnoreCase))
+            if (Uri.TryCreate(path, UriKind.Absolute, out var absoluteUrl)
+                && (absoluteUrl.Scheme == Uri.UriSchemeHttp || absoluteUrl.Scheme == Uri.UriSchemeHttps))
             {
                 return path;
             }
@@ -180,9 +209,10 @@ namespace LLB.Helpers
 
         public static string GetReturnBaseUrl(string? paymentMode)
         {
-            return string.Equals(NormalizePaymentMode(paymentMode), TestMode, StringComparison.OrdinalIgnoreCase)
-                ? TestReturnBaseUrl
-                : LiveReturnBaseUrl;
+            var normalizedPaymentMode = NormalizePaymentMode(paymentMode);
+            return ReturnBaseUrls.TryGetValue(normalizedPaymentMode, out var configuredBaseUrl)
+                ? configuredBaseUrl
+                : normalizedPaymentMode == TestMode ? TestReturnBaseUrl : LiveReturnBaseUrl;
         }
 
         public static void ApplyCurrency(Payments transaction, PaynowCurrencyContext context)

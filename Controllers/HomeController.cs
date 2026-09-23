@@ -379,6 +379,26 @@ namespace LLB.Controllers
                 .Where(a => !string.IsNullOrWhiteSpace(a.Id))
                 .Select(a => a.Id!)
                 .ToHashSet();
+            var openQueryCounts = _db.Queries
+                .Where(query => query.ApplicationId != null
+                    && applicationIds.Contains(query.ApplicationId)
+                    && query.Status == ApplicationQueryWorkflow.OpenStatus)
+                .GroupBy(query => query.ApplicationId!)
+                .ToDictionary(group => group.Key, group => group.Count());
+            var postFormationOpenQueryCounts = _db.Queries
+                .Where(query => query.ApplicationId != null
+                    && query.Stage != null
+                    && query.Stage.StartsWith(PostFormationQueryWorkflow.StagePrefix)
+                    && query.Status == ApplicationQueryWorkflow.OpenStatus)
+                .GroupBy(query => query.ApplicationId!)
+                .ToDictionary(group => group.Key, group => group.Count());
+            var postFormationQueryRecordIds = _db.Queries
+                .Where(query => query.ApplicationId != null
+                    && query.Stage != null
+                    && query.Stage.StartsWith(PostFormationQueryWorkflow.StagePrefix))
+                .Select(query => query.ApplicationId!)
+                .Distinct()
+                .ToHashSet();
             var outletinfo = _db.OutletInfo
                 .Where(a => a.ApplicationId != null && applicationIds.Contains(a.ApplicationId))
                 .ToList();
@@ -436,11 +456,21 @@ namespace LLB.Controllers
                 getreninfo.Licensetype = licensetype?.LicenseName ?? "N/A";
                 getreninfo.LicenseRegion = licenseReg?.RegionName ?? "N/A";
                 getreninfo.Status = rentask.Status;
+                getreninfo.OpenQueryCount = !string.IsNullOrWhiteSpace(rentask.Id)
+                    && postFormationOpenQueryCounts.TryGetValue(rentask.Id, out var renewalQueryCount)
+                        ? renewalQueryCount
+                        : 0;
+                getreninfo.HasQueryHistory = !string.IsNullOrWhiteSpace(rentask.Id)
+                    && postFormationQueryRecordIds.Contains(rentask.Id);
 
                 renewaltasks.Add(getreninfo);
             }
 
-            var inspections = _db.Inspection.Where(z => z.UserId == userId && z.Status == "Inspected").ToList();
+            var queriedInspectionIds = postFormationQueryRecordIds;
+            var inspections = _db.Inspection
+                .Where(z => z.UserId == userId
+                    && (z.Status == "Inspected" || queriedInspectionIds.Contains(z.Id!)))
+                .ToList();
             List<InspectionViewModel> renewalinspectiontasks = new List<InspectionViewModel>();
             foreach (var insptask in inspections)
             {
@@ -482,6 +512,12 @@ namespace LLB.Controllers
                 renewalinspectiontask.EquipmentAndAppointments = inspecy.EquipmentAndAppointments;
                 renewalinspectiontask.HygieneStandards = inspecy.HygieneStandards;
                 renewalinspectiontask.Overall = inspecy.Overall;
+                renewalinspectiontask.OpenQueryCount = !string.IsNullOrWhiteSpace(insptask.Id)
+                    && postFormationOpenQueryCounts.TryGetValue(insptask.Id, out var inspectionQueryCount)
+                        ? inspectionQueryCount
+                        : 0;
+                renewalinspectiontask.HasQueryHistory = !string.IsNullOrWhiteSpace(insptask.Id)
+                    && postFormationQueryRecordIds.Contains(insptask.Id);
 
                 renewalinspectiontasks.Add(renewalinspectiontask);
             }
@@ -646,6 +682,33 @@ namespace LLB.Controllers
                 .OrderByDescending(a => a.SubmittedDate ?? DateTime.MinValue)
                 .ToList();
 
+            var postFormationListings = managerChangeListings
+                .Concat(removalListings)
+                .Concat(extendedHourListings)
+                .Concat(temporaryRetailListings)
+                .Concat(extraCounterListings)
+                .Concat(agentLicenseListings)
+                .Concat(governmentPermitListings);
+
+            foreach (var listing in postFormationListings)
+            {
+                listing.HasQueryHistory = postFormationQueryRecordIds.Contains(listing.RecordId);
+                if (!postFormationOpenQueryCounts.TryGetValue(listing.RecordId, out var queryCount))
+                {
+                    if (listing.HasQueryHistory
+                        && string.Equals(listing.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+                    {
+                        listing.ActionUrl = $"/PostFormationQueries?recordId={Uri.EscapeDataString(listing.RecordId)}";
+                        listing.ActionLabel = "Resubmit Application";
+                    }
+                    continue;
+                }
+
+                listing.OpenQueryCount = queryCount;
+                listing.ActionUrl = $"/PostFormationQueries?recordId={Uri.EscapeDataString(listing.RecordId)}";
+                listing.ActionLabel = queryCount == 1 ? "View Query" : $"View {queryCount} Queries";
+            }
+
             ViewBag.Inspections = renewalinspectiontasks;
             ViewBag.ActiveDashboardTab = NormalizeDashboardTab(tab);
             ViewBag.RenewalTasks = renewaltasks;
@@ -663,6 +726,7 @@ namespace LLB.Controllers
             ViewBag.License = license;
             ViewBag.Applications = applications;
             ViewBag.ApprovedApplications = approvedapplications;
+            ViewBag.OpenQueryCounts = openQueryCounts;
         }
 
         private static string NormalizeDashboardTab(string? tab)

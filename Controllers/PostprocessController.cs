@@ -113,6 +113,12 @@ namespace LLB.Controllers
                 return RedirectToAction("Dashboard", "Home");
             }
 
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, renewal.Id))
+            {
+                TempData["error"] = "Resolve the examiner query, then resubmit the renewal from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = renewal.Id });
+            }
+
             var renewalEligibility = GetRenewalEligibility(renewal.ApplicationId);
             if (!renewalEligibility.IsEligible)
             {
@@ -281,6 +287,8 @@ namespace LLB.Controllers
             ViewBag.Appinfo = appinfo;
             ViewBag.ServeFee = getFee;
             ViewBag.Renewaldata = renewaldata;
+            ViewBag.HasOpenPostFormationQuery = renewaldata != null
+                && PostFormationQueryWorkflow.HasOpenQueries(_db, renewaldata.Id);
             ViewBag.Checksub = checksub;
             ViewBag.IsRenewalEligible = renewalEligibility.IsEligible;
             ViewBag.RenewalEligibilityWarning = renewalEligibility.WarningMessage;
@@ -976,15 +984,17 @@ namespace LLB.Controllers
             var payment = RefreshLatestInspectionPayment(id);
             var activeInspection = GetActivePostFormationInspection(id);
             var latestInspection = GetLatestPostFormationInspection(id);
+            var hasOpenQuery = activeInspection != null
+                && PostFormationQueryWorkflow.HasOpenQueries(_db, activeInspection.Id);
             var paymentAlreadyUsed = payment != null
                 && latestInspection != null
                 && latestInspection.DateApplied >= payment.DateAdded;
 
             var currentPayment = paymentAlreadyUsed ? null : payment;
-            var canSubmitInspection = activeInspection == null
+            var canSubmitInspection = !hasOpenQuery && activeInspection == null
                 && currentPayment != null
                 && HasPaymentStatus(currentPayment, "Paid");
-            var canMakePayment = activeInspection == null
+            var canMakePayment = !hasOpenQuery && activeInspection == null
                 && (currentPayment == null
                     || (!HasPaymentStatus(currentPayment, "Paid") && !IsActivePaymentTransaction(currentPayment)));
 
@@ -1006,6 +1016,7 @@ namespace LLB.Controllers
                 && !HasPaymentStatus(currentPayment, "Paid")
                 && IsActivePaymentTransaction(currentPayment);
             ViewBag.InspectionPaymentRedirect = currentPayment?.SystemRef;
+            ViewBag.HasOpenPostFormationQuery = hasOpenQuery;
 
             return View();
         }
@@ -1152,6 +1163,8 @@ namespace LLB.Controllers
             var hasAnotherSubmittedApplication = submittedExtendedHours != null
                 && selectedExtendedHours != null
                 && !string.Equals(submittedExtendedHours.Id, selectedExtendedHours.Id, StringComparison.OrdinalIgnoreCase);
+            var hasOpenQuery = selectedExtendedHours != null
+                && PostFormationQueryWorkflow.HasOpenQueries(_db, selectedExtendedHours.Id);
 
             var getFee = inspectionFees.Fee;
             ViewBag.License = mainlicense;
@@ -1172,7 +1185,9 @@ namespace LLB.Controllers
             ViewBag.CanSubmitExtendedHours = selectedExtendedHours != null
                 && string.Equals(selectedExtendedHours.Status, "inprogress", StringComparison.OrdinalIgnoreCase)
                 && isDraftPaid
-                && !hasAnotherSubmittedApplication;
+                && !hasAnotherSubmittedApplication
+                && !hasOpenQuery;
+            ViewBag.HasOpenPostFormationQuery = hasOpenQuery;
             ViewBag.IsExplicitExtendedHoursSelection = !string.IsNullOrWhiteSpace(extId);
             ViewBag.HasPendingSubmittedExtendedHours = hasSubmittedApplication;
             ViewBag.HasAnotherSubmittedExtendedHours = hasAnotherSubmittedApplication;
@@ -1247,7 +1262,7 @@ namespace LLB.Controllers
                 var isExistingDraftPaid = existingPayment != null && HasPaymentStatus(existingPayment, "Paid")
                     || string.Equals(existingDraft.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
 
-                if (isExistingDraftPaid)
+                if (isExistingDraftPaid && !PostFormationQueryWorkflow.HasOpenQueries(_db, existingDraft.Id))
                 {
                     TempData["error"] = "Paid extended hours applications cannot be edited.";
                     return RedirectToAction("ExtendedHours", new { id = applicationId, process = "EXH", extId = existingDraft.Id });
@@ -1329,6 +1344,12 @@ namespace LLB.Controllers
             }
 
             var applicationId = extendedHours.ApplicationId;
+
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, extendedHours.Id))
+            {
+                TempData["error"] = "Resolve the examiner query, then resubmit from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = extendedHours.Id });
+            }
 
             if (string.Equals(extendedHours.Status, "submitted", StringComparison.OrdinalIgnoreCase))
             {
@@ -1617,6 +1638,8 @@ namespace LLB.Controllers
             var hasAnotherSubmittedApplication = submittedTemporaryRetail != null
                 && selectedTemporaryRetail != null
                 && !string.Equals(submittedTemporaryRetail.Id, selectedTemporaryRetail.Id, StringComparison.OrdinalIgnoreCase);
+            var hasOpenQuery = selectedTemporaryRetail != null
+                && PostFormationQueryWorkflow.HasOpenQueries(_db, selectedTemporaryRetail.Id);
 
             var getFee = temporaryRetailFees.Fee;
             ViewBag.License = mainlicense;
@@ -1638,7 +1661,9 @@ namespace LLB.Controllers
             ViewBag.CanSubmitTemporaryRetail = selectedTemporaryRetail != null
                 && string.Equals(selectedTemporaryRetail.Status, "inprogress", StringComparison.OrdinalIgnoreCase)
                 && isDraftPaid
-                && !hasAnotherSubmittedApplication;
+                && !hasAnotherSubmittedApplication
+                && !hasOpenQuery;
+            ViewBag.HasOpenPostFormationQuery = hasOpenQuery;
             ViewBag.IsExplicitTemporaryRetailSelection = !string.IsNullOrWhiteSpace(temporaryRetailId);
             ViewBag.HasPendingSubmittedTemporaryRetail = hasSubmittedApplication;
             ViewBag.HasAnotherSubmittedTemporaryRetail = hasAnotherSubmittedApplication;
@@ -1720,7 +1745,7 @@ namespace LLB.Controllers
                 var isExistingDraftPaid = existingPayment != null && HasPaymentStatus(existingPayment, "Paid")
                     || string.Equals(existingDraft.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
 
-                if (isExistingDraftPaid)
+                if (isExistingDraftPaid && !PostFormationQueryWorkflow.HasOpenQueries(_db, existingDraft.Id))
                 {
                     TempData["error"] = "Paid temporary retail applications cannot be edited.";
                     return RedirectToAction("TemporaryRetails", new { id = applicationId, process = "TRL", temporaryRetailId = existingDraft.Id });
@@ -1796,6 +1821,12 @@ namespace LLB.Controllers
             }
 
             var applicationId = temporaryRetail.ApplicationId;
+
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, temporaryRetail.Id))
+            {
+                TempData["error"] = "Resolve the examiner query, then resubmit from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = temporaryRetail.Id });
+            }
 
             if (string.Equals(temporaryRetail.Status, "submitted", StringComparison.OrdinalIgnoreCase))
             {

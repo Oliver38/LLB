@@ -869,67 +869,83 @@ namespace LLB.Controllers
         }
 
         [HttpPost("Query")]
-        public IActionResult Query(Queries queries)
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "verifier")]
+        public IActionResult Query(string applicationId, string stage, string query, string? taskId)
         {
-           
-            /*  [Key]
-        // Liquor Outlet Info
-        public string? Id { get; set; }
-        public string? ApplicationId { get; set; }
-        public string? InspectorId { get; set; }
-        public string? Stage { get; set; }
-        public string? Query { get; set; }
-        public string? Status { get; set; }
-        public DateTime DateAdded { get; set; }
-        public DateTime DateUpdated { get; set; }
+            var stageKey = ApplicationQueryWorkflow.NormalizeStageKey(stage);
+            if (!ApplicationQueryWorkflow.IsKnownStage(stageKey)
+                || string.IsNullOrWhiteSpace(query)
+                || query.Trim().Length > 2000)
+            {
+                return BadRequest();
+            }
 
-*/
-            queries.Id = Guid.NewGuid().ToString();
-            queries.InspectorId = userManager.GetUserId(User);
-            queries.DateAdded = DateTime.Now;
-            queries.Status = "Has Query";
-            _db.Add(queries);
+            var currentUserId = userManager.GetUserId(User);
+            var task = _db.Tasks
+                .Where(item => item.ApplicationId == applicationId
+                    && item.VerifierId == currentUserId
+                    && item.Status == "assigned")
+                .OrderByDescending(item => item.DateAdded)
+                .FirstOrDefault();
+            if (task == null)
+            {
+                TempData["error"] = "This application is no longer assigned to you.";
+                return RedirectToAction("Dashboard");
+            }
+
+            var now = DateTime.Now;
+            _db.Queries.Add(new Queries
+            {
+                Id = Guid.NewGuid().ToString(),
+                ApplicationId = applicationId,
+                InspectorId = currentUserId,
+                TaskId = task.Id,
+                Stage = ApplicationQueryWorkflow.BuildStageValue("verification", stageKey),
+                Query = query.Trim(),
+                Status = ApplicationQueryWorkflow.OpenStatus,
+                DateAdded = now,
+                DateUpdated = now
+            });
             _db.SaveChanges();
-            string error = "Query has been raised successfully";
-            if (queries.Stage == "Verify Application")
-            {
-                return RedirectToAction("Apply", new { Id = queries.ApplicationId, error = error });
 
-            }else if (queries.Stage == "Verify Outlet")
-            {
-                return RedirectToAction("OutletInfo", new { Id = queries.ApplicationId, error = error });
-
-            }
-            else if (queries.Stage == "Verify Managers")
-            {
-                return RedirectToAction("ManagersInfo", new { Id = queries.ApplicationId, error = error });
-
-            }
-           
-            else if (queries.Stage == "Verify Attachments")
-            {
-                return RedirectToAction("Attachments", new { Id = queries.ApplicationId, error = error });
-
-            }
-            else
-            {
-               
-            }
-            return RedirectToAction("Apply", new { Id = queries.ApplicationId, error = error });
-
+            return RedirectToAction(
+                ApplicationQueryWorkflow.GetStageAction(stageKey),
+                new { Id = applicationId, error = "Stage query added. You can continue reviewing the application." });
         }
 
         //ask if it returns to same verifier or not
-        [HttpGet("HasQuery")]
+        [HttpPost("HasQuery")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "verifier")]
         public IActionResult HasQuery(string Id, string taskid)
         {
-            var applicationInfo = _db.ApplicationInfo.Where(a => a.Id == Id).FirstOrDefault();
+            var currentUserId = userManager.GetUserId(User);
+            var applicationInfo = _db.ApplicationInfo.FirstOrDefault(a => a.Id == Id);
+            var task = _db.Tasks
+                .Where(item => item.ApplicationId == Id
+                && item.VerifierId == currentUserId
+                && item.Status == "assigned")
+                .OrderByDescending(item => item.DateAdded)
+                .FirstOrDefault();
+            if (applicationInfo == null || task == null)
+            {
+                return NotFound();
+            }
+
+            var hasOpenQueries = _db.Queries.Any(query => query.ApplicationId == Id
+                && query.Status == ApplicationQueryWorkflow.OpenStatus);
+            if (!hasOpenQueries)
+            {
+                TempData["error"] = "Add at least one stage query before sending the application back.";
+                return RedirectToAction("Finalising", new { Id });
+            }
+
             applicationInfo.Status = "Has Query";
-            
+            applicationInfo.DateUpdated = DateTime.Now;
             _db.Update(applicationInfo);
-            _db.SaveChanges();
-            var task = _db.Tasks.Where(f => f.Id == taskid).FirstOrDefault();
             task.Status = "completed";
+            task.DateUpdated = DateTime.Now;
             _db.Update(task);
             _db.SaveChanges();
             return RedirectToAction("Dashboard", "Verify");
@@ -1552,33 +1568,80 @@ namespace LLB.Controllers
 
 
                 }
-            }else if (inspec.Service == "Verification Inspection")
-            { //getting rocomende and completing task
+            }else if (string.Equals(inspec.Service, "Verification Inspection", StringComparison.OrdinalIgnoreCase))
+            {
+                var inspectedApplication = _db.ApplicationInfo
+                    .FirstOrDefault(application => application.Id == inspec.ApplicationId);
 
-                Tasks tasksc = new Tasks();
-                tasksc.Id = Guid.NewGuid().ToString();
-                tasksc.ApplicationId = inspec.ApplicationId;
-                //adding task reference
+                if (string.Equals(inspec.Overall, "true", StringComparison.OrdinalIgnoreCase))
+                {
+                    var hasRecommendationTask = _db.Tasks.Any(existingTask =>
+                        existingTask.ApplicationId == inspec.ApplicationId
+                        && existingTask.Service == "new application"
+                        && existingTask.ExaminationStatus == "recommendation"
+                        && existingTask.Status == "assigned");
+                    if (!hasRecommendationTask)
+                    {
+                        var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
+                        _db.Add(new Tasks
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            ApplicationId = inspec.ApplicationId,
+                            ExaminationStatus = "recommendation",
+                            Service = "new application",
+                            RecommenderId = recommenderWithLeastTasks,
+                            AssignerId = "system",
+                            Status = "assigned",
+                            DateAdded = DateTime.Now,
+                            DateUpdated = DateTime.Now
+                        });
+                    }
 
-                //tasks.AssignerId
+                    if (inspectedApplication != null)
+                    {
+                        inspectedApplication.ExaminationStatus = "recommendation";
+                        inspectedApplication.DateUpdated = DateTime.Now;
+                        _db.Update(inspectedApplication);
+                    }
+                }
+                else
+                {
+                    var hasOpenInspectionQuery = _db.Queries
+                        .Where(query => query.ApplicationId == inspec.ApplicationId
+                            && query.Status == ApplicationQueryWorkflow.OpenStatus)
+                        .ToList()
+                        .Any(query => ApplicationQueryWorkflow.NormalizeStageKey(query.Stage)
+                            == ApplicationQueryWorkflow.InspectionStage);
 
-                var recommenderWithLeastTasks = await _taskAllocationHelper.GetRecommender(_db,userManager);
-                tasksc.ExaminationStatus = "recommendation";
-                tasksc.Service = "new application";
-                tasksc.RecommenderId = recommenderWithLeastTasks;
-                tasksc.AssignerId = "system";
-                tasksc.Status = "assigned";
-                tasksc.DateAdded = DateTime.Now;
-                tasksc.DateUpdated = DateTime.Now;
-                _db.Add(tasksc);
+                    if (!hasOpenInspectionQuery)
+                    {
+                        var now = DateTime.Now;
+                        _db.Add(new Queries
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            ApplicationId = inspec.ApplicationId,
+                            InspectorId = userId,
+                            TaskId = TaskId,
+                            Stage = ApplicationQueryWorkflow.BuildStageValue(
+                                "verification-inspection",
+                                ApplicationQueryWorkflow.InspectionStage),
+                            Query = BuildVerificationInspectionQueryMessage(inspec),
+                            Status = ApplicationQueryWorkflow.OpenStatus,
+                            DateAdded = now,
+                            DateUpdated = now
+                        });
+                    }
+
+                    if (inspectedApplication != null)
+                    {
+                        inspectedApplication.Status = ApplicationQueryWorkflow.OpenStatus;
+                        inspectedApplication.ExaminationStatus = "Verification Inspection Query";
+                        inspectedApplication.DateUpdated = DateTime.Now;
+                        _db.Update(inspectedApplication);
+                    }
+                }
+
                 _db.SaveChanges();
-
-                var appinfogg = _db.ApplicationInfo.Where(a => a.Id == inspec.ApplicationId).FirstOrDefault();
-                appinfogg.ExaminationStatus = "recommendation";
-                _db.Update(appinfogg);
-                _db.SaveChanges();
-                // recommendation
-
             }
             else if (inspec.Service == "Inspection")
             {
@@ -1594,6 +1657,14 @@ namespace LLB.Controllers
             task.Status = "completed";
             _db.Update(task);
             _db.SaveChanges();
+
+            if (string.Equals(inspec.Service, "Verification Inspection", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["result"] = string.Equals(inspec.Overall, "true", StringComparison.OrdinalIgnoreCase)
+                    ? "Verification inspection passed. The application has moved to recommendation."
+                    : "Verification inspection failed. A correction query has been sent to the applicant.";
+                return RedirectToAction("Dashboard", "Verify");
+            }
 
 
 
@@ -1722,6 +1793,45 @@ namespace LLB.Controllers
             _db.SaveChanges();
             //
             return RedirectToAction("Dashboard", "Home");
+        }
+
+        private static string BuildVerificationInspectionQueryMessage(Inspection inspection)
+        {
+            var failedItems = new (string Label, string? Value)[]
+            {
+                ("Ventilation", inspection.Ventilation),
+                ("Lighting", inspection.Lighting),
+                ("Sewage disposal and drainage", inspection.SewageDisposalAndDrainage),
+                ("Toilets", inspection.Toilets),
+                ("Water supply", inspection.WaterSupply),
+                ("Rubbish disposal", inspection.RubbishDisposal),
+                ("Standard of food", inspection.StandardOfFood),
+                ("Food storage arrangements", inspection.FoodStorageArrangements),
+                ("Staff uniforms and accommodation", inspection.StaffUniformsAndAccommodation),
+                ("Equipment and appointments", inspection.EquipmentAndAppointments),
+                ("Hygiene standards", inspection.HygieneStandards)
+            }
+            .Where(item => string.Equals(item.Value, "false", StringComparison.OrdinalIgnoreCase))
+            .Select(item => item.Label)
+            .ToList();
+
+            var messageParts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(inspection.Comments))
+            {
+                messageParts.Add(inspection.Comments.Trim());
+            }
+
+            if (failedItems.Count > 0)
+            {
+                messageParts.Add($"Failed inspection areas: {string.Join(", ", failedItems)}.");
+            }
+
+            if (messageParts.Count == 0)
+            {
+                messageParts.Add("The verification inspection was not satisfactory. Correct the premises before requesting another inspection.");
+            }
+
+            return string.Join(" ", messageParts);
         }
 
         private ExtendedHoursReviewViewModel? BuildExtendedHoursReviewModel(string extendedHoursId, string taskId)

@@ -89,24 +89,19 @@
                 <div class="text-center">
                     <h5 class="card-title text-success">@TempData["result"]</h5>
                 </div>
-                <h5 class="card-title">Verify Managers Information</h5>
+                <h5 class="card-title">Verify Attachments Information</h5>
             </div>
 
 
-            <form action="/Verify/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
-                <div class="row">
-                    <input type="hidden" name="applicationId" value="@ViewBag.ApplicationInfo.Id" />
-                    <input type="hidden" name="stage" value="Verify Attachments" />
-                    <input type="hidden" name="taskId" value="@ViewBag.Task.Id" />
-                    <textarea class="form-control" name="query"></textarea>
-                </div>
-
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                    <button type="reset" class="btn btn-secondary">Reset</button>
-                </div>
-
-            </form>
+            @await Html.PartialAsync("_ExaminerQueryPanel", new LLB.Models.ViewModel.ExaminerQueryPanelViewModel
+            {
+                ControllerName = "Verify",
+                ApplicationId = ViewBag.ApplicationInfo.Id,
+                TaskId = ViewBag.Task?.Id ?? string.Empty,
+                StageKey = "attachments",
+                Heading = "Verify Attachments Information",
+                SupportingText = "Name the missing, unreadable or incorrect attachment and explain what the applicant must provide."
+            })
         </div>
 
     </div>

@@ -189,9 +189,15 @@ namespace LLB.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadAttachmentAsync(string id, string documentType, IFormFile file)
         {
+            var isAjaxRequest = IsAjaxRequest();
             var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
             {
+                if (isAjaxRequest)
+                {
+                    return Unauthorized(new { success = false, message = "Your session has expired. Sign in and try again." });
+                }
+
                 return RedirectToAction("Login", "Auth");
             }
 
@@ -202,6 +208,11 @@ namespace LLB.Controllers
 
             if (agentApplication == null)
             {
+                if (isAjaxRequest)
+                {
+                    return NotFound(new { success = false, message = "The agent license application could not be found." });
+                }
+
                 TempData["error"] = "The agent license application could not be found.";
                 return RedirectToAction("AgentLicenseListings", "Home");
             }
@@ -209,12 +220,22 @@ namespace LLB.Controllers
             var payment = GetLatestAgentLicensePayment(agentApplication);
             if (!CanUploadAgentAttachments(agentApplication, payment))
             {
+                if (isAjaxRequest)
+                {
+                    return Conflict(new { success = false, message = "Agent license documents can only be updated before payment starts." });
+                }
+
                 TempData["error"] = "Agent license documents can only be updated before payment starts.";
                 return RedirectToAction("Apply", new { id = agentApplication.Id, fromPostFormation = true });
             }
 
             if (file == null || file.Length <= 0)
             {
+                if (isAjaxRequest)
+                {
+                    return BadRequest(new { success = false, message = "Choose a file to upload." });
+                }
+
                 TempData["error"] = "Choose a file to upload.";
                 return RedirectToAction("Apply", new { id = agentApplication.Id, fromPostFormation = true });
             }
@@ -259,6 +280,11 @@ namespace LLB.Controllers
                     break;
 
                 default:
+                    if (isAjaxRequest)
+                    {
+                        return BadRequest(new { success = false, message = "The selected attachment type is not supported." });
+                    }
+
                     TempData["error"] = "The selected attachment type is not supported.";
                     return RedirectToAction("Apply", new { id = agentApplication.Id, fromPostFormation = true });
             }
@@ -267,7 +293,37 @@ namespace LLB.Controllers
             _db.Update(agentApplication);
             await _db.SaveChangesAsync();
 
-            TempData["success"] = $"{documentLabel} uploaded successfully.";
+            var successMessage = $"{documentLabel} uploaded successfully.";
+            if (isAjaxRequest)
+            {
+                var tieAffidavit = await GetAttachmentAsync(agentApplication.Id, AgentLicenseHelper.TieAffidavitDocumentTitle);
+                var wholesaleLicenseAttachment = await GetAttachmentAsync(agentApplication.Id, AgentLicenseHelper.WholesaleLicenseDocumentTitle);
+                var documentLocation = normalizedDocumentType switch
+                {
+                    "tieaffidavit" => tieAffidavit?.DocumentLocation,
+                    "fingerprint" or "fingerprints" => agentApplication.Fingerprints,
+                    "form55" or "formff" => agentApplication.FormFF,
+                    "id" or "idcopy" => agentApplication.IdCopy,
+                    "wholesalelicense" => wholesaleLicenseAttachment?.DocumentLocation,
+                    _ => string.Empty
+                };
+
+                return Json(new
+                {
+                    success = true,
+                    message = successMessage,
+                    documentType = normalizedDocumentType,
+                    fileUrl = string.IsNullOrWhiteSpace(documentLocation)
+                        ? string.Empty
+                        : Url.Content($"~/{documentLocation}"),
+                    allRequiredDocumentsUploaded = HasRequiredAgentAttachments(
+                        agentApplication,
+                        tieAffidavit,
+                        wholesaleLicenseAttachment)
+                });
+            }
+
+            TempData["success"] = successMessage;
             return RedirectToAction("Apply", new { id = agentApplication.Id, fromPostFormation = true });
         }
 
@@ -434,6 +490,12 @@ namespace LLB.Controllers
             {
                 TempData["error"] = "The agent license application could not be found.";
                 return RedirectToAction("AgentLicenseListings", "Home");
+            }
+
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, agentApplication.Id))
+            {
+                TempData["error"] = "Resolve every query, then resubmit from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = agentApplication.Id });
             }
 
             if (!IsAgentPaymentStage(agentApplication)
@@ -769,6 +831,7 @@ namespace LLB.Controllers
             ViewBag.TieAffidavit = await GetAttachmentAsync(agentApplication?.Id, AgentLicenseHelper.TieAffidavitDocumentTitle);
             ViewBag.WholesaleLicenseAttachment = await GetAttachmentAsync(agentApplication?.Id, AgentLicenseHelper.WholesaleLicenseDocumentTitle);
             ViewBag.Payment = RefreshAgentLicensePaymentStatus(agentApplication);
+            ViewBag.HasOpenPostFormationQuery = PostFormationQueryWorkflow.HasOpenQueries(_db, agentApplication?.Id);
             ViewBag.LatestZwgExchangeRate = await _db.ExchangeRate
                 .Where(rate => rate.ZWGrate.HasValue && rate.ZWGrate.Value > 0)
                 .OrderByDescending(rate => rate.DateUpdated)
@@ -1202,6 +1265,11 @@ namespace LLB.Controllers
                 return false;
             }
 
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, agentApplication.Id))
+            {
+                return false;
+            }
+
             var paymentRequired = (agentApplication.PaymentFee ?? 0) > 0;
             var paymentComplete = !paymentRequired
                 || (payment != null && HasPaymentStatus(payment, "Paid"))
@@ -1290,8 +1358,14 @@ namespace LLB.Controllers
                 && !string.IsNullOrWhiteSpace(wholesaleLicenseAttachment.DocumentLocation);
         }
 
-        private static bool CanUploadAgentAttachments(ApplicationInfo? agentApplication, Payments? payment)
+        private bool CanUploadAgentAttachments(ApplicationInfo? agentApplication, Payments? payment)
         {
+            if (agentApplication != null
+                && PostFormationQueryWorkflow.HasOpenQueries(_db, agentApplication.Id))
+            {
+                return true;
+            }
+
             if (agentApplication == null || !IsAgentPaymentStage(agentApplication))
             {
                 return false;
@@ -1303,6 +1377,14 @@ namespace LLB.Controllers
             }
 
             return !IsActivePaymentTransaction(payment) && !HasPaymentStatus(payment, "Paid");
+        }
+
+        private bool IsAjaxRequest()
+        {
+            return string.Equals(
+                Request.Headers["X-Requested-With"].ToString(),
+                "XMLHttpRequest",
+                StringComparison.OrdinalIgnoreCase);
         }
 
         private static string NormalizeDocumentType(string? documentType)

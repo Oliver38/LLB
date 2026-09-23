@@ -8,6 +8,16 @@
     }
 }
 
+@if (!string.Equals((string?)ViewBag.Inspection?.Service, "Verification Inspection", StringComparison.OrdinalIgnoreCase))
+{
+    @await Html.PartialAsync("_PostFormationExaminerQueryPanel", new LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+    {
+        RecordId = (string?)ViewBag.Inspection?.Id ?? string.Empty,
+        TaskId = (string?)ViewBag.TaskId ?? string.Empty,
+        ServiceName = (string?)ViewBag.Inspection?.Service ?? "Inspection"
+    })
+}
+
 
     <div class="row">
         <div class="card">
@@ -182,6 +192,21 @@
 @ViewBag.Inspection.Comments
 </textarea> <label class="form-check-label" for="HygieneStandards">   Comments </label> </td>
                             </tr>
+
+                            @if (string.Equals((string?)ViewBag.Inspection.Service, "Verification Inspection", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="alert alert-warning d-flex align-items-start gap-2 mb-0" role="note">
+                                            <i class="bi bi-info-circle-fill mt-1"></i>
+                                            <div>
+                                                <strong>A failed result creates an applicant query.</strong>
+                                                <div>Use the comments field to explain what must be corrected before another verification inspection.</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
 
                             <tr>
 

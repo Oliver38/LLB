@@ -5,45 +5,17 @@
 
 }
 
+@{ var queryStagePanel = ViewBag.QueryStagePanel as LLB.Models.ViewModel.ApplicantQueryStagePanelViewModel; }
+@if (queryStagePanel != null)
+{
+    @await Html.PartialAsync("_ApplicantQueryStagePanel", queryStagePanel)
+}
 
 <div class="row">
     <div class="card">
        
         <div class="card-body" id="_step1">
             <div class="card-header">
-
-                @if (ViewBag.Queries.Count > 0)
-                {
-                    <!-- Default Accordion -->
-                    <div class="accordion" id="accordionExample">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingOne">
-                                <button class="accordion-button text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                    <b>Click to View Queries</b>(resolve and resubmit where necessary)
-                                </button>
-                            </h2>
-                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                <div class="accordion-body">
-                                    <!-- List group With badges -->
-                                    <ul class="list-group">
-                                        @foreach (var queries in ViewBag.Queries)
-                                        {
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                @queries.Query
-                                                <span class="badge bg-danger rounded-pill"> @queries.Status</span>
-                                                <span class="badge bg-primary rounded-pill"><a class="text-white" href="/License/ResolveQuery?Id=@queries.Id&stage=apply&applicationId=@ViewBag.ApplicationInfo.Id">Click to Resolve Query</a></span>
-
-                                            </li>
-                                        }
-
-                                    </ul><!-- End List With badges -->
-                                </div>
-                            </div>
-                        </div>
-
-
-                    </div><!-- End Default Accordion Example -->
-                }
                 <div class="text-center">
                     <h5 class="card-title text-success">@TempData["result"]</h5>
                 </div>
@@ -70,6 +42,7 @@
                                     <input required type="file" name="file" class="form-control" />
                                     <input type="hidden" name="id" value="@attachment.Id" />
                                     <input type="hidden" name="applicationId" value="@attachment.ApplicationId" />
+                                    <input type="hidden" name="queryMode" value="@(queryStagePanel != null ? "true" : "false")" />
                                 </td>
                                 <td><input type="submit" class="btn btn-primary" /> </td>
 
@@ -80,18 +53,36 @@
                         }
                         else
                         {
-                <tr>
-                    <td>@attachment.DocumentTitle </td>
-                    <td><a target="_blank" href="~/@attachment.DocumentLocation">View Here</a></td>
-                    @*<td><a href="/License/RemoveAttachments?Id=@attachment.Id" class="btn btn-danger">Remove</a></td>*@
-                    <td>
-                        <a href="/License/RemoveAttachments?Id=@attachment.Id"
-                           class="btn btn-danger"
-                           onclick="return confirm('Are you sure you want to remove this attachment?');">
-                            Remove
-                        </a>
-                    </td>
-                </tr>
+                            <tr>
+                                <td>@attachment.DocumentTitle</td>
+                                <td>
+                                    <a target="_blank" href="~/@attachment.DocumentLocation" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i>View current file
+                                    </a>
+                                </td>
+                                <td>
+                                    @if (queryStagePanel != null)
+                                    {
+                                        <form method="post" enctype="multipart/form-data" action="/License/Attachments" class="d-flex flex-column flex-lg-row gap-2 align-items-lg-center">
+                                            <input required type="file" name="file" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" />
+                                            <input type="hidden" name="id" value="@attachment.Id" />
+                                            <input type="hidden" name="applicationId" value="@attachment.ApplicationId" />
+                                            <input type="hidden" name="queryMode" value="true" />
+                                            <button type="submit" class="btn btn-sm btn-primary text-nowrap">
+                                                <i class="bi bi-arrow-repeat me-1"></i>Replace
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <a href="/License/RemoveAttachments?Id=@attachment.Id"
+                                           class="btn btn-danger"
+                                           onclick="return confirm('Are you sure you want to remove this attachment?');">
+                                            Remove
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
 
                         }
 
@@ -108,22 +99,22 @@
 
 
 
-            <div class="card-footer">
-                <div class="text-center">
-
-
-                    @if (ViewBag.Attachments == null)
-                    {
-                        <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                    }
-                    else
-                    {
-                        <a href="/License/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                        <a href="/License/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
-
-                    }
+            @if (queryStagePanel == null)
+            {
+                <div class="card-footer">
+                    <div class="text-center">
+                        @if (ViewBag.Attachments == null)
+                        {
+                            <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        }
+                        else
+                        {
+                            <a href="/License/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                            <a href="/License/Finalising?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+                        }
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     </div>
 

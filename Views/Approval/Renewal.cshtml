@@ -91,3 +91,10 @@
         </div>
     </div>
 </div>
+
+@await Html.PartialAsync("_PostFormationExaminerQueryPanel", new LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+{
+    RecordId = (string?)ViewBag.Renewals.Id ?? string.Empty,
+    TaskId = (string?)ViewBag.TaskId ?? string.Empty,
+    ServiceName = "Renewal"
+})

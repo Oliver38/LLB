@@ -9,6 +9,7 @@ using LLB.Models;
 using LLB.Extensions;
 using Microsoft.AspNetCore.Builder;
 using LLB.Helpers;
+using LLB.Services;
 using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,7 +26,15 @@ builder.Services.AddDbContextPool<AppDbContext>(options => options.UseSqlServer(
 builder.Services.AddScoped<TaskAllocationHelper>();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 
-builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
+builder.Services.Configure<CompanyRegistryOptions>(
+    builder.Configuration.GetSection(CompanyRegistryOptions.SectionName));
+builder.Services.AddHttpClient<ICompanyRegistryClient, CompanyRegistryClient>((serviceProvider, client) =>
+{
+    var options = serviceProvider.GetRequiredService<IOptions<CompanyRegistryOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(Math.Max(1, options.TimeoutSeconds));
+});
 
 builder.Services.AddMvc(options =>
 {
@@ -40,14 +49,11 @@ builder.Services.AddDNTCaptcha(options =>
 }
        );
 
-       IronPdf.License.LicenseKey = "IRONSUITE.NEWDAWNSOLAR3.GMAIL.COM.23297-7A33D32845-AIWX5EJ-WAIESQQ5GC64-44RDJ3754SQO-XQF7ZDX7FQNJ-D4NSOC6C57W7-V6WLRJ5EVP4B-VSX7UX7D4ZP6-XLI46J-T4WGPKEGASCREA-DEPLOYMENT.TRIAL-VUWO67.TRIAL.EXPIRES.04.JUL.2026";
-       //"IRONSUITE.UENERGYZIM.GMAIL.COM.18341-B96BE9DD54-DSH4G-IMLVFZT7LUVR-HZ3R4XN32X3V-5GVVKEBITGZG-DZB4FMBJ42KK-HIXSYLRTHBWK-AXWPFVVKV4LK-BJRWEW-TJDUVBDV7MCREA-DEPLOYMENT.TRIAL-UJFMPO.TRIAL.EXPIRES.10.JUN.2026";
-//IronPdf.License.LicenseKey = "IRONSUITE.CHIMUKAOLIVER.GMAIL.COM.12332-DB80BC55B8-AGWBH5YLDYE3UIWH-XRXOF7T7CXIV-W6MVY6EUSDXV-DCTN5IBDAPJ4-SGYMBWOJ2DON-JFYJUW6SCCUR-EQGFQJ-TJPJM47EDAOREA-DEPLOYMENT.TRIAL-IQRDZ7.TRIAL.EXPIRES.24.APR.2026";
-//IronPdf.License.LicenseKey = "IRONSUITE.OCHIMUKA.TTCSGLOBAL.COM.23477-13EACBA4B3-C4SBO-DNXFDTCCZ5HR-ECICSHFMCEW2-3IEBKW4RNC6C-XDJQF7U3GW2E-EIYS2IZ6E5RH-WVORH5SKJ73E-VR5PDE-TIUAQYASQUCNEA-DEPLOYMENT.TRIAL-INU7AW.TRIAL.EXPIRES.31.AUG.2024";
-
-//IronPdf.License.LicenseKey = "IRONPDF-ZIVDERO-MY-TRIAL-LICENSE-KEY-EXPIRES.15.MAR.2022";
-//IronPdf.License.LicenseKey = "IRONSUITE.OCHIMUKA.LSU.AC.ZW.4007-AF20386C1E-B3SGOFLSAXCACFEW-Y6IFKIR4G4JI-7UAZUCTH6T5L-RRFYTZSJAUXK-HINXG2L7PZZX-IPGFBKO3LIJ2-U3BWRP-TGLS3K3FUESNEA-DEPLOYMENT.TRIAL-4FDGKI.TRIAL.EXPIRES.31.JUL.2024";
-// "IRONPDF-17941296BC-181444-E7D0E8-C74E6C9B01-A2555F9F-UExAAF2885A4F327D8-DELPLOYMENT.TRIAL.EXPIRES.18.AUG.2019";
+var ironPdfLicenseKey = builder.Configuration["IronPdf:LicenseKey"];
+if (!string.IsNullOrWhiteSpace(ironPdfLicenseKey))
+{
+    IronPdf.License.LicenseKey = ironPdfLicenseKey;
+}
 
 //builder.WebHost.ConfigureKestrel(options =>
 //{

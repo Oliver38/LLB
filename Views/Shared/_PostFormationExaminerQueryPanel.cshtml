@@ -1,0 +1,35 @@
+@model LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+
+@if (!string.IsNullOrWhiteSpace(Model.RecordId) && !string.IsNullOrWhiteSpace(Model.TaskId))
+{
+    <section class="llb-query-composer mt-4" aria-labelledby="postFormationQueryHeading">
+        <span class="llb-query-composer__icon"><i class="bi bi-chat-left-dots"></i></span>
+        <div>
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-2">
+                <div>
+                    <span class="llb-section-kicker">Applicant correction</span>
+                    <h2 id="postFormationQueryHeading" class="h5 mb-1">Query this @Model.ServiceName application</h2>
+                    <p class="text-muted mb-0">Explain exactly what the applicant must update before resubmitting for examination.</p>
+                </div>
+                <span class="llb-query-stage-chip align-self-start">Examination query</span>
+            </div>
+
+            <form asp-controller="PostFormationQueries" asp-action="Raise" method="post">
+                <input type="hidden" name="recordId" value="@Model.RecordId" />
+                <input type="hidden" name="taskId" value="@Model.TaskId" />
+                <label class="form-label fw-semibold" for="postFormationQueryText">Query details</label>
+                <textarea id="postFormationQueryText"
+                          name="query"
+                          class="form-control llb-query-textarea"
+                          maxlength="2000"
+                          required
+                          placeholder="Describe the information, document, or detail that must be corrected..."></textarea>
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-send me-2"></i>Send query to applicant
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+}

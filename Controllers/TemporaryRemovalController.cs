@@ -335,6 +335,12 @@ namespace LLB.Controllers
                 return RedirectToAction("Dashboard", "Home");
             }
 
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, removalApplication.Id))
+            {
+                TempData["error"] = "Save the requested corrections, then resolve and resubmit from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = removalApplication.Id });
+            }
+
             if (!CanEditTemporaryRemoval(removalApplication))
             {
                 TempData["error"] = "Only draft temporary removal applications can be submitted.";
@@ -522,6 +528,12 @@ namespace LLB.Controllers
             {
                 TempData["error"] = "The temporary removal application could not be found.";
                 return RedirectToAction("Dashboard", "Home");
+            }
+
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, removalApplication.Id))
+            {
+                TempData["error"] = "Resolve every query, then resubmit from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = removalApplication.Id });
             }
 
             if (!string.Equals(removalApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase))
@@ -760,12 +772,13 @@ namespace LLB.Controllers
             var hasActivePayment = payment != null && IsActivePaymentTransaction(payment);
             var outletComplete = IsOutletComplete(proposedOutlet);
             var attachmentsComplete = AreAllRequiredDocumentsUploaded(attachments);
+            var hasOpenQuery = PostFormationQueryWorkflow.HasOpenQueries(_db, removalApplication.Id);
             var canEditOutlet = CanEditTemporaryRemoval(removalApplication);
-            var canSubmit = canEditOutlet && outletComplete && attachmentsComplete;
-            var canMakePayment = string.Equals(removalApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase)
+            var canSubmit = !hasOpenQuery && canEditOutlet && outletComplete && attachmentsComplete;
+            var canMakePayment = !hasOpenQuery && string.Equals(removalApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase)
                 && !paymentReceived
                 && !hasActivePayment;
-            var canContinue = string.Equals(removalApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase)
+            var canContinue = !hasOpenQuery && string.Equals(removalApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase)
                 && paymentReceived;
             var awaitingSecretary = string.Equals(removalApplication.Status, "awaiting approval", StringComparison.OrdinalIgnoreCase);
             var displayRemovalType = TemporaryRemovalHelper.GetRemovalType(removalApplication);
@@ -818,6 +831,7 @@ namespace LLB.Controllers
             ViewBag.CanContinue = canContinue;
             ViewBag.AwaitingSecretary = awaitingSecretary;
             ViewBag.PaymentReceived = paymentReceived;
+            ViewBag.HasOpenPostFormationQuery = hasOpenQuery;
             ViewBag.HasActivePayment = hasActivePayment;
         }
 

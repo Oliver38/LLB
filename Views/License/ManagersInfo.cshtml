@@ -2,45 +2,22 @@
     Layout = "_LayoutMain";
 }
 
+@{ var queryStagePanel = ViewBag.QueryStagePanel as LLB.Models.ViewModel.ApplicantQueryStagePanelViewModel; }
+@if (queryStagePanel != null)
+{
+    @await Html.PartialAsync("_ApplicantQueryStagePanel", queryStagePanel)
+}
+
+@if (TempData["error"] != null)
+{
+    <div class="alert alert-danger" role="alert">@TempData["error"]</div>
+}
 
 <div class="row">
     <div class="card">
         <div class="card-body" id="_step1">
 
             <div class="card-header">
-
-                @if (ViewBag.Queries.Count > 0)
-                {
-                    <!-- Default Accordion -->
-                    <div class="accordion" id="accordionExample">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingOne">
-                                <button class="accordion-button text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                    <b>Click to View Queries</b>(resolve and resubmit where necessary)
-                                </button>
-                            </h2>
-                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                <div class="accordion-body">
-                                    <!-- List group With badges -->
-                                    <ul class="list-group">
-                                        @foreach (var queries in ViewBag.Queries)
-                                        {
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                @queries.Query
-                                                <span class="badge bg-danger rounded-pill"> @queries.Status</span>
-                                                <span class="badge bg-primary rounded-pill"><a class="text-white" href="/License/ResolveQuery?Id=@queries.Id&stage=apply&applicationId=@ViewBag.ApplicationInfo.Id">Click to Resolve Query</a></span>
-
-                                            </li>
-                                        }
-
-                                    </ul><!-- End List With badges -->
-                                </div>
-                            </div>
-                        </div>
-
-
-                    </div><!-- End Default Accordion Example -->
-                }
                 <div class="text-center">
                     <h5 class="card-title text-success">@TempData["result"]</h5>
                 </div>
@@ -61,6 +38,10 @@
                         <th>National Id </th>
                         <th>Fingerpints </th>
                         <th>Form 55</th>
+                        @if (queryStagePanel != null)
+                        {
+                            <th class="text-end">Action</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -89,26 +70,44 @@
                                 else
                                 {<a target="_blank" href="~/@manager.Form55"> Form 55</a>}
                             </td>
+                            @if (queryStagePanel != null)
+                            {
+                                <td class="text-end">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editManagerModal"
+                                            data-manager-id="@manager.Id"
+                                            data-manager-name="@manager.Name"
+                                            data-manager-surname="@manager.Surname"
+                                            data-manager-national-id="@manager.NationalId"
+                                            data-manager-address="@manager.Address">
+                                        <i class="bi bi-pencil-square me-1"></i>Edit
+                                    </button>
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>
             </table>
 
 
-            <div class="card-footer">
-                <div class="text-center">
-                    @if (ViewBag.ManagersInfo == null)
-                    {
-                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                    }
-                    else
-                    {
-                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
-                        <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
-
-                    }
+            @if (queryStagePanel == null)
+            {
+                <div class="card-footer">
+                    <div class="text-center">
+                        @if (ViewBag.ManagersInfo == null)
+                        {
+                            <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                        }
+                        else
+                        {
+                            <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
+                            <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-success">Next</a>
+                        }
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     </div>
 
@@ -126,6 +125,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="/License/ManagersInfo" enctype="multipart/form-data" method="post">
+                <input type="hidden" name="queryMode" value="@(queryStagePanel != null ? "true" : "false")" />
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
@@ -170,73 +170,357 @@
         </div>
     </div>
 </div><!-- End Basic Modal-->
+@if (queryStagePanel != null)
+{
+    <div class="modal fade" id="editManagerModal" tabindex="-1" aria-labelledby="editManagerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form asp-controller="License" asp-action="UpdateManager" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="Id" id="editManagerId" />
+                    <input type="hidden" name="ApplicationId" value="@ViewBag.ApplicationInfo.Id" />
+                    <input type="hidden" name="queryMode" value="true" />
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title" id="editManagerModalLabel">Update manager information</h5>
+                            <small class="text-muted">Leave a document field empty to keep the current file.</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="editManagerName">Name</label>
+                                <input class="form-control" id="editManagerName" name="Name" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="editManagerSurname">Surname</label>
+                                <input class="form-control" id="editManagerSurname" name="Surname" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="editManagerNationalId">National ID</label>
+                                <input class="form-control" id="editManagerNationalId" name="NationalId" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="editManagerAddress">Address</label>
+                                <input class="form-control" id="editManagerAddress" name="Address" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="editManagerNatIdFile">Replace national ID copy</label>
+                                <input class="form-control" id="editManagerNatIdFile" type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="editManagerFingerprints">Replace fingerprints</label>
+                                <input class="form-control" id="editManagerFingerprints" type="file" name="fileb" accept=".pdf,.jpg,.jpeg,.png" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="editManagerForm55">Replace Form 55</label>
+                                <input class="form-control" id="editManagerForm55" type="file" name="form55" accept=".pdf,.jpg,.jpeg,.png" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save manager updates</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
 <!-- Get User Modal -->
-<div class="modal fade" id="getUserModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
-        <!-- Small modal -->
+<div class="modal fade" id="getUserModal" tabindex="-1" aria-labelledby="getUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Search User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <label for="userSearchInput" class="form-label">Enter User ID or Email</label>
-                <input type="text" name="manid" id="manid" class="form-control" placeholder="e.g. 245 or user@example.com">
+            <form id="managerLookupForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ApplicationId" value="@ViewBag.ApplicationInfo.Id">
+                <input type="hidden" name="SourceType" id="managerLookupSourceType">
+                <input type="hidden" name="SourceId" id="managerLookupSourceId">
+                <input type="hidden" name="NationalId" id="managerLookupNationalId">
 
-                <button id="btnGetUser" class="btn btn-primary mt-3" onclick="getUser()">
-                    Manager Information
-                </button>
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="getUserModalLabel">Get Manager Information</h5>
+                        <small class="text-muted">Searches managers, directors, then registered users.</small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="max-height: calc(100vh - 210px); overflow-y: auto; -webkit-overflow-scrolling: touch;">
+                    <label for="manid" class="form-label">National ID Number</label>
+                    <div class="input-group">
+                        <input type="text"
+                               name="manid"
+                               id="manid"
+                               class="form-control"
+                               autocomplete="off"
+                               placeholder="Spaces and special characters are optional"
+                               required>
+                        <button id="btnGetUser" type="button" class="btn btn-primary">
+                            Search
+                        </button>
+                    </div>
 
-                <div id="userResult" class="mt-3"></div>
-            </div>
+                    <div id="managerLookupFeedback" class="alert d-none mt-3 mb-0" role="alert"></div>
+
+                    <div id="managerLookupResult" class="d-none mt-4">
+                        <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                            <h6 class="mb-0">Matching Details</h6>
+                            <span id="managerLookupSourceLabel" class="badge bg-info text-dark"></span>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="managerLookupName" class="form-label">Name</label>
+                                <input type="text" id="managerLookupName" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="managerLookupSurname" class="form-label">Surname</label>
+                                <input type="text" id="managerLookupSurname" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="managerLookupDisplayNationalId" class="form-label">National ID</label>
+                                <input type="text" id="managerLookupDisplayNationalId" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="managerLookupAddress" class="form-label">Address</label>
+                                <textarea id="managerLookupAddress" class="form-control" rows="2" readonly></textarea>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <h6>Supporting Documents</h6>
+                        <p class="small text-muted">Existing documents will be copied. Upload only the documents marked as missing.</p>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="fw-semibold mb-2">National ID Copy</div>
+                                    <div id="managerLookupNatIdStatus" class="small mb-3"></div>
+                                    <div id="managerLookupNatIdUpload" class="d-none">
+                                        <input type="file" name="NatIdCopy" id="managerLookupNatIdFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="fw-semibold mb-2">Fingerprints</div>
+                                    <div id="managerLookupFingerprintsStatus" class="small mb-3"></div>
+                                    <div id="managerLookupFingerprintsUpload" class="d-none">
+                                        <input type="file" name="Fingerprints" id="managerLookupFingerprintsFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="fw-semibold mb-2">Form 55</div>
+                                    <div id="managerLookupForm55Status" class="small mb-3"></div>
+                                    <div id="managerLookupForm55Upload" class="d-none">
+                                        <input type="file" name="Form55" id="managerLookupForm55File" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">Close</button>
+                    <button type="submit" id="confirmManagerLookup" class="btn btn-success d-none">Confirm and Add Manager</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 <script>
+    const editManagerModal = document.getElementById("editManagerModal");
+    if (editManagerModal) {
+        editManagerModal.addEventListener("show.bs.modal", function (event) {
+            const button = event.relatedTarget;
+            if (!button) return;
 
+            document.getElementById("editManagerId").value = button.getAttribute("data-manager-id") || "";
+            document.getElementById("editManagerName").value = button.getAttribute("data-manager-name") || "";
+            document.getElementById("editManagerSurname").value = button.getAttribute("data-manager-surname") || "";
+            document.getElementById("editManagerNationalId").value = button.getAttribute("data-manager-national-id") || "";
+            document.getElementById("editManagerAddress").value = button.getAttribute("data-manager-address") || "";
+        });
+    }
 
-    function getUser() {
-        var nationalid = $("#manid").val();
-        //alert(nationalid);
+    document.addEventListener("DOMContentLoaded", function () {
+        if (!window.jQuery) {
+            return;
+        }
 
-        $.ajax({
-            type: 'GET',
-            url: '/License/ManDetails',
-            contentType: "application/json; charset=utf-8",
+        var $ = window.jQuery;
+        var applicationId = "@ViewBag.ApplicationInfo.Id";
+        var lookupUrl = "@Url.Action("ManDetails", "License")";
+        var confirmUrl = "@Url.Action("ConfirmManager", "License")";
 
-            datatype: 'text',
-            data: { nationalid: nationalid },
-            success: function (data) {
-                console.log(data);
+        function responseMessage(xhr, fallback) {
+            return xhr.responseJSON && xhr.responseJSON.message
+                ? xhr.responseJSON.message
+                : fallback;
+        }
 
-                document.getElementById("userResult").innerHTML = `
-    <div class="card p-3 shadow-sm">
-        <h5 class="mb-3">Verify Details</h5>
-        <p><strong>Name:</strong> ${data.name}</p>
-        <p><strong>Surname:</strong> ${data.surname}</p>
-        <p><strong>Address:</strong> ${data.address}</p>
+        function showFeedback(message, type) {
+            $("#managerLookupFeedback")
+                .removeClass("d-none alert-info alert-success alert-warning alert-danger")
+                .addClass("alert-" + type)
+                .text(message);
+        }
 
-        <button class="btn btn-success" onclick="confirmAction('${data.id}')">
-            Confirm
-        </button>
-    </div>
-`;
+        function resetLookupResult() {
+            $("#managerLookupResult").addClass("d-none");
+            $("#confirmManagerLookup").addClass("d-none").prop("disabled", false).text("Confirm and Add Manager");
+            $("#managerLookupSourceType, #managerLookupSourceId, #managerLookupNationalId").val("");
+            $("#managerLookupNatIdFile, #managerLookupFingerprintsFile, #managerLookupForm55File")
+                .val("")
+                .prop("required", false);
+        }
 
+        function configureDocument(statusSelector, uploadSelector, inputSelector, url, label) {
+            var status = $(statusSelector).empty();
+            var upload = $(uploadSelector);
+            var input = $(inputSelector);
 
-                if (data === null) {
-                    $("#userResult").html(
-                        `<div class="alert alert-danger">Details Not found</div>`
-                    );
-                }
+            if (url) {
+                $("<a>", {
+                    href: url,
+                    target: "_blank",
+                    rel: "noopener",
+                    text: "View existing " + label
+                }).appendTo(status);
+                upload.addClass("d-none");
+                input.val("").prop("required", false);
+            } else {
+                $("<span>", {
+                    class: "badge bg-warning text-dark",
+                    text: "Missing — upload required"
+                }).appendTo(status);
+                upload.removeClass("d-none");
+                input.prop("required", true);
+            }
+        }
 
-            },
-            error: function (data) {
-                $("#userResult").html(
-                    `<div class="alert alert-danger">Details Not found</div>`
-                );
+        function displayMatch(match) {
+            $("#managerLookupSourceType").val(match.sourceType);
+            $("#managerLookupSourceId").val(match.sourceId);
+            $("#managerLookupNationalId").val(match.nationalId || "");
+            $("#managerLookupSourceLabel").text(match.sourceLabel || "Matched record");
+            $("#managerLookupName").val(match.name || "");
+            $("#managerLookupSurname").val(match.surname || "");
+            $("#managerLookupDisplayNationalId").val(match.nationalId || "");
+            $("#managerLookupAddress").val(match.address || "");
+
+            var documents = match.documents || {};
+            configureDocument(
+                "#managerLookupNatIdStatus",
+                "#managerLookupNatIdUpload",
+                "#managerLookupNatIdFile",
+                documents.natIdCopyUrl,
+                "National ID Copy");
+            configureDocument(
+                "#managerLookupFingerprintsStatus",
+                "#managerLookupFingerprintsUpload",
+                "#managerLookupFingerprintsFile",
+                documents.fingerprintsUrl,
+                "Fingerprints");
+            configureDocument(
+                "#managerLookupForm55Status",
+                "#managerLookupForm55Upload",
+                "#managerLookupForm55File",
+                documents.form55Url,
+                "Form 55");
+
+            $("#managerLookupResult").removeClass("d-none");
+            if (match.profileComplete) {
+                $("#confirmManagerLookup").removeClass("d-none");
+                showFeedback("Matching details found. Review the information and provide any missing documents.", "success");
+            } else {
+                $("#confirmManagerLookup").addClass("d-none");
+                showFeedback("A matching record was found, but its name, surname, National ID or address is incomplete.", "warning");
+            }
+        }
+
+        function searchManager() {
+            var nationalId = $.trim($("#manid").val());
+            resetLookupResult();
+
+            if (!nationalId) {
+                showFeedback("Enter a National ID number.", "warning");
+                $("#manid").trigger("focus");
+                return;
             }
 
+            var searchButton = $("#btnGetUser");
+            searchButton.prop("disabled", true).text("Searching…");
+            showFeedback("Searching managers, directors and users…", "info");
+
+            $.ajax({
+                type: "GET",
+                url: lookupUrl,
+                dataType: "json",
+                data: {
+                    nationalid: nationalId,
+                    applicationId: applicationId
+                }
+            }).done(function (response) {
+                displayMatch(response.match);
+            }).fail(function (xhr) {
+                showFeedback(responseMessage(xhr, "No matching manager details were found."), "danger");
+            }).always(function () {
+                searchButton.prop("disabled", false).text("Search");
+            });
+        }
+
+        $("#btnGetUser").on("click", searchManager);
+
+        $("#manid").on("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                searchManager();
+            }
         });
 
-    }
+        $("#managerLookupForm").on("submit", function (event) {
+            event.preventDefault();
+
+            if ($("#confirmManagerLookup").hasClass("d-none")) {
+                searchManager();
+                return;
+            }
+
+            if (!this.checkValidity()) {
+                this.reportValidity();
+                return;
+            }
+
+            var confirmButton = $("#confirmManagerLookup");
+            confirmButton.prop("disabled", true).text("Adding Manager…");
+            showFeedback("Saving the manager details and documents…", "info");
+
+            $.ajax({
+                type: "POST",
+                url: confirmUrl,
+                data: new FormData(this),
+                processData: false,
+                contentType: false,
+                dataType: "json"
+            }).done(function (response) {
+                showFeedback(response.message, "success");
+                confirmButton.addClass("d-none");
+                window.setTimeout(function () {
+                    window.location.reload();
+                }, 700);
+            }).fail(function (xhr) {
+                showFeedback(responseMessage(xhr, "Unable to add the manager details."), "danger");
+                confirmButton.prop("disabled", false).text("Confirm and Add Manager");
+            });
+        });
+
+        $("#getUserModal").on("hidden.bs.modal", function () {
+            resetLookupResult();
+            $("#managerLookupFeedback").addClass("d-none").text("");
+            $("#manid").val("");
+        });
+    });
 </script>

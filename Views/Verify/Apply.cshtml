@@ -255,20 +255,15 @@ else
                 </div>
 
 
-                <form action="/Verify/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
-                    <div class="row">
-                        <input type="hidden" name="applicationId" value="@ViewBag.ApplicationInfo.Id" />
-                        <input type="hidden" name="stage" value="Verify Application" />
-                        <input type="hidden" name="taskId" value="@ViewBag.Task.Id" />
-                        <textarea class="form-control" name="query"></textarea>
-                    </div>
-
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                        <button type="reset" class="btn btn-secondary">Reset</button>
-                    </div>
-
-                </form>
+                @await Html.PartialAsync("_ExaminerQueryPanel", new LLB.Models.ViewModel.ExaminerQueryPanelViewModel
+                {
+                    ControllerName = "Verify",
+                    ApplicationId = ViewBag.ApplicationInfo.Id,
+                    TaskId = ViewBag.Task?.Id ?? string.Empty,
+                    StageKey = "applicant",
+                    Heading = "Verify Applicant Information",
+                    SupportingText = "Raise a focused query only when the applicant's identity, licence holder details or personal documents need correction."
+                })
 
                 <div class="card-footer">
                     <div class="text-center">

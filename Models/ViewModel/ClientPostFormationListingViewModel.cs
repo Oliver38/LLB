@@ -15,5 +15,8 @@ namespace LLB.Models.ViewModel
         public DateTime? EventDate { get; set; }
         public string ActionUrl { get; set; } = string.Empty;
         public string ActionLabel { get; set; } = "Open";
+        public int OpenQueryCount { get; set; }
+        public bool HasOpenQuery => OpenQueryCount > 0;
+        public bool HasQueryHistory { get; set; }
     }
 }

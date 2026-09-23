@@ -8,9 +8,10 @@
     var outlet = ViewBag.Outlet as OutletInfo;
     var provinces = ViewBag.Provinces as IEnumerable<Province> ?? Enumerable.Empty<Province>();
     var ministries = ViewBag.Ministries as IEnumerable<string> ?? Enumerable.Empty<string>();
-    var selectedProvince = outlet?.Province ?? string.Empty;
-    var selectedDistrict = outlet?.City ?? string.Empty;
-    var selectedCouncil = outlet?.Council ?? string.Empty;
+    var selectedProvince = permit?.Province ?? outlet?.Province ?? string.Empty;
+    var selectedDistrict = permit?.District ?? outlet?.City ?? string.Empty;
+    var selectedCouncil = permit?.Council ?? outlet?.Council ?? string.Empty;
+    var hasOpenPostFormationQuery = ViewBag.HasOpenPostFormationQuery is bool hasQuery && hasQuery;
     var paymentStatus = payment?.PaymentStatus ?? payment?.Status ?? permit?.PaymentStatus ?? "Not Paid";
     var paymentRequired = (permit?.Payment ?? 0) > 0;
     var paymentComplete = !paymentRequired
@@ -48,6 +49,14 @@
     <div class="alert alert-danger">@TempData["error"]</div>
 }
 
+@if (hasOpenPostFormationQuery && permit != null)
+{
+    <div class="alert alert-warning d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <span><i class="bi bi-chat-left-dots me-2"></i>Save the corrected permit details, then return to resolve the query.</span>
+        <a class="btn btn-warning" href="/PostFormationQueries?recordId=@permit.Id">Return to query</a>
+    </div>
+}
+
 <div class="row">
     <div class="card">
         <div class="card-header">
@@ -72,10 +81,11 @@
                 }
             </div>
 
-            @if (permit == null)
+            @if (permit == null || hasOpenPostFormationQuery)
             {
                 <form method="post" enctype="multipart/form-data" action="/GovernmentPermit/Submit">
                     @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@permit?.Id">
                     <input type="hidden" name="applicationId" value="@application?.Id">
                     <input type="hidden" id="selectedProvince" value="@selectedProvince">
                     <input type="hidden" id="selectedDistrict" value="@selectedDistrict">
@@ -84,7 +94,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Title of Authority</label>
-                            <input name="titleOfAuthority" class="form-control" required>
+                            <input name="titleOfAuthority" class="form-control" value="@permit?.TitleOfAuthority" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Ministry</label>
@@ -92,13 +102,20 @@
                                 <option value="">--Select Ministry--</option>
                                 @foreach (var ministryItem in ministries)
                                 {
-                                    <option value="@ministryItem">@ministryItem</option>
+                                    if (string.Equals(ministryItem, permit?.Ministry, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <option selected value="@ministryItem">@ministryItem</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@ministryItem">@ministryItem</option>
+                                    }
                                 }
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Location Name</label>
-                            <input name="locationName" class="form-control" required>
+                            <input name="locationName" class="form-control" value="@permit?.LocationName" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Province</label>
@@ -119,7 +136,7 @@
                         </div>
                         <div class="col-md-12">
                             <label class="form-label">Address</label>
-                            <input name="address" class="form-control" value="@(outlet?.Address ?? application?.OperationAddress ?? string.Empty)" required>
+                            <input name="address" class="form-control" value="@(permit?.Address ?? outlet?.Address ?? application?.OperationAddress ?? string.Empty)" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">District</label>
@@ -149,10 +166,14 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Authorisation letter</label>
-                            <input type="file" name="letterFromTheSuperior" class="form-control" required>
+                            <input type="file" name="letterFromTheSuperior" class="form-control" @(permit == null ? "required" : null)>
+                            @if (permit != null && !string.IsNullOrWhiteSpace(permit.LetterFromTheSuperior))
+                            {
+                                <div class="form-text"><a href="/@permit.LetterFromTheSuperior" target="_blank">View current authorisation letter</a></div>
+                            }
                         </div>
                         <div class="col-12">
-                            <button type="submit" class="btn btn-primary">Submit Government Permit</button>
+                            <button type="submit" class="btn btn-primary">@(permit == null ? "Submit Government Permit" : "Save Corrections")</button>
                             <a href="/Home/Dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
                         </div>
                     </div>

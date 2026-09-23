@@ -8,6 +8,10 @@
     <div class="card">
         <div class="card-body" id="_step1">
             <h5 class="card-title">License Applicant Information</h5>
+            @if (TempData["result"] != null)
+            {
+                <div class="alert alert-danger" role="alert">@TempData["result"]</div>
+            }
             <div class="card-header">
                 <form action="/Tasks/AssignTask" method="post" enctype="multipart/form-data" class="row g-3" data-allow-multiple-submit="true">
                     @if (@ViewBag.TaskDetails.ReAssigner == "")
@@ -16,7 +20,7 @@
                         @*<div class="col-md-4">*@
                             @*<label for="inputName5" class="form-label">Task Id</label>*@
                             <input type="hidden" name="Id" value="@ViewBag.Task.Id" readonly class="col-md-3 form-control" />
-                            <input type="hidden" name="stage" value="@ViewBag.TaskDetails.JobStatus" readonly class="col-md-3 form-control" />
+                            <input type="hidden" name="stage" value="@ViewBag.ResolvedStage" readonly class="col-md-3 form-control" />
                         @*</div>*@
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label">Reassign To</label>
@@ -24,9 +28,13 @@
                                 <option value="" >Select Examiner</option>
                                 @foreach (var examiner in ViewBag.Examiners)
                                     {
-                                    <option value="@examiner.Id">@examiner.Name </option>
+                                    <option value="@examiner.Id">@examiner.Name @examiner.LastName</option>
                                     }
                             </select>
+                            @if (ViewBag.Examiners.Count == 0)
+                            {
+                                <div class="form-text text-danger">No eligible examiners are configured for the @ViewBag.TaskDetails.JobStatus stage.</div>
+                            }
                         </div>
                         <div class="col-md-4">
                             <input type="submit" value="Reassign Task" name="" class="btn btn-primary col-md-3 form-control" data-allow-multiple-click="true" />

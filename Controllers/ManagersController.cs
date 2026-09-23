@@ -70,6 +70,7 @@ namespace LLB.Controllers
                 selectedChangeApplication,
                 process,
                 cancellationToken);
+            ViewBag.HasOpenPostFormationQuery = PostFormationQueryWorkflow.HasOpenQueries(_db, selectedChangeApplication.Id);
 
             ViewData["Title"] = "Manager Change";
             ViewData["Subtitle"] = "Create, pay for, and submit manager change applications";
@@ -365,6 +366,12 @@ namespace LLB.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitChangeApplicationAsync(string applicationId, string changeId, CancellationToken cancellationToken)
         {
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, changeId))
+            {
+                TempData["error"] = "Save the requested changes, then resolve and resubmit from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = changeId });
+            }
+
             var validationResult = await ValidateEditableManagerChangeDraftAsync(applicationId, changeId, cancellationToken);
             if (validationResult.redirectResult != null)
             {
@@ -547,6 +554,12 @@ namespace LLB.Controllers
                 return RedirectToAction("ManagerChange", new { id = applicationId, process = "APM" });
             }
 
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, changeApplication.Id))
+            {
+                TempData["error"] = "Resolve every query, then resubmit from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = changeApplication.Id });
+            }
+
             if (!string.Equals(changeApplication.Status, "awaiting payment", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["error"] = "This manager change application is not ready to continue.";
@@ -628,6 +641,17 @@ namespace LLB.Controllers
             }
 
             var reviewModel = await BuildManagerChangeReviewViewModelAsync(application, changeApplication, cancellationToken);
+            var currentUserId = userManager.GetUserId(User);
+            ViewBag.Task = await _db.Tasks
+                .AsNoTracking()
+                .Where(task => task.ApplicationId == Id
+                    && task.Service == "Manager Change"
+                    && task.Status == "assigned"
+                    && (task.VerifierId == currentUserId
+                        || task.RecommenderId == currentUserId
+                        || task.ApproverId == currentUserId))
+                .OrderByDescending(task => task.DateUpdated)
+                .FirstOrDefaultAsync(cancellationToken);
             ViewData["Title"] = "Manager Change Review";
             ViewData["Subtitle"] = "Review manager changes before approval";
             return View(reviewModel);

@@ -36,6 +36,16 @@
     }
 }
 
+@{
+    var agentReviewTask = ViewBag.Task as Tasks;
+}
+@await Html.PartialAsync("_PostFormationExaminerQueryPanel", new LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+{
+    RecordId = agentApplication?.Id ?? string.Empty,
+    TaskId = agentReviewTask?.Id ?? string.Empty,
+    ServiceName = "Agent License"
+})
+
 @if (TempData["error"] != null)
 {
     <div class="alert alert-danger">@TempData["error"]</div>

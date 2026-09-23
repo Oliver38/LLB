@@ -36,6 +36,7 @@
     var canMakePayment = ViewBag.CanMakePayment is bool pay && pay;
     var canContinue = ViewBag.CanContinue is bool cont && cont;
     var awaitingSecretary = ViewBag.AwaitingSecretary is bool awaiting && awaiting;
+    var hasOpenPostFormationQuery = ViewBag.HasOpenPostFormationQuery is bool hasQuery && hasQuery;
     var isEditMode = ViewBag.EditMode is bool editMode && editMode && canEditDetails;
     var isZimbabweanApplicant = string.Equals(applicantUser?.Nationality, "Zimbabwe", StringComparison.OrdinalIgnoreCase);
     var selectedTransferType = TemporaryTransferHelper.NormalizeTransferType(ViewBag.SelectedTransferType as string ?? transferApplication?.PlaceOfBirth);
@@ -118,6 +119,14 @@
 @if (TempData["success"] != null)
 {
     <div class="alert alert-success">@TempData["success"]</div>
+}
+
+@if (hasOpenPostFormationQuery && transferApplication != null)
+{
+    <div class="alert alert-warning d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <span><i class="bi bi-chat-left-dots me-2"></i>Save the corrected transfer details or documents, then return to resolve the query.</span>
+        <a class="btn btn-warning" href="/PostFormationQueries?recordId=@transferApplication.Id">Return to query</a>
+    </div>
 }
 
 <div class="card mb-4">

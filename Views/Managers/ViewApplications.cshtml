@@ -8,6 +8,16 @@
     var paymentStatus = Model.Payment?.PaymentStatus ?? Model.Payment?.Status ?? Model.ChangeApplication?.PaymentStatus ?? "Not Paid";
 }
 
+@{
+    var managerChangeTask = ViewBag.Task as LLB.Models.Tasks;
+}
+@await Html.PartialAsync("_PostFormationExaminerQueryPanel", new LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+{
+    RecordId = Model.ChangeApplication?.Id ?? string.Empty,
+    TaskId = managerChangeTask?.Id ?? string.Empty,
+    ServiceName = "Manager Change"
+})
+
 @if (TempData["error"] != null)
 {
     <div class="alert alert-danger">@TempData["error"]</div>

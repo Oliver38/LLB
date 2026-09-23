@@ -13,6 +13,7 @@
     var paymentReceived = string.Equals(paymentStatus, "Paid", StringComparison.OrdinalIgnoreCase);
     var noPaymentRequired = !Model.PaymentRequired
         && !string.Equals(currentStatus, "inprogress", StringComparison.OrdinalIgnoreCase);
+    var hasOpenPostFormationQuery = ViewBag.HasOpenPostFormationQuery is bool hasQuery && hasQuery;
     var applicationStatusClass = currentStatus.Trim().ToLowerInvariant() switch
     {
         "approved" => "bg-success",
@@ -42,6 +43,14 @@
 @if (TempData["success"] != null)
 {
     <div class="alert alert-success">@TempData["success"]</div>
+}
+
+@if (hasOpenPostFormationQuery && Model.ChangeApplication != null)
+{
+    <div class="alert alert-warning d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <span><i class="bi bi-chat-left-dots me-2"></i>Make and save the requested manager changes, then return to resolve the query.</span>
+        <a class="btn btn-warning" href="/PostFormationQueries?recordId=@Model.ChangeApplication.Id">Return to query</a>
+    </div>
 }
 
 <div class="card mb-4">
@@ -388,7 +397,7 @@ else if (string.Equals(currentStatus, "Rejected", StringComparison.OrdinalIgnore
             <div class="border rounded p-3">
                 <div class="fw-semibold mb-1">Step 2: Submit Draft For Payment</div>
                 <div class="text-muted mb-3">The manager change fee is charged per newly added manager. Status-only changes remain in the application but do not increase the fee.</div>
-                @if (Model.CanSubmitDraft)
+                @if (Model.CanSubmitDraft && !hasOpenPostFormationQuery)
                 {
                     <form action="/Managers/SubmitChangeApplication" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
@@ -413,7 +422,7 @@ else if (string.Equals(currentStatus, "Rejected", StringComparison.OrdinalIgnore
                 {
                     <span class="badge bg-success">No payment required</span>
                 }
-                else if (Model.CanMakePayment)
+                else if (Model.CanMakePayment && !hasOpenPostFormationQuery)
                 {
                     <a class="btn btn-primary"
                        href="/Managers/ManagerChangePayment?id=@applicationId&changeId=@changeId&process=@Model.Process"
@@ -432,7 +441,7 @@ else if (string.Equals(currentStatus, "Rejected", StringComparison.OrdinalIgnore
             <div class="border rounded p-3">
                 <div class="fw-semibold mb-1">Step 4: Continue To Secretary</div>
                 <div class="text-muted mb-3">After payment is confirmed, continue to send this manager change application to the secretary for approval.</div>
-                @if (Model.CanContinue)
+                @if (Model.CanContinue && !hasOpenPostFormationQuery)
                 {
                     <form action="/Managers/ContinueManagerChange" method="post" class="d-inline">
                         @Html.AntiForgeryToken()

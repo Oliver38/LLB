@@ -108,6 +108,7 @@ namespace LLB.Controllers
         [HttpPost("Submit")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitAsync(
+            string? id,
             string? applicationId,
             string titleOfAuthority,
             string ministry,
@@ -116,12 +117,26 @@ namespace LLB.Controllers
             string province,
             string district,
             string council,
-            IFormFile letterFromTheSuperior)
+            IFormFile? letterFromTheSuperior)
         {
             var currentUser = await GetCurrentUserAsync();
             if (currentUser == null)
             {
                 return RedirectToAction("Login", "Auth");
+            }
+
+            GovernmentPermit? correctionPermit = null;
+            if (!string.IsNullOrWhiteSpace(id))
+            {
+                correctionPermit = await _db.GovernmentPermit
+                    .FirstOrDefaultAsync(item => item.Id == id && item.UserId == currentUser.Id);
+                if (correctionPermit == null || !PostFormationQueryWorkflow.HasOpenQueries(_db, correctionPermit.Id))
+                {
+                    TempData["error"] = "This government permit is not open for query correction.";
+                    return RedirectToAction("Dashboard", "Home", new { tab = "services-pane" });
+                }
+
+                applicationId = correctionPermit.ApplicationId;
             }
 
             if (!string.IsNullOrWhiteSpace(applicationId))
@@ -153,13 +168,35 @@ namespace LLB.Controllers
                 || string.IsNullOrWhiteSpace(council))
             {
                 TempData["error"] = "Complete all government permit details before submitting.";
-                return RedirectToAction("Apply", new { applicationId });
+                return RedirectToAction("Apply", new { applicationId, id });
             }
 
-            if (letterFromTheSuperior == null || letterFromTheSuperior.Length <= 0)
+            if ((letterFromTheSuperior == null || letterFromTheSuperior.Length <= 0)
+                && string.IsNullOrWhiteSpace(correctionPermit?.LetterFromTheSuperior))
             {
                 TempData["error"] = "Upload the authorisation letter before submitting.";
-                return RedirectToAction("Apply", new { applicationId });
+                return RedirectToAction("Apply", new { applicationId, id });
+            }
+
+            if (correctionPermit != null)
+            {
+                correctionPermit.TitleOfAuthority = titleOfAuthority;
+                correctionPermit.Ministry = ministry;
+                correctionPermit.LocationName = locationName;
+                correctionPermit.Address = address;
+                correctionPermit.Province = province;
+                correctionPermit.District = district;
+                correctionPermit.Council = council;
+                if (letterFromTheSuperior != null && letterFromTheSuperior.Length > 0)
+                {
+                    correctionPermit.LetterFromTheSuperior = await SaveApplicationAttachmentAsync(letterFromTheSuperior);
+                }
+
+                correctionPermit.DateUpdated = DateTime.Now;
+                _db.Update(correctionPermit);
+                await _db.SaveChangesAsync();
+                TempData["success"] = "Government permit corrections saved.";
+                return RedirectToAction("Apply", new { id = correctionPermit.Id });
             }
 
             var fee = await GetGovernmentPermitFeeAsync() ?? 0;
@@ -891,6 +928,7 @@ namespace LLB.Controllers
                 .OrderBy(item => item.Name)
                 .ToList();
             ViewBag.Payment = RefreshGovernmentPermitPaymentStatus(permit);
+            ViewBag.HasOpenPostFormationQuery = PostFormationQueryWorkflow.HasOpenQueries(_db, permit?.Id);
         }
 
         private async Task<GovernmentPermitReviewViewModel> BuildReviewModelAsync(GovernmentPermit permit, Tasks? task)
@@ -1026,6 +1064,11 @@ namespace LLB.Controllers
             bool showMessages)
         {
             if (permit == null || !IsGovernmentPermitPaymentStage(permit))
+            {
+                return false;
+            }
+
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, permit.Id))
             {
                 return false;
             }

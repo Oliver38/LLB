@@ -86,3 +86,10 @@
         </div>
     </div>
 </div>
+
+@await Html.PartialAsync("_PostFormationExaminerQueryPanel", new LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+{
+    RecordId = Model.Id,
+    TaskId = Model.TaskId,
+    ServiceName = "Extended Hours"
+})

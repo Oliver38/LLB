@@ -16,6 +16,7 @@
     var extraCounterListings = ViewBag.ExtraCounterListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
     var agentLicenseListings = ViewBag.AgentLicenseListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
     var governmentPermitListings = ViewBag.GovernmentPermitListings as IEnumerable<ClientPostFormationListingViewModel> ?? Enumerable.Empty<ClientPostFormationListingViewModel>();
+    var openQueryCounts = ViewBag.OpenQueryCounts as IDictionary<string, int> ?? new Dictionary<string, int>();
     var approvedGovernmentPermitLicenses = governmentPermitListings
         .Where(listing => string.Equals(listing.Status, "Approved", StringComparison.OrdinalIgnoreCase))
         .ToList();
@@ -45,6 +46,18 @@
         isExtraCounter(listing) && string.Equals(listing.Status, "submitted", StringComparison.OrdinalIgnoreCase)
             ? "Initialised"
             : listing.Status ?? "Unknown";
+    Func<ClientPostFormationListingViewModel, string> postFormationStatusText = listing =>
+        listing.HasOpenQuery
+            ? listing.OpenQueryCount == 1 ? "Query requires attention" : $"{listing.OpenQueryCount} queries require attention"
+            : listing.HasQueryHistory && string.Equals(listing.Status, "inprogress", StringComparison.OrdinalIgnoreCase)
+                ? "Ready to resubmit"
+            : displayExtraCounterStatus(listing);
+    Func<ClientPostFormationListingViewModel, string> postFormationStatusClass = listing =>
+        listing.HasOpenQuery
+            ? "llb-status-warning"
+            : listing.HasQueryHistory && string.Equals(listing.Status, "inprogress", StringComparison.OrdinalIgnoreCase)
+                ? "llb-status-info"
+                : statusClass(listing.Status);
     Func<InspectionViewModel, bool> isDirectInspection = inspection =>
         string.Equals(inspection.Service, "Inspection", StringComparison.OrdinalIgnoreCase);
     Func<InspectionViewModel, bool> inspectionPassed = inspection =>
@@ -187,6 +200,10 @@
                             <tbody>
                                 @foreach (var application in ViewBag.Applications)
                                 {
+                                    var applicationId = application.Id as string;
+                                    var openQueryCount = applicationId != null && openQueryCounts.ContainsKey(applicationId)
+                                        ? openQueryCounts[applicationId]
+                                        : 0;
                                     <tr>
                                         <td class="fw-semibold">@application.RefNum</td>
                                         <td>
@@ -218,10 +235,31 @@
                                         </td>
                                         <td>@application.ApplicationDate.ToString("dd MMM yyyy")</td>
                                         <td>
-                                            <span class="llb-status-pill @statusClass(application.Status)">@application.Status</span>
+                                            @if (string.Equals(application.Status, "Has Query", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                @if (openQueryCount > 0)
+                                                {
+                                                    <span class="llb-status-pill llb-status-warning">Query requires attention</span>
+                                                    <small class="d-block text-muted mt-1">@openQueryCount open @(openQueryCount == 1 ? "query" : "queries")</small>
+                                                }
+                                                else
+                                                {
+                                                    <span class="llb-status-pill llb-status-success">Ready to resubmit</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="llb-status-pill @statusClass(application.Status)">@application.Status</span>
+                                            }
                                         </td>
                                         <td class="text-end">
-                                            @if (application.Status == "inprogress" || application.Status == "Has Query")
+                                            @if (string.Equals(application.Status, "Has Query", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <a asp-controller="License" asp-action="Queries" asp-route-applicationId="@application.Id" class="btn btn-sm btn-warning">
+                                                    <i class="bi bi-chat-left-text me-1"></i>View queries
+                                                </a>
+                                            }
+                                            else if (application.Status == "inprogress")
                                             {
                                                 <a href="/License/Apply?Id=@application.Id" class="btn btn-sm btn-primary">Continue</a>
                                             }
@@ -395,10 +433,32 @@
                                                         <td>@renewal.Licensetype</td>
                                                         <td>@renewal.LicenseRegion</td>
                                                         <td>
-                                                            <span class="llb-status-pill @statusClass(renewal.Status)">@renewal.Status</span>
+                                                            @if (renewal.OpenQueryCount > 0)
+                                                            {
+                                                                <span class="llb-status-pill llb-status-warning">Query requires attention</span>
+                                                            }
+                                                            else if (renewal.HasQueryHistory && string.Equals(renewal.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+                                                            {
+                                                                <span class="llb-status-pill llb-status-info">Ready to resubmit</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="llb-status-pill @statusClass(renewal.Status)">@renewal.Status</span>
+                                                            }
                                                         </td>
                                                         <td class="text-end">
-                                                            <a class="btn btn-sm btn-outline-primary" href="/Postprocess/Renewal?id=@renewal.ApplicationId&process=RNW&renid=@renewal.Id">View Renewal</a>
+                                                            @if (renewal.OpenQueryCount > 0)
+                                                            {
+                                                                <a class="btn btn-sm btn-warning" href="/PostFormationQueries?recordId=@renewal.Id">View Query</a>
+                                                            }
+                                                            else if (renewal.HasQueryHistory && string.Equals(renewal.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+                                                            {
+                                                                <a class="btn btn-sm btn-primary" href="/PostFormationQueries?recordId=@renewal.Id">Resubmit Application</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a class="btn btn-sm btn-outline-primary" href="/Postprocess/Renewal?id=@renewal.ApplicationId&process=RNW&renid=@renewal.Id">View Renewal</a>
+                                                            }
                                                         </td>
                                                     </tr>
                                                 }
@@ -454,13 +514,32 @@
                                                         <td>@inspection.LicenseRegion</td>
                                                         <td>@inspection.Service</td>
                                                         <td>
-                                                            <span class="llb-status-pill @statusClass(inspection.Status)">@inspection.Status</span>
+                                                            @if (inspection.OpenQueryCount > 0)
+                                                            {
+                                                                <span class="llb-status-pill llb-status-warning">Query requires attention</span>
+                                                            }
+                                                            else if (inspection.HasQueryHistory && string.Equals(inspection.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+                                                            {
+                                                                <span class="llb-status-pill llb-status-info">Ready to resubmit</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="llb-status-pill @statusClass(inspection.Status)">@inspection.Status</span>
+                                                            }
                                                         </td>
                                                         <td>
                                                             <span class="llb-status-pill @inspectionOutcomeClass(inspection)">@inspectionOutcomeText(inspection)</span>
                                                         </td>
                                                         <td class="text-end">
-                                                            @if (isDirectInspection(inspection) && inspectionPassed(inspection))
+                                                            @if (inspection.OpenQueryCount > 0)
+                                                            {
+                                                                <a class="btn btn-sm btn-warning" href="/PostFormationQueries?recordId=@inspection.Id">View Query</a>
+                                                            }
+                                                            else if (inspection.HasQueryHistory && string.Equals(inspection.Status, "inprogress", StringComparison.OrdinalIgnoreCase))
+                                                            {
+                                                                <a class="btn btn-sm btn-primary" href="/PostFormationQueries?recordId=@inspection.Id">Resubmit Application</a>
+                                                            }
+                                                            else if (isDirectInspection(inspection) && inspectionPassed(inspection))
                                                             {
                                                                 <a class="btn btn-sm btn-outline-primary" href="/Documents/InspectionComplianceCertificate?searchref=@inspection.Id">View Certificate</a>
                                                             }
@@ -525,7 +604,7 @@
                                                         <td>@listing.LicenseName</td>
                                                         <td>@listing.RegionName</td>
                                                         <td>
-                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                            <span class="llb-status-pill @postFormationStatusClass(listing)">@postFormationStatusText(listing)</span>
                                                         </td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
@@ -583,7 +662,7 @@
                                                         <td>@listing.LicenseName</td>
                                                         <td>@listing.RegionName</td>
                                                         <td>
-                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                            <span class="llb-status-pill @postFormationStatusClass(listing)">@postFormationStatusText(listing)</span>
                                                         </td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
@@ -639,7 +718,7 @@
                                                         <td>@listing.LicenseName</td>
                                                         <td>@listing.RegionName</td>
                                                         <td>
-                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                            <span class="llb-status-pill @postFormationStatusClass(listing)">@postFormationStatusText(listing)</span>
                                                         </td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
@@ -695,7 +774,7 @@
                                                         <td>@listing.LicenseName</td>
                                                         <td>@listing.RegionName</td>
                                                         <td>
-                                                            <span class="llb-status-pill @statusClass(listing.Status)">@displayExtraCounterStatus(listing)</span>
+                                                            <span class="llb-status-pill @postFormationStatusClass(listing)">@postFormationStatusText(listing)</span>
                                                         </td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
@@ -751,7 +830,7 @@
                                                         <td>@listing.LicenseName</td>
                                                         <td>@listing.RegionName</td>
                                                         <td>
-                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                            <span class="llb-status-pill @postFormationStatusClass(listing)">@postFormationStatusText(listing)</span>
                                                         </td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>
@@ -807,7 +886,7 @@
                                                         <td>@listing.LicenseName</td>
                                                         <td>@listing.RegionName</td>
                                                         <td>
-                                                            <span class="llb-status-pill @statusClass(listing.Status)">@listing.Status</span>
+                                                            <span class="llb-status-pill @postFormationStatusClass(listing)">@postFormationStatusText(listing)</span>
                                                         </td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="@listing.ActionUrl">@listing.ActionLabel</a>

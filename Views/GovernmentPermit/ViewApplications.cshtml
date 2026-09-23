@@ -101,3 +101,13 @@
         </div>
     </div>
 </div>
+
+@if (Model.CanReviewAction)
+{
+    @await Html.PartialAsync("_PostFormationExaminerQueryPanel", new LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+    {
+        RecordId = Model.Id,
+        TaskId = Model.TaskId,
+        ServiceName = "Government Permit"
+    })
+}

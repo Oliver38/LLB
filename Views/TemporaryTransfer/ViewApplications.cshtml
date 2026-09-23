@@ -75,6 +75,16 @@
     }
 }
 
+@{
+    var transferReviewTask = ViewBag.Task as Tasks;
+}
+@await Html.PartialAsync("_PostFormationExaminerQueryPanel", new LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+{
+    RecordId = transferApplication?.Id ?? string.Empty,
+    TaskId = transferReviewTask?.Id ?? string.Empty,
+    ServiceName = displayTransferType
+})
+
 @if (TempData["error"] != null)
 {
     <div class="alert alert-danger">@TempData["error"]</div>

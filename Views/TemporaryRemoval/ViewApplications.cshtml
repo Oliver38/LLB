@@ -62,6 +62,16 @@
     }
 }
 
+@{
+    var removalReviewTask = ViewBag.Task as Tasks;
+}
+@await Html.PartialAsync("_PostFormationExaminerQueryPanel", new LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+{
+    RecordId = removalApplication?.Id ?? string.Empty,
+    TaskId = removalReviewTask?.Id ?? string.Empty,
+    ServiceName = displayRemovalType
+})
+
 @if (TempData["error"] != null)
 {
     <div class="alert alert-danger">@TempData["error"]</div>

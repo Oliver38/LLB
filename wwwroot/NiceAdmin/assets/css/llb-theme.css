@@ -545,6 +545,366 @@ a:hover {
   opacity: 0.72;
 }
 
+.llb-query-composer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.1rem;
+  margin-top: 1.5rem;
+  padding: 1.4rem;
+  border: 1px solid rgba(199, 154, 43, 0.42);
+  border-left: 5px solid var(--llb-accent);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 248, 226, 0.96), #fff 58%);
+  box-shadow: 0 14px 32px rgba(122, 91, 0, 0.08);
+}
+
+.llb-query-composer__icon,
+.llb-stage-query-alert__icon,
+.llb-query-stage-icon,
+.llb-resubmit-panel__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: rgba(199, 154, 43, 0.16);
+  color: #725400;
+  font-size: 1.25rem;
+}
+
+.llb-query-stage-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.42rem 0.72rem;
+  border: 1px solid rgba(199, 154, 43, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #725400;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.llb-query-textarea {
+  min-height: 118px;
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.llb-stage-query-alert {
+  padding: 1.5rem;
+  border: 1px solid rgba(199, 154, 43, 0.42);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #fff8e2, #fff 58%);
+  box-shadow: var(--llb-shadow);
+}
+
+.llb-stage-query-alert__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.llb-stage-query-alert__messages,
+.llb-query-message-list {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.2rem;
+}
+
+.llb-query-message {
+  padding: 1rem;
+  border: 1px solid rgba(199, 154, 43, 0.26);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.llb-query-message.is-resolved {
+  border-color: rgba(25, 135, 84, 0.2);
+  background: rgba(25, 135, 84, 0.055);
+}
+
+.llb-query-workspace {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.llb-query-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.7fr);
+  gap: 1.5rem;
+  align-items: stretch;
+  padding: 1.8rem;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #173e2b, var(--llb-primary));
+  color: #fff;
+  box-shadow: 0 22px 46px rgba(21, 74, 48, 0.2);
+}
+
+.llb-query-hero h1 {
+  color: #fff;
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  font-weight: 800;
+}
+
+.llb-query-hero p,
+.llb-query-hero .llb-section-kicker {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.llb-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 700;
+}
+
+.llb-back-link:hover {
+  color: #fff;
+}
+
+.llb-query-progress-card {
+  align-self: stretch;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--llb-ink);
+}
+
+.llb-query-progress-card .progress {
+  height: 9px;
+  background: rgba(31, 106, 69, 0.12);
+}
+
+.llb-query-progress-card .progress-bar {
+  background: var(--llb-primary);
+}
+
+.llb-query-stage-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.llb-query-stage-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.35rem;
+  border: 1px solid var(--llb-border);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(34, 49, 63, 0.06);
+}
+
+.llb-query-stage-card.is-open {
+  border-left: 5px solid var(--llb-accent);
+}
+
+.llb-query-stage-card.is-resolved {
+  border-left: 5px solid var(--llb-primary);
+}
+
+.llb-query-stage-card.is-resolved .llb-query-stage-icon {
+  background: var(--llb-primary-soft);
+  color: var(--llb-primary);
+}
+
+.llb-query-stage-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--llb-surface-alt);
+  color: var(--llb-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.llb-query-stage-main {
+  min-width: 0;
+}
+
+.llb-resubmit-panel {
+  padding: 1.4rem;
+  border: 1px dashed #b9c5bc;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.llb-resubmit-panel.is-ready {
+  border: 1px solid rgba(31, 106, 69, 0.3);
+  background: linear-gradient(135deg, rgba(31, 106, 69, 0.1), #fff 62%);
+}
+
+.llb-resubmit-panel.is-ready .llb-resubmit-panel__icon {
+  background: var(--llb-primary-soft);
+  color: var(--llb-primary);
+}
+
+.llb-inspection-query {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.llb-inspection-status-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+}
+
+.llb-inspection-status-card .llb-status-pill {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.llb-inspection-status-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  background: rgba(199, 154, 43, 0.18);
+  color: #725400;
+  font-size: 1.3rem;
+}
+
+.llb-inspection-query-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
+  gap: 1.4rem;
+  align-items: start;
+}
+
+.llb-postformation-query-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 1.4rem;
+  align-items: start;
+}
+
+.llb-inspection-findings,
+.llb-inspection-next-step {
+  padding: 1.5rem;
+  border: 1px solid var(--llb-border);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(34, 49, 63, 0.07);
+}
+
+.llb-inspection-next-step {
+  position: sticky;
+  top: 96px;
+  border-top: 5px solid var(--llb-primary);
+}
+
+.llb-inspection-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.llb-inspection-failed-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.4rem;
+}
+
+.llb-inspection-failed-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 54px;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(199, 154, 43, 0.3);
+  border-radius: 14px;
+  background: #fff9e9;
+  color: #5e470c;
+  font-weight: 700;
+}
+
+.llb-inspection-failed-item i {
+  color: #b47b00;
+}
+
+.llb-inspector-note {
+  display: flex;
+  gap: 0.9rem;
+  margin-top: 1.4rem;
+  padding: 1.1rem;
+  border-left: 4px solid var(--llb-accent);
+  border-radius: 14px;
+  background: var(--llb-surface-alt);
+}
+
+.llb-inspector-note__icon {
+  color: var(--llb-primary);
+  font-size: 1.25rem;
+}
+
+.llb-inspection-steps {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.llb-inspection-steps li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.llb-inspection-steps li > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--llb-primary-soft);
+  color: var(--llb-primary);
+  font-weight: 800;
+}
+
+.llb-inspection-steps li.is-complete > span {
+  background: var(--llb-primary);
+  color: #fff;
+}
+
+.llb-inspection-steps strong,
+.llb-inspection-steps small {
+  display: block;
+}
+
+.llb-inspection-steps small {
+  margin-top: 0.2rem;
+  color: var(--llb-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.llb-inspection-confirmation {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+  padding: 0.9rem;
+  border-radius: 13px;
+  background: rgba(31, 106, 69, 0.08);
+  color: #24563d;
+}
+
 @media (max-width: 1199px) {
   .llb-public-nav {
     display: none !important;
@@ -558,5 +918,45 @@ a:hover {
 
   .llb-public-main {
     min-height: auto;
+  }
+
+  .llb-query-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .llb-inspection-query-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .llb-postformation-query-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .llb-inspection-next-step {
+    position: static;
+  }
+}
+
+@media (max-width: 575px) {
+  .llb-query-composer,
+  .llb-query-stage-card {
+    grid-template-columns: 1fr;
+  }
+
+  .llb-query-stage-number {
+    display: none;
+  }
+
+  .llb-stage-query-alert__header {
+    flex-direction: column;
+  }
+
+  .llb-inspection-failed-list {
+    grid-template-columns: 1fr;
+  }
+
+  .llb-inspection-findings,
+  .llb-inspection-next-step {
+    padding: 1.15rem;
   }
 }

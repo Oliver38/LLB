@@ -403,3 +403,13 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
+
+# Local editor settings
+.vscode/
+
+# Runtime-uploaded applicant documents (already-tracked files are unaffected)
+wwwroot/ApplicantInfo/
+wwwroot/ApplicationAttchments/
+wwwroot/DirectorFingerprints/
+wwwroot/ManagerFingerprints/
+wwwroot/POPS/

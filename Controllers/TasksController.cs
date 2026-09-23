@@ -220,7 +220,8 @@ namespace LLB.Controllers
             details.BarName = outletdetails?.TradingName ?? application.BusinessName ?? "N/A";
             details.DateSubmitted = application.ApplicationDate;
             details.TaskStatus = task.Status ?? "Unknown";
-            details.JobStatus = task.ExaminationStatus ?? application.ExaminationStatus ?? "N/A";
+            var resolvedStage = ResolveTaskStage(task, application);
+            details.JobStatus = resolvedStage ?? task.ExaminationStatus ?? application.ExaminationStatus ?? "N/A";
 
 
             // getting licnse type
@@ -229,7 +230,7 @@ namespace LLB.Controllers
             details.DateCreated = task.DateAdded;
 
             //var inspector = await userManager.GetUsersInRoleAsync("inspector");
-            var examiners = await GetExaminersForStageAsync(task.ExaminationStatus);
+            var examiners = await GetExaminersForStageAsync(resolvedStage);
 
             if(task.AssignerId == "system" )
             {
@@ -259,6 +260,7 @@ namespace LLB.Controllers
             ViewBag.Task = task;
             ViewBag.ApplicationInfo = application;
             ViewBag.Examiners = examiners;
+            ViewBag.ResolvedStage = resolvedStage;
             ViewBag.Task = task;
             return View();
         }
@@ -266,56 +268,78 @@ namespace LLB.Controllers
         [HttpPost("AssignTask")]
         public async Task<IActionResult> AssignTask(Tasks tasks, string reassignedto,string stage)
         {
-            var task = _db.Tasks.Where(a => a.Id == tasks.Id).FirstOrDefault();
-            task.DateUpdated = DateTime.Now;
-            var userId = await userManager.FindByEmailAsync(User.Identity.Name);
-            string id = userId.Id;
-            task.ReAssignerId = id;
-            task.Status = "reassigned";
-           // task.InspectorId = tasks.InspectorId;
-            _db.Update(task);
-            _db.SaveChanges();
-
-            Tasks newtask = new Tasks();
-
-            newtask.Id = Guid.NewGuid().ToString();
-            newtask.ApplicationId = task.ApplicationId;
-            newtask.ExaminationStatus = task.ExaminationStatus;
-            //tasks.AssignerId
-
-            //auto allocation to replace
-            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            // var userId = await userManager.FindByEmailAsync("verifier@verifier.com");
-            if (task.ExaminationStatus == "verification")
+            if (string.IsNullOrWhiteSpace(tasks.Id))
             {
-               // examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("verifier");
-                newtask.VerifierId = reassignedto;
-
+                TempData["result"] = "Select a valid task to reassign.";
+                return RedirectToAction("AdminDashboard", "Tasks");
             }
-            else if (task.ExaminationStatus == "recommendation")
+
+            var task = _db.Tasks.FirstOrDefault(item => item.Id == tasks.Id);
+            if (task == null)
+            {
+                TempData["result"] = "Task could not be found.";
+                return RedirectToAction("AdminDashboard", "Tasks");
+            }
+
+            var application = ResolveTaskApplication(task);
+            var resolvedStage = ResolveTaskStage(task, application, stage);
+            if (string.IsNullOrWhiteSpace(resolvedStage))
+            {
+                TempData["result"] = "The task stage could not be determined. Update the application workflow stage and try again.";
+                return RedirectToAction("AssignTask", new { Id = task.Id });
+            }
+
+            var eligibleExaminers = await GetExaminersForStageAsync(resolvedStage);
+            if (string.IsNullOrWhiteSpace(reassignedto)
+                || !eligibleExaminers.Any(examiner => examiner.Id == reassignedto))
+            {
+                TempData["result"] = "Select an examiner who is eligible for this workflow stage.";
+                return RedirectToAction("AssignTask", new { Id = task.Id });
+            }
+
+            var currentUser = await userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Challenge();
+            }
+
+            var now = DateTime.Now;
+            task.DateUpdated = now;
+            task.ReAssignerId = currentUser.Id;
+            task.Status = "reassigned";
+
+            var newtask = new Tasks
+            {
+                Id = Guid.NewGuid().ToString(),
+                ApplicationId = task.ApplicationId,
+                ExaminationStatus = resolvedStage,
+                Service = task.Service,
+                AssignerId = currentUser.Id,
+                Status = "assigned",
+                DateAdded = now,
+                DateUpdated = now
+            };
+
+            if (resolvedStage == "verification")
+            {
+                newtask.VerifierId = reassignedto;
+            }
+            else if (resolvedStage == "recommendation")
             {
                 newtask.RecommenderId = reassignedto;
-               // examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("recommender");
-
             }
-            else if (task.ExaminationStatus == "approval")
+            else if (resolvedStage == "approval")
             {
                 newtask.ApproverId = reassignedto;
-                //examiners = (List<ApplicationUser>)await userManager.GetUsersInRoleAsync("secretary");
-
             }
-            else if (task.ExaminationStatus == "inspection")
+            else if (resolvedStage == "inspection")
             {
                 newtask.VerifierId = reassignedto;
             }
 
-            newtask.Service = task.Service;
-            newtask.AssignerId= id;
-            newtask.Status = "assigned";
-            newtask.DateAdded = DateTime.Now;
-            newtask.DateUpdated = DateTime.Now;
+            _db.Update(task);
             _db.Add(newtask);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             return RedirectToAction("AdminDashboard", "Tasks");
         }
@@ -589,7 +613,7 @@ namespace LLB.Controllers
 
         private async Task<List<ApplicationUser>> GetExaminersForStageAsync(string? stage)
         {
-            var normalizedStage = stage?.Trim().ToLowerInvariant();
+            var normalizedStage = NormalizeWorkflowStage(stage);
 
             if (normalizedStage == "verification")
             {
@@ -632,6 +656,58 @@ namespace LLB.Controllers
             }
 
             return new List<ApplicationUser>();
+        }
+
+        private string? ResolveTaskStage(
+            Tasks task,
+            ApplicationInfo? application = null,
+            string? requestedStage = null)
+        {
+            var taskStage = NormalizeWorkflowStage(task.ExaminationStatus);
+            if (taskStage != null)
+            {
+                return taskStage;
+            }
+
+            var applicationStage = NormalizeWorkflowStage(application?.ExaminationStatus);
+            if (applicationStage != null)
+            {
+                return applicationStage;
+            }
+
+            if (string.Equals(task.Service?.Trim(), "Inspection", StringComparison.OrdinalIgnoreCase))
+            {
+                return "inspection";
+            }
+
+            if (!string.IsNullOrWhiteSpace(task.ApproverId))
+            {
+                return "approval";
+            }
+
+            if (!string.IsNullOrWhiteSpace(task.RecommenderId))
+            {
+                return "recommendation";
+            }
+
+            if (!string.IsNullOrWhiteSpace(task.VerifierId))
+            {
+                return "verification";
+            }
+
+            return NormalizeWorkflowStage(requestedStage);
+        }
+
+        private static string? NormalizeWorkflowStage(string? stage)
+        {
+            return stage?.Trim().ToLowerInvariant() switch
+            {
+                "verification" or "verify" or "verifier" => "verification",
+                "recommendation" or "recommend" or "recommender" => "recommendation",
+                "approval" or "approve" or "secretary" => "approval",
+                "inspection" or "inspect" or "inspector" => "inspection",
+                _ => null
+            };
         }
 
         private void EnsureSubmittedPaidPostFormationTasks()

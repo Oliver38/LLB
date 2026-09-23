@@ -30,6 +30,7 @@
     var awaitingSecretary = ViewBag.AwaitingSecretary is bool waitingSecretary && waitingSecretary;
     var paymentReceived = ViewBag.PaymentReceived is bool received && received;
     var hasActivePayment = ViewBag.HasActivePayment is bool activePayment && activePayment;
+    var hasOpenPostFormationQuery = ViewBag.HasOpenPostFormationQuery is bool hasQuery && hasQuery;
     var selectedTradingName = proposedOutlet?.TradingName ?? originalOutlet?.TradingName ?? sourceApplication?.BusinessName ?? string.Empty;
     var selectedLicenseId = proposedOutlet?.LicenseTypeID ?? removalApplication?.LicenseTypeID ?? sourceApplication?.LicenseTypeID ?? string.Empty;
     var selectedRegionId = proposedOutlet?.ApplicationType ?? removalApplication?.ApplicationType ?? sourceApplication?.ApplicationType ?? string.Empty;
@@ -95,6 +96,14 @@
 @if (TempData["success"] != null)
 {
     <div class="alert alert-success">@TempData["success"]</div>
+}
+
+@if (hasOpenPostFormationQuery && removalApplication != null)
+{
+    <div class="alert alert-warning d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <span><i class="bi bi-chat-left-dots me-2"></i>Save the corrected outlet or documents, then return to resolve the query.</span>
+        <a class="btn btn-warning" href="/PostFormationQueries?recordId=@removalApplication.Id">Return to query</a>
+    </div>
 }
 
 <div class="card mb-4">

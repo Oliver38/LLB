@@ -1,0 +1,43 @@
+@model LLB.Models.ViewModel.ApplicantQueryStagePanelViewModel
+
+<section class="llb-stage-query-alert mb-4" aria-labelledby="applicant-query-stage-title">
+    <div class="llb-stage-query-alert__header">
+        <div class="llb-stage-query-alert__icon" aria-hidden="true">
+            <i class="bi bi-pencil-square"></i>
+        </div>
+        <div>
+            <div class="llb-section-kicker">Query review</div>
+            <h1 class="h4 mb-1" id="applicant-query-stage-title">Update @Model.StageTitle</h1>
+            <p class="mb-0 text-muted">Make the requested changes below. Save your updates before resolving this stage.</p>
+        </div>
+    </div>
+
+    <div class="llb-stage-query-alert__messages">
+        @foreach (var query in Model.Queries.Where(query => !query.IsResolved))
+        {
+            <article class="llb-query-message">
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                        <div class="fw-semibold mb-1">@query.ReviewerStage</div>
+                        <p class="mb-0">@query.Message</p>
+                    </div>
+                    <span class="llb-status-pill llb-status-warning flex-shrink-0">Needs attention</span>
+                </div>
+                <small class="text-muted d-block mt-2">Raised @query.DateRaised.ToString("dd MMM yyyy, HH:mm")</small>
+            </article>
+        }
+    </div>
+
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mt-3">
+        <a asp-controller="License" asp-action="Queries" asp-route-applicationId="@Model.ApplicationId" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to queries
+        </a>
+        <form asp-controller="License" asp-action="ResolveQueryStage" method="post" class="m-0">
+            <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
+            <input type="hidden" name="stage" value="@Model.StageKey" />
+            <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-check2-circle me-2"></i>Resolve query for this stage
+            </button>
+        </form>
+    </div>
+</section>

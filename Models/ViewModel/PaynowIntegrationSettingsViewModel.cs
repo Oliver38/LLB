@@ -11,6 +11,7 @@ namespace LLB.Models.ViewModel
         public string Mode { get; set; } = string.Empty;
         public string IntegrationId { get; set; } = string.Empty;
         public string MaskedIntegrationKey { get; set; } = string.Empty;
+        public string ReturnUrl { get; set; } = string.Empty;
         public bool IsConfigured { get; set; }
     }
 }

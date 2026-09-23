@@ -43,6 +43,16 @@
             : status ?? "Unknown";
 }
 
+@{
+    var permissionReviewTask = ViewBag.Task as Tasks;
+}
+@await Html.PartialAsync("_PostFormationExaminerQueryPanel", new LLB.Models.ViewModel.PostFormationExaminerQueryPanelViewModel
+{
+    RecordId = record?.Id ?? string.Empty,
+    TaskId = permissionReviewTask?.Id ?? string.Empty,
+    ServiceName = serviceName
+})
+
 @if (TempData["error"] != null)
 {
     <div class="alert alert-danger">@TempData["error"]</div>

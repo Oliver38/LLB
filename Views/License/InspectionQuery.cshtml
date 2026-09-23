@@ -1,0 +1,126 @@
+@model LLB.Models.ViewModel.VerificationInspectionQueryViewModel
+
+@{
+    Layout = "_LayoutMain";
+    ViewData["Title"] = "Verification Inspection Query";
+    ViewData["Subtitle"] = "Correct the inspection findings and request another visit";
+}
+
+<div class="llb-inspection-query">
+    <section class="llb-query-hero">
+        <div>
+            <a asp-controller="License"
+               asp-action="Queries"
+               asp-route-applicationId="@Model.ApplicationId"
+               class="llb-back-link">
+                <i class="bi bi-arrow-left"></i> All application queries
+            </a>
+            <div class="llb-section-kicker mt-3">Application @Model.Reference</div>
+            <h1 class="mb-2">Verification inspection needs attention</h1>
+            <p class="mb-0">Correct the items identified at @Model.TradingName before requesting another inspection.</p>
+        </div>
+        <div class="llb-query-progress-card llb-inspection-status-card">
+            <span class="llb-inspection-status-card__icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+            <div>
+                <span class="d-block small text-muted">Current status</span>
+                <strong>Premises correction required</strong>
+            </div>
+            <span class="llb-status-pill llb-status-warning">Query open</span>
+        </div>
+    </section>
+
+    <section class="llb-inspection-query-grid">
+        <article class="llb-inspection-findings">
+            <div class="llb-inspection-section-heading">
+                <span class="llb-query-stage-icon"><i class="bi bi-clipboard2-pulse"></i></span>
+                <div>
+                    <span class="llb-section-kicker">Inspection findings</span>
+                    <h2 class="h4 mb-1">What needs to be corrected</h2>
+                    <p class="text-muted mb-0">
+                        @if (Model.InspectionDate != default)
+                        {
+                            <span>Inspection completed @Model.InspectionDate.ToString("dd MMM yyyy")</span>
+                        }
+                        else
+                        {
+                            <span>Latest verification inspection</span>
+                        }
+                        <span aria-hidden="true"> · </span>Reference @Model.InspectionReference
+                    </p>
+                </div>
+            </div>
+
+            @if (Model.FailedItems.Count > 0)
+            {
+                <div class="llb-inspection-failed-list" aria-label="Failed inspection areas">
+                    @foreach (var item in Model.FailedItems)
+                    {
+                        <div class="llb-inspection-failed-item">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span>@item</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="llb-inspector-note">
+                <span class="llb-inspector-note__icon"><i class="bi bi-chat-left-text"></i></span>
+                <div>
+                    <span class="d-block small fw-bold text-uppercase text-muted mb-1">Inspector’s comments</span>
+                    <p class="mb-0">@Model.InspectorComments</p>
+                </div>
+            </div>
+
+            <div class="llb-query-message-list">
+                @foreach (var query in Model.Queries)
+                {
+                    <div class="llb-query-message">
+                        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                            <div>
+                                <span class="fw-semibold">@query.ReviewerStage</span>
+                                <p class="mb-1 mt-1">@query.Message</p>
+                                <small class="text-muted">Raised @query.DateRaised.ToString("dd MMM yyyy, HH:mm")</small>
+                            </div>
+                            <span class="small fw-semibold text-warning text-nowrap">
+                                <i class="bi bi-clock-fill me-1"></i>Awaiting correction
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </article>
+
+        <aside class="llb-inspection-next-step">
+            <span class="llb-section-kicker">Continue your application</span>
+            <h2 class="h4 mb-3">Resolve this query when the premises are ready</h2>
+
+            <ol class="llb-inspection-steps">
+                <li>
+                    <span>1</span>
+                    <div><strong>Correct the premises</strong><small>Attend to every failed area and the inspector’s comments.</small></div>
+                </li>
+                <li>
+                    <span>2</span>
+                    <div><strong>Resolve the query</strong><small>Confirm below only when the corrections have been completed.</small></div>
+                </li>
+                <li>
+                    <span>3</span>
+                    <div><strong>Request reinspection</strong><small>Return to the query list and continue to a new verification inspection.</small></div>
+                </li>
+            </ol>
+
+            <div class="llb-inspection-confirmation">
+                <i class="bi bi-info-circle-fill"></i>
+                <p class="mb-0">Resolving this query confirms that the premises are ready to be inspected again.</p>
+            </div>
+
+            <form asp-controller="License" asp-action="ResolveQueryStage" method="post" class="mt-4">
+                <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
+                <input type="hidden" name="stage" value="inspection" />
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-check2-circle me-2"></i>Resolve inspection query
+                </button>
+            </form>
+        </aside>
+    </section>
+</div>

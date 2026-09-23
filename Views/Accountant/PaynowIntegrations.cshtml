@@ -46,6 +46,7 @@
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-primary edit-integration-btn" data-bs-toggle="modal" data-bs-target="#editIntegrationModal"
                                         data-currency="@integration.Currency" data-mode="@integration.Mode" data-id="@(integration.IntegrationId == "Not configured" ? "" : integration.IntegrationId)">
+                                    <span class="d-none integration-return-url">@integration.ReturnUrl</span>
                                     <i class="bi bi-pencil"></i> Edit
                                 </button>
                             </td>
@@ -71,11 +72,17 @@
                     <div class="row g-3">
                         <div class="col-6">
                             <label class="form-label">Currency</label>
-                            <input type="text" id="modalCurrency" name="currency" class="form-control" readonly />
+                            <select id="modalCurrency" name="currency" class="form-select" required>
+                                <option value="USD">USD</option>
+                                <option value="ZWG">ZWG</option>
+                            </select>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Mode</label>
-                            <input type="text" id="modalMode" name="mode" class="form-control" readonly />
+                            <select id="modalMode" name="mode" class="form-select" required>
+                                <option value="LIVE">Live</option>
+                                <option value="TEST">Test</option>
+                            </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Integration ID</label>
@@ -87,8 +94,8 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Return URL (for this mode)</label>
-                            <input type="text" id="modalReturnUrl" class="form-control" readonly />
-                            <div class="form-text">Use this return URL when configuring Paynow credentials for the selected environment.</div>
+                            <input type="url" id="modalReturnUrl" name="returnUrl" class="form-control" required />
+                            <div class="form-text">This URL is saved for the selected currency and environment.</div>
                         </div>
                     </div>
                 </div>
@@ -110,14 +117,14 @@
                 var currency = button.getAttribute('data-currency');
                 var mode = button.getAttribute('data-mode');
                 var id = button.getAttribute('data-id') || '';
+                var returnUrl = button.querySelector('.integration-return-url')?.textContent.trim() || '';
 
                 document.getElementById('modalCurrency').value = currency;
                 document.getElementById('modalMode').value = mode;
                 document.getElementById('modalIntegrationId').value = id;
                 document.getElementById('modalIntegrationKey').value = '';
 
-                var base = (mode === 'TEST') ? 'http://localhost:5046' : 'https://llb.pfms.gov.zw';
-                document.getElementById('modalReturnUrl').value = base + '/Payments/PaynowReturn';
+                document.getElementById('modalReturnUrl').value = returnUrl;
             });
         });
     </script>

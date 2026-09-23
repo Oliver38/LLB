@@ -3,6 +3,7 @@
 
     var latestZwgExchangeRate = Convert.ToDouble(ViewBag.LatestZwgExchangeRate ?? 0);
     var paynowUsdAmount = Convert.ToDecimal(ViewBag.ApplicationInfo?.PaymentFee ?? 0);
+    var finalData = ViewBag.FinalData as LLB.Models.Finalising ?? new LLB.Models.Finalising();
     var paynowZwgAmount = latestZwgExchangeRate > 0
         ? paynowUsdAmount * (decimal)latestZwgExchangeRate
         : 0;
@@ -30,19 +31,59 @@
                 <tbody>
                     <tr>
                         <td>Applicant Information</td>
-                        <td><span class="text-success">Correct</span></td>
+                        <td>
+                            @if (finalData.IsApplicantInformationComplete)
+                            {
+                                <span class="badge bg-success">Complete</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger me-2">Incomplete</span>
+                                <a href="/License/Apply?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-sm btn-outline-primary">Complete Applicant Information</a>
+                            }
+                        </td>
                     </tr>
                     <tr>
                         <td>Outlet Information</td>
-                        <td><span class="text-success">Correct</span></td>
+                        <td>
+                            @if (finalData.IsOutletInformationComplete)
+                            {
+                                <span class="badge bg-success">Complete</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger me-2">Incomplete</span>
+                                <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-sm btn-outline-primary">Complete Outlet Information</a>
+                            }
+                        </td>
                     </tr>
                     <tr>
                         <td>Manager's Information</td>
-                        <td><span class="text-success">Correct</span></td>
+                        <td>
+                            @if (finalData.IsManagerInformationComplete)
+                            {
+                                <span class="badge bg-success">Complete</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger me-2">Incomplete</span>
+                                <a href="/License/ManagersInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-sm btn-outline-primary">Complete Manager Information</a>
+                            }
+                        </td>
                     </tr>
                     <tr>
-                        <td>Documents Information</td>
-                        <td><span class="text-success">Correct</span></td>
+                        <td>Supporting Documents</td>
+                        <td>
+                            @if (finalData.IsDocumentInformationComplete)
+                            {
+                                <span class="badge bg-success">Complete</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger me-2">Incomplete</span>
+                                <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-sm btn-outline-primary">Complete Attachments</a>
+                            }
+                        </td>
                     </tr>
 
                     <tr>
@@ -110,12 +151,22 @@
             <div class="text-center">
                 <a href="/License/Attachments?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-warning">Prev</a>
                 @if (ViewBag.Queries.Count > 0)
-                    {
-                    <a href="/License/ResolveApplication?applicationId=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Resolve & Resubmit</a>
-                    }
+                {
+                    <a asp-controller="License" asp-action="Queries" asp-route-applicationId="@ViewBag.ApplicationInfo.Id" class="btn btn-warning">
+                        <i class="bi bi-chat-left-text me-2"></i>View application queries
+                    </a>
+                }
                     else
                     {
-                    <a href="/License/Submit?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Submit</a>
+                        if (finalData.AllRequiredSectionsComplete)
+                        {
+                            <a href="/License/Submit?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Submit</a>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-primary" disabled>Submit</button>
+                            <div class="small text-danger mt-2">Complete all four sections before submitting.</div>
+                        }
                     }
                 </div>
         </div>

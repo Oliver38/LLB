@@ -4,6 +4,12 @@
 
 }
 
+@{ var queryStagePanel = ViewBag.QueryStagePanel as LLB.Models.ViewModel.ApplicantQueryStagePanelViewModel; }
+@if (queryStagePanel != null)
+{
+    @await Html.PartialAsync("_ApplicantQueryStagePanel", queryStagePanel)
+}
+
 
 
 @if (ViewBag.ApplicationInfo == null)
@@ -57,7 +63,7 @@
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Applicant Type</label>
-                        <select  onchange="getType()" name="applicantType" required value="" class="form-control" id="applicantType">
+                        <select onchange="handleApplicantTypeChange(this)" name="applicantType" required class="form-control" id="applicantType">
 
                             <option value="Individual"> Individual</option>
                             <option value="Club"> Club</option>
@@ -69,7 +75,12 @@
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licensee Name</label> (<i>will appear on license as licensee</i>)
                         <input type="text" name="businessName" required value="" class="form-control" id="businessName">
-                        <input type="hidden" name="companyNumber" required value="" class="form-control" id="companyNumber">
+                        <input type="hidden" name="companyNumber" value="" id="companyNumber">
+                        <input type="hidden" name="Id" value="" id="applicationId">
+                        <div id="companyVerificationSummary" class="alert alert-success mt-2 d-none" role="status">
+                            <span id="verifiedCompanyText"></span>
+                            <button type="button" class="btn btn-sm btn-outline-success ms-2" onclick="openCompanyModal()">Change company</button>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">ID/Passport Copy</label>
@@ -129,38 +140,6 @@ else
                 <h5 class="card-title">Licensee Information</h5>
                 <p><i>Here only the applicant's information is required </i></p>
                 <div class="card-header">
-                    @if (ViewBag.Queries.Count > 0)
-                    {
-                        <!-- Default Accordion -->
-                        <div class="accordion" id="accordionExample">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="headingOne">
-                                    <button class="accordion-button text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                        <b>Click to View Queries</b>(resolve and resubmit where necessary)
-                                    </button>
-                                </h2>
-                                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        <!-- List group With badges -->
-                                        <ul class="list-group">
-                                            @foreach (var queries in ViewBag.Queries)
-                                            {
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    @queries.Query
-                                                    <span class="badge bg-danger rounded-pill"> @queries.Status</span>
-                                                    <span class="badge bg-primary rounded-pill"><a class="text-white" href="/License/ResolveQuery?Id=@queries.Id&stage=apply&applicationId=@ViewBag.ApplicationInfo.Id">Click to Resolve Query</a></span>
-
-                                                </li>
-                                            }
-
-                                        </ul><!-- End List With badges -->
-                                    </div>
-                                </div>
-                            </div>
-
-
-                        </div><!-- End Default Accordion Example -->
-                    }
                     <div class="text-center">
                         <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>
@@ -168,6 +147,7 @@ else
                 </div>
                 <!-- Multi Columns Form -->
                 <form action="/License/Apply" method="post" enctype="multipart/form-data" class="row g-3">
+                    <input type="hidden" name="queryMode" value="@(queryStagePanel != null ? "true" : "false")" />
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Name</label>
                         <input type="text" name="licenseName" value="@ViewBag.User.Name" readonly class="form-control" id="inputName5">
@@ -209,7 +189,7 @@ else
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Applicant Type</label>
-                        <select type="text" name="applicantType" required value="" class="form-control" id="inputName5">
+                        <select name="applicantType" required class="form-control" id="applicantType" onchange="handleApplicantTypeChange(this)">
 
                             @if (@ViewBag.ApplicationInfo.ApplicantType == "Individual")
                             {
@@ -230,7 +210,7 @@ else
                             }
                             else if (@ViewBag.ApplicationInfo.ApplicantType == "Partnership")
                             {
-                                <option selected value="" Partnership">"Partnership</option>
+                                <option selected value="Partnership">Partnership</option>
                             }
 
                             <option value="Individual"> Individual</option>
@@ -244,10 +224,15 @@ else
 
                     <div class="col-md-6">
                         <label for="inputName5" class="form-label">Licensee Name</label> (<i>will appear on license as licensee</i>)
-                        <input type="text" name="businessName" required value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="inputName5">
-                        <input type="hidden" name="Id" value="@ViewBag.ApplicationInfo.Id" readonly class="form-control" id="inputName5">
-                        <input type="hidden" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID" readonly class="form-control" id="inputName5">
-                        <input type="hidden" name="ApplicationType" value="@ViewBag.ApplicationInfo.ApplicationType" readonly class="form-control" id="inputName5">
+                        <input type="text" name="businessName" required value="@ViewBag.ApplicationInfo.BusinessName" class="form-control" id="businessName">
+                        <input type="hidden" name="Id" value="@ViewBag.ApplicationInfo.Id" id="applicationId">
+                        <input type="hidden" name="companyNumber" value="@ViewBag.ApplicationInfo.CompanyNumber" id="companyNumber">
+                        <input type="hidden" name="LicenseTypeID" value="@ViewBag.ApplicationInfo.LicenseTypeID">
+                        <input type="hidden" name="ApplicationType" value="@ViewBag.ApplicationInfo.ApplicationType">
+                        <div id="companyVerificationSummary" class="alert alert-success mt-2 @(string.IsNullOrWhiteSpace(ViewBag.ApplicationInfo.CompanyNumber) ? "d-none" : "")" role="status">
+                            <span id="verifiedCompanyText">Verified company: @ViewBag.ApplicationInfo.CompanyNumber</span>
+                            <button type="button" class="btn btn-sm btn-outline-success ms-2" onclick="openCompanyModal()">Change company</button>
+                        </div>
 
                     </div>
 
@@ -268,11 +253,18 @@ else
                     {
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label "><a target="_blank" href="~/@ViewBag.ApplicationInfo.IdCopy">ID/Passport Copy</a></label>
-                            @*<input type="file" name="idCopy" required value="" class="form-control" id="inputName5">*@
-                            <button class="btn btn-danger btn-sm float-end" type="button"
-                                    onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/License/AppinfoIdCopy?Id=@ViewBag.ApplicationInfo.Id'; }">
-                                <i class="fas fa-trash-alt"></i> Delete
-                            </button>
+                            @if (queryStagePanel != null)
+                            {
+                                <input type="file" name="idCopyb" class="form-control mt-2" accept=".pdf,.jpg,.jpeg,.png" aria-label="Replace ID or passport copy" />
+                                <small class="text-muted">Choose a file only if this document must be replaced.</small>
+                            }
+                            else
+                            {
+                                <button class="btn btn-danger btn-sm float-end" type="button"
+                                        onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/License/AppinfoIdCopy?Id=@ViewBag.ApplicationInfo.Id'; }">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            }
                         </div>
 
 
@@ -290,11 +282,18 @@ else
                     {
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label"><a target="_blank" href="~/@ViewBag.ApplicationInfo.FormFF">Form 55</a></label>
-                            @*<input type="file" name="pclearance" required value="" class="form-control" id="inputName5">*@
-                            <button class="btn btn-danger btn-sm float-end" type="button"
-                                    onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/License/AppinfoFormFF?Id=@ViewBag.ApplicationInfo.Id'; }">
-                                <i class="fas fa-trash-alt"></i> Delete
-                            </button>
+                            @if (queryStagePanel != null)
+                            {
+                                <input type="file" name="formFF" class="form-control mt-2" accept=".pdf,.jpg,.jpeg,.png" aria-label="Replace Form 55" />
+                                <small class="text-muted">Choose a file only if this document must be replaced.</small>
+                            }
+                            else
+                            {
+                                <button class="btn btn-danger btn-sm float-end" type="button"
+                                        onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/License/AppinfoFormFF?Id=@ViewBag.ApplicationInfo.Id'; }">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            }
                         </div>
                     }
 
@@ -312,11 +311,18 @@ else
                     {
                         <div class="col-md-6">
                             <label for="inputName5" class="form-label"><a target="_blank" href="~/@ViewBag.ApplicationInfo.Fingerprints">Fingerprints</a></label>
-                            @*<input type="file" name="pclearance" required value="" class="form-control" id="inputName5">*@
-                            <button class="btn btn-danger btn-sm float-end" type="button"
-                                    onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/License/AppinfoFingerprints?Id=@ViewBag.ApplicationInfo.Id'; }">
-                                <i class="fas fa-trash-alt"></i> Delete
-                            </button>
+                            @if (queryStagePanel != null)
+                            {
+                                <input type="file" name="fingerprints" class="form-control mt-2" accept=".pdf,.jpg,.jpeg,.png" aria-label="Replace fingerprints" />
+                                <small class="text-muted">Choose a file only if this document must be replaced.</small>
+                            }
+                            else
+                            {
+                                <button class="btn btn-danger btn-sm float-end" type="button"
+                                        onclick="if(confirm('Are you sure you want to delete this file?')) { window.location.href = '/License/AppinfoFingerprints?Id=@ViewBag.ApplicationInfo.Id'; }">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            }
                         </div>
                     }
                     @*<div class="col-md-6">
@@ -355,7 +361,7 @@ else
                         </div>*@
                     <div class="col-12">
                         <div class="form-floating">
-                            <textarea class="form-control" name="OperationAddress" value="@ViewBag.ApplicationInfo.OperationAddress" placeholder="Address" id="floatingTextarea" style="height: 100px;">@ViewBag.ApplicationInfo.OperationAddress</textarea>
+                            <textarea class="form-control" name="OperationAddress" placeholder="Address" id="OperationAddress" style="height: 100px;">@ViewBag.ApplicationInfo.OperationAddress</textarea>
                             <label for="floatingTextarea">Operational Address</label>
                         </div>
                     </div>
@@ -367,12 +373,14 @@ else
                     </div>
 
                 </form><!-- End Multi Columns Form -->
-                <div class="card-footer">
-                    <div class="text-center">
-                        <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Next</a>
-
+                @if (queryStagePanel == null)
+                {
+                    <div class="card-footer">
+                        <div class="text-center">
+                            <a href="/License/OutletInfo?Id=@ViewBag.ApplicationInfo.Id" class="btn btn-primary">Next</a>
+                        </div>
                     </div>
-                </div>
+                }
 
             </div>
         </div>
@@ -392,11 +400,13 @@ else
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <label>Enter Company Number</label>
-                <input type="text" id="companyNumberInput" name="companyNumberInput" class="form-control" placeholder="Company Number">
-                <button id="btnCheckCompany" onclick="getCompany()" class="btn btn-primary mt-3">Check</button>
-
-                <div id="companyDetailsResult"></div>
+                <label for="companyNumberInput" class="form-label">Company number</label>
+                <div class="input-group">
+                    <input type="text" id="companyNumberInput" class="form-control text-uppercase" maxlength="50" autocomplete="off" placeholder="Enter company number">
+                    <button type="button" id="btnCheckCompany" onclick="getCompany()" class="btn btn-primary">Check company</button>
+                </div>
+                <div id="companyLookupStatus" class="form-text" aria-live="polite"></div>
+                <div id="companyDetailsResult" class="mt-3"></div>
             </div>
         </div>
     </div>
@@ -404,103 +414,255 @@ else
 
 
 <script>
-    function getType() {
+    let verifiedCompany = null;
+    let companyLookupController = null;
 
-        var zveregion = $("#applicantType").val();
-        if (zveregion === "Company") {
-           // alert(zveregion);
-            $('#companyModal').modal('show');
+    function handleApplicantTypeChange(select) {
+        const isCompany = select.value === "Company";
+
+        if (isCompany) {
+            openCompanyModal();
         }
-     
 
+        if (!isCompany) {
+            document.getElementById("businessName").readOnly = false;
+            document.getElementById("OperationAddress").readOnly = false;
+            document.getElementById("companyVerificationSummary").classList.add("d-none");
+        }
     }
 
+    function openCompanyModal() {
+        const input = document.getElementById("companyNumberInput");
+        const modalElement = document.getElementById("companyModal");
+        input.value = document.getElementById("companyNumber").value || input.value;
 
-    function getCompany() {
-        var companynum = $("#companyNumberInput").val();
-       // alert(companynum);
+        try {
+            if (window.bootstrap && window.bootstrap.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+            } else if (window.jQuery && window.jQuery.fn.modal) {
+                window.jQuery(modalElement).modal("show");
+            } else {
+                forceShowCompanyModal(modalElement);
+            }
+        } catch {
+            forceShowCompanyModal(modalElement);
+        }
 
-        $.ajax({
-            type: 'GET',
-            url: '/License/Details',
-            contentType: "application/json; charset=utf-8",
+        window.setTimeout(function () { input.focus(); }, 200);
+    }
 
-            datatype: 'text',
-            data: { companyNumber: companynum },
-            success: function (data) {
-                console.log(data);
-                //council
-                // alert(data.councildata.councilRegion);
-             //   $("#ApplicationTypeName").val(data.councildata.councilRegion);
-              //  $("#ApplicationType").val(data.councildata.councilRegionId);
-               
-                    const info = data.companyInfo;
-                    const directors = data.directors;
+    function closeCompanyModal() {
+        const modalElement = document.getElementById("companyModal");
 
-                    // Build company info HTML
-                    let html = `
-                    <h5>Company Information</h5>
-                    <div cllass="table-responsive">
-                    <table class="table table-bordered table-sm">
-                        <tr><th>Name</th><td>${info.name}</td></tr>
-                        <tr><th>Company No.</th><td>${info.companyNumber}</td></tr>
-                        <tr><th>Type</th><td>${info.type}</td></tr>
-                        <tr><th>City</th><td>${info.city}</td></tr>
-                        <tr><th>Email</th><td>${info.email}</td></tr>
-                        <tr><th>Address</th><td>${info.physicalAddress}</td></tr>
-                    </table>
+        try {
+            if (window.bootstrap && window.bootstrap.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(modalElement).hide();
+            } else if (window.jQuery && window.jQuery.fn.modal) {
+                window.jQuery(modalElement).modal("hide");
+            } else {
+                forceHideCompanyModal(modalElement);
+            }
+        } catch {
+            forceHideCompanyModal(modalElement);
+        }
+    }
 
-                    <h6 class="mt-3">Directors</h6>
-                    <table class="table table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th>Names</th>
-                                <th>Surname</th>
-                                <th>ID No</th>
-                                <th>Email</th>
-                                <th>Address</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
+    function forceShowCompanyModal(modalElement) {
+        modalElement.classList.add("show");
+        modalElement.style.display = "block";
+        modalElement.removeAttribute("aria-hidden");
+        modalElement.setAttribute("aria-modal", "true");
+        modalElement.setAttribute("role", "dialog");
+        document.body.classList.add("modal-open");
 
-                    directors.forEach(dir => {
-                        html += `
-                        <tr>
-                            <td>${dir.names}</td>
-                            <td>${dir.surname}</td>
-                            <td>${dir.id_no}</td>
-                            <td>${dir.email}</td>
-                            <td>${dir.address}</td>
-                        </tr>
-                    `;
-                    });
+        if (!document.querySelector('[data-company-modal-backdrop="true"]')) {
+            const backdrop = document.createElement("div");
+            backdrop.className = "modal-backdrop fade show";
+            backdrop.setAttribute("data-company-modal-backdrop", "true");
+            document.body.appendChild(backdrop);
+        }
+    }
 
-                    html += `
-                        </tbody>
-                    </table>
-                    </div>
-                `;
+    function forceHideCompanyModal(modalElement) {
+        modalElement.classList.remove("show");
+        modalElement.style.display = "none";
+        modalElement.removeAttribute("aria-modal");
+        modalElement.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-open");
+        document.querySelectorAll('[data-company-modal-backdrop="true"]').forEach(function (backdrop) {
+            backdrop.remove();
+        });
+    }
 
-                    $("#companyDetailsResult").html(html);
+    async function getCompany() {
+        const companyNumber = document.getElementById("companyNumberInput").value.trim().toUpperCase();
+        const checkButton = document.getElementById("btnCheckCompany");
+        const result = document.getElementById("companyDetailsResult");
+        const status = document.getElementById("companyLookupStatus");
 
-                    // Fill Business name and make readonly
-                $("#businessName").val(info.name).prop("readonly", true);
-                $("#OperationAddress").val(info.postalAddress).prop("readonly", true);
-                
-                $("#companyNumber").val(info.companyNumber);
-               
+        if (!companyNumber) {
+            status.className = "form-text text-danger";
+            status.textContent = "Enter a company number.";
+            return;
+        }
 
-            },
-            error: function (data) {
-                $("#companyDetailsResult").html(
-                    `<div class="alert alert-danger">Error checking company</div>`
-                );
+        if (companyLookupController) {
+            companyLookupController.abort();
+        }
+        companyLookupController = new AbortController();
+        verifiedCompany = null;
+        result.innerHTML = "";
+        status.className = "form-text text-muted";
+        status.textContent = "Checking the company registry…";
+        checkButton.disabled = true;
+        checkButton.textContent = "Checking…";
+
+        try {
+            const response = await fetch(`/License/details?companyNumber=${encodeURIComponent(companyNumber)}`, {
+                headers: { "Accept": "application/json" },
+                signal: companyLookupController.signal
+            });
+            const payload = await readJson(response);
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || "The company could not be verified.");
             }
 
-        });
-        
+            verifiedCompany = payload.data;
+            renderCompanyDetails(verifiedCompany);
+            status.className = "form-text text-success";
+            status.textContent = "Company verified. Review the information, then adopt it.";
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                status.className = "form-text text-danger";
+                status.textContent = error.message || "The company could not be verified.";
+            }
+        } finally {
+            checkButton.disabled = false;
+            checkButton.textContent = "Check company";
+        }
     }
 
-   
+    function renderCompanyDetails(companyResult) {
+        const info = companyResult.companyInfo;
+        const directors = companyResult.directors || [];
+        const rows = [
+            ["Name", info.name],
+            ["Company number", info.companyNumber],
+            ["Type", info.type],
+            ["City", info.city],
+            ["Email", info.email],
+            ["Address", info.physicalAddress || info.postalAddress]
+        ].map(function (row) {
+            return `<tr><th scope="row">${escapeHtml(row[0])}</th><td>${escapeHtml(row[1])}</td></tr>`;
+        }).join("");
+
+        const directorRows = directors.length
+            ? directors.map(function (director) {
+                return `<tr>
+                    <td>${escapeHtml(director.names)}</td>
+                    <td>${escapeHtml(director.surname)}</td>
+                    <td>${escapeHtml(director.nationalId || director.id_no)}</td>
+                    <td>${escapeHtml(director.email)}</td>
+                    <td>${escapeHtml(director.address)}</td>
+                </tr>`;
+            }).join("")
+            : `<tr><td colspan="5" class="text-muted">No directors were returned by the registry.</td></tr>`;
+
+        document.getElementById("companyDetailsResult").innerHTML = `
+            <h5>Company information</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm"><tbody>${rows}</tbody></table>
+                <h6 class="mt-3">Directors (${directors.length})</h6>
+                <table class="table table-striped table-sm">
+                    <thead><tr><th>Names</th><th>Surname</th><th>ID No.</th><th>Email</th><th>Address</th></tr></thead>
+                    <tbody>${directorRows}</tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="button" id="btnAdoptCompany" class="btn btn-success" onclick="adoptCompany()">Adopt company and directors</button>
+            </div>`;
+    }
+
+    async function adoptCompany() {
+        if (!verifiedCompany || !verifiedCompany.companyInfo) {
+            return;
+        }
+
+        const button = document.getElementById("btnAdoptCompany");
+        const status = document.getElementById("companyLookupStatus");
+        button.disabled = true;
+        button.textContent = "Adopting…";
+        status.className = "form-text text-muted";
+        status.textContent = "Saving the company and synchronising its directors…";
+
+        try {
+            const response = await fetch("/License/adopt-company", {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    applicationId: document.getElementById("applicationId").value || null,
+                    companyNumber: verifiedCompany.companyInfo.companyNumber
+                })
+            });
+            const payload = await readJson(response);
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || "The company could not be adopted.");
+            }
+
+            document.getElementById("applicationId").value = payload.applicationId;
+            document.getElementById("companyNumber").value = payload.companyNumber || "";
+            document.getElementById("businessName").value = payload.businessName || "";
+            document.getElementById("businessName").readOnly = true;
+            document.getElementById("OperationAddress").value = payload.operationAddress || "";
+            document.getElementById("OperationAddress").readOnly = true;
+            document.getElementById("applicantType").value = "Company";
+            document.getElementById("verifiedCompanyText").textContent =
+                `Verified company: ${payload.companyNumber} · ${payload.directorCount} director(s) saved`;
+            document.getElementById("companyVerificationSummary").classList.remove("d-none");
+
+            status.className = "form-text text-success";
+            status.textContent = "Company adopted and directors saved. They will appear on Outlet Information.";
+            button.textContent = "Adopted";
+            window.setTimeout(function () {
+                closeCompanyModal();
+            }, 700);
+        } catch (error) {
+            status.className = "form-text text-danger";
+            status.textContent = error.message || "The company could not be adopted.";
+            button.disabled = false;
+            button.textContent = "Adopt company and directors";
+        }
+    }
+
+    async function readJson(response) {
+        try {
+            return await response.json();
+        } catch {
+            return { success: false, message: "The server returned an unexpected response." };
+        }
+    }
+
+    function escapeHtml(value) {
+        const element = document.createElement("div");
+        element.textContent = value || "—";
+        return element.innerHTML;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const companyNumber = document.getElementById("companyNumber").value;
+        if (companyNumber) {
+            document.getElementById("businessName").readOnly = true;
+            document.getElementById("OperationAddress").readOnly = true;
+        }
+
+        document.getElementById("companyNumberInput").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                getCompany();
+            }
+        });
+    });
 </script>

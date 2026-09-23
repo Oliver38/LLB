@@ -30,6 +30,7 @@
     var canContinue = ViewBag.CanContinue is bool cont && cont;
     var awaitingSecretary = ViewBag.AwaitingSecretary is bool awaiting && awaiting;
     var paymentReceived = ViewBag.PaymentReceived is bool received && received;
+    var hasOpenPostFormationQuery = ViewBag.HasOpenPostFormationQuery is bool hasQuery && hasQuery;
     var fee = ViewBag.TotalFee is double totalFee ? totalFee : record?.PaidFee ?? 0;
     var updatedText = record == null ? "N/A" : record.DateUpdated.ToString("dd MMM yyyy HH:mm");
 
@@ -66,6 +67,14 @@
 @if (TempData["success"] != null)
 {
     <div class="alert alert-success">@TempData["success"]</div>
+}
+
+@if (hasOpenPostFormationQuery && record != null)
+{
+    <div class="alert alert-warning d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <span><i class="bi bi-chat-left-dots me-2"></i>Save the requested corrections, then return to resolve the query.</span>
+        <a class="btn btn-warning" href="/PostFormationQueries?recordId=@record.Id">Return to query</a>
+    </div>
 }
 
 <div class="card mb-4">

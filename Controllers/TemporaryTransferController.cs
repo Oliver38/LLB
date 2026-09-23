@@ -48,6 +48,35 @@ namespace LLB.Controllers
                 .ThenByDescending(item => item.ApplicationDate)
                 .ToListAsync();
 
+            var transferIds = transferApplications
+                .Select(item => item.Id)
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => value!)
+                .ToList();
+            var openQueryCounts = transferIds.Count == 0
+                ? new Dictionary<string, int>()
+                : await _db.Queries
+                    .AsNoTracking()
+                    .Where(query => query.ApplicationId != null
+                        && transferIds.Contains(query.ApplicationId)
+                        && query.Stage != null
+                        && query.Stage.StartsWith(PostFormationQueryWorkflow.StagePrefix)
+                        && query.Status == ApplicationQueryWorkflow.OpenStatus)
+                    .GroupBy(query => query.ApplicationId!)
+                    .ToDictionaryAsync(group => group.Key, group => group.Count());
+            var queriedTransferIds = transferIds.Count == 0
+                ? new HashSet<string>()
+                : (await _db.Queries
+                    .AsNoTracking()
+                    .Where(query => query.ApplicationId != null
+                        && transferIds.Contains(query.ApplicationId)
+                        && query.Stage != null
+                        && query.Stage.StartsWith(PostFormationQueryWorkflow.StagePrefix))
+                    .Select(query => query.ApplicationId!)
+                    .Distinct()
+                    .ToListAsync())
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
             var rootApplicationIds = transferApplications
                 .Select(item => item.CompanyNumber)
                 .Where(value => !string.IsNullOrWhiteSpace(value))
@@ -128,9 +157,14 @@ namespace LLB.Controllers
                     regionName = region.RegionName ?? "N/A";
                 }
 
+                var recordId = transferApplication.Id ?? string.Empty;
+                var openQueryCount = openQueryCounts.TryGetValue(recordId, out var queryCount) ? queryCount : 0;
+                var readyToResubmit = openQueryCount == 0
+                    && queriedTransferIds.Contains(recordId)
+                    && string.Equals(transferApplication.Status, "inprogress", StringComparison.OrdinalIgnoreCase);
                 rows.Add(new ClientPostFormationListingViewModel
                 {
-                    RecordId = transferApplication.Id ?? string.Empty,
+                    RecordId = recordId,
                     Reference = transferApplication.RefNum ?? "Pending",
                     ApplicationId = rootApplication.Id ?? string.Empty,
                     TradingName = outlet?.TradingName ?? rootApplication.BusinessName ?? "N/A",
@@ -140,8 +174,12 @@ namespace LLB.Controllers
                     Status = transferApplication.Status ?? "Unknown",
                     SubmittedDate = transferApplication.ApplicationDate,
                     ServiceName = TemporaryTransferHelper.GetTransferType(transferApplication),
-                    ActionUrl = $"/TemporaryTransfer/Apply?id={transferApplication.Id}",
-                    ActionLabel = "Open Transfer"
+                    ActionUrl = openQueryCount > 0 || readyToResubmit
+                        ? $"/PostFormationQueries?recordId={Uri.EscapeDataString(recordId)}"
+                        : $"/TemporaryTransfer/Apply?id={transferApplication.Id}",
+                    ActionLabel = openQueryCount > 0 ? "View Query" : readyToResubmit ? "Resubmit Application" : "Open Transfer",
+                    OpenQueryCount = openQueryCount,
+                    HasQueryHistory = queriedTransferIds.Contains(recordId)
                 });
             }
 
@@ -952,6 +990,12 @@ namespace LLB.Controllers
                 return RedirectToAction("List");
             }
 
+            if (PostFormationQueryWorkflow.HasOpenQueries(_db, transferApplication.Id))
+            {
+                TempData["error"] = "Resolve every query, then resubmit the application from the query workspace.";
+                return RedirectToAction("Index", "PostFormationQueries", new { recordId = transferApplication.Id });
+            }
+
             if (!string.Equals(transferApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["error"] = "This transfer application is not ready to continue.";
@@ -1305,12 +1349,14 @@ namespace LLB.Controllers
             var paymentReceived = payment != null && HasPaymentStatus(payment, "Paid");
             var hasActivePayment = payment != null && IsActivePaymentTransaction(payment);
             var attachmentsComplete = HasRequiredAttachments(transferApplication, proofOfPublication, tieAffidavit, transferAffidavit, leaseDocuments);
+            var hasOpenQuery = transferApplication != null
+                && PostFormationQueryWorkflow.HasOpenQueries(_db, transferApplication.Id);
             var canEditDetails = CanModifyBeforePayment(transferApplication, payment);
-            var canMakePayment = transferApplication != null
+            var canMakePayment = !hasOpenQuery && transferApplication != null
                 && string.Equals(transferApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase)
                 && attachmentsComplete
                 && !paymentReceived;
-            var canContinue = transferApplication != null
+            var canContinue = !hasOpenQuery && transferApplication != null
                 && string.Equals(transferApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase)
                 && paymentReceived;
             var awaitingSecretary = transferApplication != null
@@ -1349,6 +1395,7 @@ namespace LLB.Controllers
             ViewBag.CanMakePayment = canMakePayment && !hasActivePayment;
             ViewBag.CanContinue = canContinue;
             ViewBag.AwaitingSecretary = awaitingSecretary;
+            ViewBag.HasOpenPostFormationQuery = hasOpenQuery;
         }
 
         private async Task<ApplicationUser?> GetCurrentUserAsync()
@@ -1631,8 +1678,14 @@ namespace LLB.Controllers
                 && !string.IsNullOrWhiteSpace(leaseDocuments.DocumentLocation);
         }
 
-        private static bool CanModifyBeforePayment(ApplicationInfo? transferApplication, Payments? payment)
+        private bool CanModifyBeforePayment(ApplicationInfo? transferApplication, Payments? payment)
         {
+            if (transferApplication != null
+                && PostFormationQueryWorkflow.HasOpenQueries(_db, transferApplication.Id))
+            {
+                return true;
+            }
+
             if (transferApplication == null
                 || !string.Equals(transferApplication.Status, "submitted", StringComparison.OrdinalIgnoreCase))
             {

@@ -1,0 +1,38 @@
+@model LLB.Models.ViewModel.ExaminerQueryPanelViewModel
+
+<section class="llb-query-composer" aria-labelledby="query-heading-@Model.StageKey">
+    <div class="llb-query-composer__icon" aria-hidden="true">
+        <i class="bi bi-chat-left-text"></i>
+    </div>
+    <div class="llb-query-composer__content">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-2 mb-3">
+            <div>
+                <div class="llb-section-kicker">Stage query</div>
+                <h2 class="h5 mb-1" id="query-heading-@Model.StageKey">@Model.Heading</h2>
+                <p class="text-muted mb-0">@Model.SupportingText</p>
+            </div>
+            <span class="llb-query-stage-chip align-self-start">Saved to this stage</span>
+        </div>
+
+        <form action="/@Model.ControllerName/Query" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
+            <input type="hidden" name="taskId" value="@Model.TaskId" />
+            <input type="hidden" name="stage" value="@Model.StageKey" />
+            <label class="form-label fw-semibold" for="query-@Model.ControllerName-@Model.StageKey">What must the applicant correct?</label>
+            <textarea class="form-control llb-query-textarea"
+                      id="query-@Model.ControllerName-@Model.StageKey"
+                      name="query"
+                      rows="4"
+                      maxlength="2000"
+                      required
+                      placeholder="Describe the exact information or document that needs attention."></textarea>
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mt-3">
+                <small class="text-muted"><i class="bi bi-info-circle me-1"></i>The applicant will see this wording exactly as entered.</small>
+                <button type="submit" class="btn btn-warning px-4">
+                    <i class="bi bi-plus-circle me-2"></i>Add stage query
+                </button>
+            </div>
+        </form>
+    </div>
+</section>

@@ -257,24 +257,18 @@ else
                     <div class="text-center">
                         <h5 class="card-title text-success">@TempData["result"]</h5>
                     </div>
-                    <h5 class="card-title">Verify Applicant Information</h5>
+                    <h5 class="card-title">Review Applicant Information</h5>
                 </div>
 
 
-                <form action="/Recommend/Query" method="post" enctytpe="multipart/form-data" class="row g-3">
-                    <div class="row">
-                        <input type="hidden" name="applicationId" value="@ViewBag.ApplicationInfo.Id" />
-                        <input type="hidden" name="stage" value="Recommend Application" />
-                        <input type="hidden" name="Id" value="fdftyguhij" />
-                        <textarea class="form-control" name="query"></textarea>
-                    </div>
-
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                        <button type="reset" class="btn btn-secondary">Reset</button>
-                    </div>
-
-                </form>
+                @await Html.PartialAsync("_ExaminerQueryPanel", new LLB.Models.ViewModel.ExaminerQueryPanelViewModel
+                {
+                    ControllerName = "Recommend",
+                    ApplicationId = ViewBag.ApplicationInfo.Id,
+                    StageKey = "applicant",
+                    Heading = "Review Applicant Information",
+                    SupportingText = "Raise a focused recommendation-stage query for applicant details or personal documents that require correction."
+                })
 
                 <div class="card-footer">
                     <div class="text-center">
